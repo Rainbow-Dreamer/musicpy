@@ -7,6 +7,10 @@
 
 在musicpy里面，几个基本的类是note（音符）, chord（和弦）和scale（音阶）。这几个类是构成音乐代码的基础。musicpy里面的乐理功能非常多，先从几个最基本的开始介绍吧。
 
+首先在musicpy文件夹里打开cmd, 跑一下pip install -r requirements.txt安装依赖库
+
+import这个库: from musicpy.musicpy import *
+
 1、note类（音符类），初始化一个note的实例只需要给一个音名（CDEFGAB其中一个）和一个音高（一个正整数），现在你就可以使用这个音符去做音乐里的任何事情了。你还可以设定音符的duration（音符长度）和volume（音符的音量大小）。音符长度默认为1，音量默认为100。
 
 比如： a = note('A', 5)
