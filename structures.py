@@ -708,13 +708,13 @@ class scale:
         if degree1 == 8:
             degree1 = 1
             high = True
-        scale_names = self.names()
+        scale_notes = self.notes[:-1]
         for i in range(degree1, degree1 + step * num, step):
-            result.append(scale_names[(i % 7) - 1])
+            result.append(scale_notes[(i % 7) - 1])
         resultchord = chord(result,
                             rootpitch=self.pitch,
                             interval=interval,
-                            duration=duration)
+                            duration=duration).standardize()
         if high:
             resultchord = resultchord.up(octave)
         if add is not None:
