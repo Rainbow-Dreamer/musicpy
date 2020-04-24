@@ -525,13 +525,13 @@ def tochordsfile(path,
 #Touhou main melody
 #play((getchord_by_interval('D#5',[5,7,10,7,5],2,0.5)*3+getchord_by_interval('F5',[1,0,-4],2,0.5))*3,150)
 
-
 # some chord progressions
 # 2-3-4 progression (in terms of G major scale)
 # a = chd('A','m7')
 # play(a.period(0.5)*4 + a.up(2).period(0.5)*4 + chd(a[1].up(3), 'maj7').period(0.5)*4)
 # a = chd('A','m7').set(interval=0.5)
 # play(a*2 + a.up(2)*2 + chd(a[1].up(3), 'maj7').set(interval=0.5)*2 + chd(a[1].up(3), 'maj7', duration=5))
+
 
 def inversion_from(a, b, num=False, mode=0):
     N = len(b)
