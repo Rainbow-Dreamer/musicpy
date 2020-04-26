@@ -34,6 +34,14 @@ class match:
                 return dic[i]
         return 'not found'
 
+    def search_all(self, key):
+        result = []
+        dic = self.dic
+        for i in dic:
+            if key in i:
+                result.append(dic[i])
+        return result
+
     def keys(self):
         return self.dic.keys()
 

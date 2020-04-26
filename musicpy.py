@@ -377,10 +377,70 @@ MODIFY = 'modify'
 NEW = 'new'
 
 
-def detect_scale(chord1):
+def detect_scale(x):
     # receive a piece of music and analyze what modes it is using,
     # return a list of most likely and exact modes the music has.
-    pass
+
+    # newly added on 2020/4/25, currently in development
+    whole_notes = x.names()
+    note_names = list(set(whole_notes))
+    note_names = [standard[i] for i in note_names]
+    note_names.sort()
+    note_names.append(note_names[0] + octave)
+    note_intervals = [
+        note_names[i] - note_names[i - 1] for i in range(1, len(note_names))
+    ]
+    result_scale_types = detectScale[tuple(note_intervals)]
+    if result_scale_types != 'not found':
+        result_scale_types = result_scale_types[0]
+        result_scale = f'{standard_reverse[note_names[0]]} {result_scale_types}'
+        if result_scale_types == 'major':
+            first_chord_inds = find_continuous(x.interval, 0)
+            if len(first_chord_inds) < 3:
+                first_chord_inds = add_to_index(x.interval, 4)
+            first_chord_notes = [x.notes[i] for i in first_chord_inds]
+            first_chord_notes.sort(key=lambda y: y.degree)
+            first_chord = chord(first_chord_notes).inoctave()
+            first_chord_interval = intervalof(first_chord)
+            if minor_third in first_chord_interval:
+                result_scale = f'{standard_reverse[note_names[5]]} minor'
+            return result_scale
+
+
+def find_continuous(x, value, start=None, stop=None):
+    if start is None:
+        start = 0
+    if stop is None:
+        stop = len(x)
+    inds = []
+    appear = False
+    for i in range(start, stop):
+        if not appear:
+            if x[i] == value:
+                appear = True
+                inds.append(i)
+        else:
+            if x[i] == value:
+                inds.append(i)
+            else:
+                break
+    return inds
+
+
+def add_to_index(x, value, start=None, stop=None):
+    if start is None:
+        start = 0
+    if stop is None:
+        stop = len(x)
+    inds = []
+    counter = 0
+    for i in range(start, stop):
+        counter += x[i]
+        if counter >= value:
+            break
+        else:
+            inds.append(i)
+    return inds
 
 
 def modulation(chord1, old_scale, new_scale):
@@ -1165,8 +1225,10 @@ def detect(a,
 
 
 def intervalof(a, cummulative=True, translate=False):
-    if type(a) in [chord, scale]:
-        a = a.notes
+    if type(a) == scale:
+        a = a.getScale()
+    if type(a) != chord:
+        a = chord(a)
     return a.intervalof(cummulative, translate)
 
 
