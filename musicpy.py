@@ -211,7 +211,8 @@ def read(name, trackind=1, track=1, mode='find'):
         is_find = False
         for each in whole_tracks:
             for each_track in each:
-                if type(each_track) != int and len(each_track) > 2:
+                if type(each_track) != int and any(x.type == 'note_on'
+                                                   for x in each_track):
                     t = each_track
                     is_find = True
                     break
@@ -464,7 +465,7 @@ def detect_scale(x):
 def split_melody(x, mode='index'):
     # if mode == 'notes', return a list of main melody notes
     # if mode == 'index', return a list of indexes of main melody notes
-
+    # if mode == 'hold', return a chord with main melody notes with original places
     if mode == 'index':
         temp = copy(x)
         M = len(temp.notes)
@@ -474,6 +475,16 @@ def split_melody(x, mode='index'):
         melody = [t.number for t in result]
 
         return melody
+    elif mode == 'hold':
+        result = split_melody(x)
+        whole_interval = x.interval
+        whole_notes = x.notes
+        new_interval = []
+        N = len(result) - 1
+        for i in range(N):
+            new_interval.append(sum(whole_interval[result[i]:result[i + 1]]))
+        new_interval.append(sum(whole_interval[result[-1]:]))
+        return chord([whole_notes[j] for j in result], interval=new_interval)
 
     elif mode == 'notes':
         whole_notes = copy(x.notes)
