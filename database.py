@@ -96,6 +96,9 @@ scaleTypes = match({
     ('whole tone', ): [2, 2, 2, 2, 2, 2],
     ('12', ): [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 })
+modern_modes = [
+    'major', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'minor', 'locrian'
+]
 chordTypes = match({
     ('major', 'M', 'maj', 'majorthird'): ((4, 7), ),
     ('minor', 'm', 'minorthird', 'min'): ((3, 7), ),
