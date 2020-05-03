@@ -394,7 +394,7 @@ MODIFY = 'modify'
 NEW = 'new'
 
 
-def detect_scale(x):
+def detect_scale(x, melody_tol=perfect_fifth, chord_tol=octave):
     # receive a piece of music and analyze what modes it is using,
     # return a list of most likely and exact modes the music has.
 
@@ -421,27 +421,13 @@ def detect_scale(x):
         if result_scale_types == 'major':
             FIFTH = result_scale[5].name
             SIXTH = result_scale[6].name
-            melody_notes = split_melody(x, mode='notes')
+            melody_notes = split_melody(x, 'notes', melody_tol, chord_tol)
             melody_notes = [i.name for i in melody_notes]
             fifth_num = melody_notes.count(FIFTH)
             sixth_num = melody_notes.count(SIXTH)
             if sixth_num > fifth_num:
                 result_scale = result_scale.inversion(6)
                 result_scale.mode = 'minor'
-
-            #first_chord_inds = find_continuous(x.interval, 0)
-            #if len(first_chord_inds) < 3:
-            #first_chord_inds = add_to_index(x.interval, 4)
-            #first_chord_notes = [x.notes[i] for i in first_chord_inds]
-            #first_chord_notes.sort(key=lambda y: y.degree)
-            #first_chord = chord(first_chord_notes).inoctave()
-            #first_chord_interval = intervalof(first_chord)
-            #if minor_third in first_chord_interval:
-            #result_scale = f'{standard_reverse[note_names[5]]} minor'
-            #last_chord_inds = find_last_chord(x)
-            #last_chord_inds = last_chord_inds.sortchord()
-            #last_chord_inds = chord(last_chord_inds).inoctave()
-            ##print(detect(last_chord_inds))
             return f'{result_scale.start.name} {result_scale.mode}'
     else:
         appear_note_names = set(whole_notes)
@@ -452,7 +438,7 @@ def detect_scale(x):
         result_scale = scale(most_note, 'major')
         FIFTH = result_scale[5].name
         SIXTH = result_scale[6].name
-        melody_notes = split_melody(x, mode='notes')
+        melody_notes = split_melody(x, 'notes', melody_tol, chord_tol)
         melody_notes = [i.name for i in melody_notes]
         fifth_num = melody_notes.count(FIFTH)
         sixth_num = melody_notes.count(SIXTH)
@@ -462,7 +448,7 @@ def detect_scale(x):
         return f'{result_scale.start.name} {result_scale.mode}'
 
 
-def split_melody(x, mode='index'):
+def split_melody(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
     # if mode == 'notes', return a list of main melody notes
     # if mode == 'index', return a list of indexes of main melody notes
     # if mode == 'hold', return a chord with main melody notes with original places
@@ -471,12 +457,12 @@ def split_melody(x, mode='index'):
         M = len(temp.notes)
         for k in range(M):
             temp.notes[k].number = k
-        result = split_melody(temp, mode='notes')
+        result = split_melody(temp, 'notes', melody_tol, chord_tol)
         melody = [t.number for t in result]
 
         return melody
     elif mode == 'hold':
-        result = split_melody(x)
+        result = split_melody(x, 'index', melody_tol, chord_tol)
         whole_interval = x.interval
         whole_notes = x.notes
         new_interval = []
@@ -497,7 +483,7 @@ def split_melody(x, mode='index'):
         whole_notes = [x for x in whole_notes if x is not None]
         N = len(whole_notes) - 1
         start = 0
-        if whole_notes[1].degree - whole_notes[0].degree >= octave:
+        if whole_notes[1].degree - whole_notes[0].degree >= chord_tol:
             start = 1
         split_note_ind = None
         i = start + 1
@@ -508,14 +494,14 @@ def split_melody(x, mode='index'):
             has_melody = 1 if melody else 0
             if has_melody:
                 newest_notes = melody[-1].degree
-                if current_note.degree - newest_notes > octave:
+                if current_note.degree - newest_notes > chord_tol:
                     del melody[-1]
                     has_melody = 1 if melody else 0
                     if has_melody:
                         newest_notes = melody[-1].degree
-            if current_note.degree - next_note.degree > perfect_fifth:
+            if current_note.degree - next_note.degree > melody_tol:
                 if has_melody:
-                    if newest_notes - current_note.degree >= octave:
+                    if newest_notes - current_note.degree >= chord_tol:
                         i += 1
                         continue
                 melody.append(current_note)
@@ -523,7 +509,7 @@ def split_melody(x, mode='index'):
                 i += 2
             else:
                 if has_melody:
-                    if newest_notes - current_note.degree < octave:
+                    if newest_notes - current_note.degree < chord_tol:
                         melody.append(current_note)
                         i += 1
                         continue
@@ -537,8 +523,95 @@ def split_melody(x, mode='index'):
         return melody
 
 
-def find_last_chord(x):
-    pass
+def split_chord(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
+    melody_ind = split_melody(x, 'index', melody_tol, chord_tol)
+    N = len(x)
+    chord_ind = [i for i in range(N) if i not in melody_ind]
+    if mode == 'index':
+        return chord_ind
+    elif mode == 'notes':
+        whole_notes = x.notes
+        return [whole_notes[k] for k in chord_ind]
+    elif mode == 'hold':
+        whole_notes = x.notes
+        new_interval = []
+        whole_interval = x.interval
+        M = len(chord_ind) - 1
+        for i in range(M):
+            new_interval.append(
+                sum(whole_interval[chord_ind[i]:chord_ind[i + 1]]))
+        new_interval.append(sum(whole_interval[chord_ind[-1]:]))
+        return chord([whole_notes[j] for j in chord_ind],
+                     interval=new_interval)
+
+
+def split_all(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
+    # split the main melody and chords part of a piece of music,
+    # return both of main melody and chord part
+    melody_ind = split_melody(x, 'index', melody_tol, chord_tol)
+    N = len(x)
+    chord_ind = [i for i in range(N) if i not in melody_ind]
+    if mode == 'index':
+        return [melody_ind, chord_ind]
+    elif mode == 'notes':
+        whole_notes = x.notes
+        return [[whole_notes[j] for j in melody_ind],
+                [whole_notes[k] for k in chord_ind]]
+    elif mode == 'hold':
+        whole_notes = x.notes
+        new_interval_1 = []
+        whole_interval = x.interval
+        chord_len = len(chord_ind) - 1
+        for i in range(chord_len):
+            new_interval_1.append(
+                sum(whole_interval[chord_ind[i]:chord_ind[i + 1]]))
+        new_interval_1.append(sum(whole_interval[chord_ind[-1]:]))
+        new_interval_2 = []
+        melody_len = len(melody_ind) - 1
+        for j in range(melody_len):
+            new_interval_2.append(
+                sum(whole_interval[melody_ind[j]:melody_ind[j + 1]]))
+        new_interval_2.append(sum(whole_interval[melody_ind[-1]:]))
+        result_chord = chord([whole_notes[i] for i in chord_ind],
+                             interval=new_interval_1)
+        result_melody = chord([whole_notes[j] for j in melody_ind],
+                              interval=new_interval_2)
+        # shift is the start time that chord part starts after main melody starts,
+        # or the start time that main melody starts after chord part starts,
+        # depends on which starts earlier, if shift >= 0, chord part starts after main melody,
+        # if shift < 0, chord part starts before main melody
+        first_chord_ind = chord_ind[0]
+        first_melody_ind = melody_ind[0]
+        if first_chord_ind >= first_melody_ind:
+            shift = sum(whole_interval[first_melody_ind:first_chord_ind])
+        else:
+            shift = -sum(whole_interval[first_chord_ind:first_melody_ind])
+        return [result_melody, result_chord, shift]
+
+
+def chord_analysis(x,
+                   melody_tol=perfect_fifth,
+                   chord_tol=octave,
+                   mode='chord names'):
+    chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
+    chord_ls = []
+    current_chord = []
+    whole_notes = chord_notes.notes
+    N = len(whole_notes) - 1
+    for i in range(N):
+        current_note = whole_notes[i]
+        next_note = whole_notes[i + 1]
+        if current_note.degree <= next_note.degree:
+            current_chord.append(current_note)
+        else:
+            current_chord.append(current_note)
+            if len(current_chord) > 1:
+                chord_ls.append(chord(current_chord))
+            current_chord = []
+    if mode == 'chords':
+        return chord_ls
+    elif mode == 'chord names':
+        return [detect(x) for x in chord_ls]
 
 
 def find_continuous(x, value, start=None, stop=None):
@@ -893,8 +966,10 @@ def find_similarity(a,
                     ignore_sort_from=False,
                     change_from_first=False,
                     ignore_add_from=False,
-                    same_note_special=True):
+                    same_note_special=True,
+                    get_types=False):
     result = ''
+    types = None
     if b is None:
         wholeTypes = chordTypes.keynames()
         selfname = a.names()
@@ -990,9 +1065,11 @@ def find_similarity(a,
                 chordfrom_type = first[1]
                 if samenotes(a, chordfrom):
                     result = f'{rootnote.name}{chordfrom_type}'
+                    types = 'original'
                 else:
                     if samenote_set(a, chordfrom):
                         result = inversion_from(a, chordfrom, mode=1)
+                        types = 'inversion'
                         if result is None:
                             sort_message = sort_from(a,
                                                      chordfrom,
@@ -1005,6 +1082,8 @@ def find_similarity(a,
                             result = f'{rootnote.name}{chordfrom_type} {result}'
                     else:
                         return 'not good'
+                if get_types:
+                    result = [result, types]
                 if result_ratio:
                     return (highest, result) if not getgoodchord else (
                         (highest,
@@ -1014,17 +1093,22 @@ def find_similarity(a,
             else:
                 if contains(a, chordfrom):
                     result = omitfrom(a, chordfrom)
+                    types = 'omit'
                 elif len(a) == len(chordfrom):
                     result = changefrom(a, chordfrom)
+                    types = 'change'
                 elif (not ignore_add_from) and contains(chordfrom, a):
                     result = addfrom(a, chordfrom)
+                    types = 'add'
                 if result == '':
                     if samenote_set(a, chordfrom):
                         result = inversion_from(a, chordfrom, mode=1)
+                        types = 'inversion'
                         if result is None:
                             sort_message = sort_from(a,
                                                      chordfrom,
                                                      getorder=True)
+                            types = 'inversion'
                             if sort_message is None:
                                 return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
                             else:
@@ -1035,6 +1119,8 @@ def find_similarity(a,
                 if fromchord_name:
                     from_chord_names = f'{rootnote.name}{first[1]}'
                     result = f'{from_chord_names} {result}'
+                if get_types:
+                    result = [result, types]
                 if result_ratio:
                     return (highest,
                             result) if not getgoodchord else ((highest,
@@ -1168,10 +1254,10 @@ def detect(a,
            inv_num=False,
            rootpitch=5,
            ignore_sort_from=False,
-           change_from_first=False,
-           original_first=False,
-           ignore_add_from=False,
-           same_note_special=True,
+           change_from_first=True,
+           original_first=True,
+           ignore_add_from=True,
+           same_note_special=False,
            whole_detect=True,
            return_fromchord=False,
            two_show_interval=True):
@@ -1202,15 +1288,17 @@ def detect(a,
                                           change_from_first=change_from_first,
                                           ignore_add_from=ignore_add_from,
                                           same_note_special=same_note_special,
-                                          getgoodchord=return_fromchord)
+                                          getgoodchord=return_fromchord,
+                                          get_types=True)
         if original_detect != 'not good':
             if return_fromchord:
                 original_ratio, original_msg = original_detect[0]
             else:
                 original_ratio, original_msg = original_detect
+            types = original_msg[1]
+            original_msg = original_msg[0]
             if original_first:
-                if original_ratio > 0.86 and all(x not in original_msg
-                                                 for x in ['#', 'b']):
+                if original_ratio > 0.86 and types != 'change':
                     return original_msg if not return_fromchord else (
                         original_msg, original_detect[1], original_detect[2])
             if original_ratio == 1:
