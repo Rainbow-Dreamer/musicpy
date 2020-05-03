@@ -611,7 +611,8 @@ def chord_analysis(x,
     if mode == 'chords':
         return chord_ls
     elif mode == 'chord names':
-        return [detect(x) for x in chord_ls]
+        result = [detect(x) for x in chord_ls]
+        return [i if type(i) != list else i[0] for i in result]
 
 
 def find_continuous(x, value, start=None, stop=None):
