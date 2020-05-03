@@ -448,7 +448,10 @@ def detect_scale(x, melody_tol=perfect_fifth, chord_tol=octave):
         return f'{result_scale.start.name} {result_scale.mode}'
 
 
-def split_melody(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
+def split_melody(x,
+                 mode='index',
+                 melody_tol=minor_seventh,
+                 chord_tol=major_sixth):
     # if mode == 'notes', return a list of main melody notes
     # if mode == 'index', return a list of indexes of main melody notes
     # if mode == 'hold', return a chord with main melody notes with original places
@@ -485,40 +488,29 @@ def split_melody(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
         start = 0
         if whole_notes[1].degree - whole_notes[0].degree >= chord_tol:
             start = 1
-        split_note_ind = None
         i = start + 1
         melody = [whole_notes[start]]
+        notes_num = 1
+        melody_duration = [melody[0].duration]
         while i < N:
             current_note = whole_notes[i]
-            next_note = whole_notes[i + 1]
-            has_melody = 1 if melody else 0
-            if has_melody:
-                newest_notes = melody[-1].degree
-                if current_note.degree - newest_notes > chord_tol:
-                    del melody[-1]
-                    has_melody = 1 if melody else 0
-                    if has_melody:
-                        newest_notes = melody[-1].degree
-            if current_note.degree - next_note.degree > melody_tol:
-                if has_melody:
-                    if newest_notes - current_note.degree >= chord_tol:
-                        i += 1
-                        continue
-                melody.append(current_note)
-                split_note_ind = i + 1
-                i += 2
+            recent_notes = add_to_index(melody_duration, 8, notes_num - 1, -1,
+                                        -1)
+            current_average_degree = sum(
+                [melody[j].degree for j in recent_notes]) / len(recent_notes)
+            if current_average_degree - current_note.degree <= melody_tol:
+                if melody[-1].degree - current_note.degree < chord_tol:
+                    melody.append(current_note)
+                    notes_num += 1
+                    melody_duration.append(current_note.duration)
             else:
-                if has_melody:
-                    if newest_notes - current_note.degree < chord_tol:
-                        melody.append(current_note)
-                        i += 1
-                        continue
-                if split_note_ind != None:
-                    if current_note.degree <= whole_notes[
-                            split_note_ind].degree:
-                        i += 1
-                        continue
-                i += 1
+                if melody[
+                        -1].degree - current_note.degree < chord_tol and whole_notes[
+                            i + 1].degree - current_note.degree < chord_tol:
+                    melody.append(current_note)
+                    notes_num += 1
+                    melody_duration.append(current_note.duration)
+            i += 1
 
         return melody
 
@@ -662,14 +654,14 @@ def find_all_continuous(x, value, start=None, stop=None):
     return result
 
 
-def add_to_index(x, value, start=None, stop=None):
+def add_to_index(x, value, start=None, stop=None, step=1):
     if start is None:
         start = 0
     if stop is None:
         stop = len(x)
     inds = []
     counter = 0
-    for i in range(start, stop):
+    for i in range(start, stop, step):
         counter += x[i]
         if counter >= value:
             break
