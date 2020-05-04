@@ -394,7 +394,7 @@ MODIFY = 'modify'
 NEW = 'new'
 
 
-def detect_scale(x, melody_tol=perfect_fifth, chord_tol=octave):
+def detect_scale(x, melody_tol=minor_seventh, chord_tol=major_sixth):
     # receive a piece of music and analyze what modes it is using,
     # return a list of most likely and exact modes the music has.
 
@@ -408,7 +408,7 @@ def detect_scale(x, melody_tol=perfect_fifth, chord_tol=octave):
         note_names[i] - note_names[i - 1] for i in range(1, len(note_names))
     ]
     result_scale_types = detectScale[tuple(note_intervals)]
-    if result_scale_types != 'not found':
+    if result_scale_types not in ['not found', '12']:
         result_scale_types = result_scale_types[0]
         center_note = standard_reverse[note_names[0]]
         result_scale = scale(center_note, result_scale_types)
@@ -419,33 +419,49 @@ def detect_scale(x, melody_tol=perfect_fifth, chord_tol=octave):
                 result_scale.mode = 'major'
                 result_scale_types = 'major'
         if result_scale_types == 'major':
-            FIFTH = result_scale[5].name
-            SIXTH = result_scale[6].name
             melody_notes = split_melody(x, 'notes', melody_tol, chord_tol)
             melody_notes = [i.name for i in melody_notes]
-            fifth_num = melody_notes.count(FIFTH)
-            sixth_num = melody_notes.count(SIXTH)
-            if sixth_num > fifth_num:
-                result_scale = result_scale.inversion(6)
-                result_scale.mode = 'minor'
+            scale_notes = result_scale.names()
+            scale_notes_counts = [melody_notes.count(k) for k in scale_notes]
+            n1, n2, n3, n4, n5, n6, n7 = scale_notes_counts
+            # each mode's (except major and minor modes) tonic checking parameter is the sum of
+            # melody notes's counts of 3 notes: the mode's first note (tonic note),
+            # the third note (b3 or 3 or other special cases),
+            # the most important characteristic note of the mode.
+            # if the the mode to check is either major or minor modes,
+            # then these 3 notes are the tonic triad of the mode,
+            # for major scale it is 1, 3, 5, for minor scale it is 6, 1, 3 (in terms of major scale 1234567)
+            mode_check_parameters = [['major', n1 + n3 + n5, 1],
+                                     ['minor', n6 + n1 + n3, 6],
+                                     ['dorian', n2 + n4 + n7, 2]]
+            mode_check_parameters.sort(key=lambda j: j[1], reverse=True)
+            most_probably = mode_check_parameters[0]
+            most_probably_mode = most_probably[0]
+            result_scale = result_scale.inversion(most_probably[2])
+            result_scale.mode = most_probably_mode
             return f'{result_scale.start.name} {result_scale.mode}'
     else:
-        appear_note_names = set(whole_notes)
-        most_note = max(appear_note_names, key=lambda y: whole_notes.count(y))
-        # take the most appeared notes as the center notes of the scale,
-        # first assume it is major scale, and then check if it is by
-        # counting the number of occurrences of 135 and 613.
-        result_scale = scale(most_note, 'major')
-        FIFTH = result_scale[5].name
-        SIXTH = result_scale[6].name
-        melody_notes = split_melody(x, 'notes', melody_tol, chord_tol)
+        melody_notes, chord_notes = split_all(x, 'notes', melody_tol,
+                                              chord_tol)
         melody_notes = [i.name for i in melody_notes]
-        fifth_num = melody_notes.count(FIFTH)
-        sixth_num = melody_notes.count(SIXTH)
-        if sixth_num > fifth_num:
-            result_scale = result_scale.inversion(6)
-            result_scale.mode = 'minor'
-        return f'{result_scale.start.name} {result_scale.mode}'
+        appear_note_names = set(whole_notes)
+        notes_count = {y: whole_notes.count(y) for y in appear_note_names}
+        counts = list(notes_count.keys())
+        counts.sort(key=lambda j: notes_count[j], reverse=True)
+        try_scales = [scale(g, h) for g in counts[:3] for h in modern_modes]
+        count_ls = [[
+            each[1], each.mode,
+            sum([melody_notes.count(k) for k in each.names()])
+        ] for each in try_scales]
+        count_ls.sort(key=lambda y: y[2], reverse=True)
+        t = 0
+        while t < len(count_ls):
+            each = count_ls[t]
+            if chord_notes[0].name != each[0].name:
+                del count_ls[t]
+                continue
+            t += 1
+        return f'most likely scales: {", ".join([f"{each[0].name} {each[1]}" for each in count_ls[:3]])}'
 
 
 def split_melody(x,
@@ -515,7 +531,10 @@ def split_melody(x,
         return melody
 
 
-def split_chord(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
+def split_chord(x,
+                mode='index',
+                melody_tol=minor_seventh,
+                chord_tol=major_sixth):
     melody_ind = split_melody(x, 'index', melody_tol, chord_tol)
     N = len(x)
     chord_ind = [i for i in range(N) if i not in melody_ind]
@@ -537,7 +556,10 @@ def split_chord(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
                      interval=new_interval)
 
 
-def split_all(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
+def split_all(x,
+              mode='index',
+              melody_tol=minor_seventh,
+              chord_tol=major_sixth):
     # split the main melody and chords part of a piece of music,
     # return both of main melody and chord part
     melody_ind = split_melody(x, 'index', melody_tol, chord_tol)
@@ -582,8 +604,8 @@ def split_all(x, mode='index', melody_tol=perfect_fifth, chord_tol=octave):
 
 
 def chord_analysis(x,
-                   melody_tol=perfect_fifth,
-                   chord_tol=octave,
+                   melody_tol=minor_seventh,
+                   chord_tol=major_sixth,
                    mode='chord names'):
     chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
     chord_ls = []
@@ -649,8 +671,11 @@ def find_all_continuous(x, value, start=None, stop=None):
             appear = False
     if inds:
         result.append(inds)
-    if result[-1][-1] >= len(x):
-        del result[-1][-1]
+    try:
+        if result[-1][-1] >= len(x):
+            del result[-1][-1]
+    except:
+        pass
     return result
 
 
