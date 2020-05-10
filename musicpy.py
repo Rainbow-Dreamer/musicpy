@@ -1444,7 +1444,9 @@ def detect(a,
                 current_invert = a.inversion_highest(possibles[0][1])
             invfrom_current_invert = inversion_way(a, current_invert, inv_num)
             highest_msg = best[0][1]
-            if 'sort' in highest_msg and 'sort' in invfrom_current_invert:
+            if any(x in highest_msg
+                   for x in ['sort', '/']) and any(y in invfrom_current_invert
+                                                   for y in ['sort', '/']):
                 invfrom_current_invert = inversion_way(a, best[1], inv_num)
                 final_result = f'{best[2]} {invfrom_current_invert}'
             else:
