@@ -1,6 +1,6 @@
 from midiutil import MIDIFile
 from copy import deepcopy as copy
-import os, math, random
+import os, sys, math, random
 from mido.midifiles.midifiles import MidiFile as midi
 from mido import Message
 import mido.midifiles.units as unit
@@ -197,7 +197,14 @@ def play(chord1,
                  time1=0,
                  track_num=1,
                  mode=modes)
-    os.startfile(f'{name}.mid')
+    result_file = f'{name}.mid'
+    if sys.platform.startswith('win'):
+        os.startfile(result_file)
+    elif sys.platform.startswith('linux'):
+        import subprocess        
+        subprocess.Popen(result_file)
+    elif sys.platform == 'darwin':
+        os.system(result_file)
 
 
 def read(name, trackind=1, track=1, mode='find'):
