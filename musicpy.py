@@ -1,6 +1,6 @@
 from midiutil import MIDIFile
 from copy import deepcopy as copy
-import os, sys, math, random
+import os, sys, math, random, mido
 from mido.midifiles.midifiles import MidiFile as midi
 from mido import Message
 import mido.midifiles.units as unit
@@ -188,7 +188,8 @@ def play(chord1,
          time1=0,
          track_num=1,
          name='temp',
-         modes='new2'):
+         modes='new2',
+         instrument=None):
     file = write(name,
                  chord1,
                  tempo,
@@ -196,7 +197,8 @@ def play(chord1,
                  channel=0,
                  time1=0,
                  track_num=1,
-                 mode=modes)
+                 mode=modes,
+                 instrument=instrument)
     result_file = f'{name}.mid'
     if sys.platform.startswith('win'):
         os.startfile(result_file)
@@ -303,7 +305,8 @@ def write(name_of_midi,
           channel=0,
           time1=0,
           track_num=1,
-          mode='new2'):
+          mode='new2',
+          instrument=None):
     if isinstance(chord1, note):
         chord1 = chord([chord1])
     if not isinstance(chord1, list):
@@ -327,7 +330,8 @@ def write(name_of_midi,
               channel,
               time1,
               track_num,
-              mode='m+')
+              mode='m+',
+              instrument=instrument)
 
     if mode == 'new':
         # write to a new midi file or overwrite an existing midi file
@@ -350,13 +354,17 @@ def write(name_of_midi,
             #else:
             #time1 += chordall.interval[i]+duration[i]
             #MyMIDI.addNote(track, channel, degrees[i], time1, duration[i], 0)
-
         with open(f'{name_of_midi}.mid', "wb") as output_file:
             MyMIDI.writeFile(output_file)
     elif mode in ['m+', 'm']:
         # modify existing midi files, m+: add at the end of the midi file,
         # m: add from the beginning of the midi file
         x = midi(f'{name_of_midi}.mid')
+        if instrument:
+            if instrument in instruments:
+                instrument_num = instruments[instrument] - 1
+                instrument_msg = mido.Message('program_change', program=instrument_num)
+                x.tracks[1].insert(0, instrument_msg)        
         tracklist = [x[1] for x in list(enumerate(x.tracks))][1:]
         track_modify = tracklist[track]
         interval_unit = x.ticks_per_beat
@@ -386,7 +394,7 @@ def write(name_of_midi,
                                 velocity=chordall[sorthas[n][1] + 1].volume,
                                 time=sorthas[n][0] - sorthas[n - 1][0]))
         elif mode == 'm':
-            write('tempmerge', chord1, tempo, track, channel, time1, track_num)
+            write('tempmerge', chord1, tempo, track, channel, time1, track_num, instrument=instrument)
             tempmid = midi('tempmerge.mid')
             newtrack = [y[1]
                         for y in list(enumerate(tempmid.tracks))][1:][track]
