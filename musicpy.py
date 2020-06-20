@@ -361,7 +361,11 @@ def write(name_of_midi,
         # m: add from the beginning of the midi file
         x = midi(f'{name_of_midi}.mid')
         if instrument:
-            if instrument in instruments:
+            if type(instrument) == int:
+                instrument_num = instrument - 1
+                instrument_msg = mido.Message('program_change', program=instrument_num)
+                x.tracks[1].insert(0, instrument_msg)                    
+            elif instrument in instruments:
                 instrument_num = instruments[instrument] - 1
                 instrument_msg = mido.Message('program_change', program=instrument_num)
                 x.tracks[1].insert(0, instrument_msg)        
