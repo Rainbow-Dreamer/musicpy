@@ -102,9 +102,11 @@ class chord:
 
     def addnote(self, newnote):
         if isinstance(newnote, note):
-            self.notes += newnote
+            self.notes.append(newnote)
+            self.interval.append(self.interval[-1])
         else:
-            self.notes += toNote(newnote)
+            self.notes.append(toNote(newnote))
+            self.interval.append(self.interval[-1])
 
     def split(self):
         return self.notes

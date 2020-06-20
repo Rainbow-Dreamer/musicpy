@@ -147,8 +147,7 @@ def getchord(start,
                 except:
                     return 'add(n) chord: n should be an integer'
             else:
-                print('could not detect the chord types')
-                return
+                return 'could not detect the chord types'
     for i in range(len(interval)):
         chordlist.append(degree_to_note(initial + interval[i]))
     if addition is not None:
