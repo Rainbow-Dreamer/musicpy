@@ -283,7 +283,8 @@ class Root(Tk):
             if self.is_print:
                 for each in lines:
                     try:
-                        print(eval(each))
+                        if 'play(' not in each:
+                            print(eval(each))
                     except:
                         pass
         except:
@@ -301,7 +302,8 @@ class Root(Tk):
             if self.is_print:
                 for each in lines:
                     try:
-                        print(eval(each))
+                        if 'play(' not in each:
+                            print(eval(each))
                     except:
                         pass
         except:
