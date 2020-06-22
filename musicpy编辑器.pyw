@@ -4,7 +4,7 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog
-function_names = dir(__import__('musicpy')) + ['direct_play', 'print', 'load']
+function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
 from musicpy import *
 from io import BytesIO
 import pygame
@@ -15,10 +15,6 @@ def print(obj):
     root.outputs.insert(END, '\n')
 
 
-def load(midi_obj):
-    result = BytesIO()
-    midi_obj.save(file=result)
-    return result
 
 def direct_play(filename):
     if type(filename) == str:
@@ -26,9 +22,11 @@ def direct_play(filename):
         pygame.mixer.music.play()     
     else:
         try:
-            filename.seek(0)
-            pygame.mixer.music.load(filename)
-            filename.close()
+            result = BytesIO()
+            filename.save(file=result)            
+            result.seek(0)
+            pygame.mixer.music.load(result)
+            result.close()
             pygame.mixer.music.play()    
         except:
             pass

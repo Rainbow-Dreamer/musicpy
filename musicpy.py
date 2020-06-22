@@ -235,12 +235,18 @@ def read(name, trackind=1, mode='find', is_file=False):
             if any(each_msg.type == 'note_on' for each_msg in each):
                 t = each
                 break
-
-    elif not mode:
+    elif mode == 'all':
+        available_tracks = [each for each in whole_tracks if any(each_msg.type == 'note_on' for each_msg in each)]
+        return [midi_to_chord(x, j) for j in available_tracks]
+    else:
         try:
             t = whole_tracks[trackind]
         except:
             return 'error'
+    return midi_to_chord(x, t)
+    
+
+def midi_to_chord(x, t):
     interval_unit = x.ticks_per_beat
     hason = []
     hasoff = []
@@ -300,7 +306,7 @@ def read(name, trackind=1, mode='find', is_file=False):
         for tr2 in tr1:
             if 'tempo' in tr2.__dict__:
                 tempo = tr2.tempo
-                return unit.tempo2bpm(tempo), result
+                return unit.tempo2bpm(tempo), result    
 
 
 def write(name_of_midi,
