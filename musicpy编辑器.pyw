@@ -4,8 +4,9 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog
-function_names = dir(__import__('musicpy'))
+function_names = dir(__import__('musicpy')) + ['direct_play', 'print', 'load']
 from musicpy import *
+from io import BytesIO
 import pygame
 pygame.mixer.init(44100,-16,1,1024)
 
@@ -14,27 +15,47 @@ def print(obj):
     root.outputs.insert(END, '\n')
 
 
+def load(midi_obj):
+    result = BytesIO()
+    midi_obj.save(file=result)
+    return result
+
+def direct_play(filename):
+    if type(filename) == str:
+        pygame.mixer.music.load(filename)
+        pygame.mixer.music.play()     
+    else:
+        try:
+            filename.seek(0)
+            pygame.mixer.music.load(filename)
+            filename.close()
+            pygame.mixer.music.play()    
+        except:
+            pass
+
+
 def play(chord1,
          tempo=80,
          track=0,
          channel=0,
          time1=0,
          track_num=1,
-         name='temp',
+         name='temp.mid',
          modes='new2',
          instrument=None,
-         outside_play=False):
-    write(name,
-          chord1,
-          tempo,
-          track=0,
-          channel=0,
-          time1=0,
-          track_num=1,
-          mode=modes,
-          instrument=instrument)
-    if outside_play:
-        result_file = f'{name}.mid'
+         save_as_file=False):
+    file = write(name,
+                 chord1,
+                 tempo,
+                 track=0,
+                 channel=0,
+                 time1=0,
+                 track_num=1,
+                 mode=modes,
+                 instrument=instrument,
+                 save_as_file=save_as_file)
+    if save_as_file:
+        result_file = name
         if sys.platform.startswith('win'):
             os.startfile(result_file)
         elif sys.platform.startswith('linux'):
@@ -43,8 +64,10 @@ def play(chord1,
         elif sys.platform == 'darwin':
             os.system(result_file)
     else:
-        pygame.mixer.music.load(f'{name}.mid')
-        pygame.mixer.music.play()    
+        file.seek(0)
+        pygame.mixer.music.load(file)
+        file.close()
+        pygame.mixer.music.play()
 
     
 
@@ -321,13 +344,11 @@ class Root(Tk):
     def check_realtime(self):
         value = self.realtime.get()
         if value:
-            if not self.is_realtime:
-                self.is_realtime = 1
-                self.realtime_run()
+            self.is_realtime = 1
+            self.realtime_run()
         else:
-            if self.is_realtime:
-                self.is_realtime = 0
-                self.quit = True
+            self.is_realtime = 0
+            self.quit = True
 
     def check_print(self):
         self.is_print = self.no_print.get()
