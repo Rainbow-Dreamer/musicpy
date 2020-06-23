@@ -41,7 +41,7 @@ def play(chord1,
          name='temp.mid',
          modes='new2',
          instrument=None,
-         save_as_file=False):
+         save_as_file=True):
     file = write(name,
                  chord1,
                  tempo,
@@ -54,13 +54,15 @@ def play(chord1,
                  save_as_file=save_as_file)
     if save_as_file:
         result_file = name
-        if sys.platform.startswith('win'):
-            os.startfile(result_file)
-        elif sys.platform.startswith('linux'):
-            import subprocess
-            subprocess.Popen(result_file)
-        elif sys.platform == 'darwin':
-            os.system(result_file)
+        pygame.mixer.music.load(result_file)
+        pygame.mixer.music.play()        
+        #if sys.platform.startswith('win'):
+            #os.startfile(result_file)
+        #elif sys.platform.startswith('linux'):
+            #import subprocess
+            #subprocess.Popen(result_file)
+        #elif sys.platform == 'darwin':
+            #os.system(result_file)
     else:
         file.seek(0)
         pygame.mixer.music.load(file)
