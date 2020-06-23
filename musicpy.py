@@ -1,6 +1,10 @@
 from midiutil import MIDIFile
 from copy import deepcopy as copy
-import os, sys, math, random, mido
+import os
+import sys
+import math
+import random
+import mido
 from mido.midifiles.midifiles import MidiFile as midi
 from mido import Message
 import mido.midifiles.units as unit
@@ -161,11 +165,11 @@ def getchord(start,
 
 
 chd = getchord
-#a = chord(['C5','#D5','G5'],20)
+# a = chord(['C5','#D5','G5'],20)
 #a = getchord('D5','mM7',4,0)
 #b = getchord('A4','mM7',4,0)
 #c = getchord('B4','min7',4,0)
-#d = getchord('F#4','min7',4,0)
+# d = getchord('F#4','min7',4,0)
 #e = getchord('G4','min7',4,0)
 #f = getchord('D4','min7',4,0)
 #g = getchord('G4','min7',4,0)
@@ -244,7 +248,7 @@ def read(name, trackind=1, mode='find', is_file=False):
         except:
             return 'error'
     return midi_to_chord(x, t)
-    
+
 
 def midi_to_chord(x, t):
     interval_unit = x.ticks_per_beat
@@ -290,7 +294,7 @@ def midi_to_chord(x, t):
                 duration1 = realtime / interval_unit
                 if duration1.is_integer():
                     duration1 = int(duration1)
-                #if not find_interval:
+                # if not find_interval:
                 #intervals.append(sum([t[x].time for x in range(i,notes_len-1)])/interval_unit)
                 notelist.append(
                     degree_to_note(t[i].note,
@@ -306,7 +310,7 @@ def midi_to_chord(x, t):
         for tr2 in tr1:
             if 'tempo' in tr2.__dict__:
                 tempo = tr2.tempo
-                return unit.tempo2bpm(tempo), result    
+                return unit.tempo2bpm(tempo), result
 
 
 def write(name_of_midi,
@@ -341,16 +345,16 @@ def write(name_of_midi,
         else:
             current_io = newmidi
         return write(name_of_midi,
-              chord1,
-              tempo,
-              track,
-              channel,
-              time1,
-              track_num,
-              mode='m+',
-              instrument=instrument,
-              save_as_file=save_as_file,
-              midi_io=current_io)
+                     chord1,
+                     tempo,
+                     track,
+                     channel,
+                     time1,
+                     track_num,
+                     mode='m+',
+                     instrument=instrument,
+                     save_as_file=save_as_file,
+                     midi_io=current_io)
 
     if mode == 'new':
         # write to a new midi file or overwrite an existing midi file
@@ -359,18 +363,18 @@ def write(name_of_midi,
         degrees = [x.degree for x in chordall.notes]
         duration = [x.duration for x in chordall.notes]
         for i in range(len(degrees)):
-            #if i != len(degrees) - 1:
+            # if i != len(degrees) - 1:
             MyMIDI.addNote(track, channel, degrees[i], time1, duration[i],
                            chordall[i + 1].volume)
             time1 += chordall.interval[i]
-            #if i == len(degrees) - 1:
+            # if i == len(degrees) - 1:
             #last = chordall.interval[-1]
             #MyMIDI.addNote(track, channel, degrees[i], time1+duration[i]-last, last, 0)
-            #else:
+            # else:
             #MyMIDI.addNote(track, channel, degrees[i], time1, duration[i], chordall[i].volume)
-            #if chordall.interval[i] < duration[i]:
+            # if chordall.interval[i] < duration[i]:
             #time1 += duration[i]
-            #else:
+            # else:
             #time1 += chordall.interval[i]+duration[i]
             #MyMIDI.addNote(track, channel, degrees[i], time1, duration[i], 0)
         if save_as_file:
@@ -392,11 +396,11 @@ def write(name_of_midi,
             if type(instrument) == int:
                 instrument_num = instrument - 1
                 instrument_msg = mido.Message('program_change', program=instrument_num)
-                x.tracks[1].insert(0, instrument_msg)                    
+                x.tracks[1].insert(0, instrument_msg)
             elif instrument in instruments:
                 instrument_num = instruments[instrument] - 1
                 instrument_msg = mido.Message('program_change', program=instrument_num)
-                x.tracks[1].insert(0, instrument_msg)        
+                x.tracks[1].insert(0, instrument_msg)
         tracklist = x.tracks[1:]
         track_modify = tracklist[track]
         interval_unit = x.ticks_per_beat
@@ -426,8 +430,8 @@ def write(name_of_midi,
                                 velocity=chordall[sorthas[n][1] + 1].volume,
                                 time=sorthas[n][0] - sorthas[n - 1][0]))
         elif mode == 'm':
-            file = write('tempmerge', chord1, tempo, track, channel, time1, track_num, instrument=instrument,save_as_file=save_as_file,
-              midi_io=current_io)
+            file = write('tempmerge', chord1, tempo, track, channel, time1, track_num, instrument=instrument, save_as_file=save_as_file,
+                         midi_io=current_io)
             if save_as_file:
                 tempmid = midi('tempmerge.mid')
             else:
@@ -891,8 +895,8 @@ def tochordsfile(path,
 # perfect_octave).on('G3',interval=0,duration=2).period(12))
 # play(((AM7[:-1] + AM7.reverse()).period(0.5) + (AM7[:-1] + AM7.reverse()).up().period(0.5))*3)
 
-#Touhou main melody
-#play((getchord_by_interval('D#5',[5,7,10,7,5],2,0.5)*3+getchord_by_interval('F5',[1,0,-4],2,0.5))*3,150)
+# Touhou main melody
+# play((getchord_by_interval('D#5',[5,7,10,7,5],2,0.5)*3+getchord_by_interval('F5',[1,0,-4],2,0.5))*3,150)
 
 # some chord progressions
 # 2-3-4 progression (in terms of G major scale)
@@ -1056,7 +1060,7 @@ def find_similarity(a,
         if same_note_special:
             ratios = [(1 if samenote_set(a, x[0]) else SequenceMatcher(
                 None, selfname, x[0].names()).ratio(), x[1])
-                      for x in possible_chords]
+                for x in possible_chords]
         else:
             ratios = [(SequenceMatcher(None, selfname,
                                        x[0].names()).ratio(), x[1])
@@ -1446,10 +1450,10 @@ def detect(a,
                             inversion_high_result, current,
                             f'{current[1].name}{result1[0]}')
         # try to find if the chord is from a chord which omits some notes
-        #if original_ratio > 0.6:
+        # if original_ratio > 0.6:
         #original_msg = find_similarity(a, chordfrom, provide_name = chordtype)
-        #if original_msg != 'not good':
-        #return original_msg
+        # if original_msg != 'not good':
+        # return original_msg
         inversion_final = True
         possibles = [(find_similarity(a.inversion(j),
                                       result_ratio=True,
@@ -1522,7 +1526,7 @@ def detect(a,
                                                               current_invert,
                                                               highest_msg)
 
-        #return 'cannot detect the chord types'
+        # return 'cannot detect the chord types'
         if not whole_detect:
             return
         else:
@@ -1626,8 +1630,8 @@ def random_composing(
             patterncount += 1
             if patterncount == len(pattern):
                 patterncount = 0
-        newduration = 1  #random.choice([1,2])
-        newinterval = 1  #random.choice([0.5,1])#random.choice([0,0.5,1])
+        newduration = 1  # random.choice([1,2])
+        newinterval = 1  # random.choice([0.5,1])#random.choice([0,0.5,1])
         newchord = newchordnotes.set(newduration, newinterval)
         '''
         # check if current chord belongs to a kind of (closer to) major/minor
@@ -1680,7 +1684,7 @@ def random_composing(
             newmelody = [firstmelody]
             length_of_chord = sum(newchord.interval)
             intervals = [random.choice([0.5, 1])]
-            firstmelody.duration = intervals[0]  #random.choice([0.5,1])
+            firstmelody.duration = intervals[0]  # random.choice([0.5,1])
             while sum(intervals) <= length_of_chord:
                 if focused:
                     now_focus = random.choices(
@@ -1701,9 +1705,9 @@ def random_composing(
                     else:
                         currentmelody = random.choice(chordinner)
                 currentmelody.volume = right_hand_velocity
-                newinter = 0.5  #random.choice([0.5,1])
+                newinter = 0.5  # random.choice([0.5,1])
                 intervals.append(newinter)
-                currentmelody.duration = newinter  #random.choice([0.5,1])
+                currentmelody.duration = newinter  # random.choice([0.5,1])
                 newmelody.append(currentmelody)
 
             distance = [
@@ -1719,10 +1723,10 @@ def random_composing(
             newmelodyall.interval.pop()
         newcombination = newchord.add(newmelodyall, mode='head')
         #choosemode = random.choice(['tail','head'])
-        #if choosemode == 'head':
+        # if choosemode == 'head':
         #startime = random.choice([0,0.5,1])
         #newcombination = newchord.add(newmelodyall, mode = choosemode)
-        #else:
+        # else:
         #newcombination = newchord.add(newmelodyall)
         result = result.add(newcombination)
         count += len(newcombination)

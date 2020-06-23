@@ -68,6 +68,7 @@ def degree_to_note(degree, duration=1, volume=100):
 
 class chord:
     ''' This class can contain a chord with many notes played simultaneously and either has intervals, the default interval is 0.'''
+
     def __init__(self, notes, duration=None, interval=None, rootpitch=5):
         try:
             notes = [x if isinstance(x, note) else toNote(x) for x in notes]

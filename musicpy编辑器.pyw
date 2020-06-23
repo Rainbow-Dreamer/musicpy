@@ -8,26 +8,26 @@ function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
 from musicpy import *
 from io import BytesIO
 import pygame
-pygame.mixer.init(44100,-16,1,1024)
+pygame.mixer.init(44100, -16, 1, 1024)
+
 
 def print(obj):
     root.outputs.insert(END, obj)
     root.outputs.insert(END, '\n')
 
 
-
 def direct_play(filename):
     if type(filename) == str:
         pygame.mixer.music.load(filename)
-        pygame.mixer.music.play()     
+        pygame.mixer.music.play()
     else:
         try:
             result = BytesIO()
-            filename.save(file=result)            
+            filename.save(file=result)
             result.seek(0)
             pygame.mixer.music.load(result)
             result.close()
-            pygame.mixer.music.play()    
+            pygame.mixer.music.play()
         except:
             pass
 
@@ -67,25 +67,23 @@ def play(chord1,
         file.close()
         pygame.mixer.music.play()
 
-    
-
 
 class Root(Tk):
     def __init__(self):
         super(Root, self).__init__()
         self.minsize(1200, 600)
         self.title('musicpy编辑器')
-        #try:
+        # try:
             #self.bg = Image.open(background_image)
             #ratio = 600 / self.bg.height
-            #self.bg = self.bg.resize(
+            # self.bg = self.bg.resize(
                 #(int(self.bg.width * ratio), int(self.bg.height * ratio)),
-                #Image.ANTIALIAS)
+                # Image.ANTIALIAS)
             #self.bg = ImageTk.PhotoImage(self.bg)
             #self.bg_label = ttk.Label(self, image=self.bg)
             #self.bg_label.place(x=700, y=0)
-        #except:
-            #pass
+        # except:
+            # pass
         self.inputs_text = ttk.Label(self, text='清在这里输入musicpy音乐代码语句')
         self.inputs = Text(self,
                            wrap='none',
@@ -157,17 +155,16 @@ class Root(Tk):
         self.bind('<Return>', lambda e: self.get_current_select(e))
         self.auto_complete_run()
         self.realtime_run()
-    
+
     def save(self):
         filename = filedialog.asksaveasfilename(initialdir='.',
-                                              title="保存输入文本",
-                                              filetype=(("所有文件", "*.*"),),
-                                              defaultextension=".txt")
+                                                title="保存输入文本",
+                                                filetype=(("所有文件", "*.*"),),
+                                                defaultextension=".txt")
         if filename:
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(self.inputs.get('1.0', END))
-    
-    
+
     def get_current_select(self, e):
         if self.show_select:
             text = self.auto_complete_menu.get(self.select_ind)
@@ -261,7 +258,7 @@ class Root(Tk):
                             pass
                     else:
                         if current_text[start] == '/':
-                            start += 1                        
+                            start += 1
                         current_word = current_text[start:]
                         find_similar = [
                             x for x in function_names if current_word in x
