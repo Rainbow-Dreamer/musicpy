@@ -1761,6 +1761,46 @@ def perm(n, k=None):
         locals())
 
 
+def negative_harmony(key, a=None, get_map_dict=False, sort=False):
+    notes_dict = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'] * 2
+    key_tonic = key[1].name
+    inds = notes_dict.index(key_tonic) + 1
+    right_half = notes_dict[inds:inds+6]
+    left_half = notes_dict[inds+6:inds+12]
+    left_half.reverse()
+    map_dict = {**{left_half[i]: right_half[i] for i in range(6)}, **{right_half[i]: left_half[i] for i in range(6)}}
+    if get_map_dict:
+        return map_dict
+    if a:
+        if type(a) == chord:
+            temp = copy(a)
+            notes = temp.notes
+            for each in range(len(notes)):
+                current = notes[each]
+                notes[each] = note(map_dict[current.name], current.num)
+            if sort:
+                temp.notes.sort(key=lambda s: s.degree)
+            return temp
+        else:
+            return 'requires a chord object'
+    else:
+        temp = copy(key)
+        if temp.notes[-1].degree - temp.notes[0].degree == octave:
+            temp.notes = temp.notes[:-1]
+        notes = temp.notes
+        for each in range(len(notes)):
+            current = notes[each]
+            notes[each] = note(map_dict[current.name], current.num)
+        temp.notes.sort(key=lambda s: s.degree)
+        temp.notes.append(temp.notes[0].up(octave))
+        temp.mode = None
+        temp.interval = None
+        temp.interval = temp.getInterval()
+        temp.mode = detect(temp, mode='scale')
+        return temp
+        
+
+
 # examples:
 # play([chord(x).set(1,1) for x in perm(chd('F','m9').names())], 400)
 # play([(chord(x) + chord(x)[-3:]).set(1,1) for x in perm(chd('F','m9').names())], 300)
