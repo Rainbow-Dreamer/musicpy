@@ -4,8 +4,9 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog
-function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
-from musicpy import *
+import musicpy.musicpy
+function_names = dir(musicpy.musicpy) + ['direct_play', 'print']
+from musicpy.musicpy import *
 from io import BytesIO
 import pygame
 pygame.mixer.init(44100, -16, 1, 1024)
@@ -341,14 +342,19 @@ class Root(Tk):
     def check_realtime(self):
         value = self.realtime.get()
         if value:
-            self.is_realtime = 1
-            self.realtime_run()
+            if not self.is_realtime:
+                self.is_realtime = 1
+                self.update()
+                self.realtime_run()
         else:
-            self.is_realtime = 0
-            self.quit = True
+            if self.is_realtime:
+                self.is_realtime = 0
+                self.quit = True
+                self.update()
 
     def check_print(self):
         self.is_print = self.no_print.get()
+        self.update()
 
 
 root = Root()
