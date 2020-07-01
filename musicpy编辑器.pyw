@@ -4,9 +4,8 @@ from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog
-import musicpy.musicpy
-function_names = dir(musicpy.musicpy) + ['direct_play', 'print']
-from musicpy.musicpy import *
+function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
+from musicpy import *
 from io import BytesIO
 import pygame
 pygame.mixer.init(44100, -16, 1, 1024)
@@ -136,12 +135,19 @@ class Root(Tk):
                                          text='不使用print',
                                          variable=self.no_print,
                                          command=self.check_print)
+        self.auto = IntVar()
+        self.auto.set(1)
+        self.is_auto = 1
+        self.auto_box = ttk.Checkbutton(self,
+                                         text='自动补全',
+                                         variable=self.auto,
+                                         command=self.check_auto)
         self.realtime_box.place(x=750, y=200)
         self.print_box.place(x=750, y=250)
+        self.auto_box.place(x=750, y=300)
         self.save_button = ttk.Button(self, text='保存', command=self.save)
         self.save_button.place(x=750, y=50)
         self.is_print = 1
-        self.auto = False
         self.pre_input = ''
         self.start = 0
         self.changed = False
@@ -217,6 +223,8 @@ class Root(Tk):
             self.realtime_run()
 
     def auto_complete_run(self):
+        if not self.is_auto:
+            return
         current_text = self.inputs.get('1.0', END)[:-1]
         if current_text != self.pre_input:
             self.changed = True
@@ -245,10 +253,10 @@ class Root(Tk):
                             dot_word_ind += 1
                         current_word = current_text[dot_word_ind:dot_ind - 1]
                         dot_content = current_text[dot_ind:]
-                        try:
-                            exec(current_text[:dot_word_ind], globals())
-                        except:
-                            pass
+                        #try:
+                            #exec(current_text[:dot_word_ind], globals())
+                        #except:
+                            #pass
                         try:
                             current_func = dir(eval(current_word))
                             find_similar = [
@@ -334,9 +342,14 @@ class Root(Tk):
         if self.quit:
             self.quit = False
             return
-        if self.changed:
-            self.changed = False
-            self.runs_2()
+        if self.is_auto:
+            if self.changed:
+                self.changed = False
+                self.runs_2()
+        else:
+            if self.inputs.edit_modified():
+                self.pre_input = self.inputs.get('1.0', END)[:-1]     
+                self.runs_2()
         self.after(100, self.realtime_run)
 
     def check_realtime(self):
@@ -344,17 +357,19 @@ class Root(Tk):
         if value:
             if not self.is_realtime:
                 self.is_realtime = 1
-                self.update()
                 self.realtime_run()
         else:
             if self.is_realtime:
                 self.is_realtime = 0
                 self.quit = True
-                self.update()
 
     def check_print(self):
         self.is_print = self.no_print.get()
-        self.update()
+    
+    def check_auto(self):
+        self.is_auto = self.auto.get()
+        if self.is_auto:
+            self.auto_complete_run()
 
 
 root = Root()
