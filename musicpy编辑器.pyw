@@ -9,6 +9,8 @@ from musicpy import *
 from io import BytesIO
 import pygame
 pygame.mixer.init(44100, -16, 1, 1024)
+with open('config.py', encoding='utf-8') as f:
+    exec(f.read())
 
 
 def print(obj):
@@ -75,17 +77,17 @@ class Root(Tk):
         super(Root, self).__init__()
         self.minsize(1200, 600)
         self.title('musicpy编辑器')
-        # try:
-            #self.bg = Image.open(background_image)
-            #ratio = 600 / self.bg.height
-            # self.bg = self.bg.resize(
-                #(int(self.bg.width * ratio), int(self.bg.height * ratio)),
-                # Image.ANTIALIAS)
-            #self.bg = ImageTk.PhotoImage(self.bg)
-            #self.bg_label = ttk.Label(self, image=self.bg)
-            #self.bg_label.place(x=700, y=0)
-        # except:
-            # pass
+        try:
+            self.bg = Image.open(config_dict['background_image'])
+            ratio = 600 / self.bg.height
+            self.bg = self.bg.resize(
+                (int(self.bg.width * ratio), int(self.bg.height * ratio)),
+                Image.ANTIALIAS)
+            self.bg = ImageTk.PhotoImage(self.bg)
+            self.bg_label = ttk.Label(self, image=self.bg)
+            self.bg_label.place(x=700, y=0)
+        except:
+            pass
         self.inputs_text = ttk.Label(self, text='清在这里输入musicpy音乐代码语句')
         self.inputs = Text(self,
                            wrap='none',
@@ -162,9 +164,59 @@ class Root(Tk):
         self.bind('<Left>', self.close_select)
         self.bind('<Right>', self.close_select)
         self.bind('<Return>', lambda e: self.get_current_select(e))
+        self.file_top = ttk.Label(self, text='文件', background='snow')
+        self.file_top.bind('<Enter>', lambda e: self.file_top.configure(background='lightblue'))
+        self.file_top.bind('<Leave>', lambda e: self.file_top.configure(background='snow'))
+        self.file_top.bind('<Button-1>', self.file_top_make_menu)
+        self.file_menu = Menu(self, tearoff=0)
+        self.file_menu.add_command(label='保存', command=self.save)
+        self.file_menu.add_command(label='设置', command=self.config_options)
+        self.file_top.place(x=900, y=0)
         self.auto_complete_run()
         self.realtime_run()
-
+    
+    
+    def file_top_make_menu(self, e):
+        self.file_menu.tk_popup(x=self.winfo_pointerx(), y=self.winfo_pointery())
+    
+    
+    def config_options(self):
+        self.config_window = Toplevel(self)
+        self.config_window.minsize(700, 500)
+        self.get_config_dict = {}
+        counter = 0
+        for each in config_dict:
+            current_label = ttk.Label(self.config_window, text=each)
+            current_entry = ttk.Entry(self.config_window, width=70)
+            current_entry.insert(0, config_dict[each])
+            current_label.place(x=0, y=counter)
+            current_entry.place(x=150, y=counter)
+            counter += 30      
+            self.get_config_dict[each] = current_entry
+        save_button = ttk.Button(self.config_window, text='保存', command=self.save_config)
+        save_button.place(x=600, y=400)
+        self.saved_label = ttk.Label(self.config_window, text='保存成功')
+    
+    def save_config(self):
+        for each in config_dict:
+            config_dict[each] = self.get_config_dict[each].get()
+        with open('config.py', 'w', encoding='utf-8') as f:
+            f.write(f'config_dict = {config_dict}')
+        self.saved_label.place(x=600, y=430)
+        self.after(1000, self.saved_label.place_forget)
+        self.after(1000, self.reload_config)
+        
+    def reload_config(self):
+        try:
+            self.bg = Image.open(config_dict['background_image'])
+            ratio = 600 / self.bg.height
+            self.bg = self.bg.resize(
+                (int(self.bg.width * ratio), int(self.bg.height * ratio)),
+                Image.ANTIALIAS)
+            self.bg = ImageTk.PhotoImage(self.bg)
+            self.bg_label.configure(image=self.bg)
+        except:
+            pass        
     def save(self):
         filename = filedialog.asksaveasfilename(initialdir='.',
                                                 title="保存输入文本",

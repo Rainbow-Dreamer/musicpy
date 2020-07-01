@@ -1,0 +1,1 @@
+config_dict = {'background_image': 'G:/university/MyAI project/py files/math-and-stats-modules/矩阵专业库编辑器/1.png'}
