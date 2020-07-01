@@ -370,6 +370,8 @@ class Root(Tk):
         self.is_auto = self.auto.get()
         if self.is_auto:
             self.auto_complete_run()
+        else:
+            self.close_select(1)
 
 
 root = Root()
