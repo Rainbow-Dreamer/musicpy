@@ -8,6 +8,7 @@ function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
 from musicpy import *
 from io import BytesIO
 import pygame
+from ast import literal_eval
 pygame.mixer.init(44100, -16, 1, 1024)
 with open('config.py', encoding='utf-8') as f:
     exec(f.read())
@@ -85,7 +86,9 @@ class Root(Tk):
                 Image.ANTIALIAS)
             self.bg = ImageTk.PhotoImage(self.bg)
             self.bg_label = ttk.Label(self, image=self.bg)
-            self.bg_label.place(x=700, y=0)
+            bg_places = config_dict['background_places']
+            bg_places = literal_eval(bg_places)
+            self.bg_label.place(x=bg_places[0], y=bg_places[1])
         except:
             pass
         self.inputs_text = ttk.Label(self, text='清在这里输入musicpy音乐代码语句')
@@ -94,8 +97,8 @@ class Root(Tk):
                            undo=True,
                            autoseparators=True,
                            maxundo=-1)
-        self.inputs_text.place(x=0, y=0)
-        self.inputs.place(x=0, y=30, width=700, height=200)
+        self.inputs_text.place(x=0, y=30)
+        self.inputs.place(x=0, y=60, width=700, height=200)
         self.inputs.focus_set()
         inputs_v = Scrollbar(self,
                              orient="vertical",
@@ -105,12 +108,12 @@ class Root(Tk):
                              command=self.inputs.xview)
         self.inputs.configure(yscrollcommand=inputs_v.set,
                               xscrollcommand=inputs_h.set)
-        inputs_v.place(x=700, y=30, height=200)
-        inputs_h.place(x=0, y=230, width=700)
+        inputs_v.place(x=700, y=60, height=200)
+        inputs_h.place(x=0, y=260, width=700)
         self.outputs_text = ttk.Label(self, text='在这里显示运行结果')
         self.outputs = Text(self, wrap='none')
-        self.outputs_text.place(x=0, y=250)
-        self.outputs.place(x=0, y=280, width=700, height=300)
+        self.outputs_text.place(x=0, y=280)
+        self.outputs.place(x=0, y=310, width=700, height=300)
         outputs_v = Scrollbar(self,
                               orient="vertical",
                               command=self.outputs.yview)
@@ -119,7 +122,7 @@ class Root(Tk):
                               command=self.outputs.xview)
         self.outputs.configure(yscrollcommand=outputs_v.set,
                                xscrollcommand=outputs_h.set)
-        outputs_v.place(x=700, y=280, height=300)
+        outputs_v.place(x=700, y=310, height=270)
         outputs_h.place(x=0, y=580, width=700)
         self.run_button = ttk.Button(self, text='运行', command=self.runs)
         self.run_button.place(x=750, y=100)
@@ -171,7 +174,7 @@ class Root(Tk):
         self.file_menu = Menu(self, tearoff=0)
         self.file_menu.add_command(label='保存', command=self.save)
         self.file_menu.add_command(label='设置', command=self.config_options)
-        self.file_top.place(x=900, y=0)
+        self.file_top.place(x=0, y=0)
         self.auto_complete_run()
         self.realtime_run()
     
@@ -182,7 +185,7 @@ class Root(Tk):
     
     def config_options(self):
         self.config_window = Toplevel(self)
-        self.config_window.minsize(700, 500)
+        self.config_window.minsize(800, 500)
         self.get_config_dict = {}
         counter = 0
         for each in config_dict:
@@ -191,6 +194,9 @@ class Root(Tk):
             current_entry.insert(0, config_dict[each])
             current_label.place(x=0, y=counter)
             current_entry.place(x=150, y=counter)
+            if each in path_enable_list:
+                path_button = ttk.Button(self.config_window, text='更改', command=lambda: self.search_path(current_entry))
+                path_button.place(x=650, y=counter)
             counter += 30      
             self.get_config_dict[each] = current_entry
         save_button = ttk.Button(self.config_window, text='保存', command=self.save_config)
@@ -201,11 +207,19 @@ class Root(Tk):
         for each in config_dict:
             config_dict[each] = self.get_config_dict[each].get()
         with open('config.py', 'w', encoding='utf-8') as f:
-            f.write(f'config_dict = {config_dict}')
+            f.write(f'config_dict = {config_dict}\npath_enable_list = {path_enable_list}')
         self.saved_label.place(x=600, y=430)
         self.after(1000, self.saved_label.place_forget)
-        self.after(1000, self.reload_config)
-        
+        self.reload_config()
+    
+    
+    def search_path(self, obj):
+        filename = filedialog.askopenfilename(initialdir='.',
+                                              title="选择文件",
+                                              filetype=(("所有文件", "*.*"),))
+        if filename:
+            obj.delete(0, END)
+            obj.insert(END, filename)    
     def reload_config(self):
         try:
             self.bg = Image.open(config_dict['background_image'])
@@ -215,6 +229,10 @@ class Root(Tk):
                 Image.ANTIALIAS)
             self.bg = ImageTk.PhotoImage(self.bg)
             self.bg_label.configure(image=self.bg)
+            bg_places = config_dict['background_places']
+            bg_places = literal_eval(bg_places)
+            self.bg_label.place(x=bg_places[0], y=bg_places[1])            
+            
         except:
             pass        
     def save(self):
