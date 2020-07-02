@@ -330,17 +330,18 @@ class Root(Tk):
         current_text = self.inputs.get('1.0', 'end-1c')
         if current_text != self.pre_input:
             self.changed = True
+            is_deleted = len(current_text) < len(self.pre_input)
             self.pre_input = current_text
             self.auto_complete_menu.destroy()
             self.show_select = False
             current_text2 = self.inputs.get('1.0', INSERT)
             if current_text2 and current_text2[-1] not in [' ', '\n']:
-                if current_text2[-1] == '(':
+                if current_text2[-1] == '(' and not is_deleted:
                     self.inputs.insert(INSERT, ')')
                     self.pre_input = self.inputs.get('1.0', 'end-1c')
                     x, y = self.inputs.index(INSERT).split('.')
                     self.inputs.mark_set(INSERT, f'{x}.{int(y)-1}')
-                elif current_text2[-1] == '[':
+                elif current_text2[-1] == '[' and not is_deleted:
                     self.inputs.insert(INSERT, ']')
                     self.pre_input = self.inputs.get('1.0', 'end-1c')
                     x, y = self.inputs.index(INSERT).split('.')
@@ -367,7 +368,7 @@ class Root(Tk):
                             ]
                             if find_similar:
                                 self.start = start
-                                self.start2 = start + len(current_word)
+                                self.start2 = start + len(dot_content)
                                 self.auto_complete(find_similar)
                         except:
                             pass

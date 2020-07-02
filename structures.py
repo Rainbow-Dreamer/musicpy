@@ -151,9 +151,7 @@ class chord:
             if len(newinterval) == len(self.interval):
                 self.interval = newinterval
             else:
-                print(
-                    'please ensure the intervals between notes has the same numbers of the notes'
-                )
+                return 'please ensure the intervals between notes has the same numbers of the notes'
 
     def __str__(self):
         return f'{self.notes} with interval {self.interval}'
@@ -286,9 +284,7 @@ class chord:
     def inversion(self, num=1):
         # chord's zhuan3 wei4 return chord's [first, second, ... (num)] inversion chord
         if num not in range(1, len(self.notes)):
-            print(
-                'the number of inversion is out of range of the notes in this chord'
-            )
+            return 'the number of inversion is out of range of the notes in this chord'
         else:
             temp = copy(self)
             notes = temp.notes
@@ -643,7 +639,7 @@ class scale:
         if self.mode is None:
             if self.interval is None:
                 if self.notes is None:
-                    print('a mode or interval or notes list should be settled')
+                    return 'a mode or interval or notes list should be settled'
                 else:
                     notes = self.notes
                     rootdegree = notes[0].degree
@@ -666,9 +662,7 @@ class scale:
     def getScale(self, intervals=1, durations=None):
         if self.mode == None:
             if self.interval == None:
-                print(
-                    'at least one of mode or interval in the scale should be settled'
-                )
+                return 'at least one of mode or interval in the scale should be settled'
             else:
                 result = [self.start]
                 count = self.start.degree
@@ -907,13 +901,10 @@ class circle_of_fifths:
 
     def draw(self, inner=False):
         if not inner:
-            print(
-                '\n         C \n    F         G\n   Bb          D\n  Eb            A\n   Ab          E  \n    Db        B\n         Gb'
-            )
+            return '\n         C \n    F         G\n   Bb          D\n  Eb            A\n   Ab          E  \n    Db        B\n         Gb'
+            
         else:
-            print(
-                '\n            C \n        F   Am   G\n     Bb  Dm    Em   D\n        Gm        Bm  \n    Eb Cm        F#m  A\n      Fm        C#m\n   Ab  Bbm   G#m    E  \n      Db   Ebm   B\n           Gb'
-            )
+            return '\n            C \n        F   Am   G\n     Bb  Dm    Em   D\n        Gm        Bm  \n    Eb Cm        F#m  A\n      Fm        C#m\n   Ab  Bbm   G#m    E  \n      Db   Ebm   B\n           Gb'
 
     def get(self, ind, mode=0):
         if mode == 0:
@@ -969,13 +960,9 @@ class circle_of_fourths(circle_of_fifths):
 
     def draw(self, inner=False):
         if not inner:
-            print(
-                '\n         C \n    G         F\n   D          Bb\n  A            Eb\n   E          Ab  \n    B        Db\n        Gb'
-            )
+            return '\n         C \n    G         F\n   D          Bb\n  A            Eb\n   E          Ab  \n    B        Db\n        Gb'
         else:
-            print(
-                '\n            C \n        G   Am   F\n     D   Em    Dm   Bb\n        Bm       Gm  \n    A  F#m        Cm  Eb\n      C#m        Fm\n   E   G#m    Bbm    Ab  \n      B   Ebm   Db\n           Gb'
-            )
+            return   '\n            C \n        G   Am   F\n     D   Em    Dm   Bb\n        Bm       Gm  \n    A  F#m        Cm  Eb\n      C#m        Fm\n   E   G#m    Bbm    Ab  \n      B   Ebm   Db\n           Gb'
 
 
 def perm(n, k=None):
