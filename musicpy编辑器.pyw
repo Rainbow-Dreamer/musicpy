@@ -147,9 +147,12 @@ class Root(Tk):
                                          text='自动补全',
                                          variable=self.auto,
                                          command=self.check_auto)
+        self.eachline_character = literal_eval(config_dict['eachline_character'])
+        self.wraplines_button = ttk.Button(self, text='自动换行', command=self.wraplines)
         self.realtime_box.place(x=750, y=200)
         self.print_box.place(x=750, y=250)
         self.auto_box.place(x=750, y=300)
+        self.wraplines_button.place(x=750, y=350)
         self.save_button = ttk.Button(self, text='保存', command=self.save)
         self.save_button.place(x=750, y=50)
         self.is_print = 1
@@ -183,6 +186,14 @@ class Root(Tk):
         self.file_menu.tk_popup(x=self.winfo_pointerx(), y=self.winfo_pointery())
     
     
+    def wraplines(self):
+        N = self.eachline_character
+        text = self.outputs.get('1.0', END)
+        K = len(text)
+        text = '\n'.join([text[i:i+N] for i in range(0, K, N)])
+        self.outputs.delete('1.0', END)
+        self.outputs.insert(END, text)
+    
     def config_options(self):
         self.config_window = Toplevel(self)
         self.config_window.minsize(800, 500)
@@ -195,7 +206,7 @@ class Root(Tk):
             current_label.place(x=0, y=counter)
             current_entry.place(x=150, y=counter)
             if each in path_enable_list:
-                path_button = ttk.Button(self.config_window, text='更改', command=lambda: self.search_path(current_entry))
+                path_button = ttk.Button(self.config_window, text='更改', command=lambda current_entry=current_entry: self.search_path(current_entry))
                 path_button.place(x=650, y=counter)
             counter += 30      
             self.get_config_dict[each] = current_entry
@@ -222,16 +233,20 @@ class Root(Tk):
             obj.insert(END, filename)    
     def reload_config(self):
         try:
-            self.bg = Image.open(config_dict['background_image'])
-            ratio = 600 / self.bg.height
-            self.bg = self.bg.resize(
-                (int(self.bg.width * ratio), int(self.bg.height * ratio)),
-                Image.ANTIALIAS)
-            self.bg = ImageTk.PhotoImage(self.bg)
-            self.bg_label.configure(image=self.bg)
-            bg_places = config_dict['background_places']
-            bg_places = literal_eval(bg_places)
-            self.bg_label.place(x=bg_places[0], y=bg_places[1])            
+            bg_path = config_dict['background_image']
+            if not bg_path:
+                self.bg_label.configure(image='')
+            else:
+                self.bg = Image.open(bg_path)
+                ratio = 600 / self.bg.height
+                self.bg = self.bg.resize(
+                    (int(self.bg.width * ratio), int(self.bg.height * ratio)),
+                    Image.ANTIALIAS)
+                self.bg = ImageTk.PhotoImage(self.bg)
+                self.bg_label.configure(image=self.bg)
+                bg_places = config_dict['background_places']
+                bg_places = literal_eval(bg_places)
+                self.bg_label.place(x=bg_places[0], y=bg_places[1])            
             
         except:
             pass        
@@ -322,7 +337,7 @@ class Root(Tk):
                         if current_text[dot_word_ind] == '/':
                             dot_word_ind += 1
                         current_word = current_text[dot_word_ind:dot_ind - 1]
-                        dot_content = current_text[dot_ind:]
+                        dot_content = current_text[dot_ind:].lower()
                         #try:
                             #exec(current_text[:dot_word_ind], globals())
                         #except:
@@ -330,7 +345,7 @@ class Root(Tk):
                         try:
                             current_func = dir(eval(current_word))
                             find_similar = [
-                                x for x in current_func if dot_content in x
+                                x for x in current_func if dot_content in x.lower()
                             ]
                             if find_similar:
                                 self.start = start
@@ -340,9 +355,9 @@ class Root(Tk):
                     else:
                         if current_text[start] == '/':
                             start += 1
-                        current_word = current_text[start:]
+                        current_word = current_text[start:].lower()
                         find_similar = [
-                            x for x in function_names if current_word in x
+                            x for x in function_names if current_word in x.lower()
                         ]
                         if find_similar:
                             self.start = start
