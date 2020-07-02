@@ -175,12 +175,25 @@ class Root(Tk):
         self.file_top.bind('<Leave>', lambda e: self.file_top.configure(background='snow'))
         self.file_top.bind('<Button-1>', self.file_top_make_menu)
         self.file_menu = Menu(self, tearoff=0)
+        self.file_menu.add_command(label='打开', command=self.openfile)
         self.file_menu.add_command(label='保存', command=self.save)
         self.file_menu.add_command(label='设置', command=self.config_options)
         self.file_top.place(x=0, y=0)
         self.auto_complete_run()
         self.realtime_run()
     
+    def openfile(self):
+        filename = filedialog.askopenfilename(initialdir='.',
+                                              title="选择文件",
+                                              filetype=(("所有文件", "*.*"),))
+        if filename:
+            try:
+                with open(filename, encoding='utf-8') as f:
+                    self.inputs.delete('1.0', END)
+                    self.inputs.insert(END, f.read())
+            except:
+                self.inputs.delete('1.0', END)
+                self.inputs.insert(END, '不是有效的文本文件类型')
     
     def file_top_make_menu(self, e):
         self.file_menu.tk_popup(x=self.winfo_pointerx(), y=self.winfo_pointery())
@@ -225,7 +238,7 @@ class Root(Tk):
     
     
     def search_path(self, obj):
-        filename = filedialog.askopenfilename(initialdir='.',
+        filename = filedialog.askopenfilename(initialdir='.', parent=self.config_window,
                                               title="选择文件",
                                               filetype=(("所有文件", "*.*"),))
         if filename:
@@ -249,7 +262,8 @@ class Root(Tk):
                 self.bg_label.place(x=bg_places[0], y=bg_places[1])            
             
         except:
-            pass        
+            pass 
+        self.eachline_character = literal_eval(config_dict['eachline_character'])
     def save(self):
         filename = filedialog.asksaveasfilename(initialdir='.',
                                                 title="保存输入文本",
