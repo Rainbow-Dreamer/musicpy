@@ -158,6 +158,7 @@ class Root(Tk):
         self.is_print = 1
         self.pre_input = ''
         self.start = 0
+        self.start2 = 0
         self.changed = False
         self.auto_complete_menu = Listbox(self)
         self.auto_complete_menu.bind("<<ListboxSelect>>",
@@ -276,18 +277,19 @@ class Root(Tk):
     def get_current_select(self, e):
         if self.show_select:
             text = self.auto_complete_menu.get(self.select_ind)
-            self.auto_complete_menu.place_forget()
+            self.auto_complete_menu.destroy()
             self.show_select = False
             self.inputs.delete('1.0', END)
-            self.pre_input = self.pre_input[:self.start] + text
+            self.pre_input = self.pre_input[:self.start] + text + self.pre_input[self.start2:]
             self.inputs.insert(END, self.pre_input)
+            self.inputs.mark_set(INSERT, '1.0' + f' + {self.start + len(text)} chars')
             if self.is_realtime:
                 self.changed = True
                 self.realtime_run()
 
     def close_select(self, e):
         if self.show_select:
-            self.auto_complete_menu.place_forget()
+            self.auto_complete_menu.destroy()
             self.show_select = False
 
     def change_select(self, value):
@@ -312,11 +314,12 @@ class Root(Tk):
 
     def enter_choose(self, e):
         text = self.auto_complete_menu.get(ANCHOR)
-        self.auto_complete_menu.place_forget()
+        self.auto_complete_menu.destroy()
         self.show_select = False
         self.inputs.delete('1.0', END)
-        self.pre_input = self.pre_input[:self.start] + text
+        self.pre_input = self.pre_input[:self.start] + text + self.pre_input[self.start2:]
         self.inputs.insert(END, self.pre_input)
+        self.inputs.mark_set(INSERT, '1.0' + f' + {self.start + len(text)} chars')
         if self.is_realtime:
             self.changed = True
             self.realtime_run()
@@ -324,34 +327,35 @@ class Root(Tk):
     def auto_complete_run(self):
         if not self.is_auto:
             return
-        current_text = self.inputs.get('1.0', END)[:-1]
+        current_text = self.inputs.get('1.0', 'end-1c')
         if current_text != self.pre_input:
             self.changed = True
             self.pre_input = current_text
             self.auto_complete_menu.destroy()
             self.show_select = False
-            if current_text and current_text[-1] not in [' ', '\n']:
-                if current_text[-1] == '(':
-                    self.inputs.insert(END, ')')
-                    self.pre_input += ')'
+            current_text2 = self.inputs.get('1.0', INSERT)
+            if current_text2 and current_text2[-1] not in [' ', '\n']:
+                if current_text2[-1] == '(':
+                    self.inputs.insert(INSERT, ')')
+                    self.pre_input = self.inputs.get('1.0', 'end-1c')
                     x, y = self.inputs.index(INSERT).split('.')
                     self.inputs.mark_set(INSERT, f'{x}.{int(y)-1}')
-                elif current_text[-1] == '[':
-                    self.inputs.insert(END, ']')
-                    self.pre_input += ']'
+                elif current_text2[-1] == '[':
+                    self.inputs.insert(INSERT, ']')
+                    self.pre_input = self.inputs.get('1.0', 'end-1c')
                     x, y = self.inputs.index(INSERT).split('.')
                     self.inputs.mark_set(INSERT, f'{x}.{int(y)-1}')
                 else:
-                    space_ind, newline_ind, dot_ind = current_text.rfind(
-                        ' ') + 1, current_text.rfind(
-                            '\n') + 1, current_text.rfind('.') + 1
+                    space_ind, newline_ind, dot_ind = current_text2.rfind(
+                        ' ') + 1, current_text2.rfind(
+                            '\n') + 1, current_text2.rfind('.') + 1
                     start = max(space_ind, newline_ind, dot_ind)
                     if dot_ind > space_ind and dot_ind > newline_ind:
                         dot_word_ind = max(space_ind, newline_ind)
-                        if current_text[dot_word_ind] == '/':
+                        if current_text2[dot_word_ind] == '/':
                             dot_word_ind += 1
-                        current_word = current_text[dot_word_ind:dot_ind - 1]
-                        dot_content = current_text[dot_ind:].lower()
+                        current_word = current_text2[dot_word_ind:dot_ind - 1]
+                        dot_content = current_text2[dot_ind:].lower()
                         #try:
                             #exec(current_text[:dot_word_ind], globals())
                         #except:
@@ -363,18 +367,20 @@ class Root(Tk):
                             ]
                             if find_similar:
                                 self.start = start
+                                self.start2 = start + len(current_word)
                                 self.auto_complete(find_similar)
                         except:
                             pass
                     else:
-                        if current_text[start] == '/':
+                        if current_text2[start] == '/':
                             start += 1
-                        current_word = current_text[start:].lower()
+                        current_word = current_text2[start:].lower()
                         find_similar = [
                             x for x in function_names if current_word in x.lower()
                         ]
                         if find_similar:
                             self.start = start
+                            self.start2 = start + len(current_word)
                             self.auto_complete(find_similar)
         else:
             if not self.is_realtime:
