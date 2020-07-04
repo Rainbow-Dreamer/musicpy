@@ -10,7 +10,7 @@ from io import BytesIO
 import pygame
 from ast import literal_eval
 pygame.mixer.init(44100, -16, 1, 1024)
-with open('config.py', encoding='utf-8') as f:
+with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read())
 
 
@@ -187,9 +187,9 @@ class Root(Tk):
         filename = filedialog.askopenfilename(initialdir='.',
                                               title="选择文件",
                                               filetype=(("所有文件", "*.*"),))
-        if filename:
+        if filename:          
             try:
-                with open(filename, encoding='utf-8') as f:
+                with open(filename, encoding='utf-8-sig', errors='ignore') as f:
                     self.inputs.delete('1.0', END)
                     self.inputs.insert(END, f.read())
             except:
@@ -231,7 +231,7 @@ class Root(Tk):
     def save_config(self):
         for each in config_dict:
             config_dict[each] = self.get_config_dict[each].get()
-        with open('config.py', 'w', encoding='utf-8') as f:
+        with open('config.py', 'w', encoding='utf-8-sig') as f:
             f.write(f'config_dict = {config_dict}\npath_enable_list = {path_enable_list}')
         self.saved_label.place(x=600, y=430)
         self.after(1000, self.saved_label.place_forget)
@@ -271,7 +271,7 @@ class Root(Tk):
                                                 filetype=(("所有文件", "*.*"),),
                                                 defaultextension=".txt")
         if filename:
-            with open(filename, 'w', encoding='utf-8') as f:
+            with open(filename, 'w', encoding='utf-8-sig') as f:
                 f.write(self.inputs.get('1.0', END))
 
     def get_current_select(self, e):
