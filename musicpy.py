@@ -1017,9 +1017,9 @@ def inversion_way(a,
                     if chordtype is not None:
                         return f'{b[1].name}{chordtype} sort as {sort_msg}'
                     else:
-                        return f' sort as {sort_msg}'
+                        return f'sort as {sort_msg}'
                 else:
-                    return f' sort as {sort_msg}'
+                    return f'sort as {sort_msg}'
             else:
                 return f'a voicing of {b[1].name}{chordtype}'
     else:
@@ -1193,7 +1193,7 @@ def find_similarity(a,
                             if sort_message is None:
                                 return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
                             else:
-                                result = f' sort as {sort_message}'
+                                result = f'sort as {sort_message}'
                     else:
                         return 'not good'
 
@@ -1240,9 +1240,10 @@ def find_similarity(a,
                     if sort_message is None:
                         return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
                     else:
-                        result = f' sort as {sort_message}'
+                        result = f'sort as {sort_message}'
             else:
                 return 'not good'
+        bname = None
         if fromchord_name:
             if provide_name != None:
                 bname = b[1].name + provide_name
@@ -1250,7 +1251,7 @@ def find_similarity(a,
                 bname = detect(b)
             if type(bname) == list:
                 bname = bname[0]
-            result = f'{bname} {result}'
+            #result = f'{bname} {result}'
         return result if not getgoodchord else (result, chordfrom, bname)
 
 
@@ -1518,7 +1519,13 @@ def detect(a,
             if any(x in highest_msg
                    for x in ['sort', '/']) and any(y in invfrom_current_invert
                                                    for y in ['sort', '/']):
-                invfrom_current_invert = find_similarity(a, best[1], fromchord_name=False)
+                retry_msg = find_similarity(a, best[1], fromchord_name=return_fromchord, getgoodchord=return_fromchord)
+                if not return_fromchord:
+                    invfrom_current_invert = retry_msg
+                else:
+                    invfrom_current_invert, fromchord, chordnames = retry_msg
+                    current_invert = fromchord
+                    highest_msg = chordnames
                 final_result = f'{best[2]} {invfrom_current_invert}'
             else:
                 final_result = f'{highest_msg} {invfrom_current_invert}'
