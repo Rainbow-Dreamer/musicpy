@@ -938,7 +938,7 @@ def omitfrom(a, b, showls=False):
         result = f"omit {', '.join(omitnotes)}"
         order_omit = chord([x for x in b_notes if x in a_notes])
         if order_omit.names() != a.names():
-            result += inversion_way(a, order_omit)
+            result += ' ' + inversion_way(a, order_omit)
     return result
 
 
