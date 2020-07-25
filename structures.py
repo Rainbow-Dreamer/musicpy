@@ -766,6 +766,31 @@ class scale:
                                                    pitch=self[1].num,
                                                    inner=inner)
 
+
+    def tonic(self):
+        return self[1]
+    
+    def supertonic(self):
+        return self[2]
+    
+    def mediant(self):
+        return self[3]
+    
+    def subdominant(self):
+        return self[4]
+    
+    def dominant(self):
+        return self[5]
+    
+    def submediant(self):
+        return self[6]
+    
+    def leading_tone(self):
+        return self[1].up(major_seventh)
+    
+    def subtonic(self):
+        return self[1].up(minor_seventh)
+
     def tonic_chord(self):
         return self(1)
 

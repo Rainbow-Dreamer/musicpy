@@ -763,19 +763,54 @@ def modulation(chord1, old_scale, new_scale):
     return chord1.modulation(old_scale, new_scale)
 
 
-def exp(form):
+def exp(form, obj_name='x', mode='tail'):
     # return a function that follows a mode of translating a given chord to the wanted result,
     # form is a chains of functions you want to perform on the variables.
     # e.g. exp('up(2).period(2).reverse()')
-    def express(chord1):
-        chordname = [x for x, y in locals().items() if y == chord1][0]
-        result = chord([])
-        expression = f'result = {chordname}.{form}'
-        exec(expression, locals(), globals())
-        return result
+    if mode == 'tail':
+        try:
+            func = eval(f'lambda x: x.{form}')
+        except:
+            return 'not a valid expression'
+    elif mode == 'whole':
+        try:
+            func = eval(f'lambda {obj_name}: {form}')
+        except:
+            return 'not a valid expression'        
 
-    return express
+    return func
 
+def trans(obj, pitch=5):
+    if obj in standard:
+        return chd(obj, 'M', pitch=pitch)
+    if '/' not in obj:
+        N = len(obj)
+        if N == 2:
+            first = obj[0]
+            types = obj[1]
+            if first in standard and types in chordTypes:
+                return chd(first, types, pitch=pitch)
+        elif N > 2:
+            first_two = obj[:2]
+            type1 = obj[2:]
+            if first_two in standard and type1 in chordTypes:
+                return chd(first_two, type1, pitch=pitch)
+            first_one = obj[0]
+            type2 = obj[1:]
+            if first_one in standard and type2 in chordTypes:
+                return chd(first_one, type2, pitch=pitch)       
+    else:
+        part1, part2 = obj.split('/')
+        first_chord = trans(part1, pitch)
+        if type(first_chord) == chord:
+            if part2 in standard:
+                return chord([part2] + first_chord.names(), rootpitch=pitch)
+            else:
+                second_chord = trans(part2, pitch)
+                if type(second_chord) == chord:
+                    return chord(second_chord.names() + first_chord.names(), rootpitch=pitch)
+    return 'not a valid chord representation or chord types not in database'
+            
 
 def notels(a):
     return [notedict[i] for i in a]
