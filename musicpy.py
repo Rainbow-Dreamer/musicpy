@@ -804,7 +804,10 @@ def trans(obj, pitch=5):
         first_chord = trans(part1, pitch)
         if type(first_chord) == chord:
             if part2 in standard:
-                return chord([part2] + first_chord.names(), rootpitch=pitch)
+                first_chord_notenames = first_chord.names()
+                if part2 in first_chord_notenames and part2 != first_chord_notenames[0]:
+                    return first_chord.inversion(first_chord_notenames.index(part2))
+                return chord([part2] + first_chord_notenames, rootpitch=pitch)
             else:
                 second_chord = trans(part2, pitch)
                 if type(second_chord) == chord:
