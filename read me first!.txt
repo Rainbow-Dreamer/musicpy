@@ -1,0 +1,1 @@
+musicpy editor.pyw这个程序需要的额外的库有pillow, pygame,如果电脑里还没有安装这两个库请先安装，以正常使用此编辑器。
