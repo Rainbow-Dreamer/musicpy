@@ -353,7 +353,7 @@ class Root(Tk):
                     start = max(space_ind, newline_ind, dot_ind)
                     if dot_ind > space_ind and dot_ind > newline_ind:
                         dot_word_ind = max(space_ind, newline_ind)
-                        if current_text2[dot_word_ind] == '/':
+                        if current_text2[dot_word_ind] in ['/', '?']:
                             dot_word_ind += 1
                         current_word = current_text2[dot_word_ind:dot_ind - 1]
                         dot_content = current_text2[dot_ind:].lower()
@@ -373,7 +373,7 @@ class Root(Tk):
                         except:
                             pass
                     else:
-                        if current_text2[start] == '/':
+                        if current_text2[start] in ['/', '?']:
                             start += 1
                         current_word = current_text2[start:].lower()
                         find_similar = [
@@ -411,7 +411,13 @@ class Root(Tk):
         self.outputs.delete('1.0', END)
         text = self.inputs.get('1.0', END)
         lines = text.split('\n')
-        lines = [f'play({each[1:]})' if each and each[0] == '/' else each for each in lines]
+        for i in range(len(lines)):
+            each = lines[i]
+            if each:
+                if each[0] == '/':
+                    lines[i] = f'play({each[1:]})'
+                elif each[0] == '?':
+                    lines[i] = f'detect({each[1:]})'
         text = '\n'.join(lines)
         try:
             exec(text, globals())
@@ -430,7 +436,13 @@ class Root(Tk):
         self.outputs.delete('1.0', END)
         text = self.pre_input
         lines = text.split('\n')
-        lines = [f'play({each[1:]})' if each and each[0] == '/' else each for each in lines]
+        for i in range(len(lines)):
+            each = lines[i]
+            if each:
+                if each[0] == '/':
+                    lines[i] = f'play({each[1:]})'
+                elif each[0] == '?':
+                    lines[i] = f'detect({each[1:]})'
         text = '\n'.join(lines)
         try:
             exec(text, globals())
