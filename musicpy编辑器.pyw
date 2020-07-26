@@ -15,7 +15,7 @@ with open('config.py', encoding='utf-8-sig') as f:
 
 
 def print(obj):
-    root.outputs.insert(END, obj)
+    root.outputs.insert(END, str(obj))
     root.outputs.insert(END, '\n')
 
 
