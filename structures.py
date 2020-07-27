@@ -55,13 +55,18 @@ class note:
 
 
 def toNote(notename, duration=1, volume=100, pitch=5):
+    num = eval(''.join([x for x in notename if x.isdigit()]))
+    name = ''.join([x for x in notename if not x.isdigit()])
+    return note(name, num, duration, volume)
+
+def trans_note(notename, duration=1, volume=100, pitch=5):
     num = ''.join([x for x in notename if x.isdigit()])
     if not num:
         num = pitch
     else:
         num = eval(num)
     name = ''.join([x for x in notename if not x.isdigit()])
-    return note(name, num, duration, volume)
+    return note(name, num, duration, volume)    
 
 
 def degree_to_note(degree, duration=1, volume=100):
@@ -102,6 +107,9 @@ class chord:
                 for k in range(len(duration)):
                     self.notes[k].duration = duration[k]
 
+    def get_duration(self):
+        return [i.duration for i in self.notes]
+    
     def names(self):
         return [i.name for i in self]
 
@@ -195,7 +203,33 @@ class chord:
         return self.add(obj, mode='after')
     
     def __truediv__(self, obj):
-        return self.on(obj)
+        types = type(obj)
+        if types == int:
+            if obj > 0:
+                return self.inversion(obj)
+            else:
+                return self.inversion_highest(-obj)
+        elif types == list:
+            return self.sort(obj)
+        else:
+            if types != chord:
+                if types != note:
+                    obj = trans_note(obj)
+                notenames = self.names()
+                if obj.name in notenames and obj.name != notenames[0]:
+                    return self.inversion(notenames.index(obj.name))
+            return self.on(obj)
+    
+    def __and__(self, obj):
+        if type(obj) == tuple:
+            if len(obj) == 2:
+                return self.add(obj[0], start=obj[1], mode='head')
+            else:
+                return
+        return self.add(obj, mode='head')
+    
+    def get(self, ls):
+        return chord([self[i] for i in ls], interval=[self.interval[i-1] for i in ls])
     
     def pop(self, ind=None):
         if ind is None:
@@ -320,12 +354,15 @@ class chord:
             return chord([root] + temp2, interval=temp.interval)
 
     def sort(self, indlist, rootpitch=None):
-        names = [self[i].name for i in indlist]
+        temp = self.copy()
+        names = [temp[i].name for i in indlist]
         if rootpitch is None:
-            rootpitch = self[indlist[0]].num
+            rootpitch = temp[indlist[0]].num
         elif rootpitch == 'same':
-            rootpitch = self[1].num
-        return chord(names, rootpitch=rootpitch)
+            rootpitch = temp[1].num
+        new_interval = [temp.interval[i-1] for i in indlist]
+        new_duration = [temp[i].duration for i in indlist]
+        return chord(names, rootpitch=rootpitch, interval=new_interval, duration=new_duration)
 
     def voicing(self, rootpitch=None):
         if rootpitch is None:

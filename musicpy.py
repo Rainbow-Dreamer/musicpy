@@ -780,38 +780,38 @@ def exp(form, obj_name='x', mode='tail'):
 
     return func
 
-def trans(obj, pitch=5):
+def trans(obj, pitch=5, duration=1, interval=None):
     if obj in standard:
-        return chd(obj, 'M', pitch=pitch)
+        return chd(obj, 'M', pitch=pitch, duration=duration, intervals=interval)
     if '/' not in obj:
         N = len(obj)
         if N == 2:
             first = obj[0]
             types = obj[1]
             if first in standard and types in chordTypes:
-                return chd(first, types, pitch=pitch)
+                return chd(first, types, pitch=pitch, duration=duration, intervals=interval)
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
             if first_two in standard and type1 in chordTypes:
-                return chd(first_two, type1, pitch=pitch)
+                return chd(first_two, type1, pitch=pitch, duration=duration, intervals=interval)
             first_one = obj[0]
             type2 = obj[1:]
             if first_one in standard and type2 in chordTypes:
-                return chd(first_one, type2, pitch=pitch)       
+                return chd(first_one, type2, pitch=pitch, duration=duration, intervals=interval)       
     else:
         part1, part2 = obj.split('/')
-        first_chord = trans(part1, pitch)
+        first_chord = trans(part1, pitch, duration, interval)
         if type(first_chord) == chord:
             if part2 in standard:
                 first_chord_notenames = first_chord.names()
                 if part2 in first_chord_notenames and part2 != first_chord_notenames[0]:
                     return first_chord.inversion(first_chord_notenames.index(part2))
-                return chord([part2] + first_chord_notenames, rootpitch=pitch)
+                return chord([part2] + first_chord_notenames, rootpitch=pitch, duration=duration, intervals=interval)
             else:
-                second_chord = trans(part2, pitch)
+                second_chord = trans(part2, pitch, duration, interval)
                 if type(second_chord) == chord:
-                    return chord(second_chord.names() + first_chord.names(), rootpitch=pitch)
+                    return chord(second_chord.names() + first_chord.names(), rootpitch=pitch, duration=duration, intervals=interval)
     return 'not a valid chord representation or chord types not in database'
             
 
