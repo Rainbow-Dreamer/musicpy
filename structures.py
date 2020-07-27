@@ -180,7 +180,14 @@ class chord:
             temp.interval += obj.interval
         return temp
     
+    def __pos__(self):
+        return self.up()
     
+    def __neg__(self):
+        return self.down()
+    
+    def __invert__(self):
+        return self.reverse()
     
     def __floordiv__(self, obj):
         return self.add(obj, mode='after')
