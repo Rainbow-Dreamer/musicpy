@@ -183,7 +183,14 @@ class chord:
             temp.notes.append(copy(obj))
             temp.interval.append(temp.interval[-1])
         elif isinstance(obj, str):
-            return temp.__add__(toNote(obj))
+            try:
+                return temp.__add__(toNote(obj))
+            except:
+                obj_num = temp[-1].num
+                if obj in standard:
+                    if standard[obj] <= standard[temp[-1].name]:
+                        obj_num += 1
+                return temp.__add__(note(obj, obj_num))
         elif isinstance(obj, chord):
             obj = copy(obj)
             temp.notes += obj.notes
@@ -308,10 +315,12 @@ class chord:
                     note1 = chord([toNote(note1, duration=duration)])
                 elif isinstance(note1, note):
                     note1 = chord([note1])
+                elif isinstance(note1, list):
+                    note1 = chord(note1)
                 if isinstance(interval, int):
                     inter = [interval for i in range(len(note1))]
                 else:
-                    inter = interval
+                    inter = interval if interval else [0]
             # calculate the absolute distances of all of the notes of the chord to add and self,
             # and then sort them, make differences between each two distances
             distance = []
