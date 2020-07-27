@@ -298,9 +298,12 @@ class chord:
             newnotes = [distance[x][1] for x in range(len(distance))]
             return chord(newnotes, interval=newinterval)
         elif mode == 'after':
-            times = max(max([x.duration for x in self.notes]),
-                        max(self.interval))
-            return self.period(times) + note1
+            if self.interval[-1] == 0:
+                times = max(max([x.duration for x in self.notes]),
+                            max(self.interval))
+                return self.period(times) + note1
+            else:
+                return self + note1
 
     def inversion(self, num=1):
         # chord's zhuan3 wei4 return chord's [first, second, ... (num)] inversion chord
