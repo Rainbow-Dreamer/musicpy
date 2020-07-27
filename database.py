@@ -195,6 +195,17 @@ notedict = {
     ' ': 'interval'
 }
 
+
+degree_match = {'1':[perfect_unison],
+                '3': [minor_third, major_third],
+                '4': [perfect_fourth],
+                '5': [perfect_fifth],
+                '6': [major_sixth],
+                '7': [minor_seventh, major_seventh],
+                '9': [major_second + octave],
+                '11': [perfect_fourth + octave],
+                '13': [major_sixth + octave]}
+
 instruments = {
     'Acoustic Grand Piano': 1,
     'Bright Acoustic Piano': 2,

@@ -209,6 +209,18 @@ class chord:
     def __floordiv__(self, obj):
         return self.add(obj, mode='after')
     
+    def __xor__(self, obj):
+        if type(obj) == note:
+            name = obj.name
+        else:
+            name = obj
+        notenames = self.names()
+        if name in notenames and name != notenames[-1]:
+            return self.inversion_highest(notenames.index(name) + 1)
+        else:
+            return self + obj
+    
+    
     def __truediv__(self, obj):
         types = type(obj)
         if types == int:
@@ -234,6 +246,43 @@ class chord:
             else:
                 return
         return self.add(obj, mode='head')
+    
+    def __call__(self, obj):
+        # deal with the chord's sharp or flat notes, or to omit some notes
+        # of the chord.
+        temp = copy(self)
+        commands = obj.split(',')
+        for each in commands:
+            each = each.replace(' ', '')
+            first = each[0]
+            if first in ['#', 'b']:
+                degree = each[1:]
+                if degree in degree_match:
+                    degree_ls = degree_match[degree]
+                    found = False
+                    for i in degree_ls:
+                        current_note = temp[1].up(i)
+                        if current_note in temp:
+                            ind = temp.notes.index(current_note)
+                            temp.notes[ind] = temp.notes[ind].up() if first == '#' else temp.notes[ind].down()
+                            found = True
+                            break
+                    if not found:
+                        temp += temp[1].up(degree_ls[0]).up() if first == '#' else temp[1].up(degree_ls[0]).down()
+            elif each.startswith('omit') or each.startswith('no'):
+                degree = each[4:] if each.startswith('omit') else each[2:]
+                if degree in degree_match:
+                    degree_ls = degree_match[degree]
+                    for i in degree_ls:
+                        current_note = temp[1].up(i)
+                        if current_note in temp: 
+                            ind = temp.notes.index(current_note)
+                            del temp.notes[ind]
+                            del temp.interval[ind]
+                            break
+        return temp
+                    
+    
     
     def get(self, ls):
         return chord([self[i] for i in ls], interval=[self.interval[i-1] for i in ls])
