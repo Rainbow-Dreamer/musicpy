@@ -54,8 +54,12 @@ class note:
         return degree_to_note(self.degree - unit, duration, volume)
 
 
-def toNote(notename, duration=1, volume=100):
-    num = eval(''.join([x for x in notename if x.isdigit()]))
+def toNote(notename, duration=1, volume=100, pitch=5):
+    num = ''.join([x for x in notename if x.isdigit()])
+    if not num:
+        num = pitch
+    else:
+        num = eval(num)
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume)
 
@@ -175,7 +179,15 @@ class chord:
             temp.notes += obj.notes
             temp.interval += obj.interval
         return temp
-
+    
+    
+    
+    def __floordiv__(self, obj):
+        return self.add(obj, mode='after')
+    
+    def __truediv__(self, obj):
+        return self.on(obj)
+    
     def pop(self, ind=None):
         if ind is None:
             result = self.notes.pop()
@@ -333,7 +345,9 @@ class chord:
     def on(self, root, duration=1, interval=None, each=0):
         temp = copy(self)
         if each == 0:
-            if not isinstance(root, note):
+            if type(root) == chord:
+                return root + self
+            if type(root) != note:
                 root = toNote(root)
                 root.duration = duration
             temp.notes.insert(0, root)
