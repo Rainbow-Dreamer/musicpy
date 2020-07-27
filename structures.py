@@ -134,6 +134,8 @@ class chord:
         for i in range(len(notenames)):
             current = notenames[i]
             if current not in names_offrep:
+                if current in standard_dict:
+                    current = standard_dict[current]
                 names_offrep.append(current)
                 new_interval.append(intervals[i])
         temp.notes = chord(names_offrep, rootpitch=temp[1].num).notes
