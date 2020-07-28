@@ -784,6 +784,10 @@ def trans(obj, pitch=5, duration=1, interval=None):
     if obj in standard:
         return chd(obj, 'M', pitch=pitch, duration=duration, intervals=interval)
     if '/' not in obj:
+        check_structure = obj.split(',')
+        check_structure_len = len(check_structure)
+        if check_structure_len > 1:
+            return trans(check_structure[0], pitch, duration, interval)(','.join(check_structure[1:]))        
         N = len(obj)
         if N == 2:
             first = obj[0]
@@ -807,11 +811,11 @@ def trans(obj, pitch=5, duration=1, interval=None):
                 first_chord_notenames = first_chord.names()
                 if part2 in first_chord_notenames and part2 != first_chord_notenames[0]:
                     return first_chord.inversion(first_chord_notenames.index(part2))
-                return chord([part2] + first_chord_notenames, rootpitch=pitch, duration=duration, intervals=interval)
+                return chord([part2] + first_chord_notenames, rootpitch=pitch, duration=duration, interval=interval)
             else:
                 second_chord = trans(part2, pitch, duration, interval)
                 if type(second_chord) == chord:
-                    return chord(second_chord.names() + first_chord.names(), rootpitch=pitch, duration=duration, intervals=interval)
+                    return chord(second_chord.names() + first_chord.names(), rootpitch=pitch, duration=duration, interval=interval)
     return 'not a valid chord representation or chord types not in database'
             
 
