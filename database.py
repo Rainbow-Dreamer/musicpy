@@ -196,7 +196,8 @@ notedict = {
 }
 
 
-degree_match = {'1':[perfect_unison],
+degree_match = {'1': [perfect_unison],
+                '2': [major_second],
                 '3': [minor_third, major_third],
                 '4': [perfect_fourth],
                 '5': [perfect_fifth],
