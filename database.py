@@ -120,7 +120,7 @@ chordTypes = match({
     ('aug6', 'augmented6', '+6', 'italian-sixth'): ((4, 10), ),
     ('frenchsixth', ): ((4, 6, 10), ),
     ('aug9', '+9'): ((4, 8, 10, 14), ),
-    ('augmaj9', '+maj9', '+M9'): ((4, 8, 11, 14), ),
+    ('augmaj9', '+maj9', '+M9', 'augM9'): ((4, 8, 11, 14), ),
     ('sus', 'sus4'): ((5, 7), ),
     ('sus2', ): ((2, 7), ),
     ('9', 'dominant9', 'dominant-ninth', 'ninth'): ((4, 7, 10, 14), ),
