@@ -210,6 +210,8 @@ class chord:
         return self.add(obj, mode='after')
     
     def __xor__(self, obj):
+        if type(obj) == int:
+            return self.inversion_highest(obj)
         if type(obj) == note:
             name = obj.name
         else:
