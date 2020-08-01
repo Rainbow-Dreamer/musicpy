@@ -59,6 +59,7 @@ def toNote(notename, duration=1, volume=100, pitch=5):
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume)
 
+
 def trans_note(notename, duration=1, volume=100, pitch=5):
     num = ''.join([x for x in notename if x.isdigit()])
     if not num:
@@ -66,7 +67,7 @@ def trans_note(notename, duration=1, volume=100, pitch=5):
     else:
         num = eval(num)
     name = ''.join([x for x in notename if not x.isdigit()])
-    return note(name, num, duration, volume)    
+    return note(name, num, duration, volume)
 
 
 def degree_to_note(degree, duration=1, volume=100):
@@ -77,7 +78,6 @@ def degree_to_note(degree, duration=1, volume=100):
 
 class chord:
     ''' This class can contain a chord with many notes played simultaneously and either has intervals, the default interval is 0.'''
-
     def __init__(self, notes, duration=None, interval=None, rootpitch=5):
         try:
             notes = [x if isinstance(x, note) else toNote(x) for x in notes]
@@ -109,7 +109,10 @@ class chord:
 
     def get_duration(self):
         return [i.duration for i in self.notes]
-    
+
+    def get_volume(self):
+        return [i.volume for i in self.notes]
+
     def names(self):
         return [i.name for i in self]
 
@@ -196,19 +199,19 @@ class chord:
             temp.notes += obj.notes
             temp.interval += obj.interval
         return temp
-    
+
     def __pos__(self):
         return self.up()
-    
+
     def __neg__(self):
         return self.down()
-    
+
     def __invert__(self):
         return self.reverse()
-    
+
     def __floordiv__(self, obj):
         return self.add(obj, mode='after')
-    
+
     def __xor__(self, obj):
         if type(obj) == int:
             return self.inversion_highest(obj)
@@ -221,8 +224,7 @@ class chord:
             return self.inversion_highest(notenames.index(name) + 1)
         else:
             return self + obj
-    
-    
+
     def __truediv__(self, obj):
         types = type(obj)
         if types == int:
@@ -240,7 +242,7 @@ class chord:
                 if obj.name in notenames and obj.name != notenames[0]:
                     return self.inversion(notenames.index(obj.name))
             return self.on(obj)
-    
+
     def __and__(self, obj):
         if type(obj) == tuple:
             if len(obj) == 2:
@@ -248,7 +250,7 @@ class chord:
             else:
                 return
         return self.add(obj, mode='head')
-    
+
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
         # of the chord.
@@ -266,29 +268,31 @@ class chord:
                         current_note = temp[1].up(i)
                         if current_note in temp:
                             ind = temp.notes.index(current_note)
-                            temp.notes[ind] = temp.notes[ind].up() if first == '#' else temp.notes[ind].down()
+                            temp.notes[ind] = temp.notes[ind].up(
+                            ) if first == '#' else temp.notes[ind].down()
                             found = True
                             break
                     if not found:
-                        temp += temp[1].up(degree_ls[0]).up() if first == '#' else temp[1].up(degree_ls[0]).down()
+                        temp += temp[1].up(
+                            degree_ls[0]).up() if first == '#' else temp[1].up(
+                                degree_ls[0]).down()
             elif each.startswith('omit') or each.startswith('no'):
                 degree = each[4:] if each.startswith('omit') else each[2:]
                 if degree in degree_match:
                     degree_ls = degree_match[degree]
                     for i in degree_ls:
                         current_note = temp[1].up(i)
-                        if current_note in temp: 
+                        if current_note in temp:
                             ind = temp.notes.index(current_note)
                             del temp.notes[ind]
                             del temp.interval[ind]
                             break
         return temp
-                    
-    
-    
+
     def get(self, ls):
-        return chord([self[i] for i in ls], interval=[self.interval[i-1] for i in ls])
-    
+        return chord([self[i] for i in ls],
+                     interval=[self.interval[i - 1] for i in ls])
+
     def pop(self, ind=None):
         if ind is None:
             result = self.notes.pop()
@@ -420,9 +424,12 @@ class chord:
             rootpitch = temp[indlist[0]].num
         elif rootpitch == 'same':
             rootpitch = temp[1].num
-        new_interval = [temp.interval[i-1] for i in indlist]
+        new_interval = [temp.interval[i - 1] for i in indlist]
         new_duration = [temp[i].duration for i in indlist]
-        return chord(names, rootpitch=rootpitch, interval=new_interval, duration=new_duration)
+        return chord(names,
+                     rootpitch=rootpitch,
+                     interval=new_interval,
+                     duration=new_duration)
 
     def voicing(self, rootpitch=None):
         if rootpitch is None:
@@ -649,7 +656,24 @@ class chord:
         return len(self.notes)
 
     def setvolume(self, ind, vol):
-        self.notes[ind - 1].setvolume(vol)
+        if type(ind) == int:
+            self.notes[ind - 1].setvolume(vol)
+        elif type(ind) == list:
+            if type(vol) == list:
+                for i in range(len(ind)):
+                    current = ind[i]
+                    self.notes[current - 1].setvolume(vol[i])
+            elif type(vol) == int:
+                for i in range(len(ind)):
+                    current = ind[i]
+                    self.notes[current - 1].setvolume(vol)
+        elif ind == 'all':
+            if type(vol) == list:
+                for i in range(len(vol)):
+                    self.notes[i].setvolume(vol[i])
+            elif type(vol) == int:
+                for each in self.notes:
+                    each.setvolume(vol)
 
     def move(self, x):
         # x could be a dict or list of (index, move_steps)
@@ -889,28 +913,27 @@ class scale:
                                                    pitch=self[1].num,
                                                    inner=inner)
 
-
     def tonic(self):
         return self[1]
-    
+
     def supertonic(self):
         return self[2]
-    
+
     def mediant(self):
         return self[3]
-    
+
     def subdominant(self):
         return self[4]
-    
+
     def dominant(self):
         return self[5]
-    
+
     def submediant(self):
         return self[6]
-    
+
     def leading_tone(self):
         return self[1].up(major_seventh)
-    
+
     def subtonic(self):
         return self[1].up(minor_seventh)
 
@@ -1050,7 +1073,7 @@ class circle_of_fifths:
     def draw(self, inner=False):
         if not inner:
             return '\n         C \n    F         G\n   Bb          D\n  Eb            A\n   Ab          E  \n    Db        B\n         Gb'
-            
+
         else:
             return '\n            C \n        F   Am   G\n     Bb  Dm    Em   D\n        Gm        Bm  \n    Eb Cm        F#m  A\n      Fm        C#m\n   Ab  Bbm   G#m    E  \n      Db   Ebm   B\n           Gb'
 
@@ -1110,7 +1133,7 @@ class circle_of_fourths(circle_of_fifths):
         if not inner:
             return '\n         C \n    G         F\n   D          Bb\n  A            Eb\n   E          Ab  \n    B        Db\n        Gb'
         else:
-            return   '\n            C \n        G   Am   F\n     D   Em    Dm   Bb\n        Bm       Gm  \n    A  F#m        Cm  Eb\n      C#m        Fm\n   E   G#m    Bbm    Ab  \n      B   Ebm   Db\n           Gb'
+            return '\n            C \n        G   Am   F\n     D   Em    Dm   Bb\n        Bm       Gm  \n    A  F#m        Cm  Eb\n      C#m        Fm\n   E   G#m    Bbm    Ab  \n      B   Ebm   Db\n           Gb'
 
 
 def perm(n, k=None):

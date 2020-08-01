@@ -141,7 +141,8 @@ chordTypes = match({
     ('maj9sus4', 'maj9sus', 'M9sus', 'M9sus4'): ((5, 7, 11, 14), ),
     ('13sus4', '13sus'): ((5, 7, 10, 14, 21), (7, 10, 14, 17, 21)),
     ('13sus2', ): ((2, 7, 10, 17, 21), ),
-    ('maj13sus4', 'maj13sus', 'M13sus', 'M13sus4'): ((5, 7, 11, 14, 21), (7, 11, 14, 17, 21)),
+    ('maj13sus4', 'maj13sus', 'M13sus', 'M13sus4'):
+    ((5, 7, 11, 14, 21), (7, 11, 14, 17, 21)),
     ('maj13sus2', 'M13sus2'): ((2, 7, 11, 17, 21), ),
     ('add4', '+4'): ((4, 5, 7), ),
     ('madd4', 'm+4'): ((3, 5, 7), ),
@@ -195,17 +196,18 @@ notedict = {
     ' ': 'interval'
 }
 
-
-degree_match = {'1': [perfect_unison],
-                '2': [major_second],
-                '3': [minor_third, major_third],
-                '4': [perfect_fourth],
-                '5': [perfect_fifth],
-                '6': [major_sixth],
-                '7': [minor_seventh, major_seventh],
-                '9': [major_second + octave],
-                '11': [perfect_fourth + octave],
-                '13': [major_sixth + octave]}
+degree_match = {
+    '1': [perfect_unison],
+    '2': [major_second],
+    '3': [minor_third, major_third],
+    '4': [perfect_fourth],
+    '5': [perfect_fifth],
+    '6': [major_sixth],
+    '7': [minor_seventh, major_seventh],
+    '9': [major_second + octave],
+    '11': [perfect_fourth + octave],
+    '13': [major_sixth + octave]
+}
 
 instruments = {
     'Acoustic Grand Piano': 1,

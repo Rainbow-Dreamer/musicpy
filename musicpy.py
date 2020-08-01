@@ -240,7 +240,10 @@ def read(name, trackind=1, mode='find', is_file=False):
                 t = each
                 break
     elif mode == 'all':
-        available_tracks = [each for each in whole_tracks if any(each_msg.type == 'note_on' for each_msg in each)]
+        available_tracks = [
+            each for each in whole_tracks
+            if any(each_msg.type == 'note_on' for each_msg in each)
+        ]
         return [midi_to_chord(x, j) for j in available_tracks]
     else:
         try:
@@ -286,9 +289,8 @@ def midi_to_chord(x, t):
 
                 if not find_interval:
                     intervals.append(
-                        sum([t[x].time
-                             for x in range(i,
-                                            notes_len - 1)]) / interval_unit)
+                        sum([t[x].time for x in range(i, notes_len - 1)]) /
+                        interval_unit)
                 if not find_end:
                     realtime = time2
                 duration1 = realtime / interval_unit
@@ -395,11 +397,13 @@ def write(name_of_midi,
         if instrument:
             if type(instrument) == int:
                 instrument_num = instrument - 1
-                instrument_msg = mido.Message('program_change', program=instrument_num)
+                instrument_msg = mido.Message('program_change',
+                                              program=instrument_num)
                 x.tracks[1].insert(0, instrument_msg)
             elif instrument in instruments:
                 instrument_num = instruments[instrument] - 1
-                instrument_msg = mido.Message('program_change', program=instrument_num)
+                instrument_msg = mido.Message('program_change',
+                                              program=instrument_num)
                 x.tracks[1].insert(0, instrument_msg)
         tracklist = x.tracks[1:]
         track_modify = tracklist[track]
@@ -430,7 +434,15 @@ def write(name_of_midi,
                                 velocity=chordall[sorthas[n][1] + 1].volume,
                                 time=sorthas[n][0] - sorthas[n - 1][0]))
         elif mode == 'm':
-            file = write('tempmerge', chord1, tempo, track, channel, time1, track_num, instrument=instrument, save_as_file=save_as_file,
+            file = write('tempmerge',
+                         chord1,
+                         tempo,
+                         track,
+                         channel,
+                         time1,
+                         track_num,
+                         instrument=instrument,
+                         save_as_file=save_as_file,
                          midi_io=current_io)
             if save_as_file:
                 tempmid = midi('tempmerge.mid')
@@ -776,48 +788,74 @@ def exp(form, obj_name='x', mode='tail'):
         try:
             func = eval(f'lambda {obj_name}: {form}')
         except:
-            return 'not a valid expression'        
+            return 'not a valid expression'
 
     return func
 
+
 def trans(obj, pitch=5, duration=1, interval=None):
     if obj in standard:
-        return chd(obj, 'M', pitch=pitch, duration=duration, intervals=interval)
+        return chd(obj,
+                   'M',
+                   pitch=pitch,
+                   duration=duration,
+                   intervals=interval)
     if '/' not in obj:
         check_structure = obj.split(',')
         check_structure_len = len(check_structure)
         if check_structure_len > 1:
-            return trans(check_structure[0], pitch, duration, interval)(','.join(check_structure[1:]))        
+            return trans(check_structure[0], pitch, duration,
+                         interval)(','.join(check_structure[1:]))
         N = len(obj)
         if N == 2:
             first = obj[0]
             types = obj[1]
             if first in standard and types in chordTypes:
-                return chd(first, types, pitch=pitch, duration=duration, intervals=interval)
+                return chd(first,
+                           types,
+                           pitch=pitch,
+                           duration=duration,
+                           intervals=interval)
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
             if first_two in standard and type1 in chordTypes:
-                return chd(first_two, type1, pitch=pitch, duration=duration, intervals=interval)
+                return chd(first_two,
+                           type1,
+                           pitch=pitch,
+                           duration=duration,
+                           intervals=interval)
             first_one = obj[0]
             type2 = obj[1:]
             if first_one in standard and type2 in chordTypes:
-                return chd(first_one, type2, pitch=pitch, duration=duration, intervals=interval)       
+                return chd(first_one,
+                           type2,
+                           pitch=pitch,
+                           duration=duration,
+                           intervals=interval)
     else:
         part1, part2 = obj.split('/')
         first_chord = trans(part1, pitch, duration, interval)
         if type(first_chord) == chord:
             if part2 in standard:
                 first_chord_notenames = first_chord.names()
-                if part2 in first_chord_notenames and part2 != first_chord_notenames[0]:
-                    return first_chord.inversion(first_chord_notenames.index(part2))
-                return chord([part2] + first_chord_notenames, rootpitch=pitch, duration=duration, interval=interval)
+                if part2 in first_chord_notenames and part2 != first_chord_notenames[
+                        0]:
+                    return first_chord.inversion(
+                        first_chord_notenames.index(part2))
+                return chord([part2] + first_chord_notenames,
+                             rootpitch=pitch,
+                             duration=duration,
+                             interval=interval)
             else:
                 second_chord = trans(part2, pitch, duration, interval)
                 if type(second_chord) == chord:
-                    return chord(second_chord.names() + first_chord.names(), rootpitch=pitch, duration=duration, interval=interval)
+                    return chord(second_chord.names() + first_chord.names(),
+                                 rootpitch=pitch,
+                                 duration=duration,
+                                 interval=interval)
     return 'not a valid chord representation or chord types not in database'
-            
+
 
 def notels(a):
     return [notedict[i] for i in a]
@@ -1102,7 +1140,7 @@ def find_similarity(a,
         if same_note_special:
             ratios = [(1 if samenote_set(a, x[0]) else SequenceMatcher(
                 None, selfname, x[0].names()).ratio(), x[1])
-                for x in possible_chords]
+                      for x in possible_chords]
         else:
             ratios = [(SequenceMatcher(None, selfname,
                                        x[0].names()).ratio(), x[1])
@@ -1561,7 +1599,10 @@ def detect(a,
             if any(x in highest_msg
                    for x in ['sort', '/']) and any(y in invfrom_current_invert
                                                    for y in ['sort', '/']):
-                retry_msg = find_similarity(a, best[1], fromchord_name=return_fromchord, getgoodchord=return_fromchord)
+                retry_msg = find_similarity(a,
+                                            best[1],
+                                            fromchord_name=return_fromchord,
+                                            getgoodchord=return_fromchord)
                 if not return_fromchord:
                     invfrom_current_invert = retry_msg
                 else:
@@ -1811,13 +1852,20 @@ def perm(n, k=None):
 
 
 def negative_harmony(key, a=None, get_map_dict=False, sort=False):
-    notes_dict = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'] * 2
+    notes_dict = [
+        'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'
+    ] * 2
     key_tonic = key[1].name
     inds = notes_dict.index(key_tonic) + 1
-    right_half = notes_dict[inds:inds+6]
-    left_half = notes_dict[inds+6:inds+12]
+    right_half = notes_dict[inds:inds + 6]
+    left_half = notes_dict[inds + 6:inds + 12]
     left_half.reverse()
-    map_dict = {**{left_half[i]: right_half[i] for i in range(6)}, **{right_half[i]: left_half[i] for i in range(6)}}
+    map_dict = {
+        **{left_half[i]: right_half[i]
+           for i in range(6)},
+        **{right_half[i]: left_half[i]
+           for i in range(6)}
+    }
     if get_map_dict:
         return map_dict
     if a:
@@ -1847,7 +1895,6 @@ def negative_harmony(key, a=None, get_map_dict=False, sort=False):
         temp.interval = temp.getInterval()
         temp.mode = detect(temp, mode='scale')
         return temp
-        
 
 
 # examples:

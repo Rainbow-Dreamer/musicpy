@@ -33,11 +33,10 @@ class match:
             if key in i:
                 return dic[i]
         return 'not found'
-    
+
     def __contains__(self, obj):
         return any(obj in i for i in self.dic)
-    
-    
+
     def search_all(self, key):
         result = []
         dic = self.dic
