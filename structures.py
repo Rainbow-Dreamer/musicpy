@@ -764,6 +764,20 @@ class scale:
 
     __repr__ = __str__
 
+    def standard(self):
+        if len(self) == 8:
+            standard_notes = [i.name for i in copy(self.notes)[:-1]]
+            compare_notes = [i.name for i in scale('C', 'major').notes[:-1]]
+            inds = compare_notes.index(standard_notes[0])
+            compare_notes = compare_notes[inds:] + compare_notes[:inds]
+            standard_notes = [
+                relative_note(standard_notes[i], compare_notes[i])
+                for i in range(7)
+            ]
+            return standard_notes
+        else:
+            return self.names()
+
     def __contains__(self, note1):
         return note1 in self.getScale()
 
@@ -1147,3 +1161,63 @@ def perm(n, k=None):
     return eval(
         f'''[{f"[{', '.join([f'n[a{i}]' for i in range(k)])}]"} {''.join([f'for a{i} in range(len(n)) ' if i == 0 else f"for a{i} in range(len(n)) if a{i} not in [{', '.join([f'a{t}' for t in range(i)])}] " for i in range(k)])}]''',
         locals())
+
+
+def relative_note(a, b):
+    # return the notation of note a from note b with accidentals
+    # (how note b adds accidentals to match the same pitch as note a),
+    # works for the accidentals including sharp, flat, natural,
+    # double sharp, double flat
+    # (a, b are strings that represents a note, could be with accidentals)
+    len_a, len_b = len(a), len(b)
+    a_name, b_name, accidental_a, accidental_b = a[0], b[0], a[1:], b[1:]
+    if len_a == 1 and len_b > 1 and a_name == b_name:
+        return a + '♮'
+    if a in standard:
+        a = note(a, 5)
+    else:
+        a = note(a_name, 5)
+        if accidental_a == 'b':
+            a = a.down()
+        elif accidental_a == 'bb':
+            a = a.down(2)
+        elif accidental_a == '#':
+            a = a.up()
+        elif accidental_a == 'x':
+            a = a.up(2)
+        elif accidental_a == '♮':
+            pass
+        else:
+            return f'unrecognizable accidentals {accidental_a}'
+    if b in standard:
+        b = note(b, 5)
+    else:
+        b = note(b_name, 5)
+        if accidental_b == 'b':
+            b = b.down()
+        elif accidental_b == 'bb':
+            b = b.down(2)
+        elif accidental_b == '#':
+            b = b.up()
+        elif accidental_b == 'x':
+            b = b.up(2)
+        elif accidental_b == '♮':
+            pass
+        else:
+            return f'unrecognizable accidentals {accidental_b}'
+    degree1, degree2 = a.degree, b.degree
+    diff1, diff2 = degree1 - degree2, degree1 - degree2 - 12
+    if abs(diff1) < abs(diff2):
+        diff = diff1
+    else:
+        diff = diff2
+    if diff == 0:
+        return b.name
+    if diff == 1:
+        return b.name + '#'
+    if diff == 2:
+        return b.name + 'x'
+    if diff == -1:
+        return b.name + 'b'
+    if diff == -2:
+        return b.name + 'bb'
