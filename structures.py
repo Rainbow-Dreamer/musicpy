@@ -768,7 +768,7 @@ class scale:
         if len(self) == 8:
             standard_notes = [i.name for i in copy(self.notes)[:-1]]
             compare_notes = [i.name for i in scale('C', 'major').notes[:-1]]
-            inds = compare_notes.index(standard_notes[0])
+            inds = compare_notes.index(standard_notes[0][0])
             compare_notes = compare_notes[inds:] + compare_notes[:inds]
             standard_notes = [
                 relative_note(standard_notes[i], compare_notes[i])
