@@ -134,7 +134,14 @@ class chord:
         return temp
 
     def __mod__(self, alist):
-        return self.pick(alist)
+        types = type(alist)
+        if types == list:
+            return self.pick(alist)
+        elif types == int:
+            temp = copy(self)
+            for i in range(alist - 1):
+                temp //= self
+            return temp
 
     def standardize(self):
         temp = self.copy()
@@ -211,6 +218,9 @@ class chord:
 
     def __floordiv__(self, obj):
         return self.add(obj, mode='after')
+
+    def __or__(self, other):
+        return self // other
 
     def __xor__(self, obj):
         if type(obj) == int:
