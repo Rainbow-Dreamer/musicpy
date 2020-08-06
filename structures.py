@@ -1206,7 +1206,9 @@ def relative_note(a, b):
         else:
             return f'unrecognizable accidentals {accidental_b}'
     degree1, degree2 = a.degree, b.degree
-    diff1, diff2 = degree1 - degree2, degree1 - degree2 - 12
+    diff1, diff2 = degree1 - degree2, (degree1 - degree2 -
+                                       12 if degree1 >= degree2 else degree1 +
+                                       12 - degree2)
     if abs(diff1) < abs(diff2):
         diff = diff1
     else:

@@ -13,7 +13,7 @@ from mido.midifiles.tracks import MidiTrack
 from mido.midifiles.meta import MetaMessage
 from difflib import SequenceMatcher
 from database import *
-from structures import note, chord, scale, circle_of_fifths, circle_of_fourths
+from structures import note, chord, scale, circle_of_fifths, circle_of_fourths, relative_note
 '''
 mido and midiutil is requried for this module, please make sure you have
 these two modules with this file
