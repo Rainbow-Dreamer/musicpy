@@ -102,6 +102,8 @@ scaleTypes = match({
 modern_modes = [
     'major', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'minor', 'locrian'
 ]
+# you can sort the chord types from most commonly used to least commonly used
+# to get better chord detection results
 chordTypes = match({
     ('major', 'M', 'maj', 'majorthird'): ((4, 7), ),
     ('minor', 'm', 'minorthird', 'min'): ((3, 7), ),
@@ -120,12 +122,12 @@ chordTypes = match({
     ('aug6', 'augmented6', '+6', 'italian-sixth'): ((4, 10), ),
     ('frenchsixth', ): ((4, 6, 10), ),
     ('aug9', '+9'): ((4, 8, 10, 14), ),
-    ('augmaj9', '+maj9', '+M9', 'augM9'): ((4, 8, 11, 14), ),
     ('sus', 'sus4'): ((5, 7), ),
     ('sus2', ): ((2, 7), ),
     ('9', 'dominant9', 'dominant-ninth', 'ninth'): ((4, 7, 10, 14), ),
     ('maj9', 'major-ninth', 'major9th', 'M9'): ((4, 7, 11, 14), ),
     ('m9', 'minor9', 'minor9th'): ((3, 7, 10, 14), ),
+    ('augmaj9', '+maj9', '+M9', 'augM9'): ((4, 8, 11, 14), ),
     ('add6', '6', 'sixth'): ((4, 7, 9), ),
     ('m6', 'minorsixth'): ((3, 7, 9), ),
     ('add2', '+2'): ((2, 4, 7), ),
