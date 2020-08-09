@@ -218,9 +218,11 @@ class chord:
 
     def __floordiv__(self, obj):
         if type(obj) == str:
-            obj = trans(obj)
+            import musicpy         
+            obj = musicpy.trans(obj)
         elif type(obj) == tuple:
-            obj = trans(*obj)
+            import musicpy                  
+            obj = musicpy.trans(*obj)
         return self.add(obj, mode='after')
 
     def __or__(self, other):
@@ -1238,5 +1240,3 @@ def relative_note(a, b):
     if diff == -2:
         return b.name + 'bb'
 
-
-from musicpy import trans
