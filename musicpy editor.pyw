@@ -279,7 +279,20 @@ class Root(Tk):
                 self.bg_label.place(x=bg_places[0], y=bg_places[1])
 
         except:
-            pass
+            bg_path = config_dict['background_image']
+            if not bg_path:
+                self.bg = ''
+            else:
+                self.bg = Image.open(bg_path)
+            ratio = 600 / self.bg.height
+            self.bg = self.bg.resize(
+                (int(self.bg.width * ratio), int(self.bg.height * ratio)),
+                Image.ANTIALIAS)
+            self.bg = ImageTk.PhotoImage(self.bg)
+            self.bg_label = ttk.Label(self, image=self.bg)
+            bg_places = config_dict['background_places']
+            bg_places = literal_eval(bg_places)
+            self.bg_label.place(x=bg_places[0], y=bg_places[1])
         self.eachline_character = literal_eval(
             config_dict['eachline_character'])
 

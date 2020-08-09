@@ -857,6 +857,10 @@ def trans(obj, pitch=5, duration=1, interval=None):
     return 'not a valid chord representation or chord types not in database'
 
 
+C = trans
+N = toNote
+
+
 def notels(a):
     return [notedict[i] for i in a]
 
