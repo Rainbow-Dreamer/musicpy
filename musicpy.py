@@ -1370,6 +1370,8 @@ def detect_variation(a,
                    for x in ['sort', '/']) and any(y in inv_msg
                                                    for y in ['sort', '/']):
                 inv_msg = inversion_way(a, change_from_chord, inv_num)
+                if inv_msg == 'not good':
+                    inv_msg = find_similarity(a, change_from_chord)
                 result = f'{chord_name_str} {inv_msg}'
             return result
     for each2 in range(1, N):
@@ -1393,6 +1395,8 @@ def detect_variation(a,
                    for x in ['sort', '/']) and any(y in inv_msg
                                                    for y in ['sort', '/']):
                 inv_msg = inversion_way(a, change_from_chord, inv_num)
+                if inv_msg == 'not good':
+                    inv_msg = find_similarity(a, change_from_chord)
                 result = f'{chord_name_str} {inv_msg}'
             return result
 
@@ -1401,21 +1405,19 @@ def detect_split(a, N=None):
     if N < 6:
         splitind = 1
         lower = a.notes[0].name
-        upper = detect(a.notes[splitind:]) 
+        upper = detect(a.notes[splitind:])
         if type(upper) == list:
-            upper = upper[0]        
+            upper = upper[0]
         return f'[{upper}]/{lower}'
     else:
         splitind = N // 2
         lower = detect(a.notes[:splitind])
-        upper = detect(a.notes[splitind:])    
+        upper = detect(a.notes[splitind:])
         if type(lower) == list:
-            lower = lower[0]        
+            lower = lower[0]
         if type(upper) == list:
             upper = upper[0]
         return f'[{upper}]/[{lower}]'
-    
-    
 
 
 def interval_check(a, two_show_interval=True):

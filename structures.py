@@ -218,10 +218,10 @@ class chord:
 
     def __floordiv__(self, obj):
         if type(obj) == str:
-            import musicpy         
+            import musicpy
             obj = musicpy.trans(obj)
         elif type(obj) == tuple:
-            import musicpy                  
+            import musicpy
             obj = musicpy.trans(*obj)
         return self.add(obj, mode='after')
 
@@ -292,6 +292,18 @@ class chord:
                         temp += temp[1].up(
                             degree_ls[0]).up() if first == '#' else temp[1].up(
                                 degree_ls[0]).down()
+                else:
+                    if degree in standard:
+                        if degree in standard_dict:
+                            degree = standard_dict[degree]
+                        self_names = [
+                            i if i not in standard_dict else standard_dict[i]
+                            for i in temp.names()
+                        ]
+                        if degree in self_names:
+                            ind = temp.names().index(degree)
+                            temp.notes[ind] = temp.notes[ind].up(
+                            ) if first == '#' else temp.notes[ind].down()
             elif each.startswith('omit') or each.startswith('no'):
                 degree = each[4:] if each.startswith('omit') else each[2:]
                 if degree in degree_match:
@@ -303,6 +315,16 @@ class chord:
                             del temp.notes[ind]
                             del temp.interval[ind]
                             break
+                else:
+                    if degree in standard:
+                        if degree in standard_dict:
+                            degree = standard_dict[degree]
+                        self_names = [
+                            i if i not in standard_dict else standard_dict[i]
+                            for i in temp.names()
+                        ]
+                        if degree in self_names:
+                            temp = temp.omit(degree, 2)
         return temp
 
     def get(self, ls):
@@ -1239,4 +1261,3 @@ def relative_note(a, b):
         return b.name + 'b'
     if diff == -2:
         return b.name + 'bb'
-
