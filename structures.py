@@ -67,6 +67,10 @@ class note:
             return note(reverse_standard_dict[name], self.num)
         else:
             return note(name, self.num)
+    
+    def play(self, *args, **kwargs):
+        import musicpy
+        musicpy.play(self, *args, **kwargs)
 
 
 def toNote(notename, duration=1, volume=100, pitch=5):
@@ -785,6 +789,10 @@ class chord:
                                 mode=modes)
                 temp.interval[-1] = intervals[k]
         return temp
+    
+    def play(self, *args, **kwargs):
+        import musicpy
+        musicpy.play(self, *args, **kwargs)
 
 
 class scale:
@@ -1140,6 +1148,10 @@ class scale:
             else:
                 start1 = self.getScale().notes[ind]
         return scale(start=start1, interval=new_interval)
+    
+    def play(self, intervals=1, durations=None, *args, **kwargs):
+        import musicpy
+        musicpy.play(self.getScale(intervals, durations), *args, **kwargs)    
 
 
 class circle_of_fifths:
