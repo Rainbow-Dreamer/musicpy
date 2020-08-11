@@ -597,7 +597,8 @@ def split_melody(x,
                                         -1)
             if recent_notes:
                 current_average_degree = sum(
-                    [melody[j].degree for j in recent_notes]) / len(recent_notes)
+                    [melody[j].degree
+                     for j in recent_notes]) / len(recent_notes)
                 if current_average_degree - current_note.degree <= melody_tol:
                     if melody[-1].degree - current_note.degree < chord_tol:
                         melody.append(current_note)
@@ -606,7 +607,8 @@ def split_melody(x,
                 else:
                     if melody[
                             -1].degree - current_note.degree < chord_tol and whole_notes[
-                                i + 1].degree - current_note.degree < chord_tol:
+                                i +
+                                1].degree - current_note.degree < chord_tol:
                         melody.append(current_note)
                         notes_num += 1
                         melody_duration.append(current_note.duration)
