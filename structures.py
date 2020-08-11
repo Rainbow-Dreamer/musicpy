@@ -53,6 +53,21 @@ class note:
             volume = self.volume
         return degree_to_note(self.degree - unit, duration, volume)
 
+    def __pos__(self):
+        return self.up()
+
+    def __neg__(self):
+        return self.down()
+    
+    def __invert__(self):
+        name = self.name
+        if name in standard_dict:
+            return note(standard_dict[name], self.num)
+        elif name in reverse_standard_dict:
+            return note(reverse_standard_dict[name], self.num)
+        else:
+            return note(name, self.num)
+
 
 def toNote(notename, duration=1, volume=100, pitch=5):
     num = eval(''.join([x for x in notename if x.isdigit()]))
@@ -266,7 +281,12 @@ class chord:
             else:
                 return
         return self.add(obj, mode='head')
-
+    
+    def __matmul__(self, obj):
+        import musicpy
+        return musicpy.negative_harmony(obj, self)
+    
+    
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
         # of the chord.
@@ -326,7 +346,13 @@ class chord:
                         if degree in self_names:
                             temp = temp.omit(degree, 2)
         return temp
-
+    
+    
+    def detect(self):
+        import musicpy
+        return musicpy.detect(self)
+    
+    
     def get(self, ls):
         return chord([self[i] for i in ls],
                      interval=[self.interval[i - 1] for i in ls])
@@ -1030,7 +1056,12 @@ class scale:
 
     def __matmul__(self, indlist):
         return self.pickchord_by_index(indlist)
-
+    
+    def detect(self):
+        import musicpy
+        return musicpy.detect(self, mode='scale')
+    
+    
     def get_allchord(self, interval=0, num=3, step=2):
         return [
             self.pickchord_by_degree(i, interval=interval, num=num, step=step)
@@ -1081,7 +1112,17 @@ class scale:
 
     def down(self, unit=1, ind=None, ind2=None):
         return self.up(-unit, ind2)
+    
+    
+    def __pos__(self):
+        return self.up()
 
+    def __neg__(self):
+        return self.down()
+    
+    def __invert__(self):
+        return scale(self[1], interval = list(reversed(self.interval)), pitch=self.pitch)
+    
     def move(self, x):
         notes = copy(self.getScale())
         return scale(notels=notes.move(x))

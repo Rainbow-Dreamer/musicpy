@@ -86,6 +86,8 @@ standard2 = {
 
 standard_dict = {'Bb': 'A#', 'Eb': 'D#', 'Ab': 'G#', 'Db': 'C#', 'Gb': 'F#'}
 
+reverse_standard_dict = {j : i for i, j in standard_dict.items()}
+
 scaleTypes = match({
     ('major', ): [2, 2, 1, 2, 2, 2, 1],
     ('minor', ): [2, 1, 2, 2, 1, 2, 2],
