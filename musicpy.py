@@ -1459,7 +1459,8 @@ def detect(a,
            same_note_special=False,
            whole_detect=True,
            return_fromchord=False,
-           two_show_interval=True):
+           two_show_interval=True,
+           poly_chord_first=False):
     # mode could be chord/scale
     if mode == 'chord':
         if type(a) != chord:
@@ -1564,6 +1565,8 @@ def detect(a,
         #original_msg = find_similarity(a, chordfrom, provide_name = chordtype)
         # if original_msg != 'not good':
         # return original_msg
+        if poly_chord_first and N > 3:
+            return detect_split(a, N)
         inversion_final = True
         possibles = [(find_similarity(a.inversion(j),
                                       result_ratio=True,
