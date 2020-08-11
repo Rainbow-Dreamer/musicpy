@@ -425,7 +425,8 @@ class chord:
                 distance.append((dis, temp.notes[i]))
             for j in range(len(note1.notes)):
                 dis = sum(inter[:j])
-                distance.append((dis, note1.notes[j]))
+                if start == 0 or j != 0:
+                    distance.append((dis, note1.notes[j]))
             distance = sorted(distance, key=lambda x: x[0])
             newinterval = [
                 distance[x][0] - distance[x - 1][0]

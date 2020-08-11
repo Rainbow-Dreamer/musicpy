@@ -193,13 +193,13 @@ def play(chord1,
          modes='new2',
          instrument=None,
          save_as_file=True):
-    file = write(name,
-                 chord1,
-                 tempo,
-                 track=0,
-                 channel=0,
-                 time1=0,
-                 track_num=1,
+    file = write(name_of_midi=name,
+                 chord1=chord1,
+                 tempo=tempo,
+                 track=track,
+                 channel=channel,
+                 time1=time1,
+                 track_num=track_num,
                  mode=modes,
                  instrument=instrument,
                  save_as_file=save_as_file)
@@ -260,9 +260,17 @@ def midi_to_chord(x, t):
     intervals = []
     notelist = []
     notes_len = len(t)
+    find_first_note = False
+    start_time = 0
     for i in range(notes_len):
-        if t[i].type == 'note_on' and t[i].velocity != 0:
+        current_msg = t[i]
+        if current_msg.type == 'note_on' and current_msg.velocity != 0:
             if i not in hason and i not in hasoff:
+                if not find_first_note:
+                    find_first_note = True
+                    start_time = current_msg.time / interval_unit
+                    if start_time.is_integer():
+                        start_time = int(start_time)
                 hason.append(i)
                 find_interval = False
                 find_end = False
@@ -307,12 +315,12 @@ def midi_to_chord(x, t):
     for tr in x.tracks:
         if 'tempo' in tr[0].__dict__:
             tempo = tr[0].tempo
-            return unit.tempo2bpm(tempo), result
+            return unit.tempo2bpm(tempo), result, start_time
     for tr1 in x.tracks:
         for tr2 in tr1:
             if 'tempo' in tr2.__dict__:
                 tempo = tr2.tempo
-                return unit.tempo2bpm(tempo), result
+                return unit.tempo2bpm(tempo), result, start_time
 
 
 def write(name_of_midi,
@@ -408,6 +416,8 @@ def write(name_of_midi,
         tracklist = x.tracks[1:]
         track_modify = tracklist[track]
         interval_unit = x.ticks_per_beat
+        time1 *= interval_unit
+        time1 = int(time1)
         if mode == 'm+':
             degrees = [x.degree for x in chordall.notes]
             duration = [
@@ -426,7 +436,7 @@ def write(name_of_midi,
                         Message(sorthas[n][2],
                                 note=degrees[sorthas[n][1]],
                                 velocity=chordall[sorthas[n][1] + 1].volume,
-                                time=0))
+                                time=time1))
                 else:
                     track_modify.append(
                         Message(sorthas[n][2],
@@ -585,20 +595,21 @@ def split_melody(x,
             current_note = whole_notes[i]
             recent_notes = add_to_index(melody_duration, 8, notes_num - 1, -1,
                                         -1)
-            current_average_degree = sum(
-                [melody[j].degree for j in recent_notes]) / len(recent_notes)
-            if current_average_degree - current_note.degree <= melody_tol:
-                if melody[-1].degree - current_note.degree < chord_tol:
-                    melody.append(current_note)
-                    notes_num += 1
-                    melody_duration.append(current_note.duration)
-            else:
-                if melody[
-                        -1].degree - current_note.degree < chord_tol and whole_notes[
-                            i + 1].degree - current_note.degree < chord_tol:
-                    melody.append(current_note)
-                    notes_num += 1
-                    melody_duration.append(current_note.duration)
+            if recent_notes:
+                current_average_degree = sum(
+                    [melody[j].degree for j in recent_notes]) / len(recent_notes)
+                if current_average_degree - current_note.degree <= melody_tol:
+                    if melody[-1].degree - current_note.degree < chord_tol:
+                        melody.append(current_note)
+                        notes_num += 1
+                        melody_duration.append(current_note.duration)
+                else:
+                    if melody[
+                            -1].degree - current_note.degree < chord_tol and whole_notes[
+                                i + 1].degree - current_note.degree < chord_tol:
+                        melody.append(current_note)
+                        notes_num += 1
+                        melody_duration.append(current_note.duration)
             i += 1
 
         return melody
