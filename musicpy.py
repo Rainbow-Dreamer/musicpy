@@ -221,7 +221,7 @@ def get_tracks(name):
     return x.tracks
 
 
-def read(name, trackind=1, mode='find', is_file=False):
+def read(name, trackind=1, mode='find', is_file=False, merge=False):
     # read from a midi file and return a notes list
 
     # if mode is set to 'find', then will automatically search for
@@ -244,7 +244,18 @@ def read(name, trackind=1, mode='find', is_file=False):
             each for each in whole_tracks
             if any(each_msg.type == 'note_on' for each_msg in each)
         ]
-        return [midi_to_chord(x, j) for j in available_tracks]
+        all_tracks = [midi_to_chord(x, j) for j in available_tracks]
+        if merge:
+            start_time_ls = [j[2] for j in all_tracks]
+            first_track_ind = start_time_ls.index(min(start_time_ls))
+            all_tracks.insert(0, all_tracks.pop(first_track_ind))
+            first_track = all_tracks[0]
+            tempo, all_track_notes, first_track_start_time = first_track
+            for i in all_tracks[1:]:
+                all_track_notes &= (i[1], i[2]-first_track_start_time)
+            return tempo, all_track_notes, first_track_start_time  
+        else:
+            return all_tracks
     else:
         try:
             t = whole_tracks[trackind]
