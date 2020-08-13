@@ -708,8 +708,11 @@ def split_all(x,
 def chord_analysis(x,
                    melody_tol=minor_seventh,
                    chord_tol=major_sixth,
-                   mode='chord names'):
-    chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
+                   mode='chord names', is_chord=False):
+    if not is_chord:
+        chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
+    else:
+        chord_notes = x
     chord_ls = []
     current_chord = []
     whole_notes = chord_notes.notes

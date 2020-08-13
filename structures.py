@@ -71,6 +71,8 @@ class note:
     def play(self, *args, **kwargs):
         import musicpy
         musicpy.play(self, *args, **kwargs)
+    
+    
 
 
 def toNote(notename, duration=1, volume=100, pitch=5):
@@ -793,6 +795,26 @@ class chord:
     def play(self, *args, **kwargs):
         import musicpy
         musicpy.play(self, *args, **kwargs)
+    
+    def split_melody(self, *args, **kwargs):
+        import musicpy
+        return musicpy.split_melody(self, *args, **kwargs)  
+    
+    def split_chord(self, *args, **kwargs):
+        import musicpy
+        return musicpy.split_chord(self, *args, **kwargs) 
+    
+    def split_all(self, *args, **kwargs):
+        import musicpy
+        return musicpy.split_all(self, *args, **kwargs) 
+    
+    def detect_scale(self, *args, **kwargs):
+        import musicpy
+        return musicpy.detect_scale(self, *args, **kwargs)    
+    
+    def chord_analysis(self, *args, **kwargs):
+        import musicpy
+        return musicpy.chord_analysis(self, *args, **kwargs)      
 
 
 class scale:
