@@ -13,6 +13,8 @@ import这个库: from musicpy.musicpy import *
 
 我自己做的介绍与使用教程视频第一期：https://www.bilibili.com/video/BV1754y197a9/
 
+详细的musicpy数据结构，基础语法以及使用教程，请看我正在写的Wiki，我会尽量把所有的细节都讲清楚。 https://github.com/Rainbow-Dreamer/musicpy/wiki
+
 1、note类（音符类），初始化一个note的实例只需要给一个音名（CDEFGAB其中一个）和一个音高（一个正整数），现在你就可以使用这个音符去做音乐里的任何事情了。你还可以设定音符的duration（音符长度）和volume（音符的音量大小）。音符长度默认为1，音量默认为100。
 
 比如： a = note('A', 5)
