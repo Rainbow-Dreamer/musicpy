@@ -72,6 +72,17 @@ class note:
         import musicpy
         musicpy.play(self, *args, **kwargs)
     
+    def __add__(self, obj):
+        if isinstance(obj, int):
+            return self.up(obj)
+        if not isinstance(obj, note):
+            obj = toNote(obj)
+        return chord([copy(self), copy(obj)])
+    
+    def __sub__(self, obj):
+        if isinstance(obj, int):
+            return self.down(obj)        
+    
     
 
 
@@ -209,6 +220,8 @@ class chord:
         return note1 in self.notes
 
     def __add__(self, obj):
+        if isinstance(obj, int):
+            return self.up(obj)
         temp = copy(self)
         if isinstance(obj, note):
             temp.notes.append(copy(obj))
@@ -375,6 +388,8 @@ class chord:
         return result
 
     def __sub__(self, obj):
+        if isinstance(obj, int):
+            return self.down(obj)        
         if not isinstance(obj, note):
             obj = toNote(obj)
         temp = copy(self)
