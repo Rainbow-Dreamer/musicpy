@@ -7,7 +7,8 @@
 
 在musicpy里面，几个基本的类是note（音符）, chord（和弦）和scale（音阶）。这几个类是构成音乐代码的基础。musicpy里面的乐理功能非常多，先从几个最基本的开始介绍吧。
 
-首先在musicpy文件夹里打开cmd, 跑一下pip install -r requirements.txt安装依赖库
+首先在musicpy文件夹里打开cmd, 跑一下pip install -r requirements.txt安装依赖库（如果本来就是pip install musicpy安装的就不需要这一步，
+我也比较推荐直接pip install musicpy就行）
 
 import这个库: from musicpy.musicpy import *
 
