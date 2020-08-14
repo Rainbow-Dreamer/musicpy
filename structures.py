@@ -641,10 +641,17 @@ class chord:
 
     def index(self, value):
         if type(value) == str:
-            value = toNote(value)
-        if value not in self:
-            return -1
-        return self.notes.index(value) + 1
+            try:
+                value = toNote(value)
+                if value not in self:
+                    return -1
+                return self.notes.index(value) + 1                
+            except:
+                note_names = self.names()
+                if value not in note_names:
+                    return -1
+                return note_names.index(value) + 1                   
+        
 
     def remove(self, note1):
         if type(note1) == str:
