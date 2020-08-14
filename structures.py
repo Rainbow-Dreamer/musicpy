@@ -354,9 +354,9 @@ class chord:
         return temp
     
     
-    def detect(self):
+    def detect(self, *args, **kwargs):
         import musicpy
-        return musicpy.detect(self)
+        return musicpy.detect(self, *args, **kwargs)
     
     
     def get(self, ls):
@@ -1087,9 +1087,9 @@ class scale:
     def __matmul__(self, indlist):
         return self.pickchord_by_index(indlist)
     
-    def detect(self):
+    def detect(self, *args, **kwargs):
         import musicpy
-        return musicpy.detect(self, mode='scale')
+        return musicpy.detect(self, *args, **kwargs, mode='scale')
     
     
     def get_allchord(self, interval=0, num=3, step=2):
