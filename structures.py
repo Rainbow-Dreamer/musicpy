@@ -220,6 +220,8 @@ class chord:
     def __add__(self, obj):
         if isinstance(obj, int):
             return self.up(obj)
+        if isinstance(obj, tuple):
+            return self.up(*obj)        
         temp = copy(self)
         if isinstance(obj, note):
             temp.notes.append(copy(obj))
@@ -388,6 +390,8 @@ class chord:
     def __sub__(self, obj):
         if isinstance(obj, int):
             return self.down(obj)
+        if isinstance(obj, tuple):
+            return self.up(*obj)        
         if not isinstance(obj, note):
             obj = toNote(obj)
         temp = copy(self)
