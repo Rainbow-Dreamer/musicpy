@@ -253,7 +253,6 @@ def read(name,
             for each in available_tracks:
                 if any(hasattr(j, 'channel') and j.channel == 9 for j in each):
                     available_tracks.remove(each)
-                    break
         all_tracks = [midi_to_chord(x, j) for j in available_tracks]
         if merge:
             start_time_ls = [j[2] for j in all_tracks]
