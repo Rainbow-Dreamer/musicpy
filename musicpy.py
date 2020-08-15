@@ -221,7 +221,12 @@ def get_tracks(name):
     return x.tracks
 
 
-def read(name, trackind=1, mode='find', is_file=False, merge=False, get_off_drums=True):
+def read(name,
+         trackind=1,
+         mode='find',
+         is_file=False,
+         merge=False,
+         get_off_drums=True):
     # read from a midi file and return a notes list
 
     # if mode is set to 'find', then will automatically search for
@@ -248,7 +253,7 @@ def read(name, trackind=1, mode='find', is_file=False, merge=False, get_off_drum
             for each in available_tracks:
                 if any(hasattr(j, 'channel') and j.channel == 9 for j in each):
                     available_tracks.remove(each)
-                    break        
+                    break
         all_tracks = [midi_to_chord(x, j) for j in available_tracks]
         if merge:
             start_time_ls = [j[2] for j in all_tracks]
@@ -257,8 +262,8 @@ def read(name, trackind=1, mode='find', is_file=False, merge=False, get_off_drum
             first_track = all_tracks[0]
             tempo, all_track_notes, first_track_start_time = first_track
             for i in all_tracks[1:]:
-                all_track_notes &= (i[1], i[2]-first_track_start_time)
-            return tempo, all_track_notes, first_track_start_time  
+                all_track_notes &= (i[1], i[2] - first_track_start_time)
+            return tempo, all_track_notes, first_track_start_time
         else:
             return all_tracks
     else:
@@ -708,7 +713,8 @@ def split_all(x,
 def chord_analysis(x,
                    melody_tol=minor_seventh,
                    chord_tol=major_sixth,
-                   mode='chord names', is_chord=False):
+                   mode='chord names',
+                   is_chord=False):
     if not is_chord:
         chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
     else:
@@ -890,12 +896,10 @@ def trans(obj, pitch=5, duration=1, interval=None):
     return 'not a valid chord representation or chord types not in database'
 
 
-
 def toScale(obj, pitch=5):
     inds = obj.index(' ')
-    tonic, scale_name = obj[:inds], obj[inds+1:]
+    tonic, scale_name = obj[:inds], obj[inds + 1:]
     return scale(note(tonic, pitch), scale_name)
-    
 
 
 C = trans
@@ -1302,14 +1306,12 @@ def find_similarity(a,
                     result = inversion_from(a, chordfrom, mode=1)
                     types = 'inversion'
                     if result is None:
-                        sort_message = sort_from(a,
-                                                 chordfrom,
-                                                 getorder=True)
+                        sort_message = sort_from(a, chordfrom, getorder=True)
                         types = 'inversion'
                         if sort_message is None:
                             return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
                         else:
-                            result = f'sort as {sort_message}'                
+                            result = f'sort as {sort_message}'
                 elif contains(a, chordfrom):
                     result = omitfrom(a, chordfrom)
                     types = 'omit'
@@ -1358,7 +1360,7 @@ def find_similarity(a,
                 if sort_message is None:
                     return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
                 else:
-                    result = f'sort as {sort_message}'        
+                    result = f'sort as {sort_message}'
         elif contains(a, chordfrom):
             result = omitfrom(a, chordfrom)
         elif len(a) == len(chordfrom):
@@ -1936,7 +1938,7 @@ def negative_harmony(key, a=None, get_map_dict=False, sort=True):
             for each in range(len(notes)):
                 current = notes[each]
                 if current.name in standard_dict:
-                    current.name = standard_dict[current.name]                
+                    current.name = standard_dict[current.name]
                 notes[each] = note(map_dict[current.name], current.num)
             if sort:
                 temp.notes.sort(key=lambda s: s.degree)

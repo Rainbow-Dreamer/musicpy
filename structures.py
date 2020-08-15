@@ -58,7 +58,7 @@ class note:
 
     def __neg__(self):
         return self.down()
-    
+
     def __invert__(self):
         name = self.name
         if name in standard_dict:
@@ -67,23 +67,21 @@ class note:
             return note(reverse_standard_dict[name], self.num)
         else:
             return note(name, self.num)
-    
+
     def play(self, *args, **kwargs):
         import musicpy
         musicpy.play(self, *args, **kwargs)
-    
+
     def __add__(self, obj):
         if isinstance(obj, int):
             return self.up(obj)
         if not isinstance(obj, note):
             obj = toNote(obj)
         return chord([copy(self), copy(obj)])
-    
+
     def __sub__(self, obj):
         if isinstance(obj, int):
-            return self.down(obj)        
-    
-    
+            return self.down(obj)
 
 
 def toNote(notename, duration=1, volume=100, pitch=5):
@@ -251,10 +249,13 @@ class chord:
         return self.reverse()
 
     def __floordiv__(self, obj):
-        if type(obj) == str:
+        types = type(obj)
+        if types == int or types == float:
+            return self.period(obj)
+        elif types == str:
             import musicpy
             obj = musicpy.trans(obj)
-        elif type(obj) == tuple:
+        elif types == tuple:
             import musicpy
             obj = musicpy.trans(*obj)
         return self.add(obj, mode='after')
@@ -300,12 +301,11 @@ class chord:
             else:
                 return
         return self.add(obj, mode='head')
-    
+
     def __matmul__(self, obj):
         import musicpy
         return musicpy.negative_harmony(obj, self)
-    
-    
+
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
         # of the chord.
@@ -365,13 +365,11 @@ class chord:
                         if degree in self_names:
                             temp = temp.omit(degree, 2)
         return temp
-    
-    
+
     def detect(self, *args, **kwargs):
         import musicpy
         return musicpy.detect(self, *args, **kwargs)
-    
-    
+
     def get(self, ls):
         return chord([self[i] for i in ls],
                      interval=[self.interval[i - 1] for i in ls])
@@ -389,7 +387,7 @@ class chord:
 
     def __sub__(self, obj):
         if isinstance(obj, int):
-            return self.down(obj)        
+            return self.down(obj)
         if not isinstance(obj, note):
             obj = toNote(obj)
         temp = copy(self)
@@ -660,13 +658,12 @@ class chord:
                 value = toNote(value)
                 if value not in self:
                     return -1
-                return self.notes.index(value) + 1                
+                return self.notes.index(value) + 1
             except:
                 note_names = self.names()
                 if value not in note_names:
                     return -1
-                return note_names.index(value) + 1                   
-        
+                return note_names.index(value) + 1
 
     def remove(self, note1):
         if type(note1) == str:
@@ -813,30 +810,30 @@ class chord:
                                 mode=modes)
                 temp.interval[-1] = intervals[k]
         return temp
-    
+
     def play(self, *args, **kwargs):
         import musicpy
         musicpy.play(self, *args, **kwargs)
-    
+
     def split_melody(self, *args, **kwargs):
         import musicpy
-        return musicpy.split_melody(self, *args, **kwargs)  
-    
+        return musicpy.split_melody(self, *args, **kwargs)
+
     def split_chord(self, *args, **kwargs):
         import musicpy
-        return musicpy.split_chord(self, *args, **kwargs) 
-    
+        return musicpy.split_chord(self, *args, **kwargs)
+
     def split_all(self, *args, **kwargs):
         import musicpy
-        return musicpy.split_all(self, *args, **kwargs) 
-    
+        return musicpy.split_all(self, *args, **kwargs)
+
     def detect_scale(self, *args, **kwargs):
         import musicpy
-        return musicpy.detect_scale(self, *args, **kwargs)    
-    
+        return musicpy.detect_scale(self, *args, **kwargs)
+
     def chord_analysis(self, *args, **kwargs):
         import musicpy
-        return musicpy.chord_analysis(self, *args, **kwargs)      
+        return musicpy.chord_analysis(self, *args, **kwargs)
 
 
 class scale:
@@ -1108,12 +1105,11 @@ class scale:
 
     def __matmul__(self, indlist):
         return self.pickchord_by_index(indlist)
-    
+
     def detect(self, *args, **kwargs):
         import musicpy
         return musicpy.detect(self, *args, **kwargs, mode='scale')
-    
-    
+
     def get_allchord(self, interval=0, num=3, step=2):
         return [
             self.pickchord_by_degree(i, interval=interval, num=num, step=step)
@@ -1164,17 +1160,18 @@ class scale:
 
     def down(self, unit=1, ind=None, ind2=None):
         return self.up(-unit, ind2)
-    
-    
+
     def __pos__(self):
         return self.up()
 
     def __neg__(self):
         return self.down()
-    
+
     def __invert__(self):
-        return scale(self[1], interval = list(reversed(self.interval)), pitch=self.pitch)
-    
+        return scale(self[1],
+                     interval=list(reversed(self.interval)),
+                     pitch=self.pitch)
+
     def move(self, x):
         notes = copy(self.getScale())
         return scale(notels=notes.move(x))
@@ -1192,10 +1189,10 @@ class scale:
             else:
                 start1 = self.getScale().notes[ind]
         return scale(start=start1, interval=new_interval)
-    
+
     def play(self, intervals=1, durations=None, *args, **kwargs):
         import musicpy
-        musicpy.play(self.getScale(intervals, durations), *args, **kwargs)    
+        musicpy.play(self.getScale(intervals, durations), *args, **kwargs)
 
 
 class circle_of_fifths:
