@@ -218,7 +218,7 @@ class chord:
         return note1 in self.notes
 
     def __add__(self, obj):
-        if isinstance(obj, int):
+        if isinstance(obj, int) or isinstance(obj, list):
             return self.up(obj)
         if isinstance(obj, tuple):
             return self.up(*obj)        
@@ -388,7 +388,7 @@ class chord:
         return result
 
     def __sub__(self, obj):
-        if isinstance(obj, int):
+        if isinstance(obj, int) or isinstance(obj, list):
             return self.down(obj)
         if isinstance(obj, tuple):
             return self.up(*obj)        
@@ -569,6 +569,10 @@ class chord:
 
     def up(self, unit=1, ind=None, ind2=None):
         temp = copy(self)
+        if type(unit) != int:
+            for k in range(len(unit)):
+                temp.notes[k] = temp.notes[k].up(unit[k])
+            return temp
         if type(ind) != int and ind is not None:
             temp.notes = [
                 temp.notes[i - 1].up(unit) if i in ind else temp.notes[i - 1]
@@ -598,6 +602,9 @@ class chord:
         return temp
 
     def down(self, unit=1, ind=None, ind2=None):
+        if type(unit) != int:
+            unit = [-i for i in unit]
+            return self.up(unit, ind, ind2)
         return self.up(-unit, ind, ind2)
 
     def drop(self, ind, mode=0):
