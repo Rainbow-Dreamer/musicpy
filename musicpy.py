@@ -13,7 +13,7 @@ from mido.midifiles.tracks import MidiTrack
 from mido.midifiles.meta import MetaMessage
 from difflib import SequenceMatcher
 from database import *
-from structures import note, chord, scale, circle_of_fifths, circle_of_fourths, relative_note
+from structures import note, chord, scale, piece, circle_of_fifths, circle_of_fourths, relative_note
 '''
 mido and midiutil is requried for this module, please make sure you have
 these two modules with this file
@@ -288,7 +288,8 @@ def midi_to_chord(x, t):
             if i not in hason and i not in hasoff:
                 if not find_first_note:
                     find_first_note = True
-                    start_time = sum(t[j].time for j in range(i+1)) / interval_unit
+                    start_time = sum(t[j].time
+                                     for j in range(i + 1)) / interval_unit
                     if start_time.is_integer():
                         start_time = int(start_time)
                 hason.append(i)
@@ -354,40 +355,51 @@ def write(name_of_midi,
           instrument=None,
           save_as_file=True,
           midi_io=None):
+    if isinstance(chord1, piece):
+        mode = 'multi'
+    if mode == 'multi':
+        '''
+        write a whole piece (multi tracks with different instruments) to a midi file,
+        requires a piece object
+        '''
+        if not isinstance(chord1, piece):
+            return 'multi mode requires a piece object'
+        track_number, start_times, instruments_numbers, tempo, tracks_contents, track_names = \
+        chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names
+        MyMIDI = MIDIFile(track_number)
+        for i in range(track_number):
+            MyMIDI.addTempo(i, 0, tempo)
+            MyMIDI.addProgramChange(i, i, 0, instruments_numbers[i] - 1)
+            if track_names:
+                MyMIDI.addTrackName(i, 0, track_names[i])
+            content = tracks_contents[i]
+            content_notes = content.notes
+            content_intervals = content.interval
+            current_start_time = start_times[i]
+            for j in range(len(content)):
+                current_note = content_notes[j]
+                MyMIDI.addNote(i, i, current_note.degree, current_start_time,
+                               current_note.duration, current_note.volume)
+                current_start_time += content_intervals[j]
+        if save_as_file:
+            with open(name_of_midi, "wb") as output_file:
+                MyMIDI.writeFile(output_file)
+            return
+        else:
+            from io import BytesIO
+            current_io = BytesIO()
+            MyMIDI.writeFile(current_io)
+            return current_io
     if isinstance(chord1, note):
         chord1 = chord([chord1])
     if not isinstance(chord1, list):
         chord1 = [chord1]
     chordall = concat(chord1)
-    if mode == 'new2':
-        newmidi = midi(ticks_per_beat=tempo * 4)
-        newtempo = unit.bpm2tempo(tempo)
-
-        for g in range(track_num + 1):
-            newmidi.add_track()
-        newmidi.tracks[0] = MidiTrack([
-            MetaMessage('set_tempo', tempo=newtempo, time=0),
-            MetaMessage('end_of_track', time=0)
-        ])
-        if save_as_file:
-            newmidi.save(name_of_midi)
-            current_io = None
-        else:
-            current_io = newmidi
-        return write(name_of_midi,
-                     chord1,
-                     tempo,
-                     track,
-                     channel,
-                     time1,
-                     track_num,
-                     mode='m+',
-                     instrument=instrument,
-                     save_as_file=save_as_file,
-                     midi_io=current_io)
-
     if mode == 'new':
-        # write to a new midi file or overwrite an existing midi file
+        '''
+        write to a new midi file or overwrite an existing midi file,
+        only supports writing to a single track in this mode
+        '''
         MyMIDI = MIDIFile(track_num)
         MyMIDI.addTempo(track, time1, tempo)
         degrees = [x.degree for x in chordall.notes]
@@ -415,9 +427,43 @@ def write(name_of_midi,
             current_io = BytesIO()
             MyMIDI.writeFile(current_io)
             return current_io
+    elif mode == 'new2':
+        '''
+        this mode also writes to a new midi file or overwrite an existing midi file
+        as the 'new' mode does, but uses mido ways instead of midiutil ways,
+        also only supports writing to a single track
+        '''
+        newmidi = midi(ticks_per_beat=tempo * 4)
+        newtempo = unit.bpm2tempo(tempo)
+
+        for g in range(track_num + 1):
+            newmidi.add_track()
+        newmidi.tracks[0] = MidiTrack([
+            MetaMessage('set_tempo', tempo=newtempo, time=0),
+            MetaMessage('end_of_track', time=0)
+        ])
+        if save_as_file:
+            newmidi.save(name_of_midi)
+            current_io = None
+        else:
+            current_io = newmidi
+        return write(name_of_midi,
+                     chord1,
+                     tempo,
+                     track,
+                     channel,
+                     time1,
+                     track_num,
+                     mode='m+',
+                     instrument=instrument,
+                     save_as_file=save_as_file,
+                     midi_io=current_io)
     elif mode in ['m+', 'm']:
-        # modify existing midi files, m+: add at the end of the midi file,
-        # m: add from the beginning of the midi file
+        '''
+        both of these two modes modify existing midi files
+        m+: add at the end of the midi file,
+        m: add from the beginning of the midi file
+        '''
         if save_as_file:
             x = midi(name_of_midi)
         else:
@@ -1733,23 +1779,21 @@ def sums(*chordls):
         return sums(list(chordls))
 
 
-def random_composing(
-    mode,
-    length,
-    difficulty='easy',
-    init_notes=None,
-    pattern=None,
-    focus_notes=None,
-    focus_ratio=0.7,
-    avoid_dim_5=True,
-    num=3,
-    left_hand_velocity=70,
-    right_hand_velocity=80,
-    left_hand_meter=4,
-    right_hand_meter=4,
-    choose_intervals=[0.25,0.5,1,1.5,2,4],
-    choose_durations = [0.25,0.5,1,1.5,2,4]
-):
+def random_composing(mode,
+                     length,
+                     difficulty='easy',
+                     init_notes=None,
+                     pattern=None,
+                     focus_notes=None,
+                     focus_ratio=0.7,
+                     avoid_dim_5=True,
+                     num=3,
+                     left_hand_velocity=70,
+                     right_hand_velocity=80,
+                     left_hand_meter=4,
+                     right_hand_meter=4,
+                     choose_intervals=[0.25, 0.5, 1, 1.5, 2, 4],
+                     choose_durations=[0.25, 0.5, 1, 1.5, 2, 4]):
     # Composing a piece of music randomly from a given mode (here means scale),
     # difficulty, number of start notes (or given notes) and an approximate length.
     # length is the total approximate total number of notes you want the music to be.
@@ -1836,7 +1880,8 @@ def random_composing(
             newmelody = [firstmelody]
             length_of_chord = sum(newchord.interval)
             intervals = [random.choice(choose_intervals)]
-            firstmelody.duration = random.choice(choose_durations)# intervals[0]  # random.choice([0.5,1])
+            firstmelody.duration = random.choice(
+                choose_durations)  # intervals[0]  # random.choice([0.5,1])
             while sum(intervals) <= length_of_chord:
                 if focused:
                     now_focus = random.choices(
@@ -1857,9 +1902,11 @@ def random_composing(
                     else:
                         currentmelody = random.choice(chordinner)
                 currentmelody.volume = right_hand_velocity
-                newinter = random.choice(choose_intervals) #0.5  # random.choice([0.5,1])
+                newinter = random.choice(
+                    choose_intervals)  #0.5  # random.choice([0.5,1])
                 intervals.append(newinter)
-                currentmelody.duration = random.choice(choose_durations) # newinter  # random.choice([0.5,1])
+                currentmelody.duration = random.choice(
+                    choose_durations)  # newinter  # random.choice([0.5,1])
                 newmelody.append(currentmelody)
 
             distance = [

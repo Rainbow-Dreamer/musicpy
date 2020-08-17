@@ -343,3 +343,5 @@ instruments = {
     'Applause': 127,
     'Gunshot': 128
 }
+
+reverse_instruments = {j: i for i, j in instruments.items()}

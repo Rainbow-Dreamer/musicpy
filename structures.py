@@ -221,7 +221,7 @@ class chord:
         if isinstance(obj, int) or isinstance(obj, list):
             return self.up(obj)
         if isinstance(obj, tuple):
-            return self.up(*obj)        
+            return self.up(*obj)
         temp = copy(self)
         if isinstance(obj, note):
             temp.notes.append(copy(obj))
@@ -309,11 +309,11 @@ class chord:
         if type(obj) == tuple:
             return musicpy.negative_harmony(obj[0], self, *obj[1:])
         return musicpy.negative_harmony(obj, self)
-    
+
     def negative_harmony(self, *args, **kwargs):
         import musicpy
         return musicpy.negative_harmony(a=self, *args, **kwargs)
-    
+
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
         # of the chord.
@@ -397,7 +397,7 @@ class chord:
         if isinstance(obj, int) or isinstance(obj, list):
             return self.down(obj)
         if isinstance(obj, tuple):
-            return self.up(*obj)        
+            return self.up(*obj)
         if not isinstance(obj, note):
             obj = toNote(obj)
         temp = copy(self)
@@ -1373,3 +1373,99 @@ def relative_note(a, b):
         return b.name + 'b'
     if diff == -2:
         return b.name + 'bb'
+
+
+class piece:
+    def __init__(self,
+                 tracks,
+                 instruments_list,
+                 tempo,
+                 start_times,
+                 track_names=None):
+        self.tracks = tracks
+        self.instruments_list = [
+            reverse_instruments[i] if isinstance(i, int) else i
+            for i in instruments_list
+        ]
+        self.instruments_numbers = [
+            instruments[j] for j in self.instruments_list
+        ]
+        self.tempo = tempo
+        self.start_times = start_times
+        self.track_number = len(tracks)
+        self.track_names = track_names
+
+    def __repr__(self):
+        return '\n'.join([
+            f'track {i+1} {self.track_names[i] if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
+            for i in range(self.track_number)
+        ])
+
+    def __getitem__(self, i):
+        if i == 0:
+            i = 1
+        return f'track {i} {self.track_names[i-1] if self.track_names else ""}| instrument: {self.instruments_list[i-1]} | start time: {self.start_times[i-1]} | {self.tracks[i-1]}'
+
+    def __len__(self):
+        return len(self.tracks)
+
+    def append(self, new_track, new_instrument, new_start_time):
+        self.tracks.append(new_track)
+        if isinstance(new_instrument, int):
+            new_instrument = reverse_instruments[new_instrument]
+        self.instruments_list.append(new_instrument)
+        self.instruments_numbers.append(instruments[new_instrument])
+        self.start_times.append(new_start_time)
+        self.track_number += 1
+
+    def up(self, n):
+        temp = copy(self)
+        for i in range(temp.track_number):
+            temp.tracks[i] = temp.tracks[i].up(n)
+        return temp
+
+    def down(self, n):
+        temp = copy(self)
+        for i in range(temp.track_number):
+            temp.tracks[i] = temp.tracks[i].down(n)
+        return temp
+
+    def __mul__(self, n):
+        temp = copy(self)
+        for i in range(temp.track_number):
+            temp.tracks[i] = temp.tracks[i] * n
+        return temp
+
+    def __mod__(self, n):
+        temp = copy(self)
+        for i in range(temp.track_number):
+            temp.tracks[i] = temp.tracks[i] % n
+        return temp
+
+    def __add__(self, n):
+        temp = copy(self)
+        if isinstance(n, int):
+            for i in range(temp.track_number):
+                temp.tracks[i] += n
+        else:
+            temp.append(*n)
+        return temp
+
+    def __sub__(self, n):
+        temp = copy(self)
+        if isinstance(n, int):
+            for i in range(temp.track_number):
+                temp.tracks[i] -= n
+        return temp
+
+    def __neg__(self):
+        temp = copy(self)
+        for i in range(temp.track_number):
+            temp.tracks[i] = -temp.tracks[i]
+        return temp
+
+    def __pos__(self):
+        temp = copy(self)
+        for i in range(temp.track_number):
+            temp.tracks[i] = +temp.tracks[i]
+        return temp
