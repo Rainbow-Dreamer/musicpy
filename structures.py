@@ -306,8 +306,14 @@ class chord:
 
     def __matmul__(self, obj):
         import musicpy
+        if type(obj) == tuple:
+            return musicpy.negative_harmony(obj[0], self, *obj[1:])
         return musicpy.negative_harmony(obj, self)
-
+    
+    def negative_harmony(self, *args, **kwargs):
+        import musicpy
+        return musicpy.negative_harmony(a=self, *args, **kwargs)
+    
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
         # of the chord.
