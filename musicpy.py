@@ -288,7 +288,7 @@ def midi_to_chord(x, t):
             if i not in hason and i not in hasoff:
                 if not find_first_note:
                     find_first_note = True
-                    start_time = current_msg.time / interval_unit
+                    start_time = sum(t[j].time for j in range(i+1)) / interval_unit
                     if start_time.is_integer():
                         start_time = int(start_time)
                 hason.append(i)
