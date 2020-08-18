@@ -1399,14 +1399,14 @@ class piece:
 
     def __repr__(self):
         return '\n'.join([
-            f'track {i+1} {self.track_names[i] if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
+            f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(self.track_number)
         ])
 
     def __getitem__(self, i):
         if i == 0:
             i = 1
-        return f'track {i} {self.track_names[i-1] if self.track_names else ""}| instrument: {self.instruments_list[i-1]} | start time: {self.start_times[i-1]} | {self.tracks[i-1]}'
+        return f'track {i}{" channel " + str(self.channels[i-1]) if self.channels else ""} {self.track_names[i-1] if self.track_names else ""}| instrument: {self.instruments_list[i-1]} | start time: {self.start_times[i-1]} | {self.tracks[i-1]}'
 
     def __len__(self):
         return len(self.tracks)
