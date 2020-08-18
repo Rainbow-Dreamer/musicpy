@@ -364,21 +364,26 @@ def write(name_of_midi,
         '''
         if not isinstance(chord1, piece):
             return 'multi mode requires a piece object'
-        track_number, start_times, instruments_numbers, tempo, tracks_contents, track_names = \
-        chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names
+        track_number, start_times, instruments_numbers, tempo, tracks_contents, track_names, channels = \
+        chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels
         MyMIDI = MIDIFile(track_number)
         for i in range(track_number):
+            if channels:
+                current_channel = channels[i]
+            else:
+                current_channel = i            
             MyMIDI.addTempo(i, 0, tempo)
-            MyMIDI.addProgramChange(i, i, 0, instruments_numbers[i] - 1)
+            MyMIDI.addProgramChange(i, current_channel, 0, instruments_numbers[i] - 1)
             if track_names:
                 MyMIDI.addTrackName(i, 0, track_names[i])
+            
             content = tracks_contents[i]
             content_notes = content.notes
             content_intervals = content.interval
             current_start_time = start_times[i]
             for j in range(len(content)):
                 current_note = content_notes[j]
-                MyMIDI.addNote(i, i, current_note.degree, current_start_time,
+                MyMIDI.addNote(i, current_channel, current_note.degree, current_start_time,
                                current_note.duration, current_note.volume)
                 current_start_time += content_intervals[j]
         if save_as_file:

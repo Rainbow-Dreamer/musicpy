@@ -1381,7 +1381,8 @@ class piece:
                  instruments_list,
                  tempo,
                  start_times,
-                 track_names=None):
+                 track_names=None,
+                 channels=None):
         self.tracks = tracks
         self.instruments_list = [
             reverse_instruments[i] if isinstance(i, int) else i
@@ -1394,6 +1395,7 @@ class piece:
         self.start_times = start_times
         self.track_number = len(tracks)
         self.track_names = track_names
+        self.channels = channels
 
     def __repr__(self):
         return '\n'.join([
