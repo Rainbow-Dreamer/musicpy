@@ -1831,8 +1831,8 @@ def random_composing(mode,
             patterncount += 1
             if patterncount == len(pattern):
                 patterncount = 0
-        newduration = 1  # random.choice([1,2])
-        newinterval = 1  # random.choice([0.5,1])#random.choice([0,0.5,1])
+        newduration = random.choice(choose_durations)  # random.choice([1,2])
+        newinterval = random.choice(choose_intervals)  # random.choice([0.5,1])#random.choice([0,0.5,1])
         newchord = newchordnotes.set(newduration, newinterval)
         '''
         # check if current chord belongs to a kind of (closer to) major/minor
