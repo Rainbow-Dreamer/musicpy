@@ -333,11 +333,19 @@ def midi_to_chord(x, t):
                                    volume=t[i].velocity))
 
     result = chord(notelist, interval=intervals)
-    bpm = 100
+    find_tempo = False
     for msg in x.tracks[0]:
         if hasattr(msg, 'tempo'):
             tempo = msg.tempo
-    bpm = unit.tempo2bpm(tempo)
+            find_tempo = True
+    if find_tempo:
+        bpm = unit.tempo2bpm(tempo)
+    else:
+        for each_track in x.tracks[1:]:
+            for msg in each_track:
+                if hasattr(msg, 'tempo'):
+                    tempo = msg.tempo
+        bpm = unit.tempo2bpm(tempo)
     return bpm, result, start_time
 
 
