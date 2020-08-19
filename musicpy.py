@@ -371,20 +371,22 @@ def write(name_of_midi,
             if channels:
                 current_channel = channels[i]
             else:
-                current_channel = i            
+                current_channel = i
             MyMIDI.addTempo(i, 0, tempo)
-            MyMIDI.addProgramChange(i, current_channel, 0, instruments_numbers[i] - 1)
+            MyMIDI.addProgramChange(i, current_channel, 0,
+                                    instruments_numbers[i] - 1)
             if track_names:
                 MyMIDI.addTrackName(i, 0, track_names[i])
-            
+
             content = tracks_contents[i]
             content_notes = content.notes
             content_intervals = content.interval
             current_start_time = start_times[i]
             for j in range(len(content)):
                 current_note = content_notes[j]
-                MyMIDI.addNote(i, current_channel, current_note.degree, current_start_time,
-                               current_note.duration, current_note.volume)
+                MyMIDI.addNote(i, current_channel, current_note.degree,
+                               current_start_time, current_note.duration,
+                               current_note.volume)
                 current_start_time += content_intervals[j]
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
@@ -1832,7 +1834,9 @@ def random_composing(mode,
             if patterncount == len(pattern):
                 patterncount = 0
         newduration = random.choice(choose_durations)  # random.choice([1,2])
-        newinterval = random.choice(choose_intervals)  # random.choice([0.5,1])#random.choice([0,0.5,1])
+        newinterval = random.choice(
+            choose_intervals
+        )  # random.choice([0.5,1])#random.choice([0,0.5,1])
         newchord = newchordnotes.set(newduration, newinterval)
         '''
         # check if current chord belongs to a kind of (closer to) major/minor
