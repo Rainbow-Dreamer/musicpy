@@ -71,12 +71,12 @@ def getchord_by_interval(start,
                          interval1,
                          duration=1,
                          interval=0,
-                         cummulative=False):
+                         cummulative=True):
 
     if not isinstance(start, note):
         start = toNote(start)
     result = [start]
-    if not cummulative:
+    if cummulative:
         # in this case all the notes has distance only with the start note
         startind = start.degree
         result += [
@@ -102,7 +102,7 @@ def getchord(start,
              intervals=None,
              addition=None,
              interval=None,
-             cummulative=False,
+             cummulative=True,
              pitch=5,
              b=None,
              sharp=None,
