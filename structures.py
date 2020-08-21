@@ -102,6 +102,9 @@ def trans_note(notename, duration=1, volume=100, pitch=5):
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume)
 
+def degrees_to_chord(ls, interval=0, duration=1):
+    return chord([degree_to_note(i) for i in ls], interval=interval, duration=duration)
+
 
 def degree_to_note(degree, duration=1, volume=100):
     name = standard_reverse[degree % 12]
@@ -145,6 +148,9 @@ class chord:
 
     def get_volume(self):
         return [i.volume for i in self.notes]
+    
+    def get_degree(self):
+        return [i.degree for i in self]
 
     def names(self):
         return [i.name for i in self]
