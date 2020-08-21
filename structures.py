@@ -157,7 +157,6 @@ class chord:
     def split(self):
         return self.notes
 
-
     def __mod__(self, alist):
         types = type(alist)
         if types in [list, tuple]:
@@ -314,7 +313,7 @@ class chord:
 
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
-        # of the chord.       
+        # of the chord.
         temp = copy(self)
         commands = obj.split(',')
         for each in commands:
@@ -386,9 +385,9 @@ class chord:
             elif isinstance(each, float):
                 num, pitch = [int(j) for j in str(each).split('.')]
                 if num > 0:
-                    current_note = self[num] + pitch*octave
+                    current_note = self[num] + pitch * octave
                 else:
-                    current_note = self[-num] - pitch*octave
+                    current_note = self[-num] - pitch * octave
                 result.append(current_note)
                 result_interval.append(self.interval[num - 1])
         return chord(result, interval=result_interval)
