@@ -1220,6 +1220,18 @@ class scale:
     def play(self, intervals=1, durations=None, *args, **kwargs):
         import musicpy
         musicpy.play(self.getScale(intervals, durations), *args, **kwargs)
+    
+    def __add__(self, obj):
+        if type(obj) == int:
+            return self.up(obj)
+        elif type(obj) == tuple:
+            return self.up(*obj)
+    
+    def __sub__(self, obj):
+        if type(obj) == int:
+            return self.down(obj)
+        elif type(obj) == tuple:
+            return self.down(*obj)        
 
 
 class circle_of_fifths:
