@@ -157,16 +157,11 @@ class chord:
     def split(self):
         return self.notes
 
-    def pick(self, alist):
-        temp = self.copy()
-        temp.notes = [temp.notes[i - 1] for i in alist]
-        temp.interval = [temp.interval[x - 1] for x in alist]
-        return temp
 
     def __mod__(self, alist):
         types = type(alist)
-        if types == list:
-            return self.pick(alist)
+        if types in [list, tuple]:
+            return self.set(*alist)
         elif types == int:
             temp = copy(self)
             for i in range(alist - 1):
@@ -305,8 +300,11 @@ class chord:
         return self.add(obj, mode='head')
 
     def __matmul__(self, obj):
+        types = type(obj)
+        if types == list:
+            return self.get(obj)
         import musicpy
-        if type(obj) == tuple:
+        if types == tuple:
             return musicpy.negative_harmony(obj[0], self, *obj[1:])
         return musicpy.negative_harmony(obj, self)
 
@@ -316,7 +314,7 @@ class chord:
 
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
-        # of the chord.
+        # of the chord.       
         temp = copy(self)
         commands = obj.split(',')
         for each in commands:
@@ -379,8 +377,21 @@ class chord:
         return musicpy.detect(self, *args, **kwargs)
 
     def get(self, ls):
-        return chord([self[i] for i in ls],
-                     interval=[self.interval[i - 1] for i in ls])
+        result = []
+        result_interval = []
+        for each in ls:
+            if isinstance(each, int):
+                result.append(self[each])
+                result_interval.append(self.interval[each - 1])
+            elif isinstance(each, float):
+                num, pitch = [int(j) for j in str(each).split('.')]
+                if num > 0:
+                    current_note = self[num] + pitch*octave
+                else:
+                    current_note = self[-num] - pitch*octave
+                result.append(current_note)
+                result_interval.append(self.interval[num - 1])
+        return chord(result, interval=result_interval)
 
     def pop(self, ind=None):
         if ind is None:
