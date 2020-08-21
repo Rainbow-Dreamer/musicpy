@@ -250,9 +250,14 @@ def read(name,
             if any(each_msg.type == 'note_on' for each_msg in each)
         ]
         if get_off_drums:
-            for each in available_tracks:
-                if any(hasattr(j, 'channel') and j.channel == 9 for j in each):
-                    available_tracks.remove(each)
+            available_tracks = [
+                each for each in available_tracks if not (any(
+                    hasattr(j, 'channel') and j.channel == 9
+                    for j in each) or any(
+                        hasattr(j, 'program') and 'drum' in
+                        reverse_instruments[j.program + 1].lower()
+                        for j in each))
+            ]
         all_tracks = [midi_to_chord(x, j) for j in available_tracks]
         if merge:
             start_time_ls = [j[2] for j in all_tracks]
