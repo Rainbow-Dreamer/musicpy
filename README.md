@@ -5,7 +5,6 @@
 
 这个库可以让你用非常简洁的语法，来表达一段音乐的音符，节奏等等信息，并且可以简单地输出成midi文件的格式。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在[Wiki正在写的教程](https://github.com/Rainbow-Dreamer/musicpy/wiki
 )之后你应该很快就上手了。
-在musicpy里面，几个基本的类是note（音符）, chord（和弦）和scale（音阶）。这几个类是构成音乐代码的基础。musicpy里面的乐理功能非常多，先从几个最基本的开始介绍吧。
 
 首先在musicpy文件夹里打开cmd, 跑一下pip install -r requirements.txt安装依赖库（如果本来就是pip install musicpy安装的就不需要这一步，
 我也比较推荐直接pip install musicpy就行）
@@ -18,6 +17,7 @@ import这个库: from musicpy.musicpy import *
 
 Wiki的地址： https://github.com/Rainbow-Dreamer/musicpy/wiki
 
+在musicpy里面，几个基本的类是note（音符）, chord（和弦）和scale（音阶）。这几个类是构成音乐代码的基础。
 
 在musicpy这门语言的数据结构设计中，音符类本身是等值为纯数字的，也就是完全可以作为纯数字使用。
 
