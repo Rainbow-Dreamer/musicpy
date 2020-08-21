@@ -27,6 +27,9 @@ class note:
 
     def set(self, duration=1, volume=100):
         return note(self.name, self.num, duration, volume)
+    
+    def __mod__(self, obj):
+        return self.set(*obj)
 
     def join(self, other, ind, interval):
         if type(other) == str:
