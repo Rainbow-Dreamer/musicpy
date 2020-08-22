@@ -776,29 +776,70 @@ def chord_analysis(x,
                    melody_tol=minor_seventh,
                    chord_tol=major_sixth,
                    mode='chord names',
-                   is_chord=False):
+                   is_chord=False,
+                   new_chord_tol=minor_seventh,
+                   get_original_order=False,
+                   **detect_args):
     if not is_chord:
         chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
     else:
         chord_notes = x
-    chord_ls = []
-    current_chord = []
+
     whole_notes = chord_notes.notes
+    chord_ls = []
+    current_chord = [whole_notes[0]]
+    if get_original_order:
+        chord_inds = []
     N = len(whole_notes) - 1
     for i in range(N):
         current_note = whole_notes[i]
         next_note = whole_notes[i + 1]
         if current_note.degree <= next_note.degree:
-            current_chord.append(current_note)
-        else:
-            current_chord.append(current_note)
-            if len(current_chord) > 1:
-                chord_ls.append(chord(current_chord))
-            current_chord = []
+            if i > 0 and chord_notes.interval[
+                    i - 1] == 0 and chord_notes.interval[i] != 0:
+                chord_ls.append(chord(current_chord).sortchord())
+                if get_original_order:
+                    chord_inds.append([i + 1 - len(current_chord), i + 1])
+                current_chord = []
+                current_chord.append(next_note)
+
+            else:
+                current_chord.append(next_note)
+        elif chord_notes.interval[i] == 0:
+            current_chord.append(next_note)
+        elif current_note.degree > next_note.degree:
+            if len(current_chord) < 3:
+                current_chord.append(next_note)
+            else:
+                current_chord_degrees = sorted(
+                    [k.degree for k in current_chord])
+                if next_note.degree >= current_chord_degrees[2]:
+                    if current_chord_degrees[
+                            -1] - next_note.degree >= new_chord_tol:
+                        chord_ls.append(chord(current_chord).sortchord())
+                        if get_original_order:
+                            chord_inds.append(
+                                [i + 1 - len(current_chord), i + 1])
+                        current_chord = []
+                        current_chord.append(next_note)
+                    else:
+                        current_chord.append(next_note)
+                else:
+                    chord_ls.append(chord(current_chord).sortchord())
+                    if get_original_order:
+                        chord_inds.append([i + 1 - len(current_chord), i + 1])
+                    current_chord = []
+                    current_chord.append(next_note)
+    chord_ls.append(chord(current_chord).sortchord())
+    if get_original_order:
+        chord_inds.append([N + 1 - len(current_chord), N + 1])
+    current_chord = []
     if mode == 'chords':
+        if get_original_order:
+            return [chord_notes[k[0] + 1:k[1] + 1] for k in chord_inds]
         return chord_ls
     elif mode == 'chord names':
-        result = [detect(x) for x in chord_ls]
+        result = [detect(each, **detect_args) for each in chord_ls]
         return [i if type(i) != list else i[0] for i in result]
 
 
