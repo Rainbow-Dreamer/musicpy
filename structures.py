@@ -517,18 +517,14 @@ class chord:
                 return self + note1
 
     def inversion(self, num=1):
-        # chord's zhuan3 wei4 return chord's [first, second, ... (num)] inversion chord
+        # return chord's [first, second, ... (num)] inversion chord
         if num not in range(1, len(self.notes)):
             return 'the number of inversion is out of range of the notes in this chord'
         else:
             temp = copy(self)
-            notes = temp.notes
-            temp2 = [notes[i] for i in range(len(notes)) if i != num]
-            root = notes[num]
-            while root.degree >= temp2[0].degree:
-                root = note(root.name, root.num - 1, root.duration,
-                            root.volume)
-            return chord([root] + temp2, interval=temp.interval)
+            for i in range(num):
+                temp.notes.append(temp.notes.pop(0) + octave)
+            return temp
 
     def sort(self, indlist, rootpitch=None):
         temp = self.copy()
