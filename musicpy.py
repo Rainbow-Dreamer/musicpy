@@ -779,12 +779,15 @@ def chord_analysis(x,
                    is_chord=False,
                    new_chord_tol=minor_seventh,
                    get_original_order=False,
+                   formated=False,
+                   output_as_file=False,
                    **detect_args):
     if not is_chord:
         chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
     else:
         chord_notes = x
-
+    if formated:
+        get_original_order = True
     whole_notes = chord_notes.notes
     chord_ls = []
     current_chord = [whole_notes[0]]
@@ -834,6 +837,24 @@ def chord_analysis(x,
     if get_original_order:
         chord_inds.append([N + 1 - len(current_chord), N + 1])
     current_chord = []
+    if formated:
+        result = [detect(each, **detect_args) for each in chord_ls]
+        result = [i if type(i) != list else i[0] for i in result]
+        result_notes = [chord_notes[k[0] + 1:k[1] + 1] for k in chord_inds]
+        result_notes = [
+            each.sortchord() if all(j == 0
+                                    for j in each.interval[:-1]) else each
+            for each in result_notes
+        ]
+        chords_formated = '\n\n'.join([
+            f'chord {i+1}: {result[i]}    notes: {result_notes[i]}'
+            for i in range(len(result))
+        ])
+        if output_as_file:
+            with open('chord analysis result.txt', 'w', encoding='utf-8') as f:
+                f.write(chords_formated)
+            chords_formated += "\n\nSuccessfully write the chord analysis result as a text file, please see 'chord analysis result.txt'."
+        return chords_formated
     if mode == 'chords':
         if get_original_order:
             return [chord_notes[k[0] + 1:k[1] + 1] for k in chord_inds]
