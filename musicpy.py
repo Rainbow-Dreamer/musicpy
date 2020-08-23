@@ -1,9 +1,9 @@
-from midiutil import MIDIFile
-from copy import deepcopy as copy
 import os
 import sys
 import math
 import random
+from difflib import SequenceMatcher
+from midiutil import MIDIFile
 import mido
 from mido.midifiles.midifiles import MidiFile as midi
 from mido import Message
@@ -11,9 +11,8 @@ import mido.midifiles.units as unit
 from mido.midifiles.tracks import merge_tracks as merge
 from mido.midifiles.tracks import MidiTrack
 from mido.midifiles.meta import MetaMessage
-from difflib import SequenceMatcher
-from database import *
-from structures import note, chord, scale, piece, circle_of_fifths, circle_of_fourths, relative_note, degrees_to_chord
+from .database import *
+from .structures import *
 '''
 mido and midiutil is requried for this module, please make sure you have
 these two modules with this file

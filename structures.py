@@ -1,6 +1,5 @@
 from copy import deepcopy as copy
-from match import match
-from database import *
+from .database import *
 
 
 class note:
@@ -27,7 +26,7 @@ class note:
 
     def set(self, duration=1, volume=100):
         return note(self.name, self.num, duration, volume)
-    
+
     def __mod__(self, obj):
         return self.set(*obj)
 
@@ -102,8 +101,11 @@ def trans_note(notename, duration=1, volume=100, pitch=5):
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume)
 
+
 def degrees_to_chord(ls, interval=0, duration=1):
-    return chord([degree_to_note(i) for i in ls], interval=interval, duration=duration)
+    return chord([degree_to_note(i) for i in ls],
+                 interval=interval,
+                 duration=duration)
 
 
 def degree_to_note(degree, duration=1, volume=100):
@@ -148,7 +150,7 @@ class chord:
 
     def get_volume(self):
         return [i.volume for i in self.notes]
-    
+
     def get_degree(self):
         return [i.degree for i in self]
 
@@ -525,6 +527,15 @@ class chord:
             for i in range(num):
                 temp.notes.append(temp.notes.pop(0) + octave)
             return temp
+
+    def inv(self, num=1):
+        temp = self.copy()
+        if num not in range(1, len(self.notes)):
+            return 'the number of inversion is out of range of the notes in this chord'
+        while temp[num + 1].degree >= temp[num].degree:
+            temp[num + 1] = temp[num + 1].down(octave)
+        temp.insert(1, temp.pop(num + 1))
+        return temp
 
     def sort(self, indlist, rootpitch=None):
         temp = self.copy()
@@ -1225,18 +1236,18 @@ class scale:
     def play(self, intervals=1, durations=None, *args, **kwargs):
         import musicpy
         musicpy.play(self.getScale(intervals, durations), *args, **kwargs)
-    
+
     def __add__(self, obj):
         if type(obj) == int:
             return self.up(obj)
         elif type(obj) == tuple:
             return self.up(*obj)
-    
+
     def __sub__(self, obj):
         if type(obj) == int:
             return self.down(obj)
         elif type(obj) == tuple:
-            return self.down(*obj)        
+            return self.down(*obj)
 
 
 class circle_of_fifths:
@@ -1498,3 +1509,13 @@ class piece:
         for i in range(temp.track_number):
             temp.tracks[i] = +temp.tracks[i]
         return temp
+
+    def play(self, *args, **kwargs):
+        import musicpy
+        musicpy.play(self, *args, **kwargs)
+
+    def __call__(self, num):
+        return [
+            self.tracks[num - 1], self.instruments_list[num - 1], self.tempo,
+            self.start_times[num - 1]
+        ]
