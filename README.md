@@ -9,7 +9,7 @@
 首先在musicpy文件夹里打开cmd, 跑一下pip install -r requirements.txt安装依赖库（如果本来就是pip install musicpy安装的就不需要这一步，
 我也比较推荐直接pip install musicpy就行）
 
-import这个库: from musicpy.musicpy import *
+import这个库: from musicpy import *
 
 我自己做的介绍与使用教程视频第一期：https://www.bilibili.com/video/BV1754y197a9/
 
