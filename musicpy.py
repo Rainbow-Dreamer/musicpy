@@ -591,7 +591,12 @@ MODIFY = 'modify'
 NEW = 'new'
 
 
-def detect_scale(x, melody_tol=minor_seventh, chord_tol=major_sixth):
+def detect_scale(x,
+                 melody_tol=minor_seventh,
+                 chord_tol=major_sixth,
+                 get_off_overlap_notes=True,
+                 average_degree_length=8,
+                 melody_degree_tol=toNote('B4')):
     # receive a piece of music and analyze what modes it is using,
     # return a list of most likely and exact modes the music has.
 
@@ -616,7 +621,10 @@ def detect_scale(x, melody_tol=minor_seventh, chord_tol=major_sixth):
                 result_scale.mode = 'major'
                 result_scale_types = 'major'
         if result_scale_types == 'major':
-            melody_notes = split_melody(x, 'notes', melody_tol, chord_tol)
+            melody_notes = split_melody(x, 'notes', melody_tol, chord_tol,
+                                        get_off_overlap_notes,
+                                        average_degree_length,
+                                        melody_degree_tol)
             melody_notes = [i.name for i in melody_notes]
             scale_notes = result_scale.names()
             scale_notes_counts = [melody_notes.count(k) for k in scale_notes]
@@ -639,7 +647,9 @@ def detect_scale(x, melody_tol=minor_seventh, chord_tol=major_sixth):
             return f'{result_scale.start.name} {result_scale.mode}'
     else:
         melody_notes, chord_notes = split_all(x, 'notes', melody_tol,
-                                              chord_tol)
+                                              chord_tol, get_off_overlap_notes,
+                                              average_degree_length,
+                                              melody_degree_tol)
         melody_notes = [i.name for i in melody_notes]
         appear_note_names = set(whole_notes)
         notes_count = {y: whole_notes.count(y) for y in appear_note_names}
@@ -816,9 +826,12 @@ def split_chord(x,
                 mode='index',
                 melody_tol=minor_seventh,
                 chord_tol=major_sixth,
-                get_off_overlap_notes=True):
+                get_off_overlap_notes=True,
+                average_degree_length=8,
+                melody_degree_tol=toNote('B4')):
     melody_ind = split_melody(x, 'index', melody_tol, chord_tol,
-                              get_off_overlap_notes)
+                              get_off_overlap_notes, average_degree_length,
+                              melody_degree_tol)
     N = len(x)
     chord_ind = [i for i in range(N) if i not in melody_ind]
     if mode == 'index':
@@ -843,11 +856,14 @@ def split_all(x,
               mode='index',
               melody_tol=minor_seventh,
               chord_tol=major_sixth,
-              get_off_overlap_notes=True):
+              get_off_overlap_notes=True,
+              average_degree_length=8,
+              melody_degree_tol=toNote('B4')):
     # split the main melody and chords part of a piece of music,
     # return both of main melody and chord part
     melody_ind = split_melody(x, 'index', melody_tol, chord_tol,
-                              get_off_overlap_notes)
+                              get_off_overlap_notes, average_degree_length,
+                              melody_degree_tol)
     N = len(x)
     chord_ind = [i for i in range(N) if i not in melody_ind]
     if mode == 'index':
@@ -891,6 +907,9 @@ def split_all(x,
 def chord_analysis(x,
                    melody_tol=minor_seventh,
                    chord_tol=major_sixth,
+                   get_off_overlap_notes=True,
+                   average_degree_length=8,
+                   melody_degree_tol=toNote('B4'),
                    mode='chord names',
                    is_chord=False,
                    new_chord_tol=minor_seventh,
@@ -899,7 +918,9 @@ def chord_analysis(x,
                    output_as_file=False,
                    **detect_args):
     if not is_chord:
-        chord_notes = split_chord(x, 'hold', melody_tol, chord_tol)
+        chord_notes = split_chord(x, 'hold', melody_tol, chord_tol,
+                                  get_off_overlap_notes, average_degree_length,
+                                  melody_degree_tol)
     else:
         chord_notes = x
     if formated:
