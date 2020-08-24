@@ -307,17 +307,18 @@ def midi_to_chord(x, t):
                 realtime = None
                 for k in range(i + 1, notes_len - 1):
                     current_note = t[k]
+                    current_note_type = current_note.type
                     time2 += current_note.time
                     if not find_interval:
-                        if current_note.type == 'note_on' and current_note.velocity != 0:
+                        if current_note_type == 'note_on' and current_note.velocity != 0:
                             find_interval = True
                             interval1 = time2 / interval_unit
                             if interval1.is_integer():
                                 interval1 = int(interval1)
                             intervals.append(interval1)
                     if not find_end:
-                        if current_note.type == 'note_off' or (
-                                current_note.type == 'note_on'
+                        if current_note_type == 'note_off' or (
+                                current_note_type == 'note_on'
                                 and current_note.velocity == 0):
                             if current_note.note == t[i].note:
                                 hasoff.append(k)
@@ -412,9 +413,7 @@ def write(name_of_midi,
             return current_io
     if isinstance(chord1, note):
         chord1 = chord([chord1])
-    if not isinstance(chord1, list):
-        chord1 = [chord1]
-    chordall = concat(chord1)
+    chordall = concat(chord1) if isinstance(chord1, list) else chord1
 
     if mode == 'quick':
         MyMIDI = MIDIFile(track_num)
@@ -481,9 +480,8 @@ def write(name_of_midi,
         as the 'new' mode does, but uses mido ways instead of midiutil ways,
         also only supports writing to a single track
         '''
-        newmidi = midi(ticks_per_beat=tempo * 4)
+        newmidi = midi()
         newtempo = unit.bpm2tempo(tempo)
-
         for g in range(track_num + 1):
             newmidi.add_track()
         newmidi.tracks[0] = MidiTrack([
