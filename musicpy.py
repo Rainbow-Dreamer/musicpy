@@ -11,8 +11,12 @@ import mido.midifiles.units as unit
 from mido.midifiles.tracks import merge_tracks as merge
 from mido.midifiles.tracks import MidiTrack
 from mido.midifiles.meta import MetaMessage
-from .database import *
-from .structures import *
+try:
+    from .database import *
+    from .structures import *
+except:
+    from database import *
+    from structures import *
 '''
 mido and midiutil is requried for this module, please make sure you have
 these two modules with this file

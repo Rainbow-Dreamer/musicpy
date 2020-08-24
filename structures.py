@@ -1,5 +1,8 @@
 from copy import deepcopy as copy
-from .database import *
+try:
+    from .database import *
+except:
+    from database import *
 
 
 class note:
