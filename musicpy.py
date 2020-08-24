@@ -293,6 +293,8 @@ def midi_to_chord(x, t):
     for i in range(notes_len):
         current_msg = t[i]
         if current_msg.type == 'note_on' and current_msg.velocity != 0:
+            current_msg_velocity = current_msg.velocity
+            current_msg_note = current_msg.note
             if i not in hason and i not in hasoff:
                 if not find_first_note:
                     find_first_note = True
@@ -308,9 +310,11 @@ def midi_to_chord(x, t):
                 for k in range(i + 1, notes_len - 1):
                     current_note = t[k]
                     current_note_type = current_note.type
+                    current_note_velocity = current_note.velocity
+                    current_note_degree = current_note.note
                     time2 += current_note.time
                     if not find_interval:
-                        if current_note_type == 'note_on' and current_note.velocity != 0:
+                        if current_note_type == 'note_on' and current_note_velocity != 0:
                             find_interval = True
                             interval1 = time2 / interval_unit
                             if interval1.is_integer():
@@ -319,8 +323,8 @@ def midi_to_chord(x, t):
                     if not find_end:
                         if current_note_type == 'note_off' or (
                                 current_note_type == 'note_on'
-                                and current_note.velocity == 0):
-                            if current_note.note == t[i].note:
+                                and current_note_velocity == 0):
+                            if current_note_degree == current_msg_note:
                                 hasoff.append(k)
                                 find_end = True
                                 realtime = time2
@@ -337,9 +341,9 @@ def midi_to_chord(x, t):
                 # if not find_interval:
                 #intervals.append(sum([t[x].time for x in range(i,notes_len-1)])/interval_unit)
                 notelist.append(
-                    degree_to_note(t[i].note,
+                    degree_to_note(current_msg_note,
                                    duration=duration1,
-                                   volume=t[i].velocity))
+                                   volume=current_msg_velocity))
 
     result = chord(notelist, interval=intervals)
     find_tempo = False
