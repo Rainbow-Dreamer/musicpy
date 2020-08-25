@@ -702,9 +702,7 @@ def split_melody(x,
         return chord([whole_notes[j] for j in result], interval=new_interval)
 
     elif mode == 'notes':
-        remain_notes = [
-            n for i in range(len(x)) if (n := x.notes[i]).duration > 0
-        ]
+        remain_notes = [each for each in x if each.duration > 0]
         remain_interval = [
             x.interval[i] for i in range(len(x)) if x.notes[i].duration > 0
         ]
