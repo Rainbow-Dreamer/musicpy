@@ -1234,7 +1234,9 @@ class scale:
                 start1 = start
             else:
                 start1 = self.getScale().notes[ind]
-        return scale(start=start1, interval=new_interval)
+        result = scale(start=start1, interval=new_interval)
+        result.mode = result.detect()
+        return result
 
     def play(self, intervals=1, durations=None, *args, **kwargs):
         import musicpy
