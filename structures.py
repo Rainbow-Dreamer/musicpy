@@ -715,7 +715,9 @@ class chord:
         if type(note1) == str:
             note1 = toNote(note1)
         if note1 in self:
+            inds = self.notes.index(note1)
             self.notes.remove(note1)
+            del self.interval[inds]
 
     def append(self, value, interval=None):
         if type(value) == str:
@@ -726,7 +728,8 @@ class chord:
         self.interval.append(interval)
 
     def delete(self, ind):
-        del self[ind]
+        del self.notes[ind - 1]
+        del self.interval[ind - 1]
 
     def insert(self, ind, value, interval=None):
         if type(value) == str:

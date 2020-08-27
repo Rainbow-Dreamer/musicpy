@@ -344,6 +344,11 @@ def midi_to_chord(x, t):
                                    volume=current_msg_velocity))
 
     result = chord(notelist, interval=intervals)
+    result.interval = [
+        result.interval[j] for j in range(len(result))
+        if result.notes[j].duration > 0
+    ]
+    result.notes = [each for each in result.notes if each.duration > 0]
     find_tempo = False
     for msg in x.tracks[0]:
         if hasattr(msg, 'tempo'):
@@ -599,7 +604,8 @@ def detect_scale(x,
                  melody_degree_tol=toNote('B4'),
                  most_like_num=3,
                  count_num=3,
-                 get_scales=False):
+                 get_scales=False,
+                 not_split=False):
     # receive a piece of music and analyze what modes it is using,
     # return a list of most likely and exact modes the music has.
 
@@ -624,10 +630,10 @@ def detect_scale(x,
                 result_scale.mode = 'major'
                 result_scale_types = 'major'
         if result_scale_types == 'major':
-            melody_notes = split_melody(x, 'notes', melody_tol, chord_tol,
-                                        get_off_overlap_notes,
-                                        average_degree_length,
-                                        melody_degree_tol)
+            melody_notes = split_melody(
+                x, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
+                average_degree_length,
+                melody_degree_tol) if not not_split else x
             melody_notes = [i.name for i in melody_notes]
             scale_notes = result_scale.names()
             scale_notes_counts = [melody_notes.count(k) for k in scale_notes]
@@ -652,10 +658,9 @@ def detect_scale(x,
                 return most_probably_scale_ls
             return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in most_probably_scale_ls])}'
     else:
-        melody_notes, chord_notes = split_all(x, 'notes', melody_tol,
-                                              chord_tol, get_off_overlap_notes,
-                                              average_degree_length,
-                                              melody_degree_tol)
+        melody_notes = split_melody(
+            x, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
+            average_degree_length, melody_degree_tol) if not not_split else x
         melody_notes = [i.name for i in melody_notes]
         appear_note_names = set(whole_notes)
         notes_count = {y: whole_notes.count(y) for y in appear_note_names}
@@ -973,12 +978,6 @@ def split_melody(x,
         return chord([whole_notes[j] for j in result], interval=new_interval)
 
     elif mode == 'notes':
-        remain_notes = [each for each in x if each.duration > 0]
-        remain_interval = [
-            x.interval[i] for i in range(len(x)) if x.notes[i].duration > 0
-        ]
-        x.notes = remain_notes
-        x.interval = remain_interval
         x_notes = x.notes
         x_interval = x.interval
         N = len(x)
