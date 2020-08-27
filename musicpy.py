@@ -596,6 +596,51 @@ MODIFY = 'modify'
 NEW = 'new'
 
 
+def detect_in_scale(x,
+                    most_like_num=3,
+                    get_scales=False,
+                    search_all=False,
+                    search_all_each_num=2,
+                    major_minor_preference=True):
+    whole_notes = x.names()
+    note_names = list(set(whole_notes))
+    note_names = [
+        standard_dict[i] if i not in standard2 else i for i in note_names
+    ]
+    first_note = whole_notes[0]
+    results = []
+    for each in scaleTypes:
+        scale_name = each[0]
+        if scale_name != '12':
+            current_scale = scale(first_note, scale_name)
+            current_scale_notes = current_scale.names()
+            if all(i in current_scale_notes for i in note_names):
+                results.append(current_scale)
+                if not search_all:
+                    break
+    if search_all:
+        x_len = len(x)
+        results.sort(key=lambda s: x_len / len(s), reverse=True)
+        for each in results[:]:
+            results += [
+                each.inversion(i) for i in range(2, 2 + search_all_each_num)
+            ]
+    else:
+        first_note_scale = results[0]
+        results += [first_note_scale.inversion(i) for i in range(2, 8)]
+        if major_minor_preference:
+            major_or_minor_inds = [
+                i for i in range(len(results))
+                if results[i].mode in ['major', 'minor']
+            ]
+            if len(major_or_minor_inds) > 1:
+                results.insert(1, results.pop(major_or_minor_inds[1]))
+        results = results[:most_like_num]
+    if get_scales:
+        return results
+    return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in results])}'
+
+
 def detect_scale(x,
                  melody_tol=minor_seventh,
                  chord_tol=major_sixth,
