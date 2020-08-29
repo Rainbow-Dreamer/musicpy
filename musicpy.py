@@ -642,8 +642,7 @@ def detect_in_scale(x,
                                         and altered_note not in note_names):
                                     altered_note = k.down().name
                                     header = '#'
-                                if not (altered_note in current_scale_notes
-                                        and altered_note not in note_names):
+                                if altered_note in current_scale_notes and altered_note not in note_names:
                                     inds = current_scale_notes.index(
                                         altered_note) + 1
                                     test_scale_exist = copy(
