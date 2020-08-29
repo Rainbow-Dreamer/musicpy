@@ -102,7 +102,9 @@ scaleTypes = match({
     ('mixolydian', ): [2, 2, 1, 2, 2, 1, 2],
     ('locrian', ): [1, 2, 2, 1, 2, 2, 2],
     ('whole tone', ): [2, 2, 2, 2, 2, 2],
-    ('12', ): [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ('12', ): [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ('major pentatonic', ): [2, 2, 3, 2, 3],
+    ('minor pentatonic', ): [3, 2, 2, 3, 2]
 })
 modern_modes = [
     'major', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'minor', 'locrian'

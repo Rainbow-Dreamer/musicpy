@@ -601,7 +601,11 @@ def detect_in_scale(x,
                     get_scales=False,
                     search_all=False,
                     search_all_each_num=2,
-                    major_minor_preference=True):
+                    major_minor_preference=True,
+                    find_altered=True,
+                    altered_max_number=1):
+    if type(x) != chord:
+        x = chord([trans_note(i) for i in x])
     whole_notes = x.names()
     note_names = list(set(whole_notes))
     note_names = [
@@ -609,6 +613,8 @@ def detect_in_scale(x,
     ]
     first_note = whole_notes[0]
     results = []
+    if find_altered:
+        altered_scales = []
     for each in scaleTypes:
         scale_name = each[0]
         if scale_name != '12':
@@ -618,6 +624,38 @@ def detect_in_scale(x,
                 results.append(current_scale)
                 if not search_all:
                     break
+            else:
+                if find_altered:
+                    altered = [
+                        i for i in note_names if i not in current_scale_notes
+                    ]
+                    if len(altered) <= altered_max_number:
+                        altered = [trans_note(i) for i in altered]
+                        if all((j.up().name in current_scale_notes
+                                or j.down().name in current_scale_notes)
+                               for j in altered):
+                            altered_msg = []
+                            for k in altered:
+                                altered_note = k.up().name
+                                header = 'b'
+                                if not (altered_note in current_scale_notes
+                                        and altered_note not in note_names):
+                                    altered_note = k.down().name
+                                    header = '#'
+                                inds = current_scale_notes.index(
+                                    altered_note) + 1
+                                test_scale_exist = copy(current_scale.notes)
+                                if k.degree - test_scale_exist[inds -
+                                                               2].degree < 0:
+                                    k = k.up(octave)
+                                test_scale_exist[inds - 1] = k
+                                if chord(test_scale_exist).intervalof(
+                                        cummulative=False
+                                ) not in scaleTypes.values():
+                                    altered_msg.append(f'{header}{inds}')
+                                    altered_scales.append(
+                                        f"{current_scale.start.name} {current_scale.mode} {', '.join(altered_msg)}"
+                                    )
     if search_all:
         x_len = len(x)
         results.sort(key=lambda s: x_len / len(s), reverse=True)
@@ -626,19 +664,27 @@ def detect_in_scale(x,
                 each.inversion(i) for i in range(2, 2 + search_all_each_num)
             ]
     else:
-        first_note_scale = results[0]
-        results += [first_note_scale.inversion(i) for i in range(2, 8)]
-        if major_minor_preference:
-            major_or_minor_inds = [
-                i for i in range(len(results))
-                if results[i].mode in ['major', 'minor']
-            ]
-            if len(major_or_minor_inds) > 1:
-                results.insert(1, results.pop(major_or_minor_inds[1]))
+        if results:
+            first_note_scale = results[0]
+            results += [first_note_scale.inversion(i) for i in range(2, 8)]
+            if major_minor_preference:
+                major_or_minor_inds = [
+                    i for i in range(len(results))
+                    if results[i].mode in ['major', 'minor']
+                ]
+                if len(major_or_minor_inds) > 1:
+                    results.insert(1, results.pop(major_or_minor_inds[1]))
         results = results[:most_like_num]
     if get_scales:
+        if (not results) and find_altered:
+            return altered_scales
         return results
-    return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in results])}'
+    detect_result = f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in results])}'
+    if find_altered and altered_scales:
+        if results:
+            detect_result += ', '
+        detect_result += ', '.join(altered_scales)
+    return detect_result
 
 
 def detect_scale(x,
