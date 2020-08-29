@@ -642,20 +642,23 @@ def detect_in_scale(x,
                                         and altered_note not in note_names):
                                     altered_note = k.down().name
                                     header = '#'
-                                inds = current_scale_notes.index(
-                                    altered_note) + 1
-                                test_scale_exist = copy(current_scale.notes)
-                                if k.degree - test_scale_exist[inds -
-                                                               2].degree < 0:
-                                    k = k.up(octave)
-                                test_scale_exist[inds - 1] = k
-                                if chord(test_scale_exist).intervalof(
-                                        cummulative=False
-                                ) not in scaleTypes.values():
-                                    altered_msg.append(f'{header}{inds}')
-                                    altered_scales.append(
-                                        f"{current_scale.start.name} {current_scale.mode} {', '.join(altered_msg)}"
-                                    )
+                                if not (altered_note in current_scale_notes
+                                        and altered_note not in note_names):
+                                    inds = current_scale_notes.index(
+                                        altered_note) + 1
+                                    test_scale_exist = copy(
+                                        current_scale.notes)
+                                    if k.degree - test_scale_exist[
+                                            inds - 2].degree < 0:
+                                        k = k.up(octave)
+                                    test_scale_exist[inds - 1] = k
+                                    if chord(test_scale_exist).intervalof(
+                                            cummulative=False
+                                    ) not in scaleTypes.values():
+                                        altered_msg.append(f'{header}{inds}')
+                                        altered_scales.append(
+                                            f"{current_scale.start.name} {current_scale.mode} {', '.join(altered_msg)}"
+                                        )
     if search_all:
         x_len = len(x)
         results.sort(key=lambda s: x_len / len(s), reverse=True)
