@@ -160,6 +160,9 @@ class chord:
     def names(self):
         return [i.name for i in self]
 
+    def __eq__(self, other):
+        return self.notes == other.notes and self.interval == other.interval
+
     def addnote(self, newnote):
         if isinstance(newnote, note):
             self.notes.append(newnote)
@@ -884,6 +887,26 @@ class chord:
         import musicpy
         return musicpy.chord_analysis(self, *args, **kwargs)
 
+    def clear_at(self, duration=0, interval=None, volume=None):
+        temp = copy(self)
+        i = 1
+        while i <= len(temp):
+            current = temp[i]
+            if duration is not None:
+                if current.duration <= duration:
+                    temp.delete(i)
+                    continue
+            if interval is not None:
+                if temp.interval[i] <= interval:
+                    temp.delete(i)
+                    continue
+            if volume is not None:
+                if current.volume <= volume:
+                    temp.delete(i)
+                    continue
+            i += 1
+        return temp
+
 
 class scale:
     def __init__(self,
@@ -926,6 +949,9 @@ class scale:
         return f'scale name: {self.start} {self.mode} scale\nscale intervals: {self.getInterval()}\nscale notes: {self.getScale().notes}'
 
     __repr__ = __str__
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
     def standard(self):
         if len(self) == 8:
@@ -1449,6 +1475,9 @@ class piece:
             for i in range(self.track_number)
         ])
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
     def __getitem__(self, i):
         if i == 0:
             i = 1
@@ -1527,3 +1556,6 @@ class piece:
             self.tracks[num - 1], self.instruments_list[num - 1], self.tempo,
             self.start_times[num - 1]
         ]
+
+
+P = piece
