@@ -214,7 +214,7 @@ def play(chord1,
             import subprocess
             subprocess.Popen(result_file)
         elif sys.platform == 'darwin':
-            os.system(result_file)
+            os.system(f'afplay {result_file}')
     else:
         return file
 
