@@ -2347,8 +2347,10 @@ def detect(a,
                 a = a.notes
             try:
                 scales = detectScale[tuple(a[i].degree - a[i - 1].degree
-                                           for i in range(1, len(a)))][0]
-                return scales
+                                           for i in range(1, len(a)))]
+                if scales == 'not found':
+                    return scales
+                return scales[0]
             except:
                 return 'cannot detect this scale'
 
