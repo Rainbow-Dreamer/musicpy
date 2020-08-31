@@ -19,7 +19,8 @@ class note:
     __repr__ = __str__
 
     def __eq__(self, other):
-        return other and self.__dict__ == other.__dict__
+        return isinstance(
+            other, note) and self.name == other.name and self.num == other.num
 
     def __matmul__(self, other):
         return self.name == other.name
@@ -161,7 +162,9 @@ class chord:
         return [i.name for i in self]
 
     def __eq__(self, other):
-        return other and self.__dict__ == other.__dict__
+        return isinstance(
+            other, chord
+        ) and self.notes == other.notes and self.interval == other.interval
 
     def addnote(self, newnote):
         if isinstance(newnote, note):
@@ -951,7 +954,7 @@ class scale:
     __repr__ = __str__
 
     def __eq__(self, other):
-        return other and self.__dict__ == other.__dict__
+        return isinstance(other, scale) and self.notes == other.notes
 
     def standard(self):
         if len(self) == 8:
@@ -1476,7 +1479,7 @@ class piece:
         ])
 
     def __eq__(self, other):
-        return other and self.__dict__ == other.__dict__
+        return isinstance(other, piece) and self.__dict__ == other.__dict__
 
     def __getitem__(self, i):
         if i == 0:
