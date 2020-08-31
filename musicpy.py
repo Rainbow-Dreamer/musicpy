@@ -599,7 +599,7 @@ NEW = 'new'
 def detect_in_scale(x,
                     most_like_num=3,
                     get_scales=False,
-                    search_all=False,
+                    search_all=True,
                     search_all_each_num=2,
                     major_minor_preference=True,
                     find_altered=True,
@@ -661,22 +661,25 @@ def detect_in_scale(x,
     if search_all:
         x_len = len(x)
         results.sort(key=lambda s: x_len / len(s), reverse=True)
-        for each in results[:]:
-            results += [
-                each.inversion(i) for i in range(2, 2 + search_all_each_num)
+    if results:
+        first_note_scale = results[0]
+        inversion_scales = [
+            first_note_scale.inversion(i)
+            for i in range(2, len(first_note_scale))
+        ]
+        inversion_scales = [
+            i for i in inversion_scales if i.mode != 'not found'
+        ][:search_all_each_num]
+        results += inversion_scales
+        if major_minor_preference:
+            major_or_minor_inds = [
+                i for i in range(len(results))
+                if results[i].mode in ['major', 'minor']
             ]
-    else:
-        if results:
-            first_note_scale = results[0]
-            results += [first_note_scale.inversion(i) for i in range(2, 8)]
-            if major_minor_preference:
-                major_or_minor_inds = [
-                    i for i in range(len(results))
-                    if results[i].mode in ['major', 'minor']
-                ]
-                if len(major_or_minor_inds) > 1:
-                    results.insert(1, results.pop(major_or_minor_inds[1]))
-        results = results[:most_like_num]
+            if len(major_or_minor_inds) > 1:
+                results.insert(1, results.pop(major_or_minor_inds[1]))
+
+    results = results[:most_like_num]
     if get_scales:
         if (not results) and find_altered:
             return altered_scales
