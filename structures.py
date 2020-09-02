@@ -518,6 +518,7 @@ class chord:
                 for x in range(1, len(distance))
             ] + [distance[-1][1].duration]
             newnotes = [distance[x][1] for x in range(len(distance))]
+            newinterval = [int(t) if int(t) == t else t for t in newinterval]
             return chord(newnotes, interval=newinterval)
         elif mode == 'after':
             if self.interval[-1] == 0:

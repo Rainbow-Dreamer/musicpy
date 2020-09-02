@@ -387,7 +387,7 @@ def write(name_of_midi,
             return 'multi mode requires a piece object'
         track_number, start_times, instruments_numbers, tempo, tracks_contents, track_names, channels = \
         chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels
-        MyMIDI = MIDIFile(track_number)
+        MyMIDI = MIDIFile(track_number, deinterleave=False)
         for i in range(track_number):
             if channels:
                 current_channel = channels[i]
@@ -423,7 +423,7 @@ def write(name_of_midi,
     chordall = concat(chord1) if isinstance(chord1, list) else chord1
 
     if mode == 'quick':
-        MyMIDI = MIDIFile(track_num)
+        MyMIDI = MIDIFile(track_num, deinterleave=False)
         current_channel = 0
         MyMIDI.addTempo(0, 0, tempo)
         if type(instrument) == int:
@@ -454,7 +454,7 @@ def write(name_of_midi,
         write to a new midi file or overwrite an existing midi file,
         only supports writing to a single track in this mode
         '''
-        MyMIDI = MIDIFile(track_num)
+        MyMIDI = MIDIFile(track_num, deinterleave=False)
         MyMIDI.addTempo(track, time1, tempo)
         degrees = [x.degree for x in chordall.notes]
         duration = [x.duration for x in chordall.notes]
@@ -2377,6 +2377,40 @@ def sums(*chordls):
         return sums(list(chordls))
 
 
+def choose_melody(focused, now_focus, focus_ratio, focus_notes, remained_notes,
+                  pick, avoid_dim_5, chordinner, newchord, choose_from_chord):
+    if focused:
+        now_focus = random.choices([1, 0], [focus_ratio, 1 - focus_ratio])[0]
+        if now_focus == 1:
+            firstmelody = random.choice(focus_notes)
+        else:
+            firstmelody = random.choice(remained_notes)
+    else:
+        if choose_from_chord:
+            current = random.randint(0, 1)
+            if current == 0:
+                # pick up melody notes outside chord inner notes
+                firstmelody = random.choice(pick)
+                # avoid to choose a melody note that appears a diminished fifth interval with the current chord
+                if avoid_dim_5:
+                    while any(
+                        (firstmelody.degree - x.degree) % diminished_fifth == 0
+                            for x in newchord.notes):
+                        firstmelody = random.choice(pick)
+            else:
+                # pick up melody notes from chord inner notes
+                firstmelody = random.choice(chordinner)
+        else:
+            firstmelody = random.choice(pick)
+            if avoid_dim_5:
+                while any(
+                    (firstmelody.degree - x.degree) % diminished_fifth == 0
+                        for x in newchord.notes):
+                    firstmelody = random.choice(pick)
+
+        return firstmelody
+
+
 def random_composing(mode,
                      length,
                      difficulty='easy',
@@ -2390,8 +2424,10 @@ def random_composing(mode,
                      right_hand_velocity=80,
                      left_hand_meter=4,
                      right_hand_meter=4,
-                     choose_intervals=[0.25, 0.5, 1, 1.5, 2, 4],
-                     choose_durations=[0.25, 0.5, 1, 1.5, 2, 4]):
+                     choose_intervals=[0.25, 0.5, 1, 1.5, 2],
+                     choose_durations=[0.25, 0.5, 1, 1.5, 2],
+                     melody_interval_tol=perfect_fourth,
+                     choose_from_chord=False):
     # Composing a piece of music randomly from a given mode (here means scale),
     # difficulty, number of start notes (or given notes) and an approximate length.
     # length is the total approximate total number of notes you want the music to be.
@@ -2405,6 +2441,10 @@ def random_composing(mode,
         focused = True
         focus_notes = [pick[i - 1] for i in focus_notes]
         remained_notes = [j for j in pick if j not in focus_notes]
+        now_focus = 0
+    else:
+        focus_notes = None
+        remained_notes = None
         now_focus = 0
     # the chord part and melody part will be written separately,
     # but still with some relevations. (for example, avoiding dissonant intervals)
@@ -2445,7 +2485,10 @@ def random_composing(mode,
         if newchord_len < left_hand_meter:
             choose_more = [x for x in mode if x not in newchord]
             for g in range(left_hand_meter - newchord_len):
-                newchord += random.choice(choose_more)
+                current_choose = random.choice(choose_more)
+                if current_choose.degree < newchord[-1].degree:
+                    current_choose = current_choose.up(octave)
+                newchord += current_choose
         do_inversion = random.randint(0, 1)
         if do_inversion == 1:
             newchord = newchord.inversion_highest(
@@ -2455,27 +2498,10 @@ def random_composing(mode,
         chord_notenames = newchord.names()
         chordinner = [x for x in pick if x.name in chord_notenames]
         while True:
-            if focused:
-                now_focus = random.choices([1, 0],
-                                           [focus_ratio, 1 - focus_ratio])[0]
-                if now_focus == 1:
-                    firstmelody = random.choice(focus_notes)
-                else:
-                    firstmelody = random.choice(remained_notes)
-            else:
-                current = random.randint(0, 1)
-                if current == 0:
-                    # pick up melody notes outside chord inner notes
-                    firstmelody = random.choice(pick)
-                    # avoid to choose a melody note that appears a diminished fifth interval with the current chord
-                    if avoid_dim_5:
-                        while any((firstmelody.degree - x.degree) %
-                                  diminished_fifth == 0
-                                  for x in newchord.notes):
-                            firstmelody = random.choice(pick)
-                else:
-                    # pick up melody notes from chord inner notes
-                    firstmelody = random.choice(chordinner)
+            firstmelody = choose_melody(focused, now_focus, focus_ratio,
+                                        focus_notes, remained_notes, pick,
+                                        avoid_dim_5, chordinner, newchord,
+                                        choose_from_chord)
             firstmelody.volume = right_hand_velocity
             newmelody = [firstmelody]
             length_of_chord = sum(newchord.interval)
@@ -2483,24 +2509,17 @@ def random_composing(mode,
             firstmelody.duration = random.choice(
                 choose_durations)  # intervals[0]  # random.choice([0.5,1])
             while sum(intervals) <= length_of_chord:
-                if focused:
-                    now_focus = random.choices(
-                        [1, 0], [focus_ratio, 1 - focus_ratio])[0]
-                    if now_focus == 1:
-                        currentmelody = random.choice(focus_notes)
-                    else:
-                        currentmelody = random.choice(remained_notes)
-                else:
-                    current = random.randint(0, 1)
-                    if current == 0:
-                        currentmelody = random.choice(pick)
-                        if avoid_dim_5:
-                            if any((currentmelody.degree - x.degree) %
-                                   diminished_fifth == 0
-                                   for x in newchord.notes):
-                                continue
-                    else:
-                        currentmelody = random.choice(chordinner)
+                currentmelody = choose_melody(focused, now_focus, focus_ratio,
+                                              focus_notes, remained_notes,
+                                              pick, avoid_dim_5, chordinner,
+                                              newchord, choose_from_chord)
+                while abs(currentmelody.degree -
+                          newmelody[-1].degree) > melody_interval_tol:
+                    currentmelody = choose_melody(focused, now_focus,
+                                                  focus_ratio, focus_notes,
+                                                  remained_notes, pick,
+                                                  avoid_dim_5, chordinner,
+                                                  newchord, choose_from_chord)
                 currentmelody.volume = right_hand_velocity
                 newinter = random.choice(
                     choose_intervals)  #0.5  # random.choice([0.5,1])
