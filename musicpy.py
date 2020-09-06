@@ -2130,7 +2130,8 @@ def detect(a,
            whole_detect=True,
            return_fromchord=False,
            two_show_interval=True,
-           poly_chord_first=False):
+           poly_chord_first=False,
+           root_position_return_first=True):
     # mode could be chord/scale
     if mode == 'chord':
         if type(a) != chord:
@@ -2151,7 +2152,9 @@ def detect(a,
         distance = tuple(i.degree - root for i in a[2:])
         findTypes = detectTypes[distance]
         if findTypes != 'not found':
-            return [rootNote + i for i in findTypes]
+            return [
+                rootNote + i for i in findTypes
+            ] if not root_position_return_first else rootNote + findTypes[0]
         original_detect = find_similarity(a,
                                           result_ratio=True,
                                           ignore_sort_from=ignore_sort_from,
