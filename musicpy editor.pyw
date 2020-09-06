@@ -8,7 +8,6 @@ function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
 from musicpy import *
 from io import BytesIO
 import pygame
-from ast import literal_eval
 pygame.mixer.init(44100, -16, 1, 1024)
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read())
@@ -87,7 +86,6 @@ class Root(Tk):
             self.bg = ImageTk.PhotoImage(self.bg)
             self.bg_label = ttk.Label(self, image=self.bg)
             bg_places = config_dict['background_places']
-            bg_places = literal_eval(bg_places)
             self.bg_label.place(x=bg_places[0], y=bg_places[1])
         except:
             pass
@@ -147,8 +145,9 @@ class Root(Tk):
                                         text='自动补全',
                                         variable=self.auto,
                                         command=self.check_auto)
-        self.eachline_character = literal_eval(
-            config_dict['eachline_character'])
+        self.eachline_character = config_dict['eachline_character']
+        self.pairing_symbols = config_dict['pairing_symbols']
+        self.wraplines_number = config_dict['wraplines_number']
         self.wraplines_button = ttk.Button(self,
                                            text='自动换行',
                                            command=self.wraplines)
@@ -211,7 +210,8 @@ class Root(Tk):
         N = self.eachline_character
         text = self.outputs.get('1.0', END)
         K = len(text)
-        text = '\n'.join([text[i:i + N] for i in range(0, K, N)])
+        text = ('\n' * self.wraplines_number).join(
+            [text[i:i + N] for i in range(0, K, N)])
         self.outputs.delete('1.0', END)
         self.outputs.insert(END, text)
 
@@ -223,7 +223,7 @@ class Root(Tk):
         for each in config_dict:
             current_label = ttk.Label(self.config_window, text=each)
             current_entry = ttk.Entry(self.config_window, width=70)
-            current_entry.insert(0, config_dict[each])
+            current_entry.insert(0, str(config_dict[each]))
             current_label.place(x=0, y=counter)
             current_entry.place(x=150, y=counter)
             if each in path_enable_list:
@@ -243,7 +243,10 @@ class Root(Tk):
 
     def save_config(self):
         for each in config_dict:
-            config_dict[each] = self.get_config_dict[each].get()
+            if not isinstance(config_dict[each], str):
+                config_dict[each] = eval(self.get_config_dict[each].get())
+            else:
+                config_dict[each] = self.get_config_dict[each].get()
         with open('config.py', 'w', encoding='utf-8-sig') as f:
             f.write(
                 f'config_dict = {config_dict}\npath_enable_list = {path_enable_list}'
@@ -275,7 +278,6 @@ class Root(Tk):
                 self.bg = ImageTk.PhotoImage(self.bg)
                 self.bg_label.configure(image=self.bg)
                 bg_places = config_dict['background_places']
-                bg_places = literal_eval(bg_places)
                 self.bg_label.place(x=bg_places[0], y=bg_places[1])
 
         except:
@@ -291,10 +293,8 @@ class Root(Tk):
             self.bg = ImageTk.PhotoImage(self.bg)
             self.bg_label = ttk.Label(self, image=self.bg)
             bg_places = config_dict['background_places']
-            bg_places = literal_eval(bg_places)
             self.bg_label.place(x=bg_places[0], y=bg_places[1])
-        self.eachline_character = literal_eval(
-            config_dict['eachline_character'])
+        self.eachline_character = config_dict['eachline_character']
 
     def save(self):
         filename = filedialog.asksaveasfilename(initialdir='.',
@@ -372,16 +372,13 @@ class Root(Tk):
             self.show_select = False
             current_text2 = self.inputs.get('1.0', INSERT)
             if current_text2 and current_text2[-1] not in [' ', '\n']:
-                if current_text2[-1] == '(' and not is_deleted:
-                    self.inputs.insert(INSERT, ')')
-                    self.pre_input = self.inputs.get('1.0', 'end-1c')
-                    x, y = self.inputs.index(INSERT).split('.')
-                    self.inputs.mark_set(INSERT, f'{x}.{int(y)-1}')
-                elif current_text2[-1] == '[' and not is_deleted:
-                    self.inputs.insert(INSERT, ']')
-                    self.pre_input = self.inputs.get('1.0', 'end-1c')
-                    x, y = self.inputs.index(INSERT).split('.')
-                    self.inputs.mark_set(INSERT, f'{x}.{int(y)-1}')
+                for each in self.pairing_symbols:
+                    if current_text2[-1] == each[0] and not is_deleted:
+                        self.inputs.insert(INSERT, each[1])
+                        self.pre_input = self.inputs.get('1.0', 'end-1c')
+                        x, y = self.inputs.index(INSERT).split('.')
+                        self.inputs.mark_set(INSERT, f'{x}.{int(y)-1}')
+                        break
                 else:
                     space_ind, newline_ind, dot_ind = current_text2.rfind(
                         ' ') + 1, current_text2.rfind(
