@@ -184,7 +184,8 @@ chordTypes = match({
     ('13#11', ): ((4, 7, 10, 14, 18, 21), ),
     ('m13#11', ): ((3, 7, 10, 14, 18, 21), ),
     ('fifth_9th', ): ((7, 14), ),
-    ('minormajor9', 'minor major 9', 'mM9'): ((3, 7, 11, 14), )
+    ('minormajor9', 'minor major 9', 'mM9'): ((3, 7, 11, 14), ),
+    ('dim(Maj7)', ): ((3, 6, 11), )
 })
 standard_reverse = {j: i for i, j in standard2.items()}
 detectScale = scaleTypes.reverse()
@@ -217,6 +218,8 @@ degree_match = {
     '11': [perfect_fourth + octave],
     '13': [major_sixth + octave]
 }
+
+reverse_degree_match = match({tuple(j): i for i, j in degree_match.items()})
 
 instruments = {
     'Acoustic Grand Piano': 1,
