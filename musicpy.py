@@ -1739,6 +1739,7 @@ def changefrom(a,
     N = min(len(a), len(b))
     anotes = [x.degree for x in a.notes]
     bnotes = [x.degree for x in b.notes]
+    anames = a.names()
     bnames = b.names()
     M = min(len(anotes), len(bnotes))
     changes = [(bnames[i], bnotes[i] - anotes[i]) for i in range(M)]
@@ -1750,12 +1751,24 @@ def changefrom(a,
             changes = [f'b{j[0]}' if j[1] > 0 else f'#{j[0]}' for j in changes]
         else:
             b_first_note = b[1].degree
-            changes = [
-                f'b{reverse_degree_match[bnotes[bnames.index(j[0])] - b_first_note]}'
-                if j[1] > 0 else
-                f'#{reverse_degree_match[bnotes[bnames.index(j[0])] - b_first_note]}'
-                for j in changes
-            ]
+            for i in range(len(changes)):
+                note_name, note_change = changes[i]
+                current_degree = reverse_degree_match[
+                    bnotes[bnames.index(note_name)] - b_first_note]
+                if current_degree == 'not found':
+                    original_note = anotes[anames.index(
+                        note(note_name, 5).down(note_change).name)]
+                    diff = original_note - b_first_note
+                    if diff == 19:
+                        diff = 7
+                    current_degree = reverse_degree_match[diff]
+                    changes[i] = f'({current_degree})'
+                else:
+                    if note_change > 0:
+                        changes[i] = f'b{current_degree}'
+                    else:
+                        changes[i] = f'#{current_degree}'
+
     return ', '.join(changes)
 
 
