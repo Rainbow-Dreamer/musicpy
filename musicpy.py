@@ -1759,9 +1759,9 @@ def changefrom(a,
                     original_note = anotes[anames.index(
                         note(note_name, 5).down(note_change).name)]
                     diff = original_note - b_first_note
-                    if diff == 19:
-                        diff = 7
                     current_degree = reverse_degree_match[diff]
+                    if current_degree == 'not found':
+                        current_degree = reverse_degree_match[diff % octave]
                     changes[i] = f'({current_degree})'
                 else:
                     if note_change > 0:
