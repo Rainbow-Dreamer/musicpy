@@ -541,7 +541,7 @@ class chord:
                 if i == num - 1 and temp.notes[1].name != target_note:
                     temp.notes.insert(
                         0,
-                        temp.pop(temp.index(target_note)) - octave)
+                        temp.notes.pop(temp.index(target_note) - 1) - octave)
                 else:
                     temp.notes.append(temp.notes.pop(0) + octave)
                 temp.notes.sort(key=lambda s: s.degree)
