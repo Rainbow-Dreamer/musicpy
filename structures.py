@@ -536,8 +536,15 @@ class chord:
             return 'the number of inversion is out of range of the notes in this chord'
         else:
             temp = copy(self)
+            target_note = temp[num + 1].name
             for i in range(num):
-                temp.notes.append(temp.notes.pop(0) + octave)
+                if i == num - 1 and temp.notes[1].name != target_note:
+                    temp.notes.insert(
+                        0,
+                        temp.pop(temp.index(target_note)) - octave)
+                else:
+                    temp.notes.append(temp.notes.pop(0) + octave)
+                temp.notes.sort(key=lambda s: s.degree)
             return temp
 
     def inv(self, num=1):
