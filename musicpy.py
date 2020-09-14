@@ -1516,8 +1516,7 @@ def trans(obj, pitch=5, duration=1, interval=None):
                            duration=duration,
                            intervals=interval)
     else:
-        parts = obj.split('/')
-        part1, part2 = parts[0], '/'.join(parts[1:])
+        part1, part2 = obj.split('/')
         first_chord = trans(part1, pitch, duration, interval)
         if type(first_chord) == chord:
             if part2 in standard:
