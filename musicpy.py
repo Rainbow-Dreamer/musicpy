@@ -1710,10 +1710,15 @@ def omitfrom(a, b, showls=False, alter_notes_show_degree=False):
     omitnotes = list(set(b_notes) - set(a_notes))
     if alter_notes_show_degree:
         b_first_note = b[1].degree
-        omitnotes = [
-            reverse_degree_match[b[b_notes.index(j) + 1].degree - b_first_note]
-            for j in omitnotes
-        ]
+        omitnotes_degree = []
+        for j in omitnotes:
+            current = reverse_degree_match[b[b_notes.index(j) + 1].degree -
+                                           b_first_note]
+            if current == 'not found':
+                omitnotes_degree.append(j)
+            else:
+                omitnotes_degree.append(current)
+        omitnotes = omitnotes_degree
     if showls:
         result = omitnotes
     else:
@@ -1759,18 +1764,11 @@ def changefrom(a,
                 current_degree = reverse_degree_match[
                     bnotes[bnames.index(note_name)] - b_first_note]
                 if current_degree == 'not found':
-                    original_note = anotes[anames.index(
-                        note(note_name, 5).down(note_change).name)]
-                    diff = original_note - b_first_note
-                    current_degree = reverse_degree_match[diff]
-                    if current_degree == 'not found':
-                        current_degree = reverse_degree_match[diff % octave]
-                    changes[i] = f'({current_degree})'
+                    current_degree = note_name
+                if note_change > 0:
+                    changes[i] = f'b{current_degree}'
                 else:
-                    if note_change > 0:
-                        changes[i] = f'b{current_degree}'
-                    else:
-                        changes[i] = f'#{current_degree}'
+                    changes[i] = f'#{current_degree}'
 
     return ', '.join(changes)
 
