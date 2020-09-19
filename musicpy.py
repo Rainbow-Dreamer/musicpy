@@ -1442,7 +1442,7 @@ def add_to_index(x, value, start=None, stop=None, step=1):
     counter = 0
     for i in range(start, stop, step):
         counter += x[i]
-        if counter >= value:
+        if counter > value:
             break
         else:
             inds.append(i)
