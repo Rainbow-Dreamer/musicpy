@@ -1446,6 +1446,8 @@ def add_to_index(x, value, start=None, stop=None, step=1):
             break
         else:
             inds.append(i)
+    if not inds:
+        inds = [0]
     return inds
 
 
