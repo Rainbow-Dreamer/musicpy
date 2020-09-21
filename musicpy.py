@@ -32,7 +32,7 @@ def toNote(notename, duration=1, volume=100):
 
 def degree_to_note(degree, duration=1, volume=100):
     name = standard_reverse[degree % 12]
-    num = degree // 12
+    num = (degree // 12) - 1
     return note(name, num, duration, volume)
 
 
@@ -1795,12 +1795,7 @@ def addfrom(a, b, default=True):
         return f'add {", ".join(addnotes)}'
 
 
-def inversion_way(a,
-                  b,
-                  inv_num=False,
-                  chordtype=None,
-                  only_msg=False,
-                  ignore_sort_from=False):
+def inversion_way(a, b, inv_num=False, chordtype=None, only_msg=False):
     if samenotes(a, b):
         return f'{b[1].name}{chordtype}'
     if samenote_set(a, b):
@@ -1816,8 +1811,6 @@ def inversion_way(a,
             else:
                 return inversion_msg
         else:
-            if ignore_sort_from:
-                return 'not good'
             sort_msg = sort_from(a, b, getorder=True)
             if sort_msg is not None:
                 if not only_msg:
@@ -1851,7 +1844,6 @@ def find_similarity(a,
                     ratio_chordname=False,
                     provide_name=None,
                     result_ratio=False,
-                    ignore_sort_from=False,
                     change_from_first=False,
                     ignore_add_from=False,
                     same_note_special=True,
@@ -1934,33 +1926,6 @@ def find_similarity(a,
                             first[1])][0]
                         result = ''
                         break
-            if ignore_sort_from:
-                ignore_try = find_similarity(
-                    a,
-                    chordfrom,
-                    fromchord_name=False,
-                    alter_notes_show_degree=alter_notes_show_degree)
-                ignore_ind = 0
-                ratio_len = len(ratios)
-                while 'sort' in ignore_try:
-                    ignore_ind += 1
-                    if ignore_ind < ratio_len:
-                        if ratios[ignore_ind][0] > 0.6:
-                            chordfrom = possible_chords[wholeTypes.index(
-                                ratios[ignore_ind][1])][0]
-                            ignore_try = find_similarity(
-                                a,
-                                chordfrom,
-                                fromchord_name=False,
-                                alter_notes_show_degree=alter_notes_show_degree
-                            )
-                        else:
-                            return 'not good'
-                    else:
-                        ignore_ind = 0
-                        break
-                first = ratios[ignore_ind]
-                highest = first[0]
             if highest == 1:
                 chordfrom_type = first[1]
                 if samenotes(a, chordfrom):
@@ -2083,7 +2048,6 @@ def detect_variation(a,
                      mode='chord',
                      inv_num=False,
                      rootpitch=5,
-                     ignore_sort_from=False,
                      change_from_first=False,
                      original_first=False,
                      ignore_add_from=False,
@@ -2096,7 +2060,6 @@ def detect_variation(a,
                              mode,
                              inv_num,
                              rootpitch,
-                             ignore_sort_from,
                              change_from_first,
                              original_first,
                              ignore_add_from,
@@ -2125,7 +2088,6 @@ def detect_variation(a,
                              mode,
                              inv_num,
                              rootpitch,
-                             ignore_sort_from,
                              change_from_first,
                              original_first,
                              ignore_add_from,
@@ -2188,7 +2150,6 @@ def detect(a,
            mode='chord',
            inv_num=False,
            rootpitch=5,
-           ignore_sort_from=False,
            change_from_first=True,
            original_first=True,
            ignore_add_from=True,
@@ -2225,7 +2186,6 @@ def detect(a,
         original_detect = find_similarity(
             a,
             result_ratio=True,
-            ignore_sort_from=ignore_sort_from,
             change_from_first=change_from_first,
             ignore_add_from=ignore_add_from,
             same_note_special=same_note_special,
@@ -2313,7 +2273,6 @@ def detect(a,
         possibles = [
             (find_similarity(a.inversion(j),
                              result_ratio=True,
-                             ignore_sort_from=ignore_sort_from,
                              change_from_first=change_from_first,
                              ignore_add_from=ignore_add_from,
                              same_note_special=same_note_special,
@@ -2326,7 +2285,6 @@ def detect(a,
             possibles = [(find_similarity(
                 a.inversion_highest(j),
                 result_ratio=True,
-                ignore_sort_from=ignore_sort_from,
                 change_from_first=change_from_first,
                 ignore_add_from=ignore_add_from,
                 same_note_special=same_note_special,
@@ -2343,7 +2301,6 @@ def detect(a,
                 return
             else:
                 detect_var = detect_variation(a, mode, inv_num, rootpitch,
-                                              ignore_sort_from,
                                               change_from_first,
                                               original_first, ignore_add_from,
                                               same_note_special, N,
@@ -2354,7 +2311,6 @@ def detect(a,
                         mode,
                         inv_num,
                         rootpitch,
-                        ignore_sort_from,
                         not change_from_first,
                         original_first,
                         ignore_add_from,
@@ -2410,17 +2366,15 @@ def detect(a,
             return
         else:
             detect_var = detect_variation(a, mode, inv_num, rootpitch,
-                                          ignore_sort_from, change_from_first,
-                                          original_first, ignore_add_from,
-                                          same_note_special, N,
-                                          alter_notes_show_degree)
+                                          change_from_first, original_first,
+                                          ignore_add_from, same_note_special,
+                                          N, alter_notes_show_degree)
             if detect_var is None:
                 result_change = detect(
                     a,
                     mode,
                     inv_num,
                     rootpitch,
-                    ignore_sort_from,
                     not change_from_first,
                     original_first,
                     ignore_add_from,
@@ -2729,3 +2683,31 @@ def negative_harmony(key, a=None, get_map_dict=False, sort=True):
 # play([chord(x).set(1,1) for x in perm(chd('F','m9').names())], 400)
 # play([(chord(x) + chord(x)[-3:]).set(1,1) for x in perm(chd('F','m9').names())], 300)
 # play([(chord(x) + chord(x)[-3:]).set(1,1) for x in perm((chd('F','m13')%[1,2,4,5,7]).names())], 300)
+
+
+def guitar_chord(frets,
+                 return_chord=False,
+                 tuning=['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
+                 duration=1,
+                 interval=0,
+                 **detect_args):
+    # the default tuning is the standard tuning E-A-D-G-B-E,
+    # you can set the tuning to whatever you want
+    # the parameter frets is a list contains the frets of each string of
+    # the guitar you want to press in this chord, sorting from 6th string
+    # to 1st string (which is from E2 string to E4 string in standard tuning),
+    # the fret of a string is an integer, if it is 0, then it means you
+    # play that string open (not press any fret on that string),
+    # if it is 3 for example, then it means you press the third fret on that
+    # string, if it is None, then that means you did not play that string
+    # (mute or just not touch that string)
+    # this function will return the chord types that form by the frets pressing
+    # at the strings on a guitar, or you can choose to just return the chord
+    tuning = [N(i) for i in tuning]
+    guitar_notes = [
+        tuning[j].up(frets[j]) for j in range(6) if frets[j] is not None
+    ]
+    result = chord(guitar_notes, duration, interval)
+    if return_chord:
+        return result
+    return detect(result, **detect_args)

@@ -9,7 +9,7 @@ class note:
     def __init__(self, name, num, duration=1, volume=100):
         self.name = name
         self.num = num
-        self.degree = standard[name] + 12 * num
+        self.degree = standard[name] + 12 * (num + 1)
         self.duration = duration
         self.volume = volume
 
@@ -114,7 +114,7 @@ def degrees_to_chord(ls, interval=0, duration=1):
 
 def degree_to_note(degree, duration=1, volume=100):
     name = standard_reverse[degree % 12]
-    num = degree // 12
+    num = (degree // 12) - 1
     return note(name, num, duration, volume)
 
 
