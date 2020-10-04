@@ -90,13 +90,13 @@ class note:
             return self.down(obj)
 
 
-def toNote(notename, duration=1, volume=100, pitch=5):
+def toNote(notename, duration=1, volume=100, pitch=4):
     num = eval(''.join([x for x in notename if x.isdigit()]))
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume)
 
 
-def trans_note(notename, duration=1, volume=100, pitch=5):
+def trans_note(notename, duration=1, volume=100, pitch=4):
     num = ''.join([x for x in notename if x.isdigit()])
     if not num:
         num = pitch
@@ -120,7 +120,7 @@ def degree_to_note(degree, duration=1, volume=100):
 
 class chord:
     ''' This class can contain a chord with many notes played simultaneously and either has intervals, the default interval is 0.'''
-    def __init__(self, notes, duration=None, interval=None, rootpitch=5):
+    def __init__(self, notes, duration=None, interval=None, rootpitch=4):
         if isinstance(notes, str):
             notes = notes.replace(' ', '').split(',')
         try:
@@ -921,7 +921,7 @@ class scale:
                  interval=None,
                  name=None,
                  notels=None,
-                 pitch=5):
+                 pitch=4):
         self.interval = interval
         if notels is not None:
             notels = [toNote(i) if type(i) != note else i for i in notels]

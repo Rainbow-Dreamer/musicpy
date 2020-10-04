@@ -106,7 +106,7 @@ def getchord(start,
              addition=None,
              interval=None,
              cummulative=True,
-             pitch=5,
+             pitch=4,
              b=None,
              sharp=None,
              ind=0):
@@ -1476,7 +1476,7 @@ def exp(form, obj_name='x', mode='tail'):
     return func
 
 
-def trans(obj, pitch=5, duration=1, interval=None):
+def trans(obj, pitch=4, duration=1, interval=None):
     obj = obj.replace(' ', '')
     if obj in standard:
         return chd(obj,
@@ -1542,7 +1542,7 @@ def trans(obj, pitch=5, duration=1, interval=None):
     return 'not a valid chord representation or chord types not in database'
 
 
-def toScale(obj, pitch=5):
+def toScale(obj, pitch=4):
     inds = obj.index(' ')
     tonic, scale_name = obj[:inds], obj[inds + 1:]
     return scale(note(tonic, pitch), scale_name)
@@ -1598,7 +1598,7 @@ def torealnotesfile(path,
 
 
 def tochords(a,
-             pitch=5,
+             pitch=4,
              combine=0,
              interval_unit=0.5,
              period_unit=1,
@@ -1634,7 +1634,7 @@ def tochords(a,
 
 
 def tochordsfile(path,
-                 pitch=5,
+                 pitch=4,
                  combine=0,
                  interval_unit=0.5,
                  period_unit=1,
@@ -2047,7 +2047,7 @@ def find_similarity(a,
 def detect_variation(a,
                      mode='chord',
                      inv_num=False,
-                     rootpitch=5,
+                     rootpitch=4,
                      change_from_first=False,
                      original_first=False,
                      ignore_add_from=False,
@@ -2149,7 +2149,7 @@ def interval_check(a, two_show_interval=True):
 def detect(a,
            mode='chord',
            inv_num=False,
-           rootpitch=5,
+           rootpitch=4,
            change_from_first=True,
            original_first=True,
            ignore_add_from=True,
