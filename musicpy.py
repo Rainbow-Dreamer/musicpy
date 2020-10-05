@@ -2710,4 +2710,4 @@ def guitar_chord(frets,
     result = chord(guitar_notes, duration, interval)
     if return_chord:
         return result
-    return detect(result, **detect_args)
+    return detect(result.sortchord(), **detect_args)
