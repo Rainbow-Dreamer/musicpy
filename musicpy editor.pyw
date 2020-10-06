@@ -75,7 +75,7 @@ def play(chord1,
 class Root(Tk):
     def __init__(self):
         super(Root, self).__init__()
-        self.minsize(1200, 600)
+        self.minsize(1200, 640)
         self.title('musicpy编辑器')
         try:
             self.bg = Image.open(config_dict['background_image'])
@@ -121,7 +121,7 @@ class Root(Tk):
         self.outputs.configure(yscrollcommand=outputs_v.set,
                                xscrollcommand=outputs_h.set)
         outputs_v.place(x=700, y=310, height=270)
-        outputs_h.place(x=0, y=580, width=700)
+        outputs_h.place(x=0, y=620, width=700)
         self.run_button = ttk.Button(self, text='运行', command=self.runs)
         self.run_button.place(x=750, y=100)
         self.realtime = IntVar()
