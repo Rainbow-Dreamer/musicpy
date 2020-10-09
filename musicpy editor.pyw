@@ -295,6 +295,8 @@ class Root(Tk):
             bg_places = config_dict['background_places']
             self.bg_label.place(x=bg_places[0], y=bg_places[1])
         self.eachline_character = config_dict['eachline_character']
+        self.pairing_symbols = config_dict['pairing_symbols']
+        self.wraplines_number = config_dict['wraplines_number']
 
     def save(self):
         filename = filedialog.asksaveasfilename(initialdir='.',
