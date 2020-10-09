@@ -24,13 +24,13 @@ these two modules with this file
 # the old name is audio_generator.py
 
 
-def toNote(notename, duration=1, volume=100):
+def toNote(notename, duration=0.25, volume=100):
     num = eval(''.join([x for x in notename if x.isdigit()]))
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume)
 
 
-def degree_to_note(degree, duration=1, volume=100):
+def degree_to_note(degree, duration=0.25, volume=100):
     name = standard_reverse[degree % 12]
     num = (degree // 12) - 1
     return note(name, num, duration, volume)
@@ -72,7 +72,7 @@ def get_related_chord(scale1):
 
 def getchord_by_interval(start,
                          interval1,
-                         duration=1,
+                         duration=0.25,
                          interval=0,
                          cummulative=True):
 
@@ -101,7 +101,7 @@ def inversion(chord1, num=1):
 
 def getchord(start,
              mode=None,
-             duration=1,
+             duration=0.25,
              intervals=None,
              addition=None,
              interval=None,
@@ -282,7 +282,7 @@ def read(name,
 
 
 def midi_to_chord(x, t):
-    interval_unit = x.ticks_per_beat
+    interval_unit = x.ticks_per_beat * 4
     hason = []
     hasoff = []
     intervals = []
@@ -431,14 +431,14 @@ def write(name_of_midi,
         content = chordall
         content_notes = content.notes
         content_intervals = content.interval
-        current_start_time = time1
+        current_start_time = time1 * 4
         N = len(content)
         for j in range(N):
             current_note = content_notes[j]
             MyMIDI.addNote(0, current_channel, current_note.degree,
-                           current_start_time, current_note.duration,
+                           current_start_time, current_note.duration * 4,
                            current_note.volume)
-            current_start_time += content_intervals[j]
+            current_start_time += content_intervals[j] * 4
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -534,7 +534,7 @@ def write(name_of_midi,
                 x.tracks[1].insert(0, instrument_msg)
         tracklist = x.tracks[1:]
         track_modify = tracklist[track]
-        interval_unit = x.ticks_per_beat
+        interval_unit = x.ticks_per_beat * 4
         time1 *= interval_unit
         time1 = int(time1)
         if mode == 'm+':
@@ -1442,13 +1442,33 @@ def add_to_index(x, value, start=None, stop=None, step=1):
     counter = 0
     for i in range(start, stop, step):
         counter += x[i]
-        if counter > value:
+        inds.append(i)
+        if counter == value:
+            inds.append(i + 1)
             break
-        else:
-            inds.append(i)
+        elif counter > value:
+            break
     if not inds:
         inds = [0]
     return inds
+
+
+def add_to_last_index(x, value, start=None, stop=None, step=1):
+    if start is None:
+        start = 0
+    if stop is None:
+        stop = len(x)
+    ind = 0
+    counter = 0
+    for i in range(start, stop, step):
+        counter += x[i]
+        ind = i
+        if counter == value:
+            ind += 1
+            break
+        elif counter > value:
+            break
+    return ind
 
 
 def modulation(chord1, old_scale, new_scale):
@@ -1476,7 +1496,7 @@ def exp(form, obj_name='x', mode='tail'):
     return func
 
 
-def trans(obj, pitch=4, duration=1, interval=None):
+def trans(obj, pitch=4, duration=0.25, interval=None):
     obj = obj.replace(' ', '')
     if obj in standard:
         return chd(obj,
@@ -1667,7 +1687,7 @@ def tochordsfile(path,
 # play(a.on('C3',interval=0,duration=2)+a.on('B3',interval=0,duration=2)+a.on
 # ('A3',interval=0,duration=2)+a.on('G3',interval=0,duration=2)+a.on('F3',
 # interval=0,duration=2)+a.up(2,1).up(2,2).up(3,3).on('F#3',interval=0,
-# duration=2)+getchord('G5','M7',duration=1,intervals=0.5,addition=
+# duration=2)+getchord('G5','M7',duration=0.25,intervals=0.5,addition=
 # perfect_octave).on('G3',interval=0,duration=2).period(12))
 # play(((AM7[:-1] + AM7.reverse()).period(0.5) + (AM7[:-1] + AM7.reverse()).up().period(0.5))*3)
 
@@ -2688,7 +2708,7 @@ def negative_harmony(key, a=None, get_map_dict=False, sort=True):
 def guitar_chord(frets,
                  return_chord=False,
                  tuning=['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
-                 duration=1,
+                 duration=0.25,
                  interval=0,
                  **detect_args):
     # the default tuning is the standard tuning E-A-D-G-B-E,

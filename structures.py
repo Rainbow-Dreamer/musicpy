@@ -6,7 +6,7 @@ except:
 
 
 class note:
-    def __init__(self, name, num, duration=1, volume=100):
+    def __init__(self, name, num, duration=0.25, volume=100):
         self.name = name
         self.num = num
         self.degree = standard[name] + 12 * (num + 1)
@@ -28,7 +28,7 @@ class note:
     def setvolume(self, vol):
         self.volume = vol
 
-    def set(self, duration=1, volume=100):
+    def set(self, duration=0.25, volume=100):
         return note(self.name, self.num, duration, volume)
 
     def __mod__(self, obj):
@@ -90,13 +90,13 @@ class note:
             return self.down(obj)
 
 
-def toNote(notename, duration=1, volume=100, pitch=4):
+def toNote(notename, duration=0.25, volume=100, pitch=4):
     num = eval(''.join([x for x in notename if x.isdigit()]))
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume)
 
 
-def trans_note(notename, duration=1, volume=100, pitch=4):
+def trans_note(notename, duration=0.25, volume=100, pitch=4):
     num = ''.join([x for x in notename if x.isdigit()])
     if not num:
         num = pitch
@@ -106,13 +106,13 @@ def trans_note(notename, duration=1, volume=100, pitch=4):
     return note(name, num, duration, volume)
 
 
-def degrees_to_chord(ls, interval=0, duration=1):
+def degrees_to_chord(ls, interval=0, duration=0.25):
     return chord([degree_to_note(i) for i in ls],
                  interval=interval,
                  duration=duration)
 
 
-def degree_to_note(degree, duration=1, volume=100):
+def degree_to_note(degree, duration=0.25, volume=100):
     name = standard_reverse[degree % 12]
     num = (degree // 12) - 1
     return note(name, num, duration, volume)
@@ -476,7 +476,12 @@ class chord:
             return result
         return [INTERVAL[x][0] for x in result]
 
-    def add(self, note1=None, interval=None, mode='tail', start=0, duration=1):
+    def add(self,
+            note1=None,
+            interval=None,
+            mode='tail',
+            start=0,
+            duration=0.25):
         temp = copy(self)
         if type(note1) == int:
             temp += temp[1].up(note1)
@@ -590,7 +595,7 @@ class chord:
         temp.notes.sort(key=lambda x: x.degree)
         return temp
 
-    def on(self, root, duration=1, interval=None, each=0):
+    def on(self, root, duration=0.25, interval=None, each=0):
         temp = copy(self)
         if each == 0:
             if type(root) == chord:
@@ -1015,7 +1020,7 @@ class scale:
             else:
                 return 'could not find this scale'
 
-    def getScale(self, intervals=1, durations=None):
+    def getScale(self, intervals=0.25, durations=None):
         if self.mode == None:
             if self.interval == None:
                 return 'at least one of mode or interval in the scale should be settled'
@@ -1079,7 +1084,7 @@ class scale:
     def pickdegree(self, degree1):
         return self[degree1]
 
-    def pattern(self, indlist, interval=0, duration=1, num=3, step=2):
+    def pattern(self, indlist, interval=0, duration=0.25, num=3, step=2):
         if type(indlist) == str:
             indlist = [int(i) for i in indlist]
         if type(indlist) == int:
@@ -1273,7 +1278,7 @@ class scale:
         result.mode = result.detect()
         return result
 
-    def play(self, intervals=1, durations=None, *args, **kwargs):
+    def play(self, intervals=0.25, durations=None, *args, **kwargs):
         import musicpy
         musicpy.play(self.getScale(intervals, durations), *args, **kwargs)
 
