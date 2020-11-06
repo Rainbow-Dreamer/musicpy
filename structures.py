@@ -463,15 +463,14 @@ class chord:
         return temp
 
     def intervalof(self, cummulative=True, translate=False):
+        degrees = self.get_degree()
         if not cummulative:
-            result = [
-                self[i].degree - self[i - 1].degree
-                for i in range(2,
-                               len(self) + 1)
-            ]
+            N = len(degrees)
+            result = [degrees[i] - degrees[i - 1] for i in range(1, N)]
         else:
-            root = self[1].degree
-            result = [i.degree - root for i in self[2:]]
+            root = degrees[0]
+            others = degrees[1:]
+            result = [i - root for i in others]
         if not translate:
             return result
         return [INTERVAL[x][0] for x in result]
@@ -917,6 +916,21 @@ class chord:
                     continue
             i += 1
         return temp
+
+    def retrograde(self, rhythm=False):
+        result = self.reverse()
+        if not rhythm:
+            result.interval.reverse()
+        return result
+
+    def pitch_inversion(self):
+        pitch_intervals = self.intervalof(cummulative=False)
+        import musicpy
+        result = musicpy.getchord_by_interval(self[1],
+                                              [-i for i in pitch_intervals],
+                                              self.get_duration(),
+                                              self.interval, False)
+        return result
 
 
 class scale:

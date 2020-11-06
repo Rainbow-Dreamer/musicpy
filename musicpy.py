@@ -1077,29 +1077,26 @@ def split_melody(x,
 
     elif mode == 'notes':
         x_notes = x.notes
-        x_interval = x.interval
         N = len(x)
         for k in range(N):
             x_notes[k].number = k
+        temp = copy(x)
+        whole_notes = temp.notes
+        whole_interval = temp.interval
         if get_off_overlap_notes:
             for j in range(N):
-                current_note = x_notes[j]
-                current_interval = x_interval[j]
+                current_note = whole_notes[j]
+                current_interval = whole_interval[j]
                 if current_interval != 0:
                     if current_note.duration >= current_interval:
                         current_note.duration = current_interval
                 else:
                     for y in range(j + 1, N):
-                        next_interval = x_interval[y]
+                        next_interval = whole_interval[y]
                         if next_interval != 0:
                             if current_note.duration >= next_interval:
                                 current_note.duration = next_interval
                             break
-
-        temp = copy(x)
-        whole_notes = temp.notes
-        whole_interval = temp.interval
-        if get_off_overlap_notes:
             unit_duration = min([i.duration for i in whole_notes])
             for each in whole_notes:
                 each.duration = unit_duration
@@ -1122,18 +1119,6 @@ def split_melody(x,
             for each_ind in get_off:
                 whole_notes[each_ind] = None
         whole_notes = [x for x in whole_notes if x is not None]
-
-        #if get_off_overlap_notes:
-        #whole_interval2 = x.interval
-        #whole_notes2 = x.notes
-        #new_interval = []
-        #result = [i.number for i in whole_notes]
-        #N = len(result) - 1
-        #for i in range(N):
-        #new_interval.append(sum(whole_interval2[result[i]:result[i + 1]]))
-        #new_interval.append(sum(whole_interval2[result[-1]:]))
-        #return chord(whole_notes, interval=new_interval)
-
         N = len(whole_notes) - 1
         start = 0
         if whole_notes[1].degree - whole_notes[0].degree >= chord_tol:
@@ -1184,7 +1169,7 @@ def split_melody(x,
                             notes_num += 1
                             melody_duration.append(current_note.duration)
             i += 1
-        melody = [x.notes[each.number] for each in melody]
+        melody = [x_notes[each.number] for each in melody]
         return melody
 
 
