@@ -2462,8 +2462,7 @@ def choose_melody(focused, now_focus, focus_ratio, focus_notes, remained_notes,
                     (firstmelody.degree - x.degree) % diminished_fifth == 0
                         for x in newchord.notes):
                     firstmelody = random.choice(pick)
-
-        return firstmelody
+    return firstmelody
 
 
 def random_composing(mode,
@@ -2479,8 +2478,8 @@ def random_composing(mode,
                      right_hand_velocity=80,
                      left_hand_meter=4,
                      right_hand_meter=4,
-                     choose_intervals=[0.5, 1, 1.5, 2],
-                     choose_durations=[0.5, 1, 1.5, 2],
+                     choose_intervals=[1 / 8, 1 / 4, 1 / 2],
+                     choose_durations=[1 / 8, 1 / 4, 1 / 2],
                      melody_interval_tol=perfect_fourth,
                      choose_from_chord=False):
     # Composing a piece of music randomly from a given mode (here means scale),
@@ -2519,10 +2518,8 @@ def random_composing(mode,
             patterncount += 1
             if patterncount == len(pattern):
                 patterncount = 0
-        newduration = random.choice(choose_durations)  # random.choice([1,2])
-        newinterval = random.choice(
-            choose_intervals
-        )  # random.choice([0.5,1])#random.choice([0,0.5,1])
+        newduration = random.choice(choose_durations)
+        newinterval = random.choice(choose_intervals)
         newchord = newchordnotes.set(newduration, newinterval)
         '''
         # check if current chord belongs to a kind of (closer to) major/minor
@@ -2561,8 +2558,7 @@ def random_composing(mode,
             newmelody = [firstmelody]
             length_of_chord = sum(newchord.interval)
             intervals = [random.choice(choose_intervals)]
-            firstmelody.duration = random.choice(
-                choose_durations)  # intervals[0]  # random.choice([0.5,1])
+            firstmelody.duration = random.choice(choose_durations)
             while sum(intervals) <= length_of_chord:
                 currentmelody = choose_melody(focused, now_focus, focus_ratio,
                                               focus_notes, remained_notes,
@@ -2576,11 +2572,9 @@ def random_composing(mode,
                                                   avoid_dim_5, chordinner,
                                                   newchord, choose_from_chord)
                 currentmelody.volume = right_hand_velocity
-                newinter = random.choice(
-                    choose_intervals)  #0.5  # random.choice([0.5,1])
+                newinter = random.choice(choose_intervals)
                 intervals.append(newinter)
-                currentmelody.duration = random.choice(
-                    choose_durations)  # newinter  # random.choice([0.5,1])
+                currentmelody.duration = random.choice(choose_durations)
                 newmelody.append(currentmelody)
 
             distance = [
@@ -2595,12 +2589,6 @@ def random_composing(mode,
             newmelodyall.notes.pop()
             newmelodyall.interval.pop()
         newcombination = newchord.add(newmelodyall, mode='head')
-        #choosemode = random.choice(['tail','head'])
-        # if choosemode == 'head':
-        #startime = random.choice([0,0.5,1])
-        #newcombination = newchord.add(newmelodyall, mode = choosemode)
-        # else:
-        #newcombination = newchord.add(newmelodyall)
         result = result.add(newcombination)
         count += len(newcombination)
     return result
