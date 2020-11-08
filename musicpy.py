@@ -17,6 +17,8 @@ try:
 except:
     from database import *
     from structures import *
+import pygame
+pygame.mixer.init(44100, -16, 1, 1024)
 '''
 mido and midiutil is requried for this module, please make sure you have
 these two modules with this file
@@ -208,13 +210,8 @@ def play(chord1,
                  save_as_file=save_as_file)
     if save_as_file:
         result_file = name
-        if sys.platform.startswith('win'):
-            os.startfile(result_file)
-        elif sys.platform.startswith('linux'):
-            import subprocess
-            subprocess.Popen(result_file)
-        elif sys.platform == 'darwin':
-            os.system(f'afplay {result_file}')
+        pygame.mixer.music.load(result_file)
+        pygame.mixer.music.play()
     else:
         return file
 
