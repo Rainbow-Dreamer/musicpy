@@ -23,7 +23,6 @@ pygame.mixer.init(44100, -16, 1, 1024)
 mido and midiutil is requried for this module, please make sure you have
 these two modules with this file
 '''
-# the old name is audio_generator.py
 
 
 def toNote(notename, duration=0.25, volume=100):
@@ -68,7 +67,7 @@ def secondary_dom7(root, mode='major'):
 
 
 def get_related_chord(scale1):
-    # fu4 shu3 he2 xian2 and so on
+    # get secondary dominant chords
     pass
 
 
@@ -170,15 +169,6 @@ def getchord(start,
 
 
 chd = getchord
-# a = chord(['C5','#D5','G5'],20)
-#a = getchord('D5','mM7',4,0)
-#b = getchord('A4','mM7',4,0)
-#c = getchord('B4','min7',4,0)
-# d = getchord('F#4','min7',4,0)
-#e = getchord('G4','min7',4,0)
-#f = getchord('D4','min7',4,0)
-#g = getchord('G4','min7',4,0)
-#h = getchord('A4','min7',4,0)
 
 
 def concat(chordlist):
@@ -333,8 +323,6 @@ def midi_to_chord(x, t):
                 duration1 = realtime / interval_unit
                 if duration1.is_integer():
                     duration1 = int(duration1)
-                # if not find_interval:
-                #intervals.append(sum([t[x].time for x in range(i,notes_len-1)])/interval_unit)
                 notelist.append(
                     degree_to_note(current_msg_note,
                                    duration=duration1,
@@ -399,13 +387,13 @@ def write(name_of_midi,
             content = tracks_contents[i]
             content_notes = content.notes
             content_intervals = content.interval
-            current_start_time = start_times[i]
+            current_start_time = start_times[i] * 4
             for j in range(len(content)):
                 current_note = content_notes[j]
                 MyMIDI.addNote(i, current_channel, current_note.degree,
-                               current_start_time, current_note.duration,
+                               current_start_time, current_note.duration * 4,
                                current_note.volume)
-                current_start_time += content_intervals[j]
+                current_start_time += content_intervals[j] * 4
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -452,24 +440,14 @@ def write(name_of_midi,
         only supports writing to a single track in this mode
         '''
         MyMIDI = MIDIFile(track_num, deinterleave=False)
+        time1 *= 4
         MyMIDI.addTempo(track, time1, tempo)
         degrees = [x.degree for x in chordall.notes]
-        duration = [x.duration for x in chordall.notes]
+        duration = [x.duration * 4 for x in chordall.notes]
         for i in range(len(degrees)):
-            # if i != len(degrees) - 1:
             MyMIDI.addNote(track, channel, degrees[i], time1, duration[i],
                            chordall[i + 1].volume)
-            time1 += chordall.interval[i]
-            # if i == len(degrees) - 1:
-            #last = chordall.interval[-1]
-            #MyMIDI.addNote(track, channel, degrees[i], time1+duration[i]-last, last, 0)
-            # else:
-            #MyMIDI.addNote(track, channel, degrees[i], time1, duration[i], chordall[i].volume)
-            # if chordall.interval[i] < duration[i]:
-            #time1 += duration[i]
-            # else:
-            #time1 += chordall.interval[i]+duration[i]
-            #MyMIDI.addNote(track, channel, degrees[i], time1, duration[i], 0)
+            time1 += chordall.interval[i] * 4
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -560,7 +538,7 @@ def write(name_of_midi,
                                 velocity=chordall[sorthas[n][1] + 1].volume,
                                 time=sorthas[n][0] - sorthas[n - 1][0]))
         elif mode == 'm':
-            file = write('tempmerge',
+            file = write('tempmerge.mid',
                          chord1,
                          tempo,
                          track,
@@ -568,8 +546,7 @@ def write(name_of_midi,
                          time1,
                          track_num,
                          instrument=instrument,
-                         save_as_file=save_as_file,
-                         midi_io=current_io)
+                         save_as_file=save_as_file)
             if save_as_file:
                 tempmid = midi('tempmerge.mid')
             else:
@@ -588,7 +565,6 @@ def write(name_of_midi,
             return result_io
 
 
-#x = midi('so.mid')
 MODIFY = 'modify'
 NEW = 'new'
 
