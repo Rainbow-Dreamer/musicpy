@@ -41,9 +41,10 @@ def play(chord1,
          time1=0,
          track_num=1,
          name='temp.mid',
-         modes='new2',
+         modes='quick',
          instrument=None,
-         save_as_file=True):
+         save_as_file=True,
+         deinterleave=False):
     file = write(name,
                  chord1,
                  tempo,
@@ -53,7 +54,8 @@ def play(chord1,
                  track_num=1,
                  mode=modes,
                  instrument=instrument,
-                 save_as_file=save_as_file)
+                 save_as_file=save_as_file,
+                 deinterleave=deinterleave)
     if save_as_file:
         result_file = name
         pygame.mixer.music.load(result_file)

@@ -187,7 +187,8 @@ def play(chord1,
          name='temp.mid',
          modes='quick',
          instrument=None,
-         save_as_file=True):
+         save_as_file=True,
+         deinterleave=False):
     file = write(name_of_midi=name,
                  chord1=chord1,
                  tempo=tempo,
@@ -197,7 +198,8 @@ def play(chord1,
                  track_num=track_num,
                  mode=modes,
                  instrument=instrument,
-                 save_as_file=save_as_file)
+                 save_as_file=save_as_file,
+                 deinterleave=deinterleave)
     if save_as_file:
         result_file = name
         pygame.mixer.music.load(result_file)
@@ -360,7 +362,8 @@ def write(name_of_midi,
           mode='quick',
           instrument=None,
           save_as_file=True,
-          midi_io=None):
+          midi_io=None,
+          deinterleave=False):
     if isinstance(chord1, piece):
         mode = 'multi'
     if mode == 'multi':
@@ -372,7 +375,7 @@ def write(name_of_midi,
             return 'multi mode requires a piece object'
         track_number, start_times, instruments_numbers, tempo, tracks_contents, track_names, channels = \
         chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels
-        MyMIDI = MIDIFile(track_number, deinterleave=False)
+        MyMIDI = MIDIFile(track_number, deinterleave=deinterleave)
         for i in range(track_number):
             if channels:
                 current_channel = channels[i]
@@ -408,7 +411,7 @@ def write(name_of_midi,
     chordall = concat(chord1) if isinstance(chord1, list) else chord1
 
     if mode == 'quick':
-        MyMIDI = MIDIFile(track_num, deinterleave=False)
+        MyMIDI = MIDIFile(track_num, deinterleave=deinterleave)
         current_channel = 0
         MyMIDI.addTempo(0, 0, tempo)
         if type(instrument) == int:
@@ -439,7 +442,7 @@ def write(name_of_midi,
         write to a new midi file or overwrite an existing midi file,
         only supports writing to a single track in this mode
         '''
-        MyMIDI = MIDIFile(track_num, deinterleave=False)
+        MyMIDI = MIDIFile(track_num, deinterleave=deinterleave)
         time1 *= 4
         MyMIDI.addTempo(track, time1, tempo)
         degrees = [x.degree for x in chordall.notes]
@@ -485,7 +488,8 @@ def write(name_of_midi,
                      mode='m+',
                      instrument=instrument,
                      save_as_file=save_as_file,
-                     midi_io=current_io)
+                     midi_io=current_io,
+                     deinterleave=deinterleave)
     elif mode in ['m+', 'm']:
         '''
         both of these two modes modify existing midi files
@@ -546,7 +550,8 @@ def write(name_of_midi,
                          time1,
                          track_num,
                          instrument=instrument,
-                         save_as_file=save_as_file)
+                         save_as_file=save_as_file,
+                         deinterleave=deinterleave)
             if save_as_file:
                 tempmid = midi('tempmerge.mid')
             else:
