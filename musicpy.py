@@ -171,10 +171,23 @@ def getchord(start,
 chd = getchord
 
 
-def concat(chordlist):
+def concat(chordlist, mode='+', extra=None):
     temp = copy(chordlist[0])
-    for t in chordlist[1:]:
-        temp += t
+    if mode == '+':
+        for t in chordlist[1:]:
+            temp += t
+    elif mode == '|':
+        for t in chordlist[1:]:
+            temp |= t
+    elif mode == '&':
+        if not extra:
+            for t in chordlist[1:]:
+                temp &= t
+        else:
+            extra_unit = extra
+            for t in chordlist[1:]:
+                temp &= (t, extra)
+                extra += extra_unit
     return temp
 
 
