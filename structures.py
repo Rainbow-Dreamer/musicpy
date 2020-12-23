@@ -552,6 +552,8 @@ class chord:
 
     def inv(self, num=1):
         temp = self.copy()
+        if type(num) == str:
+            return self @ num
         if num not in range(1, len(self.notes)):
             return 'the number of inversion is out of range of the notes in this chord'
         while temp[num + 1].degree >= temp[num].degree:
