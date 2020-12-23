@@ -1518,7 +1518,11 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
         part1, part2 = parts[0], '/'.join(parts[1:])
         first_chord = trans(part1, pitch, duration, interval)
         if type(first_chord) == chord:
-            if part2 in standard:
+            if part2.isdigit() or (part2[0] == '-' and part2[1:].isdigit()):
+                return first_chord / int(part2)
+            elif part2[-1] == '!' and part2[:-1].isdigit():
+                return first_chord @ int(part2[:-1])
+            elif part2 in standard:
                 first_chord_notenames = first_chord.names()
                 if part2 in first_chord_notenames and part2 != first_chord_notenames[
                         0]:

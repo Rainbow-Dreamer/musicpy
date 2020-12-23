@@ -326,10 +326,11 @@ class chord:
             return self.get(obj)
         elif types == int:
             return self.inv(obj)
+        elif types == str:
+            return self.inv(self.names().index(obj))
         else:
             import musicpy
             if types == tuple:
-
                 return musicpy.negative_harmony(obj[0], self, *obj[1:])
             else:
                 return musicpy.negative_harmony(obj, self)
