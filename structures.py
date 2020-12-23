@@ -479,7 +479,7 @@ class chord:
             result = [i - root for i in others]
         if not translate:
             return result
-        return [INTERVAL[x][0] for x in result]
+        return [INTERVAL[x % octave][0] for x in result]
 
     def add(self,
             note1=None,
