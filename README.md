@@ -11,7 +11,9 @@
 
 import这个库: from musicpy import *
 
-我自己做的介绍与使用教程视频第一期：https://www.bilibili.com/video/BV1754y197a9/
+我自己做的介绍与使用教程视频第一期：https://www.bilibili.com/video/BV1754y197a9/ （比较旧了，musicpy当前的最新版本已经有了很多语法上的改进与一些数据结构单位的改动，这期会重做的）
+
+musicpy作曲示例实际演示以及musicpy实验作曲日常：https://www.bilibili.com/video/BV18z4y1r7Pk/
 
 详细的musicpy数据结构，基础语法以及使用教程，请看我正在写的Wiki，我会尽量把所有的细节都讲清楚。 
 
