@@ -7,8 +7,23 @@
 这个库可以让你用非常简洁的语法，来表达一段音乐的音符，节奏等等信息，并且可以简单地输出成 midi 文件的格式。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki
 ) 正在写的教程之后你应该很快就上手了。
 
-首先在 musicpy 文件夹里打开 `cmd`，跑一下 `pip install -r requirements.txt` 安装依赖库（如果本来就是 `pip install musicpy` 安装的就不需要这一步，
-我也比较推荐直接 `pip install musicpy` 就行）
+安装 musicpy：
+
+```shell
+$ pip install musicpy
+```
+
+或者将仓库克隆到本地并安装依赖库：
+
+```shell
+$ pip install -r requirements.txt
+```
+
+使用编辑器需要安装额外的依赖库：
+
+```shell
+$ pip install pillow pygame
+```
 
 import 这个库：
 
