@@ -80,6 +80,7 @@ class Root(Tk):
         super(Root, self).__init__()
         self.minsize(1200, 640)
         self.title('musicpy 编辑器')
+        self.focus_force()
         try:
             self.bg = Image.open(config_dict['background_image'])
             ratio = 600 / self.bg.height
@@ -152,6 +153,13 @@ class Root(Tk):
                                         text='自动补全',
                                         variable=self.auto,
                                         command=self.check_auto)
+        self.is_grammar = 1
+        self.grammar = IntVar()
+        self.grammar.set(1)
+        self.grammar_box = ttk.Checkbutton(self,
+                                           text='语法高亮',
+                                           variable=self.grammar,
+                                           command=self.check_grammar)
         self.eachline_character = config_dict['eachline_character']
         self.pairing_symbols = config_dict['pairing_symbols']
         self.wraplines_number = config_dict['wraplines_number']
@@ -162,6 +170,7 @@ class Root(Tk):
         self.print_box.place(x=750, y=250)
         self.auto_box.place(x=750, y=300)
         self.wraplines_button.place(x=750, y=350)
+        self.grammar_box.place(x=750, y=450)
         self.save_button = ttk.Button(self, text='保存', command=self.save)
         self.save_button.place(x=750, y=50)
         self.is_print = 1
@@ -253,7 +262,9 @@ class Root(Tk):
                           errors='ignore') as f:
                     self.inputs.delete('1.0', END)
                     self.inputs.insert(END, f.read())
-                    self.after(1000, self.grammar_highlight_func)
+                    self.inputs.mark_set(INSERT, '1.0')
+                    if self.is_grammar:
+                        self.after(1000, self.grammar_highlight_func)
             except:
                 self.inputs.delete('1.0', END)
                 self.inputs.insert(END, '不是有效的文本文件类型')
@@ -532,7 +543,7 @@ class Root(Tk):
         self.auto_complete_menu.selection_set(0)
 
     def runs(self):
-        if self.inputs.edit_modified():
+        if self.is_grammar and self.inputs.edit_modified():
             self.after(1000, self.grammar_highlight_func)
         self.outputs.delete('1.0', END)
         text = self.inputs.get('1.0', END)
@@ -611,7 +622,7 @@ class Root(Tk):
         if self.quit:
             self.quit = False
             return
-        if self.inputs.edit_modified():
+        if self.is_grammar and self.inputs.edit_modified():
             self.after(1000, self.grammar_highlight_func)
         if self.is_auto:
             if self.changed:
@@ -644,6 +655,9 @@ class Root(Tk):
             self.auto_complete_run()
         else:
             self.close_select(1)
+
+    def check_grammar(self):
+        self.is_grammar = self.grammar.get()
 
 
 root = Root()
