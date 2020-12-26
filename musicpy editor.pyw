@@ -80,7 +80,6 @@ class Root(Tk):
         super(Root, self).__init__()
         self.minsize(1200, 640)
         self.title('musicpy 编辑器')
-        self.focus_force()
         try:
             self.bg = Image.open(config_dict['background_image'])
             ratio = 600 / self.bg.height
@@ -661,4 +660,6 @@ class Root(Tk):
 
 
 root = Root()
+root.wm_attributes("-topmost", 1)
+root.focus_force()
 root.mainloop()
