@@ -78,7 +78,7 @@ class Root(Tk):
     def __init__(self):
         super(Root, self).__init__()
         self.minsize(1200, 640)
-        self.title('musicpy编辑器')
+        self.title('musicpy 编辑器')
         try:
             self.bg = Image.open(config_dict['background_image'])
             ratio = 600 / self.bg.height
@@ -91,7 +91,7 @@ class Root(Tk):
             self.bg_label.place(x=bg_places[0], y=bg_places[1])
         except:
             pass
-        self.inputs_text = ttk.Label(self, text='清在这里输入musicpy音乐代码语句')
+        self.inputs_text = ttk.Label(self, text='请在这里输入 musicpy 音乐代码语句')
         self.inputs = Text(self,
                            wrap='none',
                            undo=True,
@@ -137,7 +137,7 @@ class Root(Tk):
         self.no_print = IntVar()
         self.no_print.set(1)
         self.print_box = ttk.Checkbutton(self,
-                                         text='不使用print',
+                                         text='不使用 print',
                                          variable=self.no_print,
                                          command=self.check_print)
         self.auto = IntVar()
