@@ -10,19 +10,19 @@
 安装 musicpy：
 
 ```shell
-$ pip install musicpy
+pip install musicpy
 ```
 
 或者将仓库克隆到本地并安装依赖库：
 
 ```shell
-$ pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 使用编辑器需要安装额外的依赖库：
 
 ```shell
-$ pip install pillow pygame
+pip install pillow pygame
 ```
 
 import 这个库：
