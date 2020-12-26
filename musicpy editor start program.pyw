@@ -1,6 +1,7 @@
 import traceback
 from tkinter import *
 from tkinter import ttk
+from tkinter import font
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog

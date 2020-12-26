@@ -113,15 +113,15 @@ modern_modes = [
 # to get better chord detection results
 chordTypes = match({
     ('major', 'M', 'maj', 'majorthird'): ((4, 7), ),
-    ('minor', 'm', 'minorthird', 'min'): ((3, 7), ),
+    ('minor', 'm', 'minorthird', 'min', '-'): ((3, 7), ),
     ('maj7', 'M7', 'major7th', 'majorseventh'): ((4, 7, 11), ),
-    ('m7', 'min7', 'minor7th', 'minorseventh'): ((3, 7, 10), ),
+    ('m7', 'min7', 'minor7th', 'minorseventh', '-7'): ((3, 7, 10), ),
     ('7', 'seven', 'seventh', 'dominant seventh', 'dom7', 'dominant7', 'germansixth'):
     ((4, 7, 10), ),
     ('minormajor7', 'minor major 7', 'mM7'): ((3, 7, 11), ),
-    ('dim', 'dim3', '-'): ((3, 6), ),
-    ('dim7', '-7'): ((3, 6, 9), ),
-    ('half-diminished7', 'ø7', 'ø', 'half-diminished', 'half-dim', 'o7', 'o', 'm7b5'):
+    ('dim', 'o'): ((3, 6), ),
+    ('dim7', 'o7'): ((3, 6, 9), ),
+    ('half-diminished7', 'ø7', 'ø', 'half-diminished', 'half-dim', 'm7b5'):
     ((3, 6, 10), ),
     ('aug', 'augmented', '+', 'aug3', '+3'): ((4, 8), ),
     ('aug7', 'augmented7', '+7'): ((4, 8, 10), ),
@@ -133,7 +133,7 @@ chordTypes = match({
     ('sus2', ): ((2, 7), ),
     ('9', 'dominant9', 'dominant-ninth', 'ninth'): ((4, 7, 10, 14), ),
     ('maj9', 'major-ninth', 'major9th', 'M9'): ((4, 7, 11, 14), ),
-    ('m9', 'minor9', 'minor9th'): ((3, 7, 10, 14), ),
+    ('m9', 'minor9', 'minor9th', '-9'): ((3, 7, 10, 14), ),
     ('augmaj9', '+maj9', '+M9', 'augM9'): ((4, 8, 11, 14), ),
     ('add6', '6', 'sixth'): ((4, 7, 9), ),
     ('m6', 'minorsixth'): ((3, 7, 9), ),
