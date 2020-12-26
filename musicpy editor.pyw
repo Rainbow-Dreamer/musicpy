@@ -264,7 +264,7 @@ class Root(Tk):
                     self.inputs.insert(END, f.read())
                     self.inputs.mark_set(INSERT, '1.0')
                     if self.is_grammar:
-                        self.after(1000, self.grammar_highlight_func)
+                        self.after(500, self.grammar_highlight_func)
             except:
                 self.inputs.delete('1.0', END)
                 self.inputs.insert(END, '不是有效的文本文件类型')
@@ -544,7 +544,7 @@ class Root(Tk):
 
     def runs(self):
         if self.is_grammar and self.inputs.edit_modified():
-            self.after(1000, self.grammar_highlight_func)
+            self.after(500, self.grammar_highlight_func)
         self.outputs.delete('1.0', END)
         text = self.inputs.get('1.0', END)
         lines = text.split('\n')
@@ -623,7 +623,7 @@ class Root(Tk):
             self.quit = False
             return
         if self.is_grammar and self.inputs.edit_modified():
-            self.after(1000, self.grammar_highlight_func)
+            self.after(500, self.grammar_highlight_func)
         if self.is_auto:
             if self.changed:
                 self.changed = False
