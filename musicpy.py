@@ -2699,3 +2699,19 @@ def guitar_chord(frets,
     if return_chord:
         return result
     return detect(result.sortchord(), **detect_args)
+
+
+def build(*tracks_list, bpm=80):
+    if len(set([len(i) for i in tracks_list])) != 1:
+        return 'every track should has the same number of variables'
+    tracks = [i[1] for i in tracks_list]
+    instruments_list = [i[0] for i in tracks_list]
+    start_times = [i[2] for i in tracks_list]
+    channels = None
+    track_names = None
+    tracks_len = len(tracks_list[0])
+    if tracks_len >= 4:
+        channels = [i[3] for i in tracks_list]
+    if tracks_len >= 5:
+        track_names = [i[4] for i in tracks_list]
+    return P(tracks, instruments_list, bpm, start_times, track_names, channels)
