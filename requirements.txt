@@ -1,3 +1,4 @@
 mido
 midiutil
 pygame
+pillow
