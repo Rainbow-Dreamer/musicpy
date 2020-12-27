@@ -660,6 +660,5 @@ class Root(Tk):
 
 
 root = Root()
-root.wm_attributes("-topmost", 1)
 root.focus_force()
 root.mainloop()
