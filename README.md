@@ -8,24 +8,14 @@
 ) 正在写的教程之后你应该很快就上手了。
 
 安装 musicpy：
+先确定电脑里有安装python，python版本最好是 >= 3.6，
+打开电脑的cmd然后输入
 
 ```shell
 pip install musicpy
 ```
-
-或者将仓库克隆到本地并安装依赖库：
-
-```shell
-pip install -r requirements.txt
-```
-
-使用编辑器需要安装额外的依赖库：
-
-```shell
-pip install pillow pygame
-```
-
 import 这个库：
+在你喜欢用的python的IDE里面输入
 
 ```python
 from musicpy import *
