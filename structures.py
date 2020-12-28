@@ -194,7 +194,7 @@ class chord:
         if current_intervals:
             interval = current_intervals
         #notes = [x if isinstance(x, note) else toNote(x) for x in notes]
-        if standardize_msg:
+        if standardize_msg and notes:
             root = notes[0]
             notels = [root]
             for i in range(1, len(notes)):
