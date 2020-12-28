@@ -2,7 +2,7 @@
     'background_image':
     'G:/university/MyAI project/py files/musicpy/tenshi.jpg',
     'background_places': (700, -30),
-    'eachline_character': 85,
+    'eachline_character': 58,
     'pairing_symbols': ['()', '[]', "''", '""'],
     'wraplines_number': 2,
     'font_type': 'Consolas',
@@ -10,7 +10,7 @@
     'background_mode': 'white',
     'grammar_highlight': {
         'red': ['/', '@', '^', '~', '%', '&', '|', '+', '-', '?', '*'],
-        'blue': ['getchord', 'chord', 'chd', 'C', 'trans'],
+        'blue': ['getchord', 'chord', 'trans', 'chd', 'C'],
         'green': ['toScale', 'scale', 'S'],
         'orange': ['toNote', 'note', 'N'],
         'violet': ['piece', 'build', 'P']

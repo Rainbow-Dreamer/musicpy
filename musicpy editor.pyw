@@ -44,6 +44,7 @@ def play(chord1,
          name='temp.mid',
          modes='quick',
          instrument=None,
+         i=None,
          save_as_file=True,
          deinterleave=False):
     file = write(name,
@@ -55,6 +56,7 @@ def play(chord1,
                  track_num=1,
                  mode=modes,
                  instrument=instrument,
+                 i=i,
                  save_as_file=save_as_file,
                  deinterleave=deinterleave)
     if save_as_file:
@@ -80,6 +82,7 @@ class Root(Tk):
         super(Root, self).__init__()
         self.minsize(1200, 640)
         self.title('musicpy 编辑器')
+        self.focus_set()
         try:
             self.bg = Image.open(config_dict['background_image'])
             ratio = 600 / self.bg.height
@@ -263,7 +266,7 @@ class Root(Tk):
                     self.inputs.insert(END, f.read())
                     self.inputs.mark_set(INSERT, '1.0')
                     if self.is_grammar:
-                        self.after(500, self.grammar_highlight_func)
+                        self.after(100, self.grammar_highlight_func)
             except:
                 self.inputs.delete('1.0', END)
                 self.inputs.insert(END, '不是有效的文本文件类型')
@@ -350,7 +353,7 @@ class Root(Tk):
             )
         if not outer:
             self.saved_label.place(x=600, y=430)
-            self.after(1000, self.saved_label.place_forget)
+            self.after(300, self.saved_label.place_forget)
         self.reload_config()
 
     def search_path(self, obj):
@@ -399,6 +402,12 @@ class Root(Tk):
         self.eachline_character = config_dict['eachline_character']
         self.pairing_symbols = config_dict['pairing_symbols']
         self.wraplines_number = config_dict['wraplines_number']
+        self.grammar_highlight = config_dict['grammar_highlight']
+        for each in self.grammar_highlight:
+            self.inputs.tag_configure(each, foreground=each)
+        self.font_size = eval(self.get_config_dict['font_size'].get())
+        self.inputs.configure(font=(self.font_type, self.font_size))
+        self.outputs.configure(font=(self.font_type, self.font_size))
 
     def save(self):
         filename = filedialog.asksaveasfilename(initialdir=self.last_place,
@@ -543,7 +552,7 @@ class Root(Tk):
 
     def runs(self):
         if self.is_grammar and self.inputs.edit_modified():
-            self.after(500, self.grammar_highlight_func)
+            self.after(100, self.grammar_highlight_func)
         self.outputs.delete('1.0', END)
         text = self.inputs.get('1.0', END)
         lines = text.split('\n')
@@ -569,6 +578,7 @@ class Root(Tk):
             self.outputs.insert(END, traceback.format_exc())
 
     def runs_2(self):
+        self.inputs.edit_modified(False)
         self.outputs.delete('1.0', END)
         text = self.pre_input
         lines = text.split('\n')
@@ -608,7 +618,7 @@ class Root(Tk):
                         current_last_index = f"{x}.{int(y)+word_length}"
                         self.inputs.tag_add(color, current_text_index,
                                             current_last_index)
-                        start_index = f"{x}.{int(y)+word_length+1}"
+                        start_index = current_last_index
                     else:
                         x, y = current_last_index.split('.')
                         if self.inputs.get(current_last_index) == '\n':
@@ -618,11 +628,11 @@ class Root(Tk):
                         start_index = current_last_index
 
     def realtime_run(self):
-        if self.quit:
+        if self.quit or (not self.is_realtime):
             self.quit = False
             return
         if self.is_grammar and self.inputs.edit_modified():
-            self.after(500, self.grammar_highlight_func)
+            self.after(100, self.grammar_highlight_func)
         if self.is_auto:
             if self.changed:
                 self.changed = False
@@ -660,5 +670,4 @@ class Root(Tk):
 
 
 root = Root()
-root.focus_force()
 root.mainloop()

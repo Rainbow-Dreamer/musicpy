@@ -91,9 +91,28 @@ class note:
 
 
 def toNote(notename, duration=0.25, volume=100, pitch=4):
-    num = eval(''.join([x for x in notename if x.isdigit()]))
-    name = ''.join([x for x in notename if not x.isdigit()])
-    return note(name, num, duration, volume)
+    if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
+        split_symbol = '(' if '(' in notename else (
+            '[' if '[' in notename else '{')
+        notename, info = notename.split(split_symbol)
+        info = info[:-1].split(';')
+        if len(info) == 1:
+            duration = info[0]
+        else:
+            duration, volume = info[0], eval(info[1])
+        if duration[0] == '.':
+            duration = 1 / eval(duration[1:])
+        else:
+            duration = eval(duration)
+        return toNote(notename, duration, volume)
+    else:
+        num_text = ''.join([x for x in notename if x.isdigit()])
+        if not num_text.isdigit():
+            num = pitch
+        else:
+            num = int(num_text)
+        name = ''.join([x for x in notename if not x.isdigit()])
+        return note(name, num, duration, volume)
 
 
 def trans_note(notename, duration=0.25, volume=100, pitch=4):
@@ -118,22 +137,69 @@ def degree_to_note(degree, duration=0.25, volume=100):
     return note(name, num, duration, volume)
 
 
+def read_notes(note_ls, rootpitch=4):
+    intervals = []
+    notes_result = []
+    for each in note_ls:
+        if isinstance(each, note):
+            notes_result.append(each)
+        else:
+            if any(all(i in each for i in j) for j in ['()', '[]', '{}']):
+                split_symbol = '(' if '(' in each else (
+                    '[' if '[' in each else '{')
+                notename, info = each.split(split_symbol)
+                volume = 100
+                info = info[:-1].split(';')
+                info_len = len(info)
+                if info_len == 1:
+                    duration = info[0]
+                else:
+                    if info_len == 2:
+                        duration, interval = info
+                    else:
+                        duration, interval, volume = info
+                        volume = eval(volume)
+                    if interval[0] == '.':
+                        interval = 1 / eval(interval[1:])
+                    else:
+                        interval = eval(interval)
+                    intervals.append(interval)
+                if duration[0] == '.':
+                    duration = 1 / eval(duration[1:])
+                else:
+                    duration = eval(duration)
+                notes_result.append(
+                    toNote(notename, duration, volume, rootpitch))
+            else:
+                notes_result.append(toNote(each, pitch=rootpitch))
+    if len(intervals) != len(notes_result):
+        intervals = []
+    return notes_result, intervals
+
+
 class chord:
     ''' This class can contain a chord with many notes played simultaneously and either has intervals, the default interval is 0.'''
     def __init__(self, notes, duration=None, interval=None, rootpitch=4):
-        if isinstance(notes, str):
+        standardize_msg = False
+        if type(notes) == str:
             notes = notes.replace(' ', '').split(',')
-        try:
-            notes = [x if isinstance(x, note) else toNote(x) for x in notes]
-        except:
-            if rootpitch is None:
-                raise ValueError(
-                    'must provide a pitch of root note when use nopitch mode')
-            root = note(notes[0], rootpitch)
+            if all(not any(i.isdigit() for i in j) for j in notes):
+                standardize_msg = True
+        elif type(notes) == list and all(
+                type(i) == str and (not any(j.isdigit() for j in i))
+                for i in notes):
+            standardize_msg = True
+        notes_msg = read_notes(notes, rootpitch)
+        notes, current_intervals = notes_msg
+        if current_intervals:
+            interval = current_intervals
+        #notes = [x if isinstance(x, note) else toNote(x) for x in notes]
+        if standardize_msg:
+            root = notes[0]
             notels = [root]
             for i in range(1, len(notes)):
                 last = notels[i - 1]
-                current = note(notes[i], last.num)
+                current = note(notes[i].name, last.num)
                 if standard[current.name] <= standard[last.name]:
                     current = note(current.name, last.num + 1)
                 notels.append(current)
@@ -534,8 +600,7 @@ class chord:
             return chord(newnotes, interval=newinterval)
         elif mode == 'after':
             if self.interval[-1] == 0:
-                times = max(max([x.duration for x in self.notes]),
-                            max(self.interval))
+                times = self.notes[-1].duration
                 return self.period(times) + note1
             else:
                 return self + note1
