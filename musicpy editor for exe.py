@@ -209,6 +209,9 @@ class Root(Tk):
         self.turn_bg_mode.place(x=750, y=400)
         self.change_background_color_mode(turn=False)
 
+        self.menubar = Menu(self, tearoff=False)
+        self.inputs.bind("<Button-3>", lambda x: self.rightKey(x, self.inputs))
+
     def change_background_color_mode(self, turn=True):
         if turn:
             self.bg_mode = 'white' if self.bg_mode == 'black' else 'black'
@@ -651,6 +654,56 @@ class Root(Tk):
 
     def check_grammar(self):
         self.is_grammar = self.grammar.get()
+
+    def cut(self, editor, event=None):
+        editor.event_generate("<<Cut>>")
+
+    def copy(self, editor, event=None):
+        editor.event_generate("<<Copy>>")
+
+    def paste(self, editor, event=None):
+        editor.event_generate('<<Paste>>')
+
+    def choose_all(self, editor, event=None):
+        editor.tag_add(SEL, '1.0', END)
+        editor.mark_set(INSERT, END)
+        editor.see(INSERT)
+
+    def inputs_undo(self, editor, event=None):
+        try:
+            editor.edit_undo()
+        except:
+            pass
+
+    def inputs_redo(self, editor, event=None):
+        try:
+            editor.edit_redo()
+        except:
+            pass
+
+    def play_select_text(self, editor, event=None):
+        try:
+            selected_text = self.inputs.selection_get()
+            exec(f"play({selected_text})")
+        except:
+            self.outputs.delete('1.0', END)
+            self.outputs.insert(END, '选中的语句无法播放')
+
+    def rightKey(self, event, editor):
+        self.menubar.delete(0, END)
+        self.menubar.add_command(label='剪切', command=lambda: self.cut(editor))
+        self.menubar.add_command(label='复制', command=lambda: self.copy(editor))
+        self.menubar.add_command(label='粘贴',
+                                 command=lambda: self.paste(editor))
+        self.menubar.add_command(label='全选',
+                                 command=lambda: self.choose_all(editor))
+        self.menubar.add_command(label='撤销',
+                                 command=lambda: self.inputs_undo(editor))
+        self.menubar.add_command(label='恢复',
+                                 command=lambda: self.inputs_redo(editor))
+        self.menubar.add_command(label='播放选中语句',
+                                 command=lambda: self.play_select_text(editor))
+        self.menubar.post(event.x_root, event.y_root)
 
 
 root = Root()

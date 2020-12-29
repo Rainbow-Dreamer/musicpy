@@ -409,6 +409,10 @@ def write(name_of_midi,
             return 'multi mode requires a piece object'
         track_number, start_times, instruments_numbers, tempo, tracks_contents, track_names, channels = \
         chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels
+        instruments_numbers = [
+            i if type(i) == int else instruments[i]
+            for i in instruments_numbers
+        ]
         MyMIDI = MIDIFile(track_number, deinterleave=deinterleave)
         for i in range(track_number):
             if channels:
@@ -448,8 +452,9 @@ def write(name_of_midi,
         MyMIDI = MIDIFile(track_num, deinterleave=deinterleave)
         current_channel = 0
         MyMIDI.addTempo(0, 0, tempo)
-        if type(instrument) == int:
-            MyMIDI.addProgramChange(0, current_channel, 0, instrument - 1)
+        if type(instrument) != int:
+            instrument = instruments[instrument]
+        MyMIDI.addProgramChange(0, current_channel, 0, instrument - 1)
         content = chordall
         content_notes = content.notes
         content_intervals = content.interval
