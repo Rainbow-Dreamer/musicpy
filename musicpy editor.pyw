@@ -318,7 +318,7 @@ class Root(Tk):
         self.choose_font.place(x=230, y=330)
         self.whole_fonts = list(font.families())
         self.whole_fonts.sort(
-            key=lambda x: x[0] if not x.startswith('@') else x[1])
+            key=lambda x: x if not x.startswith('@') else x[1:])
         self.font_list_bar = Scrollbar(self.config_window)
         self.font_list_bar.place(x=190, y=390, height=170, anchor=CENTER)
         self.font_list = Listbox(self.config_window,
