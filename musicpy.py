@@ -396,7 +396,7 @@ def write(name_of_midi,
           save_as_file=True,
           midi_io=None,
           deinterleave=False):
-    if instrument is None and i is not None:
+    if i is not None:
         instrument = i
     if isinstance(chord1, piece):
         mode = 'multi'
@@ -452,9 +452,12 @@ def write(name_of_midi,
         MyMIDI = MIDIFile(track_num, deinterleave=deinterleave)
         current_channel = 0
         MyMIDI.addTempo(0, 0, tempo)
+        if instrument is None:
+            instrument = 1
         if type(instrument) != int:
             instrument = instruments[instrument]
-        MyMIDI.addProgramChange(0, current_channel, 0, instrument - 1)
+        instrument -= 1
+        MyMIDI.addProgramChange(0, current_channel, 0, instrument)
         content = chordall
         content_notes = content.notes
         content_intervals = content.interval
@@ -540,17 +543,14 @@ def write(name_of_midi,
             x = midi(name_of_midi)
         else:
             x = midi_io
-        if instrument:
-            if type(instrument) == int:
-                instrument_num = instrument - 1
-                instrument_msg = mido.Message('program_change',
-                                              program=instrument_num)
-                x.tracks[1].insert(0, instrument_msg)
-            elif instrument in instruments:
-                instrument_num = instruments[instrument] - 1
-                instrument_msg = mido.Message('program_change',
-                                              program=instrument_num)
-                x.tracks[1].insert(0, instrument_msg)
+        if instrument is not None:
+            instrument_num = instrument
+            if type(instrument) != int:
+                instrument_num = instruments[instrument]
+            instrument_num -= 1
+            instrument_msg = mido.Message('program_change',
+                                          program=instrument_num)
+            x.tracks[1].insert(0, instrument_msg)
         tracklist = x.tracks[1:]
         track_modify = tracklist[track]
         interval_unit = x.ticks_per_beat * 4
