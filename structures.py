@@ -261,6 +261,7 @@ class chord:
         intervals = temp.interval
         durations = temp.get_duration()
         names_offrep = []
+        new_duration = []
         new_interval = []
         for i in range(len(notenames)):
             current = notenames[i]
@@ -269,9 +270,10 @@ class chord:
                     current = standard_dict[current]
                 names_offrep.append(current)
                 new_interval.append(intervals[i])
+                new_duration.append(durations[i])
         temp.notes = chord(names_offrep,
                            rootpitch=temp[1].num,
-                           duration=durations).notes
+                           duration=new_duration).notes
         temp.interval = new_interval
         return temp
 
