@@ -1084,8 +1084,7 @@ class scale:
             yield i
 
     def __call__(self, n, duration=0.25, interval=0, num=3, step=2):
-        return self.pickchord_by_degree(n, duration, interval, num, step, add,
-                                        omit)
+        return self.pickchord_by_degree(n, duration, interval, num, step)
 
     def getInterval(self):
         if self.mode is None:
