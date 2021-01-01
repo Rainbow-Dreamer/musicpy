@@ -125,10 +125,10 @@ def trans_note(notename, duration=0.25, volume=100, pitch=4):
     return note(name, num, duration, volume)
 
 
-def degrees_to_chord(ls, interval=0, duration=0.25):
+def degrees_to_chord(ls, duration=0.25, interval=0):
     return chord([degree_to_note(i) for i in ls],
-                 interval=interval,
-                 duration=duration)
+                 duration=duration,
+                 interval=interval)
 
 
 def degree_to_note(degree, duration=0.25, volume=100):
@@ -259,6 +259,7 @@ class chord:
         temp = self.copy()
         notenames = temp.names()
         intervals = temp.interval
+        durations = temp.get_duration()
         names_offrep = []
         new_interval = []
         for i in range(len(notenames)):
@@ -268,7 +269,9 @@ class chord:
                     current = standard_dict[current]
                 names_offrep.append(current)
                 new_interval.append(intervals[i])
-        temp.notes = chord(names_offrep, rootpitch=temp[1].num).notes
+        temp.notes = chord(names_offrep,
+                           rootpitch=temp[1].num,
+                           duration=durations).notes
         temp.interval = new_interval
         return temp
 
@@ -1080,8 +1083,9 @@ class scale:
         for i in self.notes:
             yield i
 
-    def __call__(self, n, num=3, interval=0, step=2, add=None, omit=None):
-        return self.pickchord_by_degree(n, interval, num, step, add, omit)
+    def __call__(self, n, duration=0.25, interval=0, num=3, step=2):
+        return self.pickchord_by_degree(n, duration, interval, num, step, add,
+                                        omit)
 
     def getInterval(self):
         if self.mode is None:
@@ -1142,36 +1146,31 @@ class scale:
 
     def pickchord_by_degree(self,
                             degree1,
+                            duration=0.25,
                             interval=0,
                             num=3,
-                            step=2,
-                            add=None,
-                            omit=None,
-                            duration=None):
+                            step=2):
         result = []
         high = False
         if degree1 == 8:
             degree1 = 1
             high = True
-        scale_notes = self.notes[:-1]
+        temp = copy(self)
+        scale_notes = temp.notes[:-1]
         for i in range(degree1, degree1 + step * num, step):
             result.append(scale_notes[(i % 7) - 1])
         resultchord = chord(result,
-                            rootpitch=self.pitch,
+                            rootpitch=temp.pitch,
                             interval=interval,
                             duration=duration).standardize()
         if high:
             resultchord = resultchord.up(octave)
-        if add is not None:
-            resultchord += self[add]
-        if omit is not None:
-            resultchord -= self[omit]
         return resultchord
 
     def pickdegree(self, degree1):
         return self[degree1]
 
-    def pattern(self, indlist, interval=0, duration=0.25, num=3, step=2):
+    def pattern(self, indlist, duration=0.25, interval=0, num=3, step=2):
         if type(indlist) == str:
             indlist = [int(i) for i in indlist]
         if type(indlist) == int:
@@ -1283,9 +1282,13 @@ class scale:
         import musicpy
         return musicpy.detect(self, *args, **kwargs, mode='scale')
 
-    def get_allchord(self, interval=0, num=3, step=2):
+    def get_allchord(self, duration=None, interval=0, num=3, step=2):
         return [
-            self.pickchord_by_degree(i, interval=interval, num=num, step=step)
+            self.pickchord_by_degree(i,
+                                     duration=duration,
+                                     interval=interval,
+                                     num=num,
+                                     step=step)
             for i in range(1,
                            len(self.getInterval()) + 2)
         ]
