@@ -1175,7 +1175,8 @@ class scale:
         if type(indlist) == int:
             indlist = [int(i) for i in str(indlist)]
         return [
-            self(n, num, step=step).set(duration, interval) for n in indlist
+            self(n, num=num, step=step).set(duration, interval)
+            for n in indlist
         ]
 
     def __mod__(self, x):
