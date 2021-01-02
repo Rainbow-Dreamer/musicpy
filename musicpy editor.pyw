@@ -270,7 +270,10 @@ class Root(Tk):
         self.turn_bg_mode.place(x=750, y=400)
         self.change_background_color_mode(turn=False)
 
-        self.menubar = Menu(self, tearoff=False)
+        self.menubar = Menu(self,
+                            tearoff=False,
+                            bg=self.background_color,
+                            activebackground=self.active_background_color)
         self.inputs.bind("<Button-3>", lambda x: self.rightKey(x, self.inputs))
         self.first_load_config()
 
@@ -761,18 +764,27 @@ class Root(Tk):
 
     def rightKey(self, event, editor):
         self.menubar.delete(0, END)
-        self.menubar.add_command(label='剪切', command=lambda: self.cut(editor))
-        self.menubar.add_command(label='复制', command=lambda: self.copy(editor))
+        self.menubar.add_command(label='剪切',
+                                 command=lambda: self.cut(editor),
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='复制',
+                                 command=lambda: self.copy(editor),
+                                 foreground=self.foreground_color)
         self.menubar.add_command(label='粘贴',
-                                 command=lambda: self.paste(editor))
+                                 command=lambda: self.paste(editor),
+                                 foreground=self.foreground_color)
         self.menubar.add_command(label='全选',
-                                 command=lambda: self.choose_all(editor))
+                                 command=lambda: self.choose_all(editor),
+                                 foreground=self.foreground_color)
         self.menubar.add_command(label='撤销',
-                                 command=lambda: self.inputs_undo(editor))
+                                 command=lambda: self.inputs_undo(editor),
+                                 foreground=self.foreground_color)
         self.menubar.add_command(label='恢复',
-                                 command=lambda: self.inputs_redo(editor))
+                                 command=lambda: self.inputs_redo(editor),
+                                 foreground=self.foreground_color)
         self.menubar.add_command(label='播放选中语句',
-                                 command=lambda: self.play_select_text(editor))
+                                 command=lambda: self.play_select_text(editor),
+                                 foreground=self.foreground_color)
         self.menubar.post(event.x_root, event.y_root)
 
 
