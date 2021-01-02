@@ -106,6 +106,10 @@ class Root(Tk):
         style.configure('TLabel',
                         background=self.background_color,
                         foreground=self.foreground_color)
+        style.map('TButton',
+                  background=[('active', self.active_background_color)])
+        style.map('TCheckbutton',
+                  background=[('active', self.active_background_color)])
         try:
             self.bg = Image.open(config_dict['background_image'])
             ratio = 600 / self.bg.height
