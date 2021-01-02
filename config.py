@@ -15,9 +15,9 @@
         'orange': ['toNote', 'note', 'N'],
         'violet': ['piece', 'build', 'P']
     },
-    'background_color': 'gray20',
-    'foreground_color': 'white',
-    'active_background_color': 'lightblue',
+    'background_color': 'alice blue',
+    'foreground_color': 'black',
+    'active_background_color': 'light green',
     'day_and_night_colors': ('white', 'gray8')
 }
 path_enable_list = ['background_image']
