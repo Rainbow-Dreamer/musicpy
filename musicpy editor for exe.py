@@ -70,6 +70,7 @@ class Root(Tk):
         self.background_color = config_dict['background_color']
         self.foreground_color = config_dict['foreground_color']
         self.active_background_color = config_dict['active_background_color']
+        self.day_color, self.night_color = config_dict['day_and_night_colors']
         self.configure(background=self.background_color)
         style = ttk.Style()
         style.theme_use('alt')
@@ -265,19 +266,19 @@ class Root(Tk):
         if turn:
             self.bg_mode = 'white' if self.bg_mode == 'black' else 'black'
         if self.bg_mode == 'white':
-            self.inputs.configure(bg='white',
+            self.inputs.configure(bg=self.day_color,
                                   fg='black',
                                   insertbackground='black')
-            self.outputs.configure(bg='white',
+            self.outputs.configure(bg=self.day_color,
                                    fg='black',
                                    insertbackground='black')
             self.bg_mode = 'white'
             self.turn_bg_mode.configure(text='关灯')
         elif self.bg_mode == 'black':
-            self.inputs.configure(background='black',
+            self.inputs.configure(background=self.night_color,
                                   foreground='white',
                                   insertbackground='white')
-            self.outputs.configure(background='black',
+            self.outputs.configure(background=self.night_color,
                                    foreground='white',
                                    insertbackground='white')
             self.bg_mode = 'black'
@@ -325,7 +326,7 @@ class Root(Tk):
 
     def config_options(self):
         self.config_window = Toplevel(self, bg=self.background_color)
-        self.config_window.minsize(800, 600)
+        self.config_window.minsize(800, 620)
         self.get_config_dict = {}
         counter = 0
         for each in config_dict:
@@ -348,23 +349,23 @@ class Root(Tk):
         save_button = ttk.Button(self.config_window,
                                  text='保存',
                                  command=self.save_config)
-        save_button.place(x=600, y=400)
+        save_button.place(x=600, y=420)
         self.saved_label = ttk.Label(self.config_window, text='保存成功')
         self.choose_font = ttk.Button(self.config_window,
                                       text='选择字体',
                                       command=self.get_font)
-        self.choose_font.place(x=230, y=410)
+        self.choose_font.place(x=230, y=430)
         self.whole_fonts = list(font.families())
         self.whole_fonts.sort(
             key=lambda x: x if not x.startswith('@') else x[1:])
         self.font_list_bar = ttk.Scrollbar(self.config_window)
-        self.font_list_bar.place(x=190, y=470, height=170, anchor=CENTER)
+        self.font_list_bar.place(x=190, y=490, height=170, anchor=CENTER)
         self.font_list = Listbox(self.config_window,
                                  yscrollcommand=self.font_list_bar.set,
                                  width=25)
         for k in self.whole_fonts:
             self.font_list.insert(END, k)
-        self.font_list.place(x=0, y=380)
+        self.font_list.place(x=0, y=400)
         self.font_list_bar.config(command=self.font_list.yview)
         current_font_ind = self.whole_fonts.index(self.font_type)
         self.font_list.selection_set(current_font_ind)
@@ -393,7 +394,7 @@ class Root(Tk):
                 f'config_dict = {config_dict}\npath_enable_list = {path_enable_list}'
             )
         if not outer:
-            self.saved_label.place(x=600, y=430)
+            self.saved_label.place(x=600, y=450)
             self.after(300, self.saved_label.place_forget)
         self.reload_config()
 
