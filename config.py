@@ -1,7 +1,7 @@
 ﻿config_dict = {
     'background_image':
     'G:/university/MyAI project/py files/musicpy/tenshi.jpg',
-    'background_places': (700, -30),
+    'background_places': (870, -30),
     'eachline_character': 58,
     'pairing_symbols': ['()', '[]', "''", '""'],
     'wraplines_number': 2,
@@ -14,6 +14,9 @@
         'green': ['toScale', 'scale', 'S'],
         'orange': ['toNote', 'note', 'N'],
         'violet': ['piece', 'build', 'P']
-    }
+    },
+    'background_color': 'light grey',
+    'foreground_color': 'black',
+    'active_background_color': 'lightblue'
 }
 path_enable_list = ['background_image']

@@ -83,6 +83,29 @@ class Root(Tk):
         self.minsize(1200, 640)
         self.title('musicpy 编辑器')
         self.focus_set()
+        self.background_color = config_dict['background_color']
+        self.foreground_color = config_dict['foreground_color']
+        self.active_background_color = config_dict['active_background_color']
+        self.configure(background=self.background_color)
+        style = ttk.Style()
+        style.theme_use('alt')
+        style.configure('TButton',
+                        background=self.background_color,
+                        foreground=self.foreground_color,
+                        width=12,
+                        borderwidth=0,
+                        focusthickness=3,
+                        focuscolor='none')
+        style.configure('TCheckbutton',
+                        background=self.background_color,
+                        foreground=self.foreground_color,
+                        width=12,
+                        borderwidth=0,
+                        focusthickness=3,
+                        focuscolor='none')
+        style.configure('TLabel',
+                        background=self.background_color,
+                        foreground=self.foreground_color)
         try:
             self.bg = Image.open(config_dict['background_image'])
             ratio = 600 / self.bg.height
@@ -95,7 +118,9 @@ class Root(Tk):
             self.bg_label.place(x=bg_places[0], y=bg_places[1])
         except:
             pass
-        self.inputs_text = ttk.Label(self, text='请在这里输入 musicpy 音乐代码语句')
+        self.inputs_text = ttk.Label(self,
+                                     text='请在这里输入 musicpy 音乐代码语句',
+                                     background=self.background_color)
         self.inputs = Text(self,
                            wrap='none',
                            undo=True,
@@ -107,30 +132,32 @@ class Root(Tk):
         self.inputs_text.place(x=0, y=30)
         self.inputs.place(x=0, y=60, width=700, height=200)
         self.inputs.focus_set()
-        inputs_v = Scrollbar(self,
-                             orient="vertical",
-                             command=self.inputs.yview)
-        inputs_h = Scrollbar(self,
-                             orient="horizontal",
-                             command=self.inputs.xview)
+        inputs_v = ttk.Scrollbar(self,
+                                 orient="vertical",
+                                 command=self.inputs.yview)
+        inputs_h = ttk.Scrollbar(self,
+                                 orient="horizontal",
+                                 command=self.inputs.xview)
         self.inputs.configure(yscrollcommand=inputs_v.set,
                               xscrollcommand=inputs_h.set)
         inputs_v.place(x=700, y=60, height=200)
         inputs_h.place(x=0, y=260, width=700)
-        self.outputs_text = ttk.Label(self, text='在这里显示运行结果')
+        self.outputs_text = ttk.Label(self,
+                                      text='在这里显示运行结果',
+                                      background=self.background_color)
         self.outputs = Text(self, wrap='none')
         self.outputs.configure(font=(self.font_type, self.font_size))
         self.outputs_text.place(x=0, y=280)
         self.outputs.place(x=0, y=310, width=700, height=300)
-        outputs_v = Scrollbar(self,
-                              orient="vertical",
-                              command=self.outputs.yview)
-        outputs_h = Scrollbar(self,
-                              orient="horizontal",
-                              command=self.outputs.xview)
+        outputs_v = ttk.Scrollbar(self,
+                                  orient="vertical",
+                                  command=self.outputs.yview)
+        outputs_h = ttk.Scrollbar(self,
+                                  orient="horizontal",
+                                  command=self.outputs.xview)
         self.outputs.configure(yscrollcommand=outputs_v.set,
                                xscrollcommand=outputs_h.set)
-        outputs_v.place(x=700, y=310, height=270)
+        outputs_v.place(x=700, y=310, height=300)
         outputs_h.place(x=0, y=620, width=700)
         self.run_button = ttk.Button(self, text='运行', command=self.runs)
         self.run_button.place(x=750, y=100)
@@ -173,6 +200,7 @@ class Root(Tk):
         self.auto_box.place(x=750, y=300)
         self.wraplines_button.place(x=750, y=350)
         self.grammar_box.place(x=750, y=450)
+
         self.save_button = ttk.Button(self, text='保存', command=self.save)
         self.save_button.place(x=750, y=50)
         self.is_print = 1
@@ -191,17 +219,30 @@ class Root(Tk):
         self.bind('<Left>', self.close_select)
         self.bind('<Right>', self.close_select)
         self.bind('<Return>', lambda e: self.get_current_select(e))
-        self.file_top = ttk.Label(self, text='文件', background='snow')
+        self.file_top = ttk.Label(self,
+                                  text='文件',
+                                  background=self.background_color,
+                                  foreground=self.foreground_color)
         self.file_top.bind(
-            '<Enter>',
-            lambda e: self.file_top.configure(background='lightblue'))
+            '<Enter>', lambda e: self.file_top.configure(
+                background=self.active_background_color))
         self.file_top.bind(
-            '<Leave>', lambda e: self.file_top.configure(background='snow'))
+            '<Leave>', lambda e: self.file_top.configure(background=self.
+                                                         background_color))
         self.file_top.bind('<Button-1>', self.file_top_make_menu)
-        self.file_menu = Menu(self, tearoff=0)
-        self.file_menu.add_command(label='打开', command=self.openfile)
-        self.file_menu.add_command(label='保存', command=self.save)
-        self.file_menu.add_command(label='设置', command=self.config_options)
+        self.file_menu = Menu(self,
+                              tearoff=0,
+                              bg=self.background_color,
+                              activebackground=self.active_background_color)
+        self.file_menu.add_command(label='打开',
+                                   command=self.openfile,
+                                   foreground=self.foreground_color)
+        self.file_menu.add_command(label='保存',
+                                   command=self.save,
+                                   foreground=self.foreground_color)
+        self.file_menu.add_command(label='设置',
+                                   command=self.config_options,
+                                   foreground=self.foreground_color)
         self.file_top.place(x=0, y=0)
         grammar_highlight = config_dict['grammar_highlight']
         for each in grammar_highlight:
@@ -227,6 +268,7 @@ class Root(Tk):
 
         self.menubar = Menu(self, tearoff=False)
         self.inputs.bind("<Button-3>", lambda x: self.rightKey(x, self.inputs))
+        self.first_load_config()
 
     def change_background_color_mode(self, turn=True):
         if turn:
@@ -287,13 +329,18 @@ class Root(Tk):
         self.outputs.delete('1.0', END)
         self.outputs.insert(END, text)
 
+    def first_load_config(self):
+        self.get_config_dict = {}
+
     def config_options(self):
-        self.config_window = Toplevel(self)
-        self.config_window.minsize(800, 500)
+        self.config_window = Toplevel(self, bg=self.background_color)
+        self.config_window.minsize(800, 600)
         self.get_config_dict = {}
         counter = 0
         for each in config_dict:
-            current_label = ttk.Label(self.config_window, text=each)
+            current_label = ttk.Label(self.config_window,
+                                      text=each,
+                                      background=self.background_color)
             current_entry = ttk.Entry(self.config_window, width=70)
             current_entry.insert(0, str(config_dict[each]))
             current_label.place(x=0, y=counter)
@@ -315,18 +362,18 @@ class Root(Tk):
         self.choose_font = ttk.Button(self.config_window,
                                       text='选择字体',
                                       command=self.get_font)
-        self.choose_font.place(x=230, y=330)
+        self.choose_font.place(x=230, y=410)
         self.whole_fonts = list(font.families())
         self.whole_fonts.sort(
             key=lambda x: x if not x.startswith('@') else x[1:])
-        self.font_list_bar = Scrollbar(self.config_window)
-        self.font_list_bar.place(x=190, y=390, height=170, anchor=CENTER)
+        self.font_list_bar = ttk.Scrollbar(self.config_window)
+        self.font_list_bar.place(x=190, y=470, height=170, anchor=CENTER)
         self.font_list = Listbox(self.config_window,
                                  yscrollcommand=self.font_list_bar.set,
                                  width=25)
         for k in self.whole_fonts:
             self.font_list.insert(END, k)
-        self.font_list.place(x=0, y=300)
+        self.font_list.place(x=0, y=380)
         self.font_list_bar.config(command=self.font_list.yview)
         current_font_ind = self.whole_fonts.index(self.font_type)
         self.font_list.selection_set(current_font_ind)
@@ -408,9 +455,12 @@ class Root(Tk):
         self.grammar_highlight = config_dict['grammar_highlight']
         for each in self.grammar_highlight:
             self.inputs.tag_configure(each, foreground=each)
-        self.font_size = eval(self.get_config_dict['font_size'].get())
-        self.inputs.configure(font=(self.font_type, self.font_size))
-        self.outputs.configure(font=(self.font_type, self.font_size))
+        try:
+            self.font_size = eval(self.get_config_dict['font_size'].get())
+            self.inputs.configure(font=(self.font_type, self.font_size))
+            self.outputs.configure(font=(self.font_type, self.font_size))
+        except:
+            pass
 
     def save(self):
         filename = filedialog.asksaveasfilename(initialdir=self.last_place,
