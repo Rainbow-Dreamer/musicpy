@@ -153,21 +153,29 @@ def read_notes(note_ls, rootpitch=4):
                 info_len = len(info)
                 if info_len == 1:
                     duration = info[0]
+                    if duration[0] == '.':
+                        duration = 1 / eval(duration[1:])
+                    else:
+                        duration = eval(duration)
                 else:
                     if info_len == 2:
                         duration, interval = info
                     else:
                         duration, interval, volume = info
                         volume = eval(volume)
+                    if duration[0] == '.':
+                        duration = 1 / eval(duration[1:])
+                    else:
+                        duration = eval(duration)
                     if interval[0] == '.':
-                        interval = 1 / eval(interval[1:])
+                        if len(interval) > 1 and interval[1].isdigit():
+                            interval = 1 / eval(interval[1:])
+                        else:
+                            interval = eval(
+                                interval.replace('.', str(duration)))
                     else:
                         interval = eval(interval)
                     intervals.append(interval)
-                if duration[0] == '.':
-                    duration = 1 / eval(duration[1:])
-                else:
-                    duration = eval(duration)
                 notes_result.append(
                     toNote(notename, duration, volume, rootpitch))
             else:
@@ -885,7 +893,7 @@ class chord:
     def __len__(self):
         return len(self.notes)
 
-    def setvolume(self, ind, vol):
+    def setvolume(self, vol, ind='all'):
         if type(ind) == int:
             self.notes[ind - 1].setvolume(vol)
         elif type(ind) == list:
