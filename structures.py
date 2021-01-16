@@ -846,9 +846,10 @@ class chord:
         temp.interval.insert(0, dropinterval)
         return temp
 
-    def period(self, length, ind=-1):
+    def period(self, length):
         temp = copy(self)
-        temp.interval[ind] += length
+        temp.interval[-1] += (temp.notes[-1].duration + length -
+                              temp.interval[-1])
         return temp
 
     def modulation(self, old_scale, new_scale):
