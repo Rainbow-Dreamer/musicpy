@@ -348,7 +348,7 @@ class chord:
     def __floordiv__(self, obj):
         types = type(obj)
         if types == int or types == float:
-            return self.period(obj)
+            return self.rest(obj)
         elif types == str:
             import musicpy
             obj = musicpy.trans(obj)
@@ -613,8 +613,7 @@ class chord:
             return chord(newnotes, interval=newinterval)
         elif mode == 'after':
             if self.interval[-1] == 0:
-                times = self.notes[-1].duration
-                return self.period(times) + note1
+                return self.rest(0) + note1
             else:
                 return self + note1
 
@@ -846,10 +845,14 @@ class chord:
         temp.interval.insert(0, dropinterval)
         return temp
 
-    def period(self, length):
+    def rest(self, length):
         temp = copy(self)
-        temp.interval[-1] += (temp.notes[-1].duration + length -
-                              temp.interval[-1])
+        last_interval = temp.interval[-1]
+        if last_interval != 0:
+            temp.interval[-1] += length
+        else:
+            temp.interval[-1] += (temp.notes[-1].duration + length +
+                                  last_interval)
         return temp
 
     def modulation(self, old_scale, new_scale):

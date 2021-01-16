@@ -1485,7 +1485,6 @@ def modulation(chord1, old_scale, new_scale):
 def exp(form, obj_name='x', mode='tail'):
     # return a function that follows a mode of translating a given chord to the wanted result,
     # form is a chains of functions you want to perform on the variables.
-    # e.g. exp('up(2).period(2).reverse()')
     if mode == 'tail':
         try:
             func = eval(f'lambda x: x.{form}')
@@ -1629,14 +1628,14 @@ def tochords(a,
              pitch=4,
              combine=0,
              interval_unit=0.5,
-             period_unit=1,
+             rest_unit=1,
              has_interval=0):
     if type(a[0]) != list:
         a = [a]
     if has_interval == 0:
         chordls = [
             chord([note(j, pitch)
-                   for j in i], interval=interval_unit).period(period_unit)
+                   for j in i], interval=interval_unit).rest(rest_unit)
             for i in a
         ]
     else:
@@ -1650,7 +1649,7 @@ def tochords(a,
                 if now != 'interval':
                     newchord.append(note(now, pitch))
                     if k != N - 1 and i[k + 1] == 'interval':
-                        newinterval.append(interval_unit + period_unit)
+                        newinterval.append(interval_unit + rest_unit)
                     else:
                         newinterval.append(interval_unit)
             chordls.append(chord(newchord, interval=newinterval))
@@ -1665,7 +1664,7 @@ def tochordsfile(path,
                  pitch=4,
                  combine=0,
                  interval_unit=0.5,
-                 period_unit=1,
+                 rest_unit=1,
                  has_interval=0,
                  mode=0,
                  splitway=0,
@@ -1680,34 +1679,14 @@ def tochordsfile(path,
             if data[:2] == '[[':
                 data = eval(data)
                 result = tochords(data, pitch, combine, interval_unit,
-                                  period_unit, has_interval)
+                                  rest_unit, has_interval)
             else:
                 result = 'not a valid real notes file'
         else:
             data = torealnotes(data, combine1, bychar, splitway)
-            result = tochords(data, pitch, combine, interval_unit, period_unit,
+            result = tochords(data, pitch, combine, interval_unit, rest_unit,
                               has_interval)
     return result
-
-
-# some examples
-# a= getchord('C5','M7',2,0.5)
-# play(a.on('C3',interval=0,duration=2)+a.on('B3',interval=0,duration=2)+a.on
-# ('A3',interval=0,duration=2)+a.on('G3',interval=0,duration=2)+a.on('F3',
-# interval=0,duration=2)+a.up(2,1).up(2,2).up(3,3).on('F#3',interval=0,
-# duration=2)+getchord('G5','M7',duration=0.25,intervals=0.5,addition=
-# perfect_octave).on('G3',interval=0,duration=2).period(12))
-# play(((AM7[:-1] + AM7.reverse()).period(0.5) + (AM7[:-1] + AM7.reverse()).up().period(0.5))*3)
-
-# Touhou main melody
-# play((getchord_by_interval('D#5',[5,7,10,7,5],2,0.5)*3+getchord_by_interval('F5',[1,0,-4],2,0.5))*3,150)
-
-# some chord progressions
-# 2-3-4 progression (in terms of G major scale)
-# a = chd('A','m7')
-# play(a.period(0.5)*4 + a.up(2).period(0.5)*4 + chd(a[1].up(3), 'maj7').period(0.5)*4)
-# a = chd('A','m7').set(interval=0.5)
-# play(a*2 + a.up(2)*2 + chd(a[1].up(3), 'maj7').set(interval=0.5)*2 + chd(a[1].up(3), 'maj7', duration=5))
 
 
 def inversion_from(a, b, num=False, mode=0):
@@ -2527,7 +2506,7 @@ def random_composing(mode,
     # but still with some relevations. (for example, avoiding dissonant intervals)
     # the draft of the piece of music would be generated first,
     # and then modify the details of the music (durations, intervals,
-    # notes volume, periods and so on)
+    # notes volume, rests and so on)
     basechord = mode.get_allchord(num=num)
     # count is the counter for the total number of notes in the piece
     count = 0
