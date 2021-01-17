@@ -17,6 +17,7 @@ try:
 except:
     from database import *
     from structures import *
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 pygame.mixer.init(44100, -16, 1, 1024)
 '''
