@@ -2625,7 +2625,7 @@ def perm(n, k=None):
         locals())
 
 
-def negative_harmony(key, a=None, get_map_dict=False, sort=True):
+def negative_harmony(key, a=None, sort=False, get_map=False):
     notes_dict = [
         'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'
     ] * 2
@@ -2642,7 +2642,7 @@ def negative_harmony(key, a=None, get_map_dict=False, sort=True):
         **{right_half[i]: left_half[i]
            for i in range(6)}
     }
-    if get_map_dict:
+    if get_map:
         return map_dict
     if a:
         if type(a) == chord:
