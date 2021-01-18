@@ -475,6 +475,7 @@ class Root(Tk):
             self.inputs.insert(END, self.pre_input)
             self.inputs.mark_set(INSERT,
                                  '1.0' + f' + {self.start + len(text)} chars')
+            self.inputs.see(INSERT)
             if self.is_realtime:
                 self.changed = True
                 self.realtime_run()
@@ -514,6 +515,7 @@ class Root(Tk):
         self.inputs.insert(END, self.pre_input)
         self.inputs.mark_set(INSERT,
                              '1.0' + f' + {self.start + len(text)} chars')
+        self.inputs.see(INSERT)
         if self.is_realtime:
             self.changed = True
             self.realtime_run()
