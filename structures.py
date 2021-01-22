@@ -268,14 +268,15 @@ class chord:
         notenames = temp.names()
         intervals = temp.interval
         durations = temp.get_duration()
+        names_standard = [
+            standard_dict[i] if i in standard_dict else i for i in notenames
+        ]
         names_offrep = []
         new_duration = []
         new_interval = []
-        for i in range(len(notenames)):
-            current = notenames[i]
+        for i in range(len(names_standard)):
+            current = names_standard[i]
             if current not in names_offrep:
-                if current in standard_dict:
-                    current = standard_dict[current]
                 names_offrep.append(current)
                 new_interval.append(intervals[i])
                 new_duration.append(durations[i])
