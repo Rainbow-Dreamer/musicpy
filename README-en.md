@@ -1,44 +1,46 @@
 ﻿# musicpy
 
-[中文][[English](README-en.md)]
-### 你们想过用代码来写音乐吗？
+[[中文](README.md)][English]
 
-最近几个月学业繁忙，但是业余时间自己开发了很多python库，内容包括数学统计，各种游戏，还有音乐等等。其实还有试着写AI方面的，但是目前还是初期进度。今天我想先介绍一下我正在开发中的一个音乐代码语言库：**musicpy**。
+### Ever wondered making music with codes?
 
-这个库可以让你用非常简洁的语法，来表达一段音乐的音符，节奏等等信息，并且可以简单地输出成 midi 文件的格式。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki
-) 正在写的教程之后你应该很快就上手了。
+I've been working on many python libraries in my spare time, including those for statistics, games and music. In fact I've been trying to write something for AI but that's only in the early phase. Today I wanna introduce to you a library that lets you write music with code: **musicpy**.
 
-安装 musicpy：
-先确定电脑里有安装python，python版本最好是 >= 3.6，
-打开电脑的cmd然后输入
+This library enables you to express a sequence of notes and beats in a music piece with very clean and simple syntax, along with the ability to output as midi format with ease. I recommend using this library with some pre-knowledge about music theory so it would not make confusion. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are familiar with music theory.
+
+Installation：
+
+Make sure you have at least python 3.6 installed first.  
+Execute the following command in the terminal.
 
 ```shell
 pip install musicpy
 ```
-import 这个库：
-在你喜欢用的python的IDE里面输入
+Importing:
+
+Place this line at the start of the files you want to have it used in.
 
 ```python
 from musicpy import *
 ```
 
-我自己做的介绍与使用教程视频第一期：[BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/) （musicpy 当前的最新版本有很多重大的更新与语法上的改进，这期教程很多地方跟最新版本已经不一样了，我会重新做这期教程）
+Introduction and Tutorial video series part 1: [BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/) (The current version of musicpy is very different to that in the tutorial. I'll remake this tutorial some time to keep it updated)
 
-musicpy 作曲示例实际演示以及 musicpy 实验作曲日常：[BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
+Demo of writing music with musicpy: [BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
-详细的 musicpy 数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚。 
+musicpy's data sturctures, basic syntax and usage is detailed in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear. 
 
-在 musicpy 里面，几个基本的类是 `note`（音符），`chord`（和弦）和 `scale`（音阶）。这几个类是构成音乐代码的基础。
+`note`, `chord`, `scale` are the basic classes in musicpy that builds up the base of music programming.
 
-在 musicpy 这门语言的数据结构设计中，音符类本身是等值为纯数字的，也就是完全可以作为纯数字使用。
+Because of musicpy's data structure design, the `note` class is congruent to integers, which means that it can be used as int directly.
 
-和弦类是音符类的集合，也说明和弦类本身等值为一个全部都是数字的集合，也可以作为向量，甚至矩阵来看待（比如多个和弦的连接走向就可以看作多个向量的拼接，因此也就有了行列数，也就是矩阵的形式）。
+The `chord` class is the set of `note`s, which means that it itself can be seen as a set of integers, a vector, or even a matrix (e.g. a set of chord progressions can be seen as a combination of multiple vectors, which results in a form of matrix with lines and columns indexed)
 
-也因此在这门语言的数据结构设计中，音符类，和弦类，音阶类都是可以进行数学运算的，比如线性代数领域的运算，离散数学领域的运算等等。也可以在这门语言的数据结构的基础上建立一整套乐理逻辑的算法，结合纯数学逻辑来进行多方面的音乐分析研究。
+Because of that, `note`, `chord` and `scale` classes can all be arithmetically used in calculation, with examples of Linear Algebra and Discrete Mathmetics. It is also possible to write an algorithm following music theory logics using this library's data structure, or to perform experiments on music with the help of pure mathematics logics.
 
-现代音乐领域的很多实验性质的音乐，比如序列主义，偶然音乐，后现代主义音乐（比如极简主义音乐），理论上全部都可以在这门语言的纯数字化的数据结构的基础上进行严格的创作。即使不提实验性质的音乐，这门语言也可以写任何的古典音乐，爵士音乐，流行音乐。
+Many experimental music styles nowadays, like serialism, aleatoric music, postmodern music (like minimalist music), are theoretically possible to make upon the arithmetically performable data structures provided in this library. Of course this library can be used to write any kind of classical music, jazz, or pop music.
 
-我几乎每隔两三天就会更新一次这个库的内容，具体的更新内容请大家看这个库里的 `更新日志Changelog.txt`（[链接](./更新日志Changelog.txt)），里面有按照日期的每次更新的非常详细的细节与说明。
+I make updates to this library about every three days. You can checkout this [changelog](./更新日志Changelog.txt) for detailed and fully explained new features sorted by date.
 
 我开发这个语言主要的初衷有两点，第一，比起工程文件和 midi 文件单纯存储音符，力度，速度等单位化的信息，如果能够按照乐理上的角度来表示一段音乐从作曲上的角度是如何实现的，那就更加有表示的意义了。而且只要不是现代主义无调性音乐，大部分的音乐都是极其具有乐理上的规律性的，这些规律抽象成乐理逻辑语句可以大大地精简化。（比如一个 midi 文件 1000 个音符，实际上按照乐理角度可能可以简化到几句代码）。第二，开发这个语言是为了让作曲 AI 能够在真正懂得乐理的情况下来作曲（而不是深度学习，喂大量的数据），这个语言也算是一个接口，AI 只要把乐理的语法搞懂了，那作曲就会拥有和人一样的思维。我们可以把乐理上的规则，做什么好不做什么好告诉 AI，这些东西还是可以量化的，所以这个乐理库也可以作为一个乐理接口，沟通人和 AI 之间的音乐。因此，比如想让 AI 学习某个人的作曲风格，那么在乐理上面也同样可以量化这个人的风格，每种风格对应着一些不同的乐理逻辑规则，这些只要写给 AI，经过我这个库，AI 就可以实现模仿那个人的风格了。如果是 AI 自己原创风格，那就是从各种复杂的作曲规则里寻找可能性。
 
