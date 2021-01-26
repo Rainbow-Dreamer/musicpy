@@ -11,12 +11,8 @@ import mido.midifiles.units as unit
 from mido.midifiles.tracks import merge_tracks as merge
 from mido.midifiles.tracks import MidiTrack
 from mido.midifiles.meta import MetaMessage
-try:
-    from .database import *
-    from .structures import *
-except:
-    from database import *
-    from structures import *
+from .database import *
+from .structures import *
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 pygame.mixer.init(44100, -16, 1, 1024)
