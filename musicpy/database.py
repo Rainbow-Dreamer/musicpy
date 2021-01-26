@@ -1,7 +1,4 @@
-try:
-    from .match import match
-except:
-    from match import match
+from .match import match
 perfect_unison, minor_second, augmented_unison, major_second,\
     diminished_third, minor_third, augmented_second, major_third,\
     diminished_fourth, perfect_fourth, augmented_third, diminished_fifth,\
