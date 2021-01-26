@@ -1,17 +1,16 @@
-import setuptools
 from setuptools import setup
 from os import path
 setup(
   name = 'musicpy', 
-  packages = setuptools.find_packages(),
+  packages = ['musicpy'],
   package_data = {'musicpy': ['./*'],},
-  version = '1.59',  
+  version = '1.60',  
   license='bsd-2-clause',    
   description = 'A music programming language to write music in syntax based on music theory, and make a piece of music simple in short sentences', 
   author = 'Rainbow-Dreamer',
   author_email = '1036889495@qq.com', 
   url = 'https://github.com/Rainbow-Dreamer/musicpy.git',
-  download_url = 'https://github.com/Rainbow-Dreamer/musicpy/archive/1.59.tar.gz',
+  download_url = 'https://github.com/Rainbow-Dreamer/musicpy/archive/1.60.tar.gz',
   keywords = ['music language', 'use codes to write music', 'music language for AI'],
   install_requires=[  
           'mido',
