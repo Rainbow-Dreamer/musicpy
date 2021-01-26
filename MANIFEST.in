@@ -1,0 +1,3 @@
+graft musicpy
+include README.md
+include LICENSE.txt
