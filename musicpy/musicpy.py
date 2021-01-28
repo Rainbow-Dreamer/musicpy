@@ -1849,7 +1849,6 @@ def find_similarity(a,
                     provide_name=None,
                     result_ratio=False,
                     change_from_first=False,
-                    ignore_add_from=False,
                     same_note_special=True,
                     get_types=False,
                     alter_notes_show_degree=False):
@@ -1869,21 +1868,13 @@ def find_similarity(a,
             ratios = [(SequenceMatcher(None, selfname,
                                        x[0].names()).ratio(), x[1])
                       for x in possible_chords]
-        if ignore_add_from:
-            alen = len(a)
-            ratios_temp = [
-                ratios[k] for k in range(len(ratios))
-                if len(possible_chords[k][0]) >= alen
-            ]
-            if len(ratios_temp) != 0:
-                ratios = ratios_temp
-        else:
-            if change_from_first:
-                alen = len(a)
-                ratios = [
-                    ratios[k] for k in range(len(ratios))
-                    if len(possible_chords[k][0]) == alen
-                ]
+        alen = len(a)
+        ratios_temp = [
+            ratios[k] for k in range(len(ratios))
+            if len(possible_chords[k][0]) >= alen
+        ]
+        if len(ratios_temp) != 0:
+            ratios = ratios_temp
         ratios.sort(key=lambda x: x[0], reverse=True)
         if listall:
             return ratios
@@ -1982,7 +1973,7 @@ def find_similarity(a,
                         chordfrom,
                         alter_notes_show_degree=alter_notes_show_degree)
                     types = 'change'
-                elif (not ignore_add_from) and contains(chordfrom, a):
+                elif contains(chordfrom, a):
                     result = addfrom(a, chordfrom)
                     types = 'add'
                 if result == '':
@@ -2032,7 +2023,7 @@ def find_similarity(a,
         elif len(a) == len(chordfrom):
             result = changefrom(
                 a, chordfrom, alter_notes_show_degree=alter_notes_show_degree)
-        elif (not ignore_add_from) and contains(chordfrom, a):
+        elif contains(chordfrom, a):
             result = addfrom(a, chordfrom)
         if result == '':
             return 'not good'
@@ -2054,7 +2045,6 @@ def detect_variation(a,
                      rootpitch=4,
                      change_from_first=False,
                      original_first=False,
-                     ignore_add_from=False,
                      same_note_special=True,
                      N=None,
                      alter_notes_show_degree=False):
@@ -2066,7 +2056,6 @@ def detect_variation(a,
                              rootpitch,
                              change_from_first,
                              original_first,
-                             ignore_add_from,
                              same_note_special,
                              whole_detect=False,
                              return_fromchord=True,
@@ -2094,7 +2083,6 @@ def detect_variation(a,
                              rootpitch,
                              change_from_first,
                              original_first,
-                             ignore_add_from,
                              same_note_special,
                              whole_detect=False,
                              return_fromchord=True,
@@ -2156,7 +2144,6 @@ def detect(a,
            rootpitch=4,
            change_from_first=True,
            original_first=True,
-           ignore_add_from=True,
            same_note_special=False,
            whole_detect=True,
            return_fromchord=False,
@@ -2191,7 +2178,6 @@ def detect(a,
             a,
             result_ratio=True,
             change_from_first=change_from_first,
-            ignore_add_from=ignore_add_from,
             same_note_special=same_note_special,
             getgoodchord=return_fromchord,
             get_types=True,
@@ -2278,7 +2264,6 @@ def detect(a,
             (find_similarity(a.inversion(j),
                              result_ratio=True,
                              change_from_first=change_from_first,
-                             ignore_add_from=ignore_add_from,
                              same_note_special=same_note_special,
                              getgoodchord=True,
                              alter_notes_show_degree=alter_notes_show_degree),
@@ -2290,7 +2275,6 @@ def detect(a,
                 a.inversion_highest(j),
                 result_ratio=True,
                 change_from_first=change_from_first,
-                ignore_add_from=ignore_add_from,
                 same_note_special=same_note_special,
                 getgoodchord=True,
                 alter_notes_show_degree=alter_notes_show_degree), j)
@@ -2306,7 +2290,7 @@ def detect(a,
             else:
                 detect_var = detect_variation(a, mode, inv_num, rootpitch,
                                               change_from_first,
-                                              original_first, ignore_add_from,
+                                              original_first,
                                               same_note_special, N,
                                               alter_notes_show_degree)
                 if detect_var is None:
@@ -2317,7 +2301,6 @@ def detect(a,
                         rootpitch,
                         not change_from_first,
                         original_first,
-                        ignore_add_from,
                         same_note_special,
                         False,
                         return_fromchord,
@@ -2371,8 +2354,8 @@ def detect(a,
         else:
             detect_var = detect_variation(a, mode, inv_num, rootpitch,
                                           change_from_first, original_first,
-                                          ignore_add_from, same_note_special,
-                                          N, alter_notes_show_degree)
+                                          same_note_special, N,
+                                          alter_notes_show_degree)
             if detect_var is None:
                 result_change = detect(
                     a,
@@ -2381,7 +2364,6 @@ def detect(a,
                     rootpitch,
                     not change_from_first,
                     original_first,
-                    ignore_add_from,
                     same_note_special,
                     False,
                     return_fromchord,
