@@ -23,7 +23,7 @@ import 这个库：
 from musicpy import *
 ```
 
-我自己做的介绍与使用教程视频第一期：[BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/) （musicpy 当前的最新版本有很多重大的更新与语法上的改进，这期教程很多地方跟最新版本已经不一样了，我会重新做这期教程）
+我自己做的介绍与使用教程视频第一期：[BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
 
 musicpy 作曲示例实际演示以及 musicpy 实验作曲日常：[BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
