@@ -205,7 +205,7 @@ def concat(chordlist, mode='+', extra=None):
 
 
 def play(chord1,
-         tempo=80,
+         bpm=80,
          track=0,
          channel=0,
          time1=0,
@@ -218,7 +218,7 @@ def play(chord1,
          deinterleave=False):
     file = write(name_of_midi=name,
                  chord1=chord1,
-                 tempo=tempo,
+                 bpm=bpm,
                  track=track,
                  channel=channel,
                  time1=time1,
@@ -382,7 +382,7 @@ def midi_to_chord(x, t):
 
 def write(name_of_midi,
           chord1,
-          tempo=80,
+          bpm=80,
           track=0,
           channel=0,
           time1=0,
@@ -404,7 +404,7 @@ def write(name_of_midi,
         '''
         if not isinstance(chord1, piece):
             return 'multi mode requires a piece object'
-        track_number, start_times, instruments_numbers, tempo, tracks_contents, track_names, channels = \
+        track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels = \
         chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels
         instruments_numbers = [
             i if type(i) == int else instruments[i]
@@ -416,7 +416,7 @@ def write(name_of_midi,
                 current_channel = channels[i]
             else:
                 current_channel = i
-            MyMIDI.addTempo(i, 0, tempo)
+            MyMIDI.addTempo(i, 0, bpm)
             MyMIDI.addProgramChange(i, current_channel, 0,
                                     instruments_numbers[i] - 1)
             if track_names:
@@ -428,10 +428,26 @@ def write(name_of_midi,
             current_start_time = start_times[i] * 4
             for j in range(len(content)):
                 current_note = content_notes[j]
-                MyMIDI.addNote(i, current_channel, current_note.degree,
-                               current_start_time, current_note.duration * 4,
-                               current_note.volume)
-                current_start_time += content_intervals[j] * 4
+                if type(current_note) == tempo:
+                    if type(current_note.bpm) == list:
+                        for k in range(len(current_note.bpm)):
+                            MyMIDI.addTempo(
+                                i, (current_note.start_time[k] - 1) * 4,
+                                current_note.bpm[k])
+                    else:
+                        if current_note.start_time:
+                            MyMIDI.addTempo(i,
+                                            (current_note.start_time - 1) * 4,
+                                            current_note.bpm)
+                        else:
+                            MyMIDI.addTempo(i, current_start_time,
+                                            current_note.bpm)
+                else:
+                    MyMIDI.addNote(i, current_channel, current_note.degree,
+                                   current_start_time,
+                                   current_note.duration * 4,
+                                   current_note.volume)
+                    current_start_time += content_intervals[j] * 4
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -448,7 +464,7 @@ def write(name_of_midi,
     if mode == 'quick':
         MyMIDI = MIDIFile(track_num, deinterleave=deinterleave)
         current_channel = 0
-        MyMIDI.addTempo(0, 0, tempo)
+        MyMIDI.addTempo(0, 0, bpm)
         if instrument is None:
             instrument = 1
         if type(instrument) != int:
@@ -462,10 +478,24 @@ def write(name_of_midi,
         N = len(content)
         for j in range(N):
             current_note = content_notes[j]
-            MyMIDI.addNote(0, current_channel, current_note.degree,
-                           current_start_time, current_note.duration * 4,
-                           current_note.volume)
-            current_start_time += content_intervals[j] * 4
+            if type(current_note) == tempo:
+                if type(current_note.bpm) == list:
+                    for k in range(len(current_note.bpm)):
+                        MyMIDI.addTempo(i,
+                                        (current_note.start_time[k] - 1) * 4,
+                                        current_note.bpm[k])
+                else:
+                    if current_note.start_time:
+                        MyMIDI.addTempo(0, (current_note.start_time - 1) * 4,
+                                        current_note.bpm)
+                    else:
+                        MyMIDI.addTempo(0, current_start_time,
+                                        current_note.bpm)
+            else:
+                MyMIDI.addNote(0, current_channel, current_note.degree,
+                               current_start_time, current_note.duration * 4,
+                               current_note.volume)
+                current_start_time += content_intervals[j] * 4
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -483,7 +513,7 @@ def write(name_of_midi,
         '''
         MyMIDI = MIDIFile(track_num, deinterleave=deinterleave)
         time1 *= 4
-        MyMIDI.addTempo(track, time1, tempo)
+        MyMIDI.addTempo(track, time1, bpm)
         degrees = [x.degree for x in chordall.notes]
         duration = [x.duration * 4 for x in chordall.notes]
         for i in range(len(degrees)):
@@ -505,11 +535,11 @@ def write(name_of_midi,
         also only supports writing to a single track
         '''
         newmidi = midi()
-        newtempo = unit.bpm2tempo(tempo)
+        newtempo = unit.bpm2tempo(bpm)
         for g in range(track_num + 1):
             newmidi.add_track()
         newmidi.tracks[0] = MidiTrack([
-            MetaMessage('set_tempo', tempo=newtempo, time=0),
+            MetaMessage('set_tempo', bpm=newtempo, time=0),
             MetaMessage('end_of_track', time=0)
         ])
         if save_as_file:
@@ -519,7 +549,7 @@ def write(name_of_midi,
             current_io = newmidi
         return write(name_of_midi,
                      chord1,
-                     tempo,
+                     bpm,
                      track,
                      channel,
                      time1,
@@ -581,7 +611,7 @@ def write(name_of_midi,
         elif mode == 'm':
             file = write('tempmerge.mid',
                          chord1,
-                         tempo,
+                         bpm,
                          track,
                          channel,
                          time1,

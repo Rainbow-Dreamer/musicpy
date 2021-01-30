@@ -142,6 +142,18 @@ def read_notes(note_ls, rootpitch=4):
     for each in note_ls:
         if isinstance(each, note):
             notes_result.append(each)
+        elif isinstance(each, tempo):
+            notes_result.append(each)
+        elif each.startswith('tempo'):
+            current = each.split(';')[1:]
+            if len(current) == 2:
+                current_bpm, current_start_time = current
+            else:
+                current_bpm, current_start_time = current[0], None
+            current_bpm = float(current_bpm)
+            if current_start_time:
+                current_start_time = float(current_start_time)
+            notes_result.append(tempo(current_bpm, current_start_time))
         else:
             if any(all(i in each for i in j) for j in ['()', '[]', '{}']):
                 split_symbol = '(' if '(' in each else (
@@ -290,8 +302,11 @@ class chord:
         temp.notes.sort(key=lambda x: x.degree)
         return temp
 
-    def set(self, duration=None, interval=None):
-        return chord(copy(self.notes), duration, interval)
+    def set(self, duration=None, interval=None, volume=None, ind='all'):
+        result = chord(copy(self.notes), duration, interval)
+        if volume:
+            result.setvolume(volume, ind)
+        return result
 
     def changeInterval(self, newinterval):
         if isinstance(newinterval, int) or isinstance(newinterval, float):
@@ -899,23 +914,32 @@ class chord:
 
     def setvolume(self, vol, ind='all'):
         if type(ind) == int:
-            self.notes[ind - 1].setvolume(vol)
+            each = self.notes[ind - 1]
+            if type(each) == note:
+                each.setvolume(vol)
         elif type(ind) == list:
             if type(vol) == list:
                 for i in range(len(ind)):
                     current = ind[i]
-                    self.notes[current - 1].setvolume(vol[i])
+                    each = self.notes[current - 1]
+                    if type(each) == note:
+                        each.setvolume(vol[i])
             elif type(vol) == int:
                 for i in range(len(ind)):
-                    current = ind[i]
-                    self.notes[current - 1].setvolume(vol)
+                    each = self.notes[current - 1]
+                    if type(each) == note:
+                        each.setvolume(vol)
         elif ind == 'all':
             if type(vol) == list:
+                available_notes = [i for i in self.notes if type(i) == note]
                 for i in range(len(vol)):
-                    self.notes[i].setvolume(vol[i])
+                    current = available_notes[i]
+                    if type(current) == note:
+                        current.setvolume(vol[i])
             elif type(vol) == int:
                 for each in self.notes:
-                    each.setvolume(vol)
+                    if type(each) == note:
+                        each.setvolume(vol)
 
     def move(self, x):
         # x could be a dict or list of (index, move_steps)
@@ -1674,3 +1698,20 @@ class piece:
 
 
 P = piece
+
+
+class tempo:
+    # this is a class to change tempo for the notes after it when it is read,
+    # it can be inserted into a chord, and if the chord is in a piece,
+    # then it also works for the piece.
+    def __init__(self, bpm, start_time=None):
+        self.bpm = bpm
+        self.start_time = start_time
+
+    def __str__(self):
+        result = f'tempo change to {self.bpm}'
+        if self.start_time:
+            result += f' starts at {self.start_time}'
+        return result
+
+    __repr__ = __str__
