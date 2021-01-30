@@ -154,6 +154,7 @@ def read_notes(note_ls, rootpitch=4):
             if current_start_time:
                 current_start_time = float(current_start_time)
             notes_result.append(tempo(current_bpm, current_start_time))
+            intervals.append(0)
         else:
             if any(all(i in each for i in j) for j in ['()', '[]', '{}']):
                 split_symbol = '(' if '(' in each else (
