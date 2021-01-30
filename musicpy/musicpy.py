@@ -259,14 +259,15 @@ def read(name,
         x = midi(name)
     whole_tracks = x.tracks
     t = None
+    changes_track = whole_tracks[0]
     if mode == 'find':
-        for each in whole_tracks:
+        for each in whole_tracks[1:]:
             if any(each_msg.type == 'note_on' for each_msg in each):
                 t = each
                 break
     elif mode == 'all':
         available_tracks = [
-            each for each in whole_tracks
+            each for each in whole_tracks[1:]
             if any(each_msg.type == 'note_on' for each_msg in each)
         ]
         if get_off_drums:
@@ -295,7 +296,10 @@ def read(name,
             t = whole_tracks[trackind]
         except:
             return 'error'
-    return midi_to_chord(x, t)
+    result = midi_to_chord(x, t)
+    changes = midi_to_chord(x, changes_track)[1]
+    result[1] += changes
+    return result
 
 
 def midi_to_chord(x, t):
@@ -307,6 +311,7 @@ def midi_to_chord(x, t):
     notes_len = len(t)
     find_first_note = False
     start_time = 0
+    tempo_times = 1
     for i in range(notes_len):
         current_msg = t[i]
         if current_msg.type == 'note_on' and current_msg.velocity != 0:
@@ -357,27 +362,35 @@ def midi_to_chord(x, t):
                     degree_to_note(current_msg_note,
                                    duration=duration1,
                                    volume=current_msg_velocity))
-
+        elif current_msg.type == 'set_tempo':
+            tempo_times += current_msg.time / interval_unit
+            current_tempo = tempo(unit.tempo2bpm(current_msg.tempo),
+                                  tempo_times)
+            notelist.append(current_tempo)
+            intervals.append(0)
     result = chord(notelist, interval=intervals)
     result.interval = [
         result.interval[j] for j in range(len(result))
-        if result.notes[j].duration > 0
+        if type(result.notes[j]) != note or result.notes[j].duration > 0
     ]
-    result.notes = [each for each in result.notes if each.duration > 0]
+    result.notes = [
+        each for each in result.notes
+        if type(each) != note or each.duration > 0
+    ]
     find_tempo = False
     for msg in x.tracks[0]:
         if hasattr(msg, 'tempo'):
-            tempo = msg.tempo
+            tempo_msg = msg.tempo
             find_tempo = True
     if find_tempo:
-        bpm = unit.tempo2bpm(tempo)
+        bpm = unit.tempo2bpm(tempo_msg)
     else:
         for each_track in x.tracks[1:]:
             for msg in each_track:
                 if hasattr(msg, 'tempo'):
-                    tempo = msg.tempo
-        bpm = unit.tempo2bpm(tempo)
-    return bpm, result, start_time
+                    tempo_msg = msg.tempo
+        bpm = unit.tempo2bpm(tempo_msg)
+    return [bpm, result, start_time]
 
 
 def write(name_of_midi,

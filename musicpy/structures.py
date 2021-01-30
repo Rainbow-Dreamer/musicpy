@@ -1710,7 +1710,7 @@ class tempo:
 
     def __str__(self):
         result = f'tempo change to {self.bpm}'
-        if self.start_time:
+        if self.start_time is not None:
             result += f' starts at {self.start_time}'
         return result
 
