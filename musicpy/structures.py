@@ -150,9 +150,15 @@ def read_notes(note_ls, rootpitch=4):
                 current_bpm, current_start_time = current
             else:
                 current_bpm, current_start_time = current[0], None
-            current_bpm = float(current_bpm)
-            if current_start_time:
-                current_start_time = float(current_start_time)
+            if current_bpm[0] == '[':
+                current_bpm = current_bpm[1:-1].split(':')
+                current_bpm = [float(i) for i in current_bpm]
+                current_start_time = current_start_time[1:-1].split(':')
+                current_start_time = [float(i) for i in current_start_time]
+            else:
+                current_bpm = float(current_bpm)
+                if current_start_time:
+                    current_start_time = float(current_start_time)
             notes_result.append(tempo(current_bpm, current_start_time))
             intervals.append(0)
         else:
