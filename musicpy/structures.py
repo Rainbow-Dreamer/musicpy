@@ -23,6 +23,8 @@ class note:
         return self.name == other.name
 
     def setvolume(self, vol):
+        if vol > 127:
+            vol = 127
         self.volume = vol
 
     def set(self, duration=0.25, volume=100):
