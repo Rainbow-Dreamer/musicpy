@@ -441,7 +441,14 @@ def write(name_of_midi,
             current_start_time = start_times[i] * 4
             for j in range(len(content)):
                 current_note = content_notes[j]
-                if type(current_note) == tempo:
+                current_type = type(current_note)
+                if current_type == note:
+                    MyMIDI.addNote(i, current_channel, current_note.degree,
+                                   current_start_time,
+                                   current_note.duration * 4,
+                                   current_note.volume)
+                    current_start_time += content_intervals[j] * 4
+                elif current_type == tempo:
                     if type(current_note.bpm) == list:
                         for k in range(len(current_note.bpm)):
                             MyMIDI.addTempo(
@@ -455,7 +462,7 @@ def write(name_of_midi,
                         else:
                             MyMIDI.addTempo(i, current_start_time,
                                             current_note.bpm)
-                elif type(current_note) == pitch_bend:
+                elif current_type == pitch_bend:
                     if current_note.time is not None:
                         pitch_bend_time = (current_note.time - 1) * 4
                     else:
@@ -465,12 +472,7 @@ def write(name_of_midi,
                                               pitch_bend_channel,
                                               pitch_bend_time,
                                               current_note.value)
-                else:
-                    MyMIDI.addNote(i, current_channel, current_note.degree,
-                                   current_start_time,
-                                   current_note.duration * 4,
-                                   current_note.volume)
-                    current_start_time += content_intervals[j] * 4
+
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -501,7 +503,13 @@ def write(name_of_midi,
         N = len(content)
         for j in range(N):
             current_note = content_notes[j]
-            if type(current_note) == tempo:
+            current_type = type(current_note)
+            if current_type == note:
+                MyMIDI.addNote(0, current_channel, current_note.degree,
+                               current_start_time, current_note.duration * 4,
+                               current_note.volume)
+                current_start_time += content_intervals[j] * 4
+            elif current_type == tempo:
                 if type(current_note.bpm) == list:
                     for k in range(len(current_note.bpm)):
                         MyMIDI.addTempo(i,
@@ -514,18 +522,16 @@ def write(name_of_midi,
                     else:
                         MyMIDI.addTempo(0, current_start_time,
                                         current_note.bpm)
-            elif type(current_note) == pitch_bend:
+            elif current_type == pitch_bend:
                 if current_note.time is not None:
                     pitch_bend_time = (current_note.time - 1) * 4
                 else:
                     pitch_bend_time = current_start_time
                 MyMIDI.addPitchWheelEvent(current_note.track, channel,
                                           pitch_bend_time, current_note.value)
-            else:
-                MyMIDI.addNote(0, current_channel, current_note.degree,
-                               current_start_time, current_note.duration * 4,
-                               current_note.volume)
-                current_start_time += content_intervals[j] * 4
+            #elif type(current_note) == tuning:
+            #MyMIDI.changeNoteTuning(current_note.track, current_note.tunings, current_note.sysExChannel, current_note.realTime, current_note.tuningProgam)
+
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)

@@ -1763,6 +1763,7 @@ class pitch_bend:
     __repr__ = __str__
 
 
+'''
 class tuning:
     def __init__(self,
                  tuning_dict,
@@ -1786,3 +1787,4 @@ class tuning:
         return f'tuning: {self.tuning_dict}'
 
     __repr__ = __str__
+'''
