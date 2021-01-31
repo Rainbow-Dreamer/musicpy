@@ -246,7 +246,8 @@ def read(name,
          mode='find',
          is_file=False,
          merge=False,
-         get_off_drums=True):
+         get_off_drums=True,
+         to_piece=False):
     # read from a midi file and return a notes list
 
     # if mode is set to 'find', then will automatically search for
@@ -290,7 +291,26 @@ def read(name,
                 all_track_notes &= (i[1], i[2] - first_track_start_time)
             return tempo, all_track_notes, first_track_start_time
         else:
-            return all_tracks
+            if not to_piece:
+                return all_tracks
+            else:
+                start_times_list = [j[2] for j in all_tracks]
+                channels_list = [each[1].channel for each in available_tracks]
+                current_tempo = all_tracks[0][0]
+                instruments_list = []
+                for each in available_tracks:
+                    current_program = [
+                        i.program for i in each if hasattr(i, 'program')
+                    ]
+                    if current_program:
+                        instruments_list.append(current_program[0] + 1)
+                    else:
+                        instruments_list.append(1)
+                chords_list = [each[1] for each in all_tracks]
+                tracks_names_list = [each[0].name for each in available_tracks]
+                return piece(chords_list, instruments_list, current_tempo,
+                             start_times_list, tracks_names_list,
+                             channels_list)
     else:
         try:
             t = whole_tracks[trackind]
@@ -2101,7 +2121,6 @@ def find_similarity(a,
                 bname = detect(b)
             if type(bname) == list:
                 bname = bname[0]
-            #result = f'{bname} {result}'
         return result if not getgoodchord else (result, chordfrom, bname)
 
 
@@ -2318,11 +2337,6 @@ def detect(a,
                         return inversion_high_result if not return_fromchord else (
                             inversion_high_result, current,
                             f'{current[1].name}{result1[0]}')
-        # try to find if the chord is from a chord which omits some notes
-        # if original_ratio > 0.6:
-        #original_msg = find_similarity(a, chordfrom, provide_name = chordtype)
-        # if original_msg != 'not good':
-        # return original_msg
         if poly_chord_first and N > 3:
             return detect_split(a, N)
         inversion_final = True
@@ -2414,7 +2428,6 @@ def detect(a,
                                                               current_invert,
                                                               highest_msg)
 
-        # return 'cannot detect the chord types'
         if not whole_detect:
             return
         else:
@@ -2717,12 +2730,6 @@ def negative_harmony(key, a=None, sort=False, get_map=False):
         temp.interval = temp.getInterval()
         temp.mode = detect(temp, mode='scale')
         return temp
-
-
-# examples:
-# play([chord(x).set(1,1) for x in perm(chd('F','m9').names())], 400)
-# play([(chord(x) + chord(x)[-3:]).set(1,1) for x in perm(chd('F','m9').names())], 300)
-# play([(chord(x) + chord(x)[-3:]).set(1,1) for x in perm((chd('F','m13')%[1,2,4,5,7]).names())], 300)
 
 
 def guitar_chord(frets,

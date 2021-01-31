@@ -219,7 +219,6 @@ class chord:
         notes, current_intervals = notes_msg
         if current_intervals:
             interval = current_intervals
-        #notes = [x if isinstance(x, note) else toNote(x) for x in notes]
         if standardize_msg and notes:
             root = notes[0]
             notels = [root]
@@ -640,7 +639,6 @@ class chord:
                 return self + note1
 
     def inversion(self, num=1):
-        # return chord's [first, second, ... (num)] inversion chord
         if num not in range(1, len(self.notes)):
             return 'the number of inversion is out of range of the notes in this chord'
         else:
@@ -1657,25 +1655,25 @@ class piece:
     def up(self, n):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] = temp.tracks[i].up(n)
+            temp.tracks[i] += n
         return temp
 
     def down(self, n):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] = temp.tracks[i].down(n)
+            temp.tracks[i] -= n
         return temp
 
     def __mul__(self, n):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] = temp.tracks[i] * n
+            temp.tracks[i] *= n
         return temp
 
     def __mod__(self, n):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] = temp.tracks[i] % n
+            temp.tracks[i] %= n
         return temp
 
     def __add__(self, n):
@@ -1697,13 +1695,13 @@ class piece:
     def __neg__(self):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] = -temp.tracks[i]
+            temp.tracks[i] -= 1
         return temp
 
     def __pos__(self):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] = +temp.tracks[i]
+            temp.tracks[i] += 1
         return temp
 
     def play(self, *args, **kwargs):
@@ -1715,6 +1713,35 @@ class piece:
             self.tracks[num - 1], self.instruments_list[num - 1], self.tempo,
             self.start_times[num - 1]
         ]
+
+    def add_pitch_bend(self,
+                       value,
+                       time=1,
+                       channel='all',
+                       track=0,
+                       mode='cents',
+                       ind=None):
+        if channel == 'all':
+            for i in range(len(self.tracks)):
+                current_channel = self.channels[i] if self.channels else i
+                self.tracks[i] += chord(
+                    [pitch_bend(value, time, current_channel, track, mode)])
+        else:
+            current_channel = self.channels[
+                channel] if self.channels else channel
+            if ind is not None:
+                self.tracks[channel].insert(
+                    ind + 1,
+                    pitch_bend(value, time, current_channel, track, mode))
+            else:
+                self.tracks[channel] += chord(
+                    [pitch_bend(value, time, current_channel, track, mode)])
+
+    def add_tempo_change(self, bpm, start_time=None, ind=None, track_ind=None):
+        if ind is not None and track_ind is not None:
+            self.tracks[track_ind].insert(ind + 1, tempo(bpm, start_time))
+        else:
+            self.tracks[0] += chord([tempo(bpm, start_time)])
 
 
 P = piece
@@ -1758,12 +1785,14 @@ class pitch_bend:
             self.value = int(self.value * 4096)
 
     def __str__(self):
-        return f'pitch bend {"up" if self.value >= 0 else "down"} by {abs(self.value/40.96)} cents'
+        result = f'pitch bend {"up" if self.value >= 0 else "down"} by {abs(self.value/40.96)} cents'
+        if self.time is not None:
+            result += f' starts at {self.time}'
+        return result
 
     __repr__ = __str__
 
 
-'''
 class tuning:
     def __init__(self,
                  tuning_dict,
@@ -1787,4 +1816,3 @@ class tuning:
         return f'tuning: {self.tuning_dict}'
 
     __repr__ = __str__
-'''
