@@ -455,6 +455,16 @@ def write(name_of_midi,
                         else:
                             MyMIDI.addTempo(i, current_start_time,
                                             current_note.bpm)
+                elif type(current_note) == pitch_bend:
+                    if current_note.time is not None:
+                        pitch_bend_time = (current_note.time - 1) * 4
+                    else:
+                        pitch_bend_time = current_start_time
+                    pitch_bend_channel = i if current_note.channel is None else current_note.channel
+                    MyMIDI.addPitchWheelEvent(current_note.track,
+                                              pitch_bend_channel,
+                                              pitch_bend_time,
+                                              current_note.value)
                 else:
                     MyMIDI.addNote(i, current_channel, current_note.degree,
                                    current_start_time,
@@ -504,6 +514,13 @@ def write(name_of_midi,
                     else:
                         MyMIDI.addTempo(0, current_start_time,
                                         current_note.bpm)
+            elif type(current_note) == pitch_bend:
+                if current_note.time is not None:
+                    pitch_bend_time = (current_note.time - 1) * 4
+                else:
+                    pitch_bend_time = current_start_time
+                MyMIDI.addPitchWheelEvent(current_note.track, channel,
+                                          pitch_bend_time, current_note.value)
             else:
                 MyMIDI.addNote(0, current_channel, current_note.degree,
                                current_start_time, current_note.duration * 4,

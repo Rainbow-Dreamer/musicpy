@@ -142,7 +142,7 @@ def read_notes(note_ls, rootpitch=4):
     for each in note_ls:
         if isinstance(each, note):
             notes_result.append(each)
-        elif isinstance(each, tempo):
+        elif isinstance(each, tempo) or isinstance(each, pitch_bend):
             notes_result.append(each)
         elif each.startswith('tempo'):
             current = each.split(';')[1:]
@@ -882,16 +882,28 @@ class chord:
         # of music from a given scale to another given scale, and return
         # the new changing piece of music.
         temp = copy(self)
-        number = len(new_scale.getScale())
+        old_scale_names = [
+            i if i not in standard_dict else standard_dict[i]
+            for i in old_scale.names()
+        ]
+        new_scale_names = [
+            i if i not in standard_dict else standard_dict[i]
+            for i in new_scale.names()
+        ]
+        number = len(new_scale_names)
         transdict = {
-            old_scale[i].name: new_scale[i].name
-            for i in range(1, number + 1)
+            old_scale_names[i]: new_scale_names[i]
+            for i in range(number)
         }
         for k in range(len(temp)):
-            if temp[k + 1].name in transdict:
-                current = temp.notes[k]
+            current = temp.notes[k]
+            if current.name in standard_dict:
+                current_name = standard_dict[current.name]
+            else:
+                current_name = current.name
+            if current_name in transdict:
                 temp.notes[k] = toNote(
-                    f'{transdict[current.name]}{current.num}',
+                    f'{transdict[current_name]}{current.num}',
                     current.duration, current.volume)
         return temp
 
@@ -1068,6 +1080,7 @@ class scale:
             self.notes = notels
             self.start = notels[0]
             self.mode = mode
+            self.pitch = pitch
         else:
             if not isinstance(start, note):
                 try:
@@ -1380,7 +1393,7 @@ class scale:
             return scale(notels=notes)
 
     def down(self, unit=1, ind=None, ind2=None):
-        return self.up(-unit, ind2)
+        return self.up(-unit, ind, ind2)
 
     def __pos__(self):
         return self.up()
@@ -1720,5 +1733,56 @@ class tempo:
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
         return result
+
+    __repr__ = __str__
+
+
+class pitch_bend:
+    def __init__(self, value, time=None, channel=None, track=0, mode='cents'):
+        # general midi pitch bend values could be taken from -8192 to 8192,
+        # and the default pitch bend range is -2 semitones to 2 semitones,
+        # which is -200 cents to 200 cents, which means 1 cent equals to
+        # 8192/200 = 40.96, about 41 values, and 1 semitone equals to
+        # 8192/2 = 4096 values.
+        # if mode == 'cents', convert value as cents to midi pitch bend values,
+        # if mode == 'semitones', convert value as semitones to midi pitch bend values,
+        # if mode == other values, use value as midi pitch bend values
+        self.value = value
+        self.time = time
+        self.channel = channel
+        self.track = track
+        self.mode = mode
+        if self.mode == 'cents':
+            self.value = int(self.value * 40.96)
+        elif self.mode == 'semitones':
+            self.value = int(self.value * 4096)
+
+    def __str__(self):
+        return f'pitch bend {"up" if self.value >= 0 else "down"} by {abs(self.value/40.96)} cents'
+
+    __repr__ = __str__
+
+
+class tuning:
+    def __init__(self,
+                 tuning_dict,
+                 track=0,
+                 sysExChannel=127,
+                 realTime=True,
+                 tuningProgam=0):
+        self.tuning_dict = tuning_dict
+        keys = list(self.tuning_dict.keys())
+        values = list(self.tuning_dict.values())
+        keys = [
+            i.degree if type(i) == note else toNote(i).degree for i in keys
+        ]
+        self.tunings = [(keys[i], values[i]) for i in range(len(keys))]
+        self.track = track
+        self.sysExChannel = sysExChannel
+        self.realTime = realTime
+        self.tuningProgam = tuningProgam
+
+    def __str__(self):
+        return f'tuning: {self.tuning_dict}'
 
     __repr__ = __str__
