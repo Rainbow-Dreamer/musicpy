@@ -307,7 +307,14 @@ def read(name,
                     else:
                         instruments_list.append(1)
                 chords_list = [each[1] for each in all_tracks]
-                tracks_names_list = [each[0].name for each in available_tracks]
+                changes = midi_to_chord(x, changes_track)[1]
+                chords_list[0] += changes
+                tracks_names_list = [
+                    each[0].name for each in available_tracks
+                    if hasattr(each[0], 'name')
+                ]
+                if not tracks_names_list:
+                    tracks_names_list = None
                 return piece(chords_list, instruments_list, current_tempo,
                              start_times_list, tracks_names_list,
                              channels_list)
@@ -387,6 +394,12 @@ def midi_to_chord(x, t):
             current_tempo = tempo(unit.tempo2bpm(current_msg.tempo),
                                   tempo_times)
             notelist.append(current_tempo)
+            intervals.append(0)
+        elif current_msg.type == 'pitchwheel':
+            current_pitch_bend = pitch_bend(current_msg.pitch,
+                                            channel=current_msg.channel,
+                                            mode='values')
+            notelist.append(current_pitch_bend)
             intervals.append(0)
     result = chord(notelist, interval=intervals)
     result.interval = [
