@@ -215,7 +215,7 @@ def play(chord1,
          instrument=None,
          i=None,
          save_as_file=True,
-         deinterleave=False):
+         deinterleave=True):
     file = write(name_of_midi=name,
                  chord1=chord1,
                  bpm=bpm,
@@ -441,7 +441,7 @@ def write(name_of_midi,
           i=None,
           save_as_file=True,
           midi_io=None,
-          deinterleave=False):
+          deinterleave=True):
     if i is not None:
         instrument = i
     if isinstance(chord1, piece):

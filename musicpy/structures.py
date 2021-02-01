@@ -1650,6 +1650,38 @@ class piece:
             temp.tracks[i] %= n
         return temp
 
+    def __or__(self, n):
+        temp = copy(self)
+        whole_length = None
+        for i in range(temp.track_number):
+            current = temp.tracks[i]
+            counter = 0
+            for j in range(len(current) - 1, -1, -1):
+                current_note = current.notes[j]
+                if type(current_note) == note:
+                    current.interval[j] = current.notes[j].duration
+                    counter = j
+                    break
+            if i == 0:
+                whole_length = sum(current.interval)
+            else:
+                current.interval[counter] += (whole_length -
+                                              sum(current.interval) -
+                                              temp.start_times[i])
+            unit = copy(current)
+            for k in range(n - 1):
+                current_start_time = temp.start_times[i]
+                if current_start_time:
+                    for j in range(len(current) - 1, -1, -1):
+                        current_note = current.notes[j]
+                        if type(current_note) == note:
+                            current.interval[j] += current_start_time
+                            break
+                current.notes += unit.notes
+                current.interval += unit.interval
+            temp.tracks[i] = current
+        return temp
+
     def __add__(self, n):
         temp = copy(self)
         if isinstance(n, int):
@@ -1729,7 +1761,7 @@ class tempo:
         self.bpm = bpm
         self.start_time = start_time
         self.degree = 0
-        self.duration = 1
+        self.duration = 0
         self.volume = 100
 
     def __str__(self):
@@ -1761,7 +1793,7 @@ class pitch_bend:
         elif self.mode == 'semitones':
             self.value = int(self.value * 4096)
         self.degree = 0
-        self.duration = 1
+        self.duration = 0
         self.volume = 100
 
     def __str__(self):
