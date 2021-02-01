@@ -260,7 +260,10 @@ def read(name,
         x = midi(name)
     whole_tracks = x.tracks
     t = None
-    changes_track = whole_tracks[0]
+    changes_track = [
+        each for each in whole_tracks
+        if any(i.type == 'set_tempo' for i in each)
+    ][0]
     if mode == 'find':
         for each in whole_tracks[1:]:
             if any(each_msg.type == 'note_on' for each_msg in each):

@@ -736,14 +736,12 @@ class chord:
     def up(self, unit=1, ind=None, ind2=None):
         temp = copy(self)
         if type(unit) != int:
-            for k in range(len(unit)):
-                temp.notes[k] = temp.notes[k].up(unit[k])
+            temp.notes = [temp.notes[k].up(unit[k]) for k in range(len(unit))]
             return temp
         if type(ind) != int and ind is not None:
             temp.notes = [
-                temp.notes[i - 1].up(unit) if i in ind else temp.notes[i - 1]
-                for i in range(1,
-                               len(temp.notes) + 1)
+                temp.notes[i].up(unit) if i in ind else temp.notes[i]
+                for i in range(len(temp.notes))
             ]
             return temp
         if ind2 is None:
@@ -1350,9 +1348,8 @@ class scale:
         if ind2 is not None:
             notes = copy(self.notes)
             return scale(notels=[
-                notes[i - 1].up(unit) if ind <= i < ind2 else notes[i - 1]
-                for i in range(1,
-                               len(notes) + 1)
+                notes[i].up(unit) if ind <= i < ind2 else notes[i]
+                for i in range(len(notes))
             ])
         if ind is None:
             return scale(self[1].up(unit), self.mode, self.interval)
@@ -1362,9 +1359,8 @@ class scale:
                 notes[ind - 1] = notes[ind - 1].up(unit)
             else:
                 notes = [
-                    notes[i - 1].up(unit) if i in ind else notes[i - 1]
-                    for i in range(1,
-                                   len(notes) + 1)
+                    notes[i].up(unit) if i in ind else notes[i]
+                    for i in range(len(notes))
                 ]
             return scale(notels=notes)
 
