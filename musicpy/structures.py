@@ -281,7 +281,7 @@ class chord:
         return [i.degree for i in self]
 
     def names(self):
-        return [i.name for i in self]
+        return [i.name for i in self if type(i) == note]
 
     def __eq__(self, other):
         return isinstance(
@@ -298,6 +298,108 @@ class chord:
 
     def split(self):
         return self.notes
+
+    def cut(self, ind1=1, ind2=None):
+        # get parts of notes between two bars
+        current_bar = 1
+        notes = self.notes
+        intervals = self.interval
+        length = len(notes)
+        start_ind = 0
+        to_ind = length
+        find_start = False
+        if ind1 == 1:
+            find_start = True
+        for i in range(length):
+            current_note = notes[i]
+            if type(current_note) == note:
+                current_bar += intervals[i]
+                if (not find_start) and current_bar >= ind1:
+                    start_ind = i + 1
+                    find_start = True
+                    if ind2 is None:
+                        break
+                elif current_bar >= ind2:
+                    to_ind = i + 1
+                    break
+        return self[start_ind + 1:to_ind + 1]
+
+    def cut_time(self, bpm, time1=0, time2=None):
+        current_bar = 0
+        notes = self.notes
+        intervals = self.interval
+        length = len(notes)
+        start_ind = 0
+        to_ind = length
+        find_start = False
+        if time1 == 0:
+            find_start = True
+        for i in range(length):
+            current_note = notes[i]
+            if type(current_note) == note:
+                current_bar += intervals[i]
+                if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
+                    start_ind = i + 1
+                    find_start = True
+                    if time2 is None:
+                        break
+                elif (60 / bpm) * current_bar * 4 >= time2:
+                    to_ind = i + 1
+                    break
+        return self[start_ind + 1:to_ind + 1]
+
+    def bars(self):
+        return sum(self.interval)
+
+    def firstnbars(self, n):
+        return self.cut(1, n + 1)
+
+    def count(self, note1, mode='name'):
+        if type(note1) == str:
+            if any(i.isdigit() for i in note1):
+                mode = 'note'
+            note1 = toNote(note1)
+        if mode == 'name':
+            return self.names().count(note1.name)
+        elif mode == 'note':
+            return self.notes.count(note1)
+
+    def standard_notation(self):
+        temp = copy(self)
+        for each in temp.notes:
+            if type(each) == note and each.name in standard_dict:
+                each.name = standard_dict[each.name]
+        return temp
+
+    def most_appear(self, choices=None, mode='name', as_standard=False):
+        test_obj = self
+        if as_standard:
+            test_obj = self.standard_notation()
+        if not choices:
+            return max([i for i in standard2], key=lambda s: test_obj.count(s))
+        else:
+            choices = [toNote(i) if type(i) == str else i for i in choices]
+            if mode == 'name':
+                return max([i.name for i in choices],
+                           key=lambda s: test_obj.count(s))
+            elif mode == 'note':
+                return max(choices,
+                           key=lambda s: test_obj.count(s, mode='note'))
+
+    def eval_time(self, bpm, ind1=None, ind2=None, mode='seconds'):
+        whole_bars = self.bars()
+        result = (60 / bpm) * whole_bars * 4
+        if mode == 'seconds':
+            result = round(result, 3)
+            return f'{result}s'
+        elif mode == 'hms':
+            hours = int(result / 3600)
+            minutes = int((result - 3600 * hours) / 60)
+            seconds = round(result - 3600 * hours - 60 * minutes, 3)
+            if hours:
+                return f'{hours} hours, {minutes} minutes, {seconds} seconds'
+            else:
+                return f'{minutes} minutes, {seconds} seconds'
 
     def __mod__(self, alist):
         types = type(alist)
@@ -1000,6 +1102,10 @@ class chord:
         import musicpy
         return musicpy.detect_scale(self, *args, **kwargs)
 
+    def detect_in_scale(self, *args, **kwargs):
+        import musicpy
+        return musicpy.detect_in_scale(self, *args, **kwargs)
+
     def chord_analysis(self, *args, **kwargs):
         import musicpy
         return musicpy.chord_analysis(self, *args, **kwargs)
@@ -1038,6 +1144,15 @@ class chord:
                                               self.get_duration(),
                                               self.interval, False)
         return result
+
+    def only_notes(self):
+        temp = copy(self)
+        whole_notes = temp.notes
+        intervals = temp.interval
+        inds = [i for i in range(len(temp)) if type(whole_notes[i]) == note]
+        temp.notes = [whole_notes[k] for k in inds]
+        temp.interval = [intervals[k] for k in inds]
+        return temp
 
 
 class scale:

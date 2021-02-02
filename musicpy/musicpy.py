@@ -1082,6 +1082,7 @@ def chord_functions_analysis(x,
                              space_lines=2,
                              full_chord_msg=False,
                              **detect_args):
+    x = x.only_notes()
     if fixed_scale_type:
         scales = fixed_scale_type
     else:
@@ -1171,6 +1172,7 @@ def split_melody(x,
     # if mode == 'notes', return a list of main melody notes
     # if mode == 'index', return a list of indexes of main melody notes
     # if mode == 'hold', return a chord with main melody notes with original places
+    x = x.only_notes()
     if not isinstance(melody_degree_tol, note):
         melody_degree_tol = toNote(melody_degree_tol)
     if mode == 'index':
@@ -1391,6 +1393,7 @@ def chord_analysis(x,
                    split_symbol='|',
                    space_lines=2,
                    **detect_args):
+    x = x.only_notes()
     if not is_chord:
         chord_notes = split_chord(x, 'hold', melody_tol, chord_tol,
                                   get_off_overlap_notes, average_degree_length,
