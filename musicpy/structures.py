@@ -354,6 +354,16 @@ class chord:
     def firstnbars(self, n):
         return self.cut(1, n + 1)
 
+    def get_bar(self, n):
+        return self.cut(n, n + 1)
+
+    def split_bars(self):
+        bars_length = int(self.bars())
+        result = []
+        for i in range(1, bars_length + 1):
+            result.append(self.cut(i, i + 1))
+        return result
+
     def count(self, note1, mode='name'):
         if type(note1) == str:
             if any(i.isdigit() for i in note1):
