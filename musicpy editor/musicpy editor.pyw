@@ -5,8 +5,12 @@ from tkinter import font
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog
+import os, sys
+os.chdir('..')
+sys.path.append('.')
 function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
 from musicpy import *
+os.chdir('musicpy editor')
 from io import BytesIO
 import pygame
 pygame.mixer.init(44100, -16, 1, 1024)

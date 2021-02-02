@@ -1,3 +1,4 @@
 graft musicpy
 include README.md
+include README-en.md
 include LICENSE.txt
