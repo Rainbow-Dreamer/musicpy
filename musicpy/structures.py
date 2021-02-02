@@ -299,9 +299,9 @@ class chord:
     def split(self):
         return self.notes
 
-    def cut(self, ind1=1, ind2=None):
+    def cut(self, ind1=1, ind2=None, start_time=0):
         # get parts of notes between two bars
-        current_bar = 1
+        current_bar = 1 + start_time
         notes = self.notes
         intervals = self.interval
         length = len(notes)
@@ -319,13 +319,13 @@ class chord:
                     find_start = True
                     if ind2 is None:
                         break
-                elif current_bar >= ind2:
+                elif ind2 and current_bar >= ind2:
                     to_ind = i + 1
                     break
         return self[start_ind + 1:to_ind + 1]
 
-    def cut_time(self, bpm, time1=0, time2=None):
-        current_bar = 0
+    def cut_time(self, bpm, time1=0, time2=None, start_time=0):
+        current_bar = start_time
         notes = self.notes
         intervals = self.interval
         length = len(notes)
@@ -343,25 +343,25 @@ class chord:
                     find_start = True
                     if time2 is None:
                         break
-                elif (60 / bpm) * current_bar * 4 >= time2:
+                elif time2 and (60 / bpm) * current_bar * 4 >= time2:
                     to_ind = i + 1
                     break
         return self[start_ind + 1:to_ind + 1]
 
-    def bars(self):
-        return sum(self.interval)
+    def bars(self, start_time=0):
+        return start_time + sum(self.interval)
 
-    def firstnbars(self, n):
-        return self.cut(1, n + 1)
+    def firstnbars(self, n, start_time=0):
+        return self.cut(1, n + 1, start_time)
 
-    def get_bar(self, n):
-        return self.cut(n, n + 1)
+    def get_bar(self, n, start_time=0):
+        return self.cut(n, n + 1, start_time)
 
-    def split_bars(self):
-        bars_length = int(self.bars())
+    def split_bars(self, start_time=0):
+        bars_length = int(self.bars(start_time))
         result = []
         for i in range(1, bars_length + 1):
-            result.append(self.cut(i, i + 1))
+            result.append(self.cut(i, i + 1, start_time))
         return result
 
     def count(self, note1, mode='name'):
@@ -396,8 +396,18 @@ class chord:
                 return max(choices,
                            key=lambda s: test_obj.count(s, mode='note'))
 
-    def eval_time(self, bpm, ind1=None, ind2=None, mode='seconds'):
-        whole_bars = self.bars()
+    def eval_time(self,
+                  bpm,
+                  ind1=None,
+                  ind2=None,
+                  mode='seconds',
+                  start_time=0):
+        if ind1 is None:
+            whole_bars = self.bars(start_time)
+        else:
+            if ind2 is None:
+                ind2 = self.bars(start_time)
+            whole_bars = ind2 - ind1
         result = (60 / bpm) * whole_bars * 4
         if mode == 'seconds':
             result = round(result, 3)
