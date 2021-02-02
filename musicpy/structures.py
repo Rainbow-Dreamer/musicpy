@@ -164,21 +164,27 @@ def read_notes(note_ls, rootpitch=4):
         elif each.startswith('pitch'):
             current = each.split(';')[1:]
             length = len(current)
-            if length == 5:
-                mode = current[4]
+            mode = 'cents'
+            if length > 1:
+                current_time = current[1]
+                if current_time == 'None':
+                    current[1] = None
+                else:
+                    current[1] = float(current_time)
+            if length > 2:
+                mode = current[2]
                 if mode != 'cents' and mode != 'semitones':
                     current[0] = int(current[0])
                 else:
                     current[0] = float(current[0])
+                if length > 3:
+                    current[3] = int(current[3])
+                if length > 4:
+                    current[4] = int(current[3])
+                del current[2]
             else:
                 current[0] = float(current[0])
-            if length > 1:
-                current[1] = float(current[1])
-            if length > 2:
-                current[2] = int(current[2])
-            if length > 3:
-                current[3] = int(current[3])
-            current_pitch_bend = pitch_bend(*current)
+            current_pitch_bend = pitch_bend(*current, mode=mode)
             notes_result.append(current_pitch_bend)
             intervals.append(0)
         else:
