@@ -355,7 +355,13 @@ class chord:
         return self[start_ind + 1:to_ind + 1]
 
     def bars(self, start_time=0):
-        return start_time + sum(self.interval)
+        durations = self.get_duration()
+        intervals = self.interval
+        length = len(self)
+        return start_time + durations[0] + sum([
+            durations[i + 1] - (durations[i] - intervals[i])
+            for i in range(1, length - 1)
+        ])
 
     def firstnbars(self, n, start_time=0):
         return self.cut(1, n + 1, start_time)
@@ -1804,10 +1810,9 @@ class piece:
                     counter = j
                     break
             if i == 0:
-                whole_length = sum(current.interval)
+                whole_length = current.bars()
             else:
-                current.interval[counter] += (whole_length -
-                                              sum(current.interval) -
+                current.interval[counter] += (whole_length - current.bars() -
                                               temp.start_times[i])
             unit = copy(current)
             for k in range(n - 1):
