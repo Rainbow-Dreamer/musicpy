@@ -433,6 +433,29 @@ class chord:
             else:
                 return f'{minutes} minutes, {seconds} seconds'
 
+    def clear_pitch_bend(self, value=0):
+        length = len(self)
+        whole_notes = self.notes
+        if value == 0:
+            inds = [
+                i for i in range(length)
+                if not (type(whole_notes[i]) == pitch_bend
+                        and whole_notes[i].value == 0)
+            ]
+        elif value == 'all':
+            inds = [
+                i for i in range(length) if type(whole_notes[i]) != pitch_bend
+            ]
+        self.notes = [whole_notes[k] for k in inds]
+        self.interval = [self.interval[k] for k in inds]
+
+    def clear_tempo(self):
+        length = len(self)
+        whole_notes = self.notes
+        inds = [i for i in range(length) if type(whole_notes[i]) != tempo]
+        self.notes = [whole_notes[k] for k in inds]
+        self.interval = [self.interval[k] for k in inds]
+
     def __mod__(self, alist):
         types = type(alist)
         if types in [list, tuple]:
@@ -1875,12 +1898,13 @@ class piece:
                        ind=None):
         if channel == 'all':
             for i in range(len(self.tracks)):
-                current_channel = self.channels[i] if self.channels else i
+                current_channel = self.channels[
+                    i] if self.channels is not None else i
                 self.tracks[i] += chord(
                     [pitch_bend(value, time, current_channel, track, mode)])
         else:
             current_channel = self.channels[
-                channel] if self.channels else channel
+                channel] if self.channels is not None else channel
             if ind is not None:
                 self.tracks[channel].insert(
                     ind + 1,
@@ -1894,6 +1918,20 @@ class piece:
             self.tracks[track_ind].insert(ind + 1, tempo(bpm, start_time))
         else:
             self.tracks[0] += chord([tempo(bpm, start_time)])
+
+    def clear_pitch_bend(self, ind='all', value=0):
+        if ind == 'all':
+            for each in self.tracks:
+                each.clear_pitch_bend(value)
+        else:
+            self.tracks[ind - 1].clear_pitch_bend(value)
+
+    def clear_tempo(self, ind='all'):
+        if ind == 'all':
+            for each in self.tracks:
+                each.clear_tempo()
+        else:
+            self.tracks[ind - 1].clear_tempo()
 
 
 P = piece

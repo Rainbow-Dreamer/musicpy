@@ -461,15 +461,15 @@ def write(name_of_midi,
         ]
         MyMIDI = MIDIFile(track_number, deinterleave=deinterleave)
         for i in range(track_number):
-            if channels:
+            if channels is not None:
                 current_channel = channels[i]
             else:
                 current_channel = i
-            MyMIDI.addTempo(i, 0, bpm)
+            MyMIDI.addTempo(0, 0, bpm)
             MyMIDI.addProgramChange(i, current_channel, 0,
                                     instruments_numbers[i] - 1)
-            if track_names:
-                MyMIDI.addTrackName(i, 0, track_names[i])
+            if track_names is not None:
+                MyMIDI.addTrackName(current_channel, 0, track_names[i])
 
             content = tracks_contents[i]
             content_notes = content.notes
@@ -488,15 +488,15 @@ def write(name_of_midi,
                     if type(current_note.bpm) == list:
                         for k in range(len(current_note.bpm)):
                             MyMIDI.addTempo(
-                                i, (current_note.start_time[k] - 1) * 4,
+                                0, (current_note.start_time[k] - 1) * 4,
                                 current_note.bpm[k])
                     else:
-                        if current_note.start_time:
-                            MyMIDI.addTempo(i,
+                        if current_note.start_time is not None:
+                            MyMIDI.addTempo(0,
                                             (current_note.start_time - 1) * 4,
                                             current_note.bpm)
                         else:
-                            MyMIDI.addTempo(i, current_start_time,
+                            MyMIDI.addTempo(0, current_start_time,
                                             current_note.bpm)
                 elif current_type == pitch_bend:
                     if current_note.time is not None:
@@ -504,8 +504,7 @@ def write(name_of_midi,
                     else:
                         pitch_bend_time = current_start_time
                     pitch_bend_channel = i if current_note.channel is None else current_note.channel
-                    MyMIDI.addPitchWheelEvent(current_note.track,
-                                              pitch_bend_channel,
+                    MyMIDI.addPitchWheelEvent(i, pitch_bend_channel,
                                               pitch_bend_time,
                                               current_note.value)
 
@@ -548,11 +547,11 @@ def write(name_of_midi,
             elif current_type == tempo:
                 if type(current_note.bpm) == list:
                     for k in range(len(current_note.bpm)):
-                        MyMIDI.addTempo(i,
+                        MyMIDI.addTempo(0,
                                         (current_note.start_time[k] - 1) * 4,
                                         current_note.bpm[k])
                 else:
-                    if current_note.start_time:
+                    if current_note.start_time is not None:
                         MyMIDI.addTempo(0, (current_note.start_time - 1) * 4,
                                         current_note.bpm)
                     else:
@@ -1172,15 +1171,14 @@ def split_melody(x,
     # if mode == 'notes', return a list of main melody notes
     # if mode == 'index', return a list of indexes of main melody notes
     # if mode == 'hold', return a chord with main melody notes with original places
-    x = x.only_notes()
     if not isinstance(melody_degree_tol, note):
         melody_degree_tol = toNote(melody_degree_tol)
-    if mode == 'index':
-        result = split_melody(x, 'notes', melody_tol, chord_tol,
+    if mode == 'notes':
+        result = split_melody(x, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
-        melody = [t.number for t in result]
-
+        x_notes = x.notes
+        melody = [x_notes[t] for t in result]
         return melody
     elif mode == 'hold':
         result = split_melody(x, 'index', melody_tol, chord_tol,
@@ -1195,12 +1193,17 @@ def split_melody(x,
         new_interval.append(sum(whole_interval[result[-1]:]))
         return chord([whole_notes[j] for j in result], interval=new_interval)
 
-    elif mode == 'notes':
+    elif mode == 'index':
         x_notes = x.notes
-        N = len(x)
-        for k in range(N):
+        x_interval = x.interval
+        whole_length = len(x)
+        for k in range(whole_length):
             x_notes[k].number = k
-        temp = copy(x)
+        other_messages_inds = [
+            i for i in range(whole_length) if type(x_notes[i]) != note
+        ]
+        temp = x.only_notes()
+        N = len(temp)
         whole_notes = temp.notes
         whole_interval = temp.interval
         if get_off_overlap_notes:
@@ -1220,7 +1223,7 @@ def split_melody(x,
             unit_duration = min([i.duration for i in whole_notes])
             for each in whole_notes:
                 each.duration = unit_duration
-            whole_interval = [whole_interval[j.number] for j in whole_notes]
+            whole_interval = [x_interval[j.number] for j in whole_notes]
             k = 0
             while k < len(whole_notes) - 1:
                 current_note = whole_notes[k]
@@ -1289,8 +1292,10 @@ def split_melody(x,
                             notes_num += 1
                             melody_duration.append(current_note.duration)
             i += 1
-        melody = [x_notes[each.number] for each in melody]
-        return melody
+        melody_inds = [each.number for each in melody]
+        whole_inds = melody_inds + other_messages_inds
+        whole_inds.sort()
+        return whole_inds
 
 
 def split_chord(x,
@@ -1304,11 +1309,15 @@ def split_chord(x,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
     N = len(x)
-    chord_ind = [i for i in range(N) if i not in melody_ind]
+    whole_notes = x.notes
+    other_messages_inds = [i for i in range(N) if type(whole_notes[i]) != note]
+    chord_ind = [
+        i for i in range(N)
+        if (i not in melody_ind) or (i in other_messages_inds)
+    ]
     if mode == 'index':
         return chord_ind
     elif mode == 'notes':
-        whole_notes = x.notes
         return [whole_notes[k] for k in chord_ind]
     elif mode == 'hold':
         whole_notes = x.notes
@@ -1336,17 +1345,23 @@ def split_all(x,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
     N = len(x)
-    chord_ind = [i for i in range(N) if i not in melody_ind]
+    whole_notes = x.notes
+    chord_ind = [
+        i for i in range(N)
+        if (i not in melody_ind) or (type(whole_notes[i]) != note)
+    ]
     if mode == 'index':
         return [melody_ind, chord_ind]
     elif mode == 'notes':
-        whole_notes = x.notes
         return [[whole_notes[j] for j in melody_ind],
                 [whole_notes[k] for k in chord_ind]]
     elif mode == 'hold':
-        whole_notes = x.notes
         new_interval_1 = []
-        whole_interval = x.interval
+        x_interval = x.interval
+        whole_interval = [
+            x_interval[k] if type(whole_notes[k]) == note else 0
+            for k in range(N)
+        ]
         chord_len = len(chord_ind) - 1
         for i in range(chord_len):
             new_interval_1.append(
@@ -1366,8 +1381,12 @@ def split_all(x,
         # or the start time that main melody starts after chord part starts,
         # depends on which starts earlier, if shift >= 0, chord part starts after main melody,
         # if shift < 0, chord part starts before main melody
-        first_chord_ind = chord_ind[0]
-        first_melody_ind = melody_ind[0]
+        first_chord_ind = [
+            j for j in chord_ind if type(whole_notes[j]) == note
+        ][0]
+        first_melody_ind = [
+            j for j in melody_ind if type(whole_notes[j]) == note
+        ][0]
         if first_chord_ind >= first_melody_ind:
             shift = sum(whole_interval[first_melody_ind:first_chord_ind])
         else:
@@ -2726,9 +2745,10 @@ def negative_harmony(key, a=None, sort=False, get_map=False):
             notes = temp.notes
             for each in range(len(notes)):
                 current = notes[each]
-                if current.name in standard_dict:
-                    current.name = standard_dict[current.name]
-                notes[each] = note(map_dict[current.name], current.num)
+                if type(current) == note:
+                    if current.name in standard_dict:
+                        current.name = standard_dict[current.name]
+                    notes[each] = note(map_dict[current.name], current.num)
             if sort:
                 temp.notes.sort(key=lambda s: s.degree)
             return temp

@@ -252,6 +252,9 @@ class Root(Tk):
         self.file_menu.add_command(label='设置',
                                    command=self.config_options,
                                    foreground=self.foreground_color)
+        self.file_menu.add_command(label='导入midi文件',
+                                   command=self.read_midi_file,
+                                   foreground=self.foreground_color)
         self.file_top.place(x=0, y=0)
         grammar_highlight = config_dict['grammar_highlight']
         for each in grammar_highlight:
@@ -769,6 +772,24 @@ class Root(Tk):
             self.outputs.delete('1.0', END)
             self.outputs.insert(END, '选中的语句无法播放')
 
+    def read_midi_file(self, editor=None, event=None):
+        filename = filedialog.askopenfilename(initialdir=self.last_place,
+                                              title="选择midi文件",
+                                              filetype=(("midi文件", "*.mid"),
+                                                        ("所有文件", "*.*")))
+        if filename:
+            memory = filename[:filename.rindex('/') + 1]
+            with open('browse memory.txt', 'w') as f:
+                f.write(memory)
+            self.last_place = memory
+            self.inputs.insert(
+                END,
+                f"new_midi_file = read(\"{filename}\", mode='all', to_piece=True, get_off_drums=False)\n"
+            )
+
+    def stop_play_midi(self, editor, event=None):
+        pygame.mixer.music.stop()
+
     def rightKey(self, event, editor):
         self.menubar.delete(0, END)
         self.menubar.add_command(label='剪切',
@@ -791,6 +812,12 @@ class Root(Tk):
                                  foreground=self.foreground_color)
         self.menubar.add_command(label='播放选中语句',
                                  command=lambda: self.play_select_text(editor),
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='导入midi文件',
+                                 command=lambda: self.read_midi_file(editor),
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='停止播放',
+                                 command=lambda: self.stop_play_midi(editor),
                                  foreground=self.foreground_color)
         self.menubar.post(event.x_root, event.y_root)
 
