@@ -469,7 +469,7 @@ def write(name_of_midi,
             MyMIDI.addProgramChange(i, current_channel, 0,
                                     instruments_numbers[i] - 1)
             if track_names is not None:
-                MyMIDI.addTrackName(current_channel, 0, track_names[i])
+                MyMIDI.addTrackName(i, 0, track_names[i])
 
             content = tracks_contents[i]
             content_notes = content.notes
