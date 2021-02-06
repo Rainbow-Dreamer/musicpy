@@ -1062,7 +1062,7 @@ class chord:
         }
         for k in range(len(temp)):
             current = temp.notes[k]
-            if type(current):
+            if type(current) == note:
                 if current.name in standard_dict:
                     current_name = standard_dict[current.name]
                 else:
