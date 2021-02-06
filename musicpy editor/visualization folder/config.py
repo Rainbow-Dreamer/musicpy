@@ -301,6 +301,8 @@ load_sound = True
 # detect chord types when the current notes change
 show_chord = False
 show_notes = True
+
+# names of intervals
 perfect_unison = 0
 minor_second = 1
 augmented_unison = 1
@@ -341,7 +343,7 @@ note_mode = 'bars drop'
 bar_width = 14
 bar_height = 20
 bar_color = (124, 252, 0)
-bar_y = 174
+bar_y = 178
 bar_offset_x = 6
 dots_offset_x = 10
 bar_opacity = 160
@@ -353,7 +355,10 @@ bar_unit = 200
 bar_hold_increase = 5
 bars_drop_interval = 2
 bars_drop_place = 173
-adjust_ratio = 64
+adjust_ratio = 62
+
+# when play midi files, if you choose to merge all tracks, get_off_drums
+# set to True will not merge the drum tracks if your midi file has
 get_off_drums = True
 
 sort_invisible = False
@@ -389,6 +394,7 @@ music_analysis_place = (250, 500)
 key_header = '当前调性：'
 music_analysis_width = 1300
 music_analysis_fonts_size = 20
+
 use_track_colors = True
 tracks_colors = [(0, 255, 0), (255, 255, 0), (0, 0, 255), (0, 255, 255),
                  (255, 0, 255), (0, 128, 0), (0, 191, 255), (0, 255, 127),
