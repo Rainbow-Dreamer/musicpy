@@ -300,7 +300,9 @@ def read(name,
                 return all_tracks
             else:
                 start_times_list = [j[2] for j in all_tracks]
-                channels_list = [each[1].channel for each in available_tracks]
+                channels_list = [[
+                    i.channel for i in each if hasattr(i, 'channel')
+                ][0] for each in available_tracks]
                 current_tempo = all_tracks[0][0]
                 instruments_list = []
                 for each in available_tracks:
@@ -2750,7 +2752,10 @@ def negative_harmony(key, a=None, sort=False, get_map=False):
                 if type(current) == note:
                     if current.name in standard_dict:
                         current.name = standard_dict[current.name]
-                    notes[each] = note(map_dict[current.name], current.num)
+                    notes[each] = note(map_dict[current.name],
+                                       current.num,
+                                       volume=current.volume,
+                                       duration=current.duration)
             if sort:
                 temp.notes.sort(key=lambda s: s.degree)
             return temp
