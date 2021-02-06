@@ -5,10 +5,17 @@ from tkinter import font
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog
-import midiutil
-import mido
 import sys
 import os
+import midiutil
+import mido
+import pygame
+import keyboard
+import time
+import pyglet
+from pyglet.window import mouse
+from pyglet import shapes
+import pygame.midi
 abs_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(abs_path)
 os.chdir('..')

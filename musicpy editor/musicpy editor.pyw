@@ -765,6 +765,19 @@ class Root(Tk):
             self.outputs.delete('1.0', END)
             self.outputs.insert(END, '选中的语句无法播放')
 
+    def visualize_play_select_text(self, editor, event=None):
+        try:
+            selected_text = self.inputs.selection_get()
+            exec(f"write('temp.mid', {selected_text})")
+        except:
+            self.outputs.delete('1.0', END)
+            self.outputs.insert(END, '选中的语句无法播放')
+            return
+        os.chdir('visualization folder')
+        with open('Ideal Piano start program.pyw', encoding='utf-8-sig') as f:
+            exec(f.read(), globals(), globals())
+        os.chdir('../')
+
     def read_midi_file(self, editor=None, event=None):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
                                               title="选择midi文件",
@@ -806,6 +819,10 @@ class Root(Tk):
         self.menubar.add_command(label='播放选中语句',
                                  command=lambda: self.play_select_text(editor),
                                  foreground=self.foreground_color)
+        self.menubar.add_command(
+            label='可视化播放选中语句',
+            command=lambda: self.visualize_play_select_text(editor),
+            foreground=self.foreground_color)
         self.menubar.add_command(label='导入midi文件',
                                  command=lambda: self.read_midi_file(editor),
                                  foreground=self.foreground_color)

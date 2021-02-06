@@ -6,7 +6,7 @@ setup(
     package_data={
         'musicpy': ['./*'],
     },
-    version='1.71',
+    version='1.72',
     license='bsd-2-clause',
     description=
     'Musicpy is a python domain-specific language designed to write music in very handy syntax for musicians. 这是一个可以让你用编程写音乐的python领域特定语言，可以让你用简洁的语法通过乐理知识写出优美的音乐。',
@@ -14,11 +14,13 @@ setup(
     author_email='1036889495@qq.com',
     url='https://github.com/Rainbow-Dreamer/musicpy.git',
     download_url=
-    'https://github.com/Rainbow-Dreamer/musicpy/archive/1.71.tar.gz',
+    'https://github.com/Rainbow-Dreamer/musicpy/archive/1.72.tar.gz',
     keywords=[
         'music language', 'use codes to write music', 'music language for AI'
     ],
-    install_requires=['mido', 'midiutil', 'pygame', 'pillow'],
+    install_requires=[
+        'mido', 'midiutil', 'pygame', 'pillow', 'pyglet==1.5.11'
+    ],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
