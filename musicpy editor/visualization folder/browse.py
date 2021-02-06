@@ -5,8 +5,9 @@ set_bpm = None
 
 def setup():
     global read_result
-    read_mode = 'find'
     all_tracks = read(file_path, None, 'all', get_off_drums=get_off_drums)
+    changes = all_tracks[-1]
+    all_tracks = all_tracks[:-1]
     start_time_ls = [j[2] for j in all_tracks]
     first_track_ind = start_time_ls.index(min(start_time_ls))
     all_tracks.insert(0, all_tracks.pop(first_track_ind))
@@ -36,4 +37,5 @@ def setup():
         if i > 0:
             all_track_notes &= (current_track,
                                 current[2] - first_track_start_time)
-    read_result = tempo, all_track_notes, first_track_start_time
+    all_track_notes.clear_pitch_bend('all')
+    read_result = tempo, all_track_notes, first_track_start_time, changes

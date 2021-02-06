@@ -536,7 +536,8 @@ def initialize(musicsheet, unit_time, start_time):
                     bars_drop_time.append(
                         (currentstart - bars_drop_interval, currentnote))
                 start += interval
-        except:
+        except Exception as e:
+            print(str(e))
             pygame.mixer.music.load(path)
             play_midi_file = True
             playls.clear()
@@ -642,7 +643,7 @@ def init_show():
     setup()
     path = file_path
     if read_result != 'error':
-        bpm2, musicsheet, start_time = read_result
+        bpm2, musicsheet, start_time, changes = read_result
     sheetlen = len(musicsheet)
     pygame.mixer.set_num_channels(sheetlen)
     wholenotes = musicsheet.notes
