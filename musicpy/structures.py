@@ -1062,14 +1062,15 @@ class chord:
         }
         for k in range(len(temp)):
             current = temp.notes[k]
-            if current.name in standard_dict:
-                current_name = standard_dict[current.name]
-            else:
-                current_name = current.name
-            if current_name in transdict:
-                temp.notes[k] = toNote(
-                    f'{transdict[current_name]}{current.num}',
-                    current.duration, current.volume)
+            if type(current):
+                if current.name in standard_dict:
+                    current_name = standard_dict[current.name]
+                else:
+                    current_name = current.name
+                if current_name in transdict:
+                    temp.notes[k] = toNote(
+                        f'{transdict[current_name]}{current.num}',
+                        current.duration, current.volume)
         return temp
 
     def __getitem__(self, ind):
