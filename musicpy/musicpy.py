@@ -295,6 +295,8 @@ def read(name,
             return tempo, all_track_notes, first_track_start_time
         else:
             if not to_piece:
+                changes = midi_to_chord(x, changes_track)[1]
+                all_tracks.append(changes)
                 return all_tracks
             else:
                 start_times_list = [j[2] for j in all_tracks]
