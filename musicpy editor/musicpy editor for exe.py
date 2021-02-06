@@ -47,13 +47,6 @@ def play(chord1,
         result_file = name
         pygame.mixer.music.load(result_file)
         pygame.mixer.music.play()
-        #if sys.platform.startswith('win'):
-        #os.startfile(result_file)
-        #elif sys.platform.startswith('linux'):
-        #import subprocess
-        #subprocess.Popen(result_file)
-        #elif sys.platform == 'darwin':
-        #os.system(result_file)
     else:
         file.seek(0)
         pygame.mixer.music.load(file)
