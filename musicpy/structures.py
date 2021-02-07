@@ -305,10 +305,11 @@ class chord:
     def split(self):
         return self.notes
 
-    def cut(self, ind1=1, ind2=None, start_time=0):
+    def cut(self, ind1=1, ind2=None, start_time=0, return_inds=False):
         # get parts of notes between two bars
         current_bar = 1 + start_time
         notes = self.notes
+        durations = self.get_duration()
         intervals = self.interval
         length = len(notes)
         start_ind = 0
@@ -316,10 +317,15 @@ class chord:
         find_start = False
         if ind1 == 1:
             find_start = True
-        for i in range(length):
+
+        for i in range(length - 1):
             current_note = notes[i]
             if type(current_note) == note:
-                current_bar += intervals[i]
+                if i == 0:
+                    current_bar += durations[0]
+                else:
+                    current_bar += (durations[i + 1] -
+                                    (durations[i] - intervals[i]))
                 if (not find_start) and current_bar >= ind1:
                     start_ind = i + 1
                     find_start = True
@@ -328,11 +334,18 @@ class chord:
                 elif ind2 and current_bar >= ind2:
                     to_ind = i + 1
                     break
+        if not find_start:
+            start_ind = to_ind
+        if ind1 == ind2:
+            to_ind = start_ind
+        if return_inds:
+            return start_ind, to_ind
         return self[start_ind + 1:to_ind + 1]
 
     def cut_time(self, bpm, time1=0, time2=None, start_time=0):
         current_bar = start_time
         notes = self.notes
+        durations = self.get_duration()
         intervals = self.interval
         length = len(notes)
         start_ind = 0
@@ -340,10 +353,14 @@ class chord:
         find_start = False
         if time1 == 0:
             find_start = True
-        for i in range(length):
+        for i in range(length - 1):
             current_note = notes[i]
             if type(current_note) == note:
-                current_bar += intervals[i]
+                if i == 0:
+                    current_bar += durations[0]
+                else:
+                    current_bar += (durations[i + 1] -
+                                    (durations[i] - intervals[i]))
                 if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
                     start_ind = i + 1
                     find_start = True
@@ -1210,6 +1227,56 @@ class chord:
         temp.interval = [intervals[k] for k in inds]
         return temp
 
+    def normalize_tempo(self, bpm, return_tempo_changes=False):
+        # choose a bpm and apply to all of the notes, if there are tempo
+        # changes, use relative ratios of the chosen bpms and changes bpms
+        # to re-calculate the notes durations and intervals
+        original = copy(self)
+        original.clear_tempo()
+        tempo_changes = [
+            i for i in range(len(self.notes)) if type(self.notes[i]) == tempo
+        ]
+        tempo_changes_no_time = [
+            k for k in tempo_changes if self.notes[k].start_time is None
+        ]
+        for each in tempo_changes_no_time:
+            current_time = self[:each + 1].bars()
+            current_tempo = self.notes[each]
+            current_tempo.start_time = current_time
+        tempo_changes = [self.notes[j] for j in tempo_changes]
+        tempo_changes.sort(key=lambda s: s.start_time)
+        self.clear_tempo()
+        tempo_changes.insert(0, tempo(bpm, 1))
+
+        for each in self.notes:
+            each.current_bpm = bpm
+
+        for i in range(len(tempo_changes) - 1):
+            current_tempo = tempo_changes[i]
+            next_tempo = tempo_changes[i + 1]
+            start_ind, to_ind = original.cut(current_tempo.start_time,
+                                             next_tempo.start_time,
+                                             return_inds=True)
+            current_change_tempo = current_tempo.bpm
+            for k in range(start_ind, to_ind):
+                current_change_note = self.notes[k]
+                current_ratio = current_change_tempo / current_change_note.current_bpm
+                current_change_note.duration /= current_ratio
+                self.interval[k] /= current_ratio
+                current_change_note.current_bpm = current_change_tempo
+        last_tempo = tempo_changes[-1]
+        start_ind, to_ind = original.cut(last_tempo.start_time,
+                                         return_inds=True)
+        current_change_tempo = last_tempo.bpm
+        for k in range(start_ind, to_ind):
+            current_change_note = self.notes[k]
+            current_ratio = current_change_tempo / current_change_note.current_bpm
+            current_change_note.duration /= current_ratio
+            self.interval[k] /= current_ratio
+            current_change_note.current_bpm = current_change_tempo
+        if return_tempo_changes:
+            return tempo_changes
+
 
 class scale:
     def __init__(self,
@@ -1933,6 +2000,15 @@ class piece:
                 each.clear_tempo()
         else:
             self.tracks[ind - 1].clear_tempo()
+
+    def normalize_tempo(self, bpm=None):
+        if bpm is None:
+            bpm = self.tempo
+        tempo_changes = self.tracks[0].normalize_tempo(
+            bpm, return_tempo_changes=True)
+        for i in range(1, self.track_number):
+            self.tracks[i] += chord(tempo_changes)
+            self.tracks[i].normalize_tempo(bpm)
 
 
 P = piece

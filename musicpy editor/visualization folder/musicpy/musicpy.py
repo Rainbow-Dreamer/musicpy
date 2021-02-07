@@ -264,6 +264,8 @@ def read(name,
         each for each in whole_tracks
         if any(i.type == 'set_tempo' for i in each)
     ][0]
+    changes = midi_to_chord(x, changes_track)[0]
+    whole_bpm = [i.bpm for i in changes if type(i) == tempo][0]
     if mode == 'find':
         for each in whole_tracks[1:]:
             if any(each_msg.type == 'note_on' for each_msg in each):
@@ -283,19 +285,19 @@ def read(name,
                         reverse_instruments[j.program + 1].lower()
                         for j in each))
             ]
-        all_tracks = [midi_to_chord(x, j) for j in available_tracks]
+        all_tracks = [midi_to_chord(x, j, whole_bpm) for j in available_tracks]
         if merge:
             start_time_ls = [j[2] for j in all_tracks]
             first_track_ind = start_time_ls.index(min(start_time_ls))
             all_tracks.insert(0, all_tracks.pop(first_track_ind))
             first_track = all_tracks[0]
-            tempo, all_track_notes, first_track_start_time = first_track
+            tempos, all_track_notes, first_track_start_time = first_track
             for i in all_tracks[1:]:
                 all_track_notes &= (i[1], i[2] - first_track_start_time)
-            return tempo, all_track_notes, first_track_start_time
+            return tempos, all_track_notes, first_track_start_time
         else:
             if not to_piece:
-                changes = midi_to_chord(x, changes_track)[1]
+                changes.insert(0, whole_bpm)
                 all_tracks.append(changes)
                 return all_tracks
             else:
@@ -303,7 +305,6 @@ def read(name,
                 channels_list = [[
                     i.channel for i in each if hasattr(i, 'channel')
                 ][0] for each in available_tracks]
-                current_tempo = all_tracks[0][0]
                 instruments_list = []
                 for each in available_tracks:
                     current_program = [
@@ -314,7 +315,6 @@ def read(name,
                     else:
                         instruments_list.append(1)
                 chords_list = [each[1] for each in all_tracks]
-                changes = midi_to_chord(x, changes_track)[1]
                 chords_list[0] += changes
                 tracks_names_list = [
                     each[0].name for each in available_tracks
@@ -322,7 +322,7 @@ def read(name,
                 ]
                 if not tracks_names_list:
                     tracks_names_list = None
-                return piece(chords_list, instruments_list, current_tempo,
+                return piece(chords_list, instruments_list, whole_bpm,
                              start_times_list, tracks_names_list,
                              channels_list)
     else:
@@ -330,13 +330,12 @@ def read(name,
             t = whole_tracks[trackind]
         except:
             return 'error'
-    result = midi_to_chord(x, t)
-    changes = midi_to_chord(x, changes_track)[1]
+    result = midi_to_chord(x, t, whole_bpm)
     result[1] += changes
     return result
 
 
-def midi_to_chord(x, t):
+def midi_to_chord(x, t, bpm=None):
     interval_unit = x.ticks_per_beat * 4
     hason = []
     hasoff = []
@@ -417,20 +416,10 @@ def midi_to_chord(x, t):
         each for each in result.notes
         if type(each) != note or each.duration > 0
     ]
-    find_tempo = False
-    for msg in x.tracks[0]:
-        if hasattr(msg, 'tempo'):
-            tempo_msg = msg.tempo
-            find_tempo = True
-    if find_tempo:
-        bpm = unit.tempo2bpm(tempo_msg)
+    if bpm is not None:
+        return [bpm, result, start_time]
     else:
-        for each_track in x.tracks[1:]:
-            for msg in each_track:
-                if hasattr(msg, 'tempo'):
-                    tempo_msg = msg.tempo
-        bpm = unit.tempo2bpm(tempo_msg)
-    return [bpm, result, start_time]
+        return [result, start_time]
 
 
 def write(name_of_midi,
