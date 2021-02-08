@@ -302,8 +302,31 @@ class chord:
             self.notes.append(toNote(newnote))
             self.interval.append(self.interval[-1])
 
-    def split(self):
-        return self.notes
+    def split(self, return_type, get_time=False, sort=False, mode=0):
+        temp = copy(self)
+        inds = [
+            i for i in range(len(temp)) if type(temp.notes[i]) == return_type
+        ]
+        notes = [temp.notes[i] for i in inds]
+        intervals = [temp.interval[i] for i in inds]
+        if get_time and return_type in [tempo, pitch_bend]:
+            no_time = [k for k in inds if temp.notes[k].start_time is None
+                       ] if return_type == tempo else [
+                           k for k in inds if temp.notes[k].time is None
+                       ]
+            for each in no_time:
+                current_time = temp[:each + 1].bars(mode=mode) + 1
+                current = temp.notes[each]
+                if return_type == tempo:
+                    current.start_time = current_time
+                else:
+                    current.time = current_time
+            if sort:
+                if return_type == tempo:
+                    notes.sort(key=lambda s: s.start_time)
+                else:
+                    notes.sort(key=lambda s: s.time)
+        return chord(notes, interval=intervals)
 
     def cut(self, ind1=1, ind2=None, start_time=0, return_inds=False, mode=0):
         # get parts of notes between two bars
@@ -1301,7 +1324,7 @@ class chord:
             k for k in tempo_changes if self.notes[k].start_time is None
         ]
         for each in tempo_changes_no_time:
-            current_time = self[:each + 1].bars(mode=mode)
+            current_time = self[:each + 1].bars(mode=mode) + 1
             current_tempo = self.notes[each]
             current_tempo.start_time = current_time
         tempo_changes = [self.notes[j] for j in tempo_changes]
