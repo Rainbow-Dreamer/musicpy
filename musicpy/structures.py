@@ -1311,7 +1311,7 @@ class chord:
         temp.interval = [intervals[k] for k in inds]
         return temp
 
-    def normalize_tempo(self, bpm, return_tempo_changes=False, mode=0):
+    def normalize_tempo(self, bpm=None, return_tempo_changes=False, mode=0):
         # choose a bpm and apply to all of the notes, if there are tempo
         # changes, use relative ratios of the chosen bpms and changes bpms
         # to re-calculate the notes durations and intervals
@@ -1330,6 +1330,8 @@ class chord:
         tempo_changes = [self.notes[j] for j in tempo_changes]
         tempo_changes.sort(key=lambda s: s.start_time)
         self.clear_tempo()
+        if bpm is None:
+            bpm = tempo_changes[0].bpm
         tempo_changes.insert(0, tempo(bpm, 1))
 
         for each in self.notes:
@@ -2087,8 +2089,8 @@ class piece:
         else:
             self.tracks[ind - 1].clear_tempo()
 
-    def normalize_tempo(self, bpm=None, mode=0):
-        if bpm is None:
+    def normalize_tempo(self, bpm=None, mode=0, find_bpm=False):
+        if bpm is None and not find_bpm:
             bpm = self.tempo
         tempo_changes = self.tracks[0].normalize_tempo(
             bpm, return_tempo_changes=True, mode=mode)
