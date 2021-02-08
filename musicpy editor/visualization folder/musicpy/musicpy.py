@@ -297,7 +297,6 @@ def read(name,
             return tempos, all_track_notes, first_track_start_time
         else:
             if not to_piece:
-                changes.insert(0, whole_bpm)
                 all_tracks.append(changes)
                 return all_tracks
             else:
