@@ -208,7 +208,7 @@ def play(chord1,
          bpm=80,
          track=0,
          channel=0,
-         time1=0,
+         start_time=0,
          track_num=1,
          name='temp.mid',
          modes='quick',
@@ -216,12 +216,13 @@ def play(chord1,
          i=None,
          save_as_file=True,
          deinterleave=True):
+    time1 = start_time
     file = write(name_of_midi=name,
                  chord1=chord1,
                  bpm=bpm,
                  track=track,
                  channel=channel,
-                 time1=time1,
+                 start_time=time1,
                  track_num=track_num,
                  mode=modes,
                  instrument=instrument,
@@ -294,6 +295,7 @@ def read(name,
             tempos, all_track_notes, first_track_start_time = first_track
             for i in all_tracks[1:]:
                 all_track_notes &= (i[1], i[2] - first_track_start_time)
+            all_track_notes += changes
             return tempos, all_track_notes, first_track_start_time
         else:
             if not to_piece:
@@ -426,7 +428,7 @@ def write(name_of_midi,
           bpm=80,
           track=0,
           channel=0,
-          time1=0,
+          start_time=0,
           track_num=1,
           mode='quick',
           instrument=None,
@@ -434,6 +436,7 @@ def write(name_of_midi,
           save_as_file=True,
           midi_io=None,
           deinterleave=True):
+    time1 = start_time
     if i is not None:
         instrument = i
     if isinstance(chord1, piece):
