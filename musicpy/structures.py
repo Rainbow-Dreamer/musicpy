@@ -447,8 +447,6 @@ class chord:
                         break
         if not find_start:
             start_ind = to_ind
-        if time1 == time2:
-            to_ind = start_ind
         if return_inds:
             return start_ind, to_ind
         return self[start_ind + 1:to_ind + 1]
@@ -514,6 +512,22 @@ class chord:
             elif mode == 'note':
                 return max(choices,
                            key=lambda s: test_obj.count(s, mode='note'))
+
+    def count_appear(self, choices=None, as_standard=True, sort=False):
+        test_obj = self
+        if as_standard:
+            test_obj = self.standard_notation()
+        if not choices:
+            choices = copy(standard2) if as_standard else copy(standard)
+        else:
+            choices = [
+                toNote(i).anme if type(i) == str else i.name for i in choices
+            ]
+        result = {i: test_obj.count(i) for i in choices}
+        if sort:
+            result = [[i, result[i]] for i in result]
+            result.sort(key=lambda s: s[1], reverse=True)
+        return result
 
     def eval_time(self,
                   bpm,
@@ -2120,7 +2134,6 @@ class piece:
     def normalize_tempo(self, bpm=None, mode=0):
         if bpm is None:
             bpm = self.tempo
-            tempo_changes = self.get_tempo_changes()
         temp = copy(self)
         all_tracks = temp.tracks
         length = len(all_tracks)
@@ -2164,7 +2177,7 @@ class piece:
         ] for inds in new_track_inds]
         for i in range(length):
             new_track_intervals[i].append(
-                sum(whole_interval[new_track_inds[k][-1]:]))
+                sum(whole_interval[new_track_inds[i][-1]:]))
         new_tracks = [
             chord(new_track_notes[k], interval=new_track_intervals[k])
             for k in range(length)
@@ -2172,22 +2185,200 @@ class piece:
         self.tracks = new_tracks
         self.start_times = new_start_times
 
-    def get_tempo_changes(self):
-        tempo_changes = [[i for i in each if type(i) == tempo]
-                         for each in self.tracks]
-        result = tempo_changes[0]
-        for each in tempo_changes[1:]:
-            result += each
-        return chord(result)
+    def get_tempo_changes(self, mode=0):
+        temp = copy(self)
+        tempo_changes = []
+        for each in temp.tracks:
+            inds = [
+                i for i in range(len(each)) if type(each.notes[i]) == tempo
+            ]
+            notes = [each.notes[i] for i in inds]
+            no_time = [k for k in inds if each.notes[k].start_time is None]
+            for k in no_time:
+                current_time = each[:k + 1].bars(mode=mode) + 1
+                current = each.notes[k]
+                current.start_time = current_time
+            tempo_changes += notes
+        tempo_changes.sort(key=lambda s: s.start_time)
+        return chord(tempo_changes)
 
-    def get_pitch_bend(self):
-        pass
+    def get_pitch_bend(self, track_number=1, mode=0):
+        temp = copy(self)
+        each = temp.tracks[track_number - 1]
+        inds = [
+            i for i in range(len(each)) if type(each.notes[i]) == pitch_bend
+        ]
+        pitch_bend_changes = [each.notes[i] for i in inds]
+        no_time = [k for k in inds if each.notes[k].time is None]
+        for k in no_time:
+            current_time = each[:k + 1].bars(mode=mode) + 1
+            current = each.notes[k]
+            current.time = current_time
+        pitch_bend_changes.sort(key=lambda s: s.time)
+        return chord(pitch_bend_changes)
 
-    def merge(self):
-        pass
+    def reassign_channels(self, start=0):
+        new_channels_numbers = [start + i for i in range(len(self.tracks))]
+        self.channels = new_channels_numbers
 
-    def eval_time(self):
-        pass
+    def merge(self, add_labels=True):
+        temp = copy(self)
+        if add_labels:
+            temp.add_track_labels()
+        all_tracks = temp.tracks
+        length = len(all_tracks)
+        start_time_ls = temp.start_times
+        first_track_start_time = min(start_time_ls)
+        first_track_ind = start_time_ls.index(first_track_start_time)
+        start_time_ls.insert(0, start_time_ls.pop(first_track_ind))
+
+        all_tracks.insert(0, all_tracks.pop(first_track_ind))
+        first_track = all_tracks[0]
+
+        for i in range(1, length):
+            first_track &= (all_tracks[i],
+                            start_time_ls[i] - first_track_start_time)
+        return temp.tempo, first_track, first_track_start_time
+
+    def add_track_labels(self):
+        all_tracks = self.tracks
+        length = len(all_tracks)
+        for k in range(length):
+            for each in all_tracks[k]:
+                each.track_num = k
+
+    def reconstruct(self, track, start_time):
+        first_track, first_track_start_time = track, start_time
+        length = len(self.tracks)
+        start_times_inds = [[
+            i for i in range(len(first_track))
+            if first_track.notes[i].track_num == k
+        ] for k in range(length)]
+        available_tracks_inds = [
+            k for k in range(length) if start_times_inds[k]
+        ]
+        start_times_inds = [i[0] for i in start_times_inds if i]
+        new_start_times = [
+            first_track_start_time + first_track[:k + 1].bars()
+            for k in start_times_inds
+        ]
+        new_start_times = [i if i >= 0 else 0 for i in new_start_times]
+        new_track_notes = [[] for k in range(length)]
+        new_track_inds = [[] for k in range(length)]
+        new_track_intervals = [[] for k in range(length)]
+        whole_length = len(first_track)
+        for j in range(whole_length):
+            current_note = first_track.notes[j]
+            new_track_notes[current_note.track_num].append(current_note)
+            new_track_inds[current_note.track_num].append(j)
+        whole_interval = first_track.interval
+        new_track_intervals = [[
+            sum(whole_interval[inds[i]:inds[i + 1]])
+            for i in range(len(inds) - 1)
+        ] for inds in new_track_inds]
+        for i in available_tracks_inds:
+            new_track_intervals[i].append(
+                sum(whole_interval[new_track_inds[i][-1]:]))
+        new_tracks = [
+            chord(new_track_notes[k], interval=new_track_intervals[k])
+            for k in available_tracks_inds
+        ]
+        self.tracks = new_tracks
+        self.start_times = new_start_times
+        self.instruments_list = [
+            self.instruments_list[k] for k in available_tracks_inds
+        ]
+        self.instruments_numbers = [
+            self.instruments_numbers[k] for k in available_tracks_inds
+        ]
+        if self.track_names:
+            self.track_names = [
+                self.track_names[k] for k in available_tracks_inds
+            ]
+        if self.channels:
+            self.channels = [self.channels[k] for k in available_tracks_inds]
+        self.track_number = len(self.tracks)
+
+    def eval_time(self,
+                  bpm=None,
+                  ind1=None,
+                  ind2=None,
+                  mode='seconds',
+                  normalize_tempo=False,
+                  bars_mode=0):
+        temp_bpm, merged_result, start_time = self.merge()
+        if bpm is not None:
+            temp_bpm = bpm
+        if normalize_tempo:
+            merged_result.normalize_tempo(temp_bpm,
+                                          mode=bars_mode,
+                                          start_time=start_time)
+        return merged_result.eval_time(temp_bpm,
+                                       ind1,
+                                       ind2,
+                                       mode,
+                                       start_time=start_time,
+                                       bars_mode=bars_mode)
+
+    def cut(self, ind1=1, ind2=None, mode=0):
+        temp_bpm, merged_result, start_time = self.merge()
+        result = merged_result.cut(ind1, ind2, start_time, mode=mode)
+
+        temp = copy(self)
+        tempo_changes = temp.get_tempo_changes(mode=mode)
+        for each in tempo_changes:
+            each.start_time -= (ind1 - 1)
+        if ind2 is None:
+            ind2 = temp.bars(mode=mode)
+        tempo_changes = chord([
+            i for i in tempo_changes if 1 <= i.start_time <= ind2 - (ind1 - 1)
+        ])
+        start_time -= (ind1 - 1)
+        if start_time < 0:
+            start_time = 0
+        temp.reconstruct(result, start_time)
+        temp.clear_tempo()
+        temp.tracks[0] += tempo_changes
+        return temp
+
+    def cut_time(self, time1=0, time2=None, bpm=None, start_time=0, mode=0):
+        temp = copy(self)
+        temp.normalize_tempo()
+        if bpm is not None:
+            temp_bpm = bpm
+        else:
+            temp_bpm = temp.tempo
+        bar_left = time1 / ((60 / temp_bpm) * 4)
+        bar_right = time2 / (
+            (60 / temp_bpm) * 4) if time2 is not None else temp.bars()
+        result = temp.cut(1 + bar_left, 1 + bar_right, mode)
+        return result
+
+    def get_bar(self, n):
+        start_time = min(self.start_times)
+        return self.cut(n + start_time, n + 1 + start_time)
+
+    def firstnbars(self, n):
+        start_time = min(self.start_times)
+        return self.cut(1 + start_time, n + 1 + start_time)
+
+    def bars(self, mode=0):
+        bpm, merged_result, start_time = self.merge()
+        return merged_result.bars(start_time=start_time, mode=mode)
+
+    def count(self, note1, mode='name'):
+        return self.merge()[1].count(note1, mode)
+
+    def most_appear(self, choices=None, mode='name', as_standard=False):
+        return self.merge()[1].most_appear(choices, mode, as_standard)
+
+    def standard_notation(self):
+        temp = copy(self)
+        temp.tracks = [each.standard_notation() for each in temp.tracks]
+        return temp
+
+    def count_appear(self, choices=None, as_standard=True, sort=False):
+        return self.merge()[1].count_appear(choices, as_standard, sort)
 
 
 P = piece
