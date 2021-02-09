@@ -1,7 +1,7 @@
 # basic screen settings
 
 screen_size = (1300, 650)
-background_image = 'D:/musicpy-editor-visualization/visualization folder/white.png'
+background_image = 'white.png'
 background_size = None
 piano_image = 'piano.png'
 piano_size = None

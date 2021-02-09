@@ -37,5 +37,6 @@ def setup():
         if i > 0:
             all_track_notes &= (current_track,
                                 current[2] - first_track_start_time)
-    all_track_notes.clear_pitch_bend('all')
-    read_result = tempo, all_track_notes, first_track_start_time, changes
+    all_track_notes += changes
+    all_track_notes.normalize_tempo(tempo, start_time=first_track_start_time)
+    read_result = tempo, all_track_notes, first_track_start_time

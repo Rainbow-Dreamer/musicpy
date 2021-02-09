@@ -643,7 +643,7 @@ def init_show():
     setup()
     path = file_path
     if read_result != 'error':
-        bpm2, musicsheet, start_time, changes = read_result
+        bpm2, musicsheet, start_time = read_result
     sheetlen = len(musicsheet)
     pygame.mixer.set_num_channels(sheetlen)
     wholenotes = musicsheet.notes
