@@ -633,6 +633,8 @@ class chord:
         return temp
 
     def set(self, duration=None, interval=None, volume=None, ind='all'):
+        if interval is None:
+            interval = copy(self.interval)
         result = chord(copy(self.notes), duration, interval)
         if volume:
             result.setvolume(volume, ind)
