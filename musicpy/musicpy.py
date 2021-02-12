@@ -325,7 +325,8 @@ def read(name,
                     tracks_names_list = None
                 return piece(chords_list, instruments_list, whole_bpm,
                              start_times_list, tracks_names_list,
-                             channels_list)
+                             channels_list,
+                             os.path.splitext(os.path.basename(name))[0])
     else:
         try:
             t = whole_tracks[trackind]

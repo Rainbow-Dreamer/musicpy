@@ -451,12 +451,20 @@ class chord:
             return start_ind, to_ind
         return self[start_ind + 1:to_ind + 1]
 
+    def last_note_standardize(self):
+        for i in range(len(self.notes) - 1, -1, -1):
+            current = self.notes[i]
+            if type(current) == note:
+                self.interval[i] = current.duration
+                break
+
     def bars(self, start_time=0, mode=0):
         # there are 2 modes to calculate the bars length of a chord,
         # mode == 0, use sum of intervals to calculate the bars,
         # mode == 1, use durations and relative length to calculate the bars,
         # mode 0 is the most common use case (so mode 0 is the default),
         # use mode 1 only when all of the intervals are 0
+        self.last_note_standardize()
         durations = self.get_duration()
         intervals = self.interval
         length = len(self)
@@ -927,7 +935,9 @@ class chord:
                 for x in range(1, len(distance))
             ] + [distance[-1][1].duration]
             newnotes = [distance[x][1] for x in range(len(distance))]
-            newinterval = [int(t) if int(t) == t else t for t in newinterval]
+            for k in range(len(newnotes)):
+                if type(newnotes[k]) != note:
+                    newinterval[k] = 0
             return chord(newnotes, interval=newinterval)
         elif mode == 'after':
             if self.interval[-1] == 0:
@@ -1953,7 +1963,8 @@ class piece:
                  tempo,
                  start_times,
                  track_names=None,
-                 channels=None):
+                 channels=None,
+                 name=None):
         self.tracks = tracks
         self.instruments_list = [
             reverse_instruments[i] if isinstance(i, int) else i
@@ -1967,9 +1978,10 @@ class piece:
         self.track_number = len(tracks)
         self.track_names = track_names
         self.channels = channels
+        self.name = name
 
     def __repr__(self):
-        return '\n'.join([
+        return (f'{self.name}\n' if self.name else '') + '\n'.join([
             f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(self.track_number)
         ])
@@ -2049,11 +2061,20 @@ class piece:
             temp.tracks[i] = current
         return temp
 
+    def __and__(self, n):
+        if type(n) == tuple:
+            n, start_time = n
+        else:
+            start_time = 0
+        return self.merge_track(n, mode='head', start_time=start_time)
+
     def __add__(self, n):
         temp = copy(self)
         if isinstance(n, int):
             for i in range(temp.track_number):
                 temp.tracks[i] += n
+        elif isinstance(n, piece):
+            return self.merge_track(n, mode='after')
         else:
             temp.append(*n)
         return temp
@@ -2086,6 +2107,74 @@ class piece:
             self.tracks[num - 1], self.instruments_list[num - 1], self.tempo,
             self.start_times[num - 1]
         ]
+
+    def merge_track(self, n, mode='after', start_time=0, keep_tempo=True):
+        temp = copy(self)
+        temp2 = copy(n)
+        temp_length = temp.bars()
+        if temp.channels is not None:
+            free_channel_numbers = [
+                i for i in range(16) if i not in temp.channels
+            ]
+            counter = 0
+        if mode == 'after':
+            start_time = temp_length
+        for i in range(len(temp2)):
+            current_instrument_number = temp2.instruments_numbers[i]
+            if current_instrument_number in temp.instruments_numbers:
+                current_ind = temp.instruments_numbers.index(
+                    current_instrument_number)
+                current_track = temp2.tracks[i]
+                for each in current_track:
+                    if type(each) == tempo:
+                        if each.start_time is not None:
+                            each.start_time += start_time
+                    elif type(each) == pitch_bend:
+                        if each.time is not None:
+                            each.time += start_time
+                current_start_time = temp2.start_times[
+                    i] + start_time - temp.start_times[current_ind]
+                temp.tracks[current_ind] &= (current_track, current_start_time)
+                if current_start_time < 0:
+                    temp.start_times[current_ind] += current_start_time
+            else:
+                current_instrument = temp2.instruments_list[i]
+                temp.instruments_list.append(current_instrument)
+                temp.instruments_numbers.append(current_instrument_number)
+                current_start_time = temp2.start_times[i]
+                current_start_time += start_time
+                current_track = temp2.tracks[i]
+                for each in current_track:
+                    if type(each) == tempo:
+                        if each.start_time is not None:
+                            each.start_time += start_time
+                    elif type(each) == pitch_bend:
+                        if each.time is not None:
+                            each.time += start_time
+                temp.tracks.append(current_track)
+                temp.start_times.append(current_start_time)
+                if temp.channels is not None:
+                    if temp2.channels is not None:
+                        current_channel_number = temp2.channels[i]
+                        if current_channel_number in temp.channels:
+                            current_channel_number = free_channel_numbers[
+                                counter]
+                            counter += 1
+                        else:
+                            if current_channel_number in free_channel_numbers:
+                                del free_channel_numbers[
+                                    free_channel_numbers.index(
+                                        current_channel_number)]
+                    else:
+                        current_channel_number = free_channel_numbers[counter]
+                        counter += 1
+                    temp.channels.append(current_channel_number)
+                if temp.track_names is not None:
+                    temp.track_names.append(temp2.track_names[i])
+        if mode == 'after' and keep_tempo:
+            temp.add_tempo_change(temp2.tempo, 1 + temp_length)
+        temp.track_number = len(temp.tracks)
+        return temp
 
     def add_pitch_bend(self,
                        value,
@@ -2363,8 +2452,10 @@ class piece:
         return self.cut(1 + start_time, n + 1 + start_time)
 
     def bars(self, mode=0):
-        bpm, merged_result, start_time = self.merge()
-        return merged_result.bars(start_time=start_time, mode=mode)
+        return max([
+            self.tracks[i].bars(start_time=self.start_times[i])
+            for i in range(len(self.tracks))
+        ])
 
     def count(self, note1, mode='name'):
         return self.merge()[1].count(note1, mode)
