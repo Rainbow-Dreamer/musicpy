@@ -636,7 +636,7 @@ class chord:
         if interval is None:
             interval = copy(self.interval)
         result = chord(copy(self.notes), duration, interval)
-        if volume:
+        if volume is not None:
             result.setvolume(volume, ind)
         return result
 
