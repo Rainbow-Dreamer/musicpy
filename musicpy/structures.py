@@ -1982,7 +1982,9 @@ class piece:
         self.name = name
 
     def __repr__(self):
-        return (f'{self.name}\n' if self.name else '') + '\n'.join([
+        return (
+            f'{self.name}\n' if self.name else ''
+        ) + f'BPM: {round(self.tempo, 3)}\n' + '\n'.join([
             f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(self.track_number)
         ])

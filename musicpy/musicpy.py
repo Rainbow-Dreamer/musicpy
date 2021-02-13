@@ -215,7 +215,7 @@ def play(chord1,
          instrument=None,
          i=None,
          save_as_file=True,
-         deinterleave=True):
+         deinterleave=False):
     time1 = start_time
     file = write(name_of_midi=name,
                  chord1=chord1,
@@ -317,11 +317,12 @@ def read(name,
                         instruments_list.append(1)
                 chords_list = [each[1] for each in all_tracks]
                 chords_list[0] += changes
-                tracks_names_list = [
-                    each[0].name for each in available_tracks
-                    if hasattr(each[0], 'name')
-                ]
-                if not tracks_names_list:
+                tracks_names_list = [[
+                    k.name for k in each if hasattr(k, 'name')
+                ] for each in available_tracks]
+                if all(j for j in tracks_names_list):
+                    tracks_names_list = [j[0] for j in tracks_names_list]
+                else:
                     tracks_names_list = None
                 return piece(chords_list, instruments_list, whole_bpm,
                              start_times_list, tracks_names_list,
@@ -436,7 +437,7 @@ def write(name_of_midi,
           i=None,
           save_as_file=True,
           midi_io=None,
-          deinterleave=True):
+          deinterleave=False):
     time1 = start_time
     if i is not None:
         instrument = i
@@ -819,25 +820,35 @@ def detect_scale(x,
     # return a list of most likely and exact modes the music has.
 
     # newly added on 2020/4/25, currently in development
+    x = x.only_notes()
     whole_notes = x.names()
-    note_names = list(set(whole_notes))
-    note_names = [standard[i] for i in note_names]
-    note_names.sort()
-    note_names.append(note_names[0] + octave)
-    note_intervals = [
-        note_names[i] - note_names[i - 1] for i in range(1, len(note_names))
-    ]
-    result_scale_types = detectScale[tuple(note_intervals)]
-    if result_scale_types not in ['not found', ('12', )]:
-        result_scale_types = result_scale_types[0]
-        center_note = standard_reverse[note_names[0]]
-        result_scale = scale(center_note, result_scale_types)
-        if result_scale_types in modern_modes:
-            inds = modern_modes.index(result_scale_types) - 1
-            if inds != -1:
-                result_scale = result_scale.inversion(7 - inds)
-                result_scale.mode = 'major'
-                result_scale_types = 'major'
+    notes_counts = x.count_appear(sort=True)
+    most_appeared_note = N(notes_counts[0][0])
+    third_degree_major = most_appeared_note.up(major_third).name
+    third_degree_minor = most_appeared_note.up(minor_third).name
+    if x.count(third_degree_major) > x.count(third_degree_minor):
+        current_mode = 'major'
+        if x.count(most_appeared_note.up(augmented_fourth).name) > x.count(
+                most_appeared_note.up(perfect_fourth).name):
+            current_mode = 'lydian'
+        else:
+            if x.count(most_appeared_note.up(minor_seventh).name) > x.count(
+                    most_appeared_note.up(major_seventh).name):
+                current_mode = 'mixolydian'
+    else:
+        current_mode = 'minor'
+        if x.count(most_appeared_note.up(major_sixth).name) > x.count(
+                most_appeared_note.up(minor_sixth).name):
+            current_mode = 'dorian'
+        else:
+            if x.count(most_appeared_note.up(minor_second).name) > x.count(
+                    most_appeared_note.up(major_second).name):
+                current_mode = 'phrygian'
+                if x.count(most_appeared_note.up(
+                        diminished_fifth).name) > x.count(
+                            most_appeared_note.up(perfect_fifth).name):
+                    current_mode = 'locrian'
+    '''
         if result_scale_types == 'major':
             melody_notes = split_melody(
                 x, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
@@ -895,6 +906,10 @@ def detect_scale(x,
         if get_scales:
             return most_probably_scale_ls
         return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in most_probably_scale_ls])}'
+    '''
+    if get_scales:
+        return scale(most_appeared_note.name, current_mode)
+    return f'most likely scales: {most_appeared_note.name} {current_mode}'
 
 
 def get_chord_root_note(chord_name, get_chord_types=False):
