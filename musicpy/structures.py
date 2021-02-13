@@ -464,7 +464,6 @@ class chord:
         # mode == 1, use durations and relative length to calculate the bars,
         # mode 0 is the most common use case (so mode 0 is the default),
         # use mode 1 only when all of the intervals are 0
-        self.last_note_standardize()
         durations = self.get_duration()
         intervals = self.interval
         length = len(self)
@@ -2113,6 +2112,8 @@ class piece:
     def merge_track(self, n, mode='after', start_time=0, keep_tempo=True):
         temp = copy(self)
         temp2 = copy(n)
+        for each in temp.tracks:
+            each.last_note_standardize()
         temp_length = temp.bars()
         if temp.channels is not None:
             free_channel_numbers = [
