@@ -458,12 +458,14 @@ class chord:
                 self.interval[i] = current.duration
                 break
 
-    def bars(self, start_time=0, mode=0):
+    def bars(self, start_time=0, mode=0, standard=False):
         # there are 2 modes to calculate the bars length of a chord,
         # mode == 0, use sum of intervals to calculate the bars,
         # mode == 1, use durations and relative length to calculate the bars,
         # mode 0 is the most common use case (so mode 0 is the default),
         # use mode 1 only when all of the intervals are 0
+        if standard:
+            self.last_note_standardize()
         durations = self.get_duration()
         intervals = self.interval
         length = len(self)
@@ -2456,9 +2458,11 @@ class piece:
         start_time = min(self.start_times)
         return self.cut(1 + start_time, n + 1 + start_time)
 
-    def bars(self, mode=0):
+    def bars(self, mode=0, standard=False):
         return max([
-            self.tracks[i].bars(start_time=self.start_times[i])
+            self.tracks[i].bars(start_time=self.start_times[i],
+                                mode=mode,
+                                standard=standard)
             for i in range(len(self.tracks))
         ])
 

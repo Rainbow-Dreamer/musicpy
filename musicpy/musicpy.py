@@ -806,24 +806,7 @@ def detect_in_scale(x,
     return detect_result
 
 
-def detect_scale(x,
-                 melody_tol=minor_seventh,
-                 chord_tol=major_sixth,
-                 get_off_overlap_notes=True,
-                 average_degree_length=8,
-                 melody_degree_tol=toNote('B4'),
-                 most_like_num=3,
-                 count_num=3,
-                 get_scales=False,
-                 not_split=False):
-    # receive a piece of music and analyze what modes it is using,
-    # return a list of most likely and exact modes the music has.
-
-    # newly added on 2020/4/25, currently in development
-    x = x.only_notes()
-    whole_notes = x.names()
-    notes_counts = x.count_appear(sort=True)
-    most_appeared_note = N(notes_counts[0][0])
+def most_appear_notes_detect_scale(x, most_appeared_note, get_scales=False):
     third_degree_major = most_appeared_note.up(major_third).name
     third_degree_minor = most_appeared_note.up(minor_third).name
     if x.count(third_degree_major) > x.count(third_degree_minor):
@@ -848,6 +831,34 @@ def detect_scale(x,
                         diminished_fifth).name) > x.count(
                             most_appeared_note.up(perfect_fifth).name):
                     current_mode = 'locrian'
+    if get_scales:
+        return scale(most_appeared_note.name, current_mode)
+    return f'{most_appeared_note.name} {current_mode}'
+
+
+def detect_scale(x,
+                 melody_tol=minor_seventh,
+                 chord_tol=major_sixth,
+                 get_off_overlap_notes=True,
+                 average_degree_length=8,
+                 melody_degree_tol=toNote('B4'),
+                 most_like_num=3,
+                 count_num=3,
+                 get_scales=False,
+                 not_split=False,
+                 most_appear_num=5,
+                 major_minor_preference=True):
+    # receive a piece of music and analyze what modes it is using,
+    # return a list of most likely and exact modes the music has.
+
+    # newly added on 2020/4/25, currently in development
+    x = x.only_notes()
+    counts = x.count_appear(sort=True)
+    most_appeared_note = [N(each[0]) for each in counts[:most_appear_num]]
+    result_scales = [
+        most_appear_notes_detect_scale(x, each, get_scales)
+        for each in most_appeared_note
+    ]
     '''
         if result_scale_types == 'major':
             melody_notes = split_melody(
@@ -907,9 +918,24 @@ def detect_scale(x,
             return most_probably_scale_ls
         return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in most_probably_scale_ls])}'
     '''
+    if major_minor_preference:
+        if get_scales:
+            major_minor_inds = [
+                i for i in range(len(result_scales))
+                if result_scales[i].mode in ['major', 'minor']
+            ]
+        else:
+            major_minor_inds = [
+                i for i in range(len(result_scales))
+                if any(k in result_scales[i] for k in ['major', 'minor'])
+            ]
+        result_scales = [result_scales[i] for i in major_minor_inds] + [
+            result_scales[i]
+            for i in range(len(result_scales)) if i not in major_minor_inds
+        ]
     if get_scales:
-        return scale(most_appeared_note.name, current_mode)
-    return f'most likely scales: {most_appeared_note.name} {current_mode}'
+        return result_scales
+    return f'most likely scales: {", ".join(result_scales)}'
 
 
 def get_chord_root_note(chord_name, get_chord_types=False):
