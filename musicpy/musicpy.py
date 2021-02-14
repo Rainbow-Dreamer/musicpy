@@ -248,7 +248,9 @@ def read(name,
          is_file=False,
          merge=False,
          get_off_drums=True,
-         to_piece=False):
+         to_piece=False,
+         split_channels=False,
+         clear_empty_notes=False):
     # read from a midi file and return a notes list
 
     # if mode is set to 'find', then will automatically search for
@@ -263,18 +265,37 @@ def read(name,
     t = None
     changes_track = [
         each for each in whole_tracks
-        if any(i.type == 'set_tempo' for i in each)
-    ][0]
-    changes = midi_to_chord(x, changes_track)[0]
-    whole_bpm = [i.bpm for i in changes if type(i) == tempo][0]
+        if any(i.type == 'set_tempo' for i in each) and all(i.type != 'note_on'
+                                                            for i in each)
+    ]
+    if changes_track:
+        changes_track = changes_track[0]
+        changes = midi_to_chord(x,
+                                changes_track,
+                                add_track_num=split_channels,
+                                clear_empty_notes=clear_empty_notes)[0]
+        whole_bpm = [i.bpm for i in changes if type(i) == tempo][0]
+    else:
+        changes = []
+        whole_bpm = 80
+        for each in whole_tracks:
+            curren_tempo = [i for i in each if i.type == 'set_tempo']
+            if curren_tempo:
+                whole_bpm = unit.tempo2bpm(curren_tempo[0].tempo)
+                break
+            whole_bpm = None
     if mode == 'find':
-        for each in whole_tracks[1:]:
+        for each in whole_tracks:
             if any(each_msg.type == 'note_on' for each_msg in each):
                 t = each
                 break
+        result = midi_to_chord(x, t, whole_bpm)
+        if changes:
+            result[1] += changes
+        return result
     elif mode == 'all':
         available_tracks = [
-            each for each in whole_tracks[1:]
+            each for each in whole_tracks
             if any(each_msg.type == 'note_on' for each_msg in each)
         ]
         if get_off_drums:
@@ -286,7 +307,14 @@ def read(name,
                         reverse_instruments[j.program + 1].lower()
                         for j in each))
             ]
-        all_tracks = [midi_to_chord(x, j, whole_bpm) for j in available_tracks]
+        all_tracks = [
+            midi_to_chord(x,
+                          j,
+                          whole_bpm,
+                          add_track_num=split_channels,
+                          clear_empty_notes=clear_empty_notes)
+            for j in available_tracks
+        ]
         if merge:
             start_time_ls = [j[2] for j in all_tracks]
             first_track_ind = start_time_ls.index(min(start_time_ls))
@@ -295,11 +323,13 @@ def read(name,
             tempos, all_track_notes, first_track_start_time = first_track
             for i in all_tracks[1:]:
                 all_track_notes &= (i[1], i[2] - first_track_start_time)
-            all_track_notes += changes
+            if changes:
+                all_track_notes += changes
             return tempos, all_track_notes, first_track_start_time
         else:
             if not to_piece:
-                all_tracks.append(changes)
+                if changes:
+                    all_tracks.append(changes)
                 return all_tracks
             else:
                 start_times_list = [j[2] for j in all_tracks]
@@ -316,7 +346,8 @@ def read(name,
                     else:
                         instruments_list.append(1)
                 chords_list = [each[1] for each in all_tracks]
-                chords_list[0] += changes
+                if changes:
+                    chords_list[0] += changes
                 tracks_names_list = [[
                     k.name for k in each if hasattr(k, 'name')
                 ] for each in available_tracks]
@@ -324,101 +355,152 @@ def read(name,
                     tracks_names_list = [j[0] for j in tracks_names_list]
                 else:
                     tracks_names_list = None
-                return piece(chords_list, instruments_list, whole_bpm,
-                             start_times_list, tracks_names_list,
-                             channels_list,
-                             os.path.splitext(os.path.basename(name))[0])
+                result_piece = piece(
+                    chords_list, instruments_list, whole_bpm, start_times_list,
+                    tracks_names_list, channels_list,
+                    os.path.splitext(os.path.basename(name))[0])
+                if split_channels and len(available_tracks) == 1:
+                    available_tracks = available_tracks[0]
+                    all_tracks = all_tracks[0]
+                    channels_numbers = [
+                        i.channel for i in available_tracks
+                        if hasattr(i, 'channel')
+                    ]
+                    if channels_numbers:
+                        channels_list = list(set(channels_numbers))
+                        channels_list.sort()
+                        instruments_list = [[
+                            i for i in available_tracks
+                            if i.type == 'program_change' and i.channel == k
+                        ][0].program + 1 for k in channels_list]
+                        tracks_names_list = [
+                            i.name for i in available_tracks
+                            if hasattr(i, 'name')
+                        ]
+                        if (not tracks_names_list) or (len(tracks_names_list)
+                                                       != len(channels_list)):
+                            tracks_names_list = None
+                        result_merge_track = all_tracks[1]
+                        result_piece.tracks = [
+                            [] for i in range(len(channels_list))
+                        ]
+                        result_piece.instruments_list = [
+                            reverse_instruments[i] for i in instruments_list
+                        ]
+                        result_piece.instruments_numbers = instruments_list
+                        result_piece.track_names = tracks_names_list
+                        result_piece.channels = channels_list
+                        for each in result_merge_track:
+                            if type(each) == tempo:
+                                each.track_num = channels_list[0]
+                            else:
+                                each.track_num = channels_list.index(
+                                    each.track_num)
+                        result_piece.reconstruct(result_merge_track,
+                                                 all_tracks[2])
+                return result_piece
+
     else:
         try:
             t = whole_tracks[trackind]
+            result = midi_to_chord(x, t, whole_bpm)
+            if changes:
+                result[1] += changes
+            return result
         except:
             return 'error'
-    result = midi_to_chord(x, t, whole_bpm)
-    result[1] += changes
-    return result
 
 
-def midi_to_chord(x, t, bpm=None):
+def midi_to_chord(x,
+                  t,
+                  bpm=None,
+                  add_track_num=False,
+                  clear_empty_notes=False):
     interval_unit = x.ticks_per_beat * 4
-    hason = []
-    hasoff = []
     intervals = []
     notelist = []
     notes_len = len(t)
     find_first_note = False
     start_time = 0
-    tempo_times = 1
+    current_time = 0
+
+    counter = 0
     for i in range(notes_len):
         current_msg = t[i]
+        current_time += current_msg.time
         if current_msg.type == 'note_on' and current_msg.velocity != 0:
+            counter += 1
             current_msg_velocity = current_msg.velocity
             current_msg_note = current_msg.note
-            if i not in hason and i not in hasoff:
-                if not find_first_note:
-                    find_first_note = True
-                    start_time = sum(t[j].time
-                                     for j in range(i + 1)) / interval_unit
-                    if start_time.is_integer():
-                        start_time = int(start_time)
-                hason.append(i)
-                find_interval = False
-                find_end = False
-                time2 = 0
-                realtime = None
-                for k in range(i + 1, notes_len - 1):
-                    current_note = t[k]
-                    current_note_type = current_note.type
-                    time2 += current_note.time
-                    if not find_interval:
-                        if current_note_type == 'note_on' and current_note.velocity != 0:
-                            find_interval = True
-                            interval1 = time2 / interval_unit
-                            if interval1.is_integer():
-                                interval1 = int(interval1)
-                            intervals.append(interval1)
-                    if not find_end:
-                        if current_note_type == 'note_off' or (
-                                current_note_type == 'note_on'
-                                and current_note.velocity == 0):
-                            if current_note.note == current_msg_note:
-                                hasoff.append(k)
-                                find_end = True
-                                realtime = time2
-
+            if not find_first_note:
+                find_first_note = True
+                start_time = sum(t[j].time
+                                 for j in range(i + 1)) / interval_unit
+                if start_time.is_integer():
+                    start_time = int(start_time)
+            current_interval = 0
+            current_duration = 0
+            current_note_interval = 0
+            current_note_duration = 0
+            find_interval = False
+            find_duration = False
+            for k in range(i + 1, notes_len):
+                new_msg = t[k]
+                new_msg_type = new_msg.type
+                current_interval += new_msg.time
+                current_duration += new_msg.time
                 if not find_interval:
-                    intervals.append(
-                        sum([t[x].time for x in range(i, notes_len - 1)]) /
-                        interval_unit)
-                if not find_end:
-                    realtime = time2
-                duration1 = realtime / interval_unit
-                if duration1.is_integer():
-                    duration1 = int(duration1)
-                notelist.append(
-                    degree_to_note(current_msg_note,
-                                   duration=duration1,
-                                   volume=current_msg_velocity))
+                    if new_msg_type == 'note_on' and new_msg.velocity != 0:
+                        find_interval = True
+                        current_interval /= interval_unit
+                        if current_interval.is_integer():
+                            current_interval = int(current_interval)
+                        current_note_interval = current_interval
+                if not find_duration:
+                    if (
+                            new_msg_type == 'note_off' or
+                        (new_msg_type == 'note_on' and new_msg.velocity == 0)
+                    ) and new_msg.note == current_msg_note and new_msg.channel == current_msg.channel:
+                        find_duration = True
+                        current_duration /= interval_unit
+                        if current_duration.is_integer():
+                            current_duration = int(current_duration)
+                        current_note_duration = current_duration
+                if find_interval and find_duration:
+                    break
+            current_append_note = degree_to_note(
+                current_msg_note,
+                duration=current_note_duration,
+                volume=current_msg_velocity)
+            intervals.append(current_note_interval)
+            if add_track_num and hasattr(current_msg, 'channel'):
+                current_append_note.track_num = current_msg.channel
+            notelist.append(current_append_note)
         elif current_msg.type == 'set_tempo':
-            tempo_times += current_msg.time / interval_unit
             current_tempo = tempo(unit.tempo2bpm(current_msg.tempo),
-                                  tempo_times)
+                                  (current_time / interval_unit) + 1)
+            if add_track_num:
+                current_tempo.track_num = 0
             notelist.append(current_tempo)
             intervals.append(0)
         elif current_msg.type == 'pitchwheel':
             current_pitch_bend = pitch_bend(current_msg.pitch,
                                             channel=current_msg.channel,
                                             mode='values')
+            if add_track_num and hasattr(current_msg, 'channel'):
+                current_pitch_bend.track_num = current_msg.channel
             notelist.append(current_pitch_bend)
             intervals.append(0)
     result = chord(notelist, interval=intervals)
-    result.interval = [
-        result.interval[j] for j in range(len(result))
-        if type(result.notes[j]) != note or result.notes[j].duration > 0
-    ]
-    result.notes = [
-        each for each in result.notes
-        if type(each) != note or each.duration > 0
-    ]
+    if clear_empty_notes:
+        result.interval = [
+            result.interval[j] for j in range(len(result))
+            if type(result.notes[j]) != note or result.notes[j].duration > 0
+        ]
+        result.notes = [
+            each for each in result.notes
+            if type(each) != note or each.duration > 0
+        ]
     if bpm is not None:
         return [bpm, result, start_time]
     else:

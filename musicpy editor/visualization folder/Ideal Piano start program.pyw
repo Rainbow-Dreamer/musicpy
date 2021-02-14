@@ -14,8 +14,9 @@ if 'visualization folder' not in abs_path:
     abs_path += '/visualization folder'
 os.chdir(abs_path)
 sys.path.append(abs_path)
-with open('musicpy/__init__.py', encoding='utf-8-sig') as f:
-    exec(f.read(), globals(), globals())
+os.chdir('../../musicpy')
+exec('from musicpy.musicpy import *', globals(), globals())
+os.chdir(abs_path)    
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read(), globals(), globals())
 import pygame.midi
