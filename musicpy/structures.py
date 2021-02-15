@@ -425,19 +425,20 @@ class chord:
             return start_ind, to_ind
         return self[start_ind + 1:to_ind + 1]
 
-    def bars(self, start_time=0):
-        first_duration = 0
-        for k in range(len(self) - 1, -1, -1):
-            current = self.notes[k]
-            if type(current) == note:
-                if self.interval[k] == 0:
-                    for each in self.notes:
-                        if type(each) == note:
-                            first_duration = each.duration
-                else:
-                    first_duration = 0
-                break
-        return start_time + first_duration + sum(self.interval)
+    def bars(self, start_time=0, mode=0):
+        if mode == 0:
+            extra = 0
+        elif mode == 1:
+            extra = 0
+            for  i in range(len(self.notes)-1, -1, -1):
+                current = self.notes[i]
+                if type(current) == note:
+                    if self.interval[i] == 0:
+                        extra = current.duration
+                    else:
+                        extra = 0
+                    break
+        return start_time + sum(self.interval) + extra
 
     def firstnbars(self, n, start_time=0):
         return self.cut(1, n + 1, start_time)
@@ -2301,7 +2302,7 @@ class piece:
             for each in all_tracks[k]:
                 each.track_num = k
 
-    def reconstruct(self, track, start_time):
+    def reconstruct(self, track, start_time=0):
         first_track, first_track_start_time = track, start_time
         length = len(self.tracks)
         start_times_inds = [[
