@@ -16,11 +16,12 @@ import pyglet
 from pyglet.window import mouse
 from pyglet import shapes
 import pygame.midi
+import re
 abs_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(abs_path)
 os.chdir('..')
 sys.path.append('.')
-function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
+musicpy_vars = dir(__import__('musicpy'))
 exec("from musicpy import *")
 os.chdir('musicpy editor')
 from io import BytesIO

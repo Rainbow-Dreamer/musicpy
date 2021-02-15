@@ -17,6 +17,7 @@
     'background_color': 'alice blue',
     'foreground_color': 'black',
     'active_background_color': 'light green',
-    'day_and_night_colors': ('white', 'gray8')
+    'day_and_night_colors': ('white', 'gray8'),
+    'search_highlight_color': ['light blue', 'light green']
 }
 path_enable_list = ['background_image']

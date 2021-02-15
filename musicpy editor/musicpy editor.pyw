@@ -6,9 +6,10 @@ from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 from tkinter import filedialog
 import os, sys
+import re
 os.chdir('..')
 sys.path.append('.')
-function_names = dir(__import__('musicpy')) + ['direct_play', 'print']
+musicpy_vars = dir(__import__('musicpy'))
 from musicpy import *
 os.chdir('musicpy editor')
 from io import BytesIO
@@ -79,11 +80,11 @@ class Root(Tk):
         super(Root, self).__init__()
         self.minsize(1200, 640)
         self.title('musicpy 编辑器')
-        self.focus_set()
         self.background_color = config_dict['background_color']
         self.foreground_color = config_dict['foreground_color']
         self.active_background_color = config_dict['active_background_color']
         self.day_color, self.night_color = config_dict['day_and_night_colors']
+        self.search_highlight_color = config_dict['search_highlight_color']
         self.configure(background=self.background_color)
         style = ttk.Style()
         style.theme_use('alt')
@@ -133,7 +134,6 @@ class Root(Tk):
         self.inputs.configure(font=(self.font_type, self.font_size))
         self.inputs_text.place(x=0, y=30)
         self.inputs.place(x=0, y=60, width=700, height=200)
-        self.inputs.focus_set()
         inputs_v = ttk.Scrollbar(self,
                                  orient="vertical",
                                  command=self.inputs.yview)
@@ -277,6 +277,18 @@ class Root(Tk):
                             activebackground=self.active_background_color)
         self.inputs.bind("<Button-3>", lambda x: self.rightKey(x, self.inputs))
         self.first_load_config()
+        self.inputs.bind('<Control-f>', self.search_words)
+        self.inputs.bind('<Control-e>', self.stop_play_midi)
+        self.inputs.bind('<Control-d>', self.read_midi_file)
+        self.inputs.bind('<Control-w>', self.openfile)
+        self.inputs.bind('<Control-s>', self.save)
+        self.inputs.bind('<Control-q>', lambda e: self.destroy())
+        self.inputs.bind('<Control-r>', lambda e: self.runs())
+        self.inputs.bind('<Control-g>',
+                         lambda e: self.change_background_color_mode(True))
+        self.inputs.bind('<Control-b>', lambda e: self.config_options())
+        self.search_box_open = False
+        self.config_box_open = False
 
     def change_background_color_mode(self, turn=True):
         if turn:
@@ -303,7 +315,7 @@ class Root(Tk):
             config_dict['background_mode'] = self.bg_mode
             self.save_config(True)
 
-    def openfile(self):
+    def openfile(self, e=None):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
                                               title="选择文件",
                                               filetype=(("所有文件", "*.*"), ))
@@ -340,9 +352,19 @@ class Root(Tk):
     def first_load_config(self):
         self.get_config_dict = {}
 
+    def close_config_box(self):
+        self.config_window.destroy()
+        self.config_box_open = False
+
     def config_options(self):
+        if self.config_box_open:
+            self.config_window.focus_set()
+            return
+        self.config_box_open = True
         self.config_window = Toplevel(self, bg=self.background_color)
-        self.config_window.minsize(800, 620)
+        self.config_window.minsize(800, 650)
+        self.config_window.title('设置')
+        self.config_window.protocol("WM_DELETE_WINDOW", self.close_config_box)
         self.get_config_dict = {}
         counter = 0
         for each in config_dict:
@@ -370,18 +392,18 @@ class Root(Tk):
         self.choose_font = ttk.Button(self.config_window,
                                       text='选择字体',
                                       command=self.get_font)
-        self.choose_font.place(x=230, y=430)
+        self.choose_font.place(x=230, y=460)
         self.whole_fonts = list(font.families())
         self.whole_fonts.sort(
             key=lambda x: x if not x.startswith('@') else x[1:])
         self.font_list_bar = ttk.Scrollbar(self.config_window)
-        self.font_list_bar.place(x=190, y=490, height=170, anchor=CENTER)
+        self.font_list_bar.place(x=190, y=520, height=170, anchor=CENTER)
         self.font_list = Listbox(self.config_window,
                                  yscrollcommand=self.font_list_bar.set,
                                  width=25)
         for k in self.whole_fonts:
             self.font_list.insert(END, k)
-        self.font_list.place(x=0, y=400)
+        self.font_list.place(x=0, y=430)
         self.font_list_bar.config(command=self.font_list.yview)
         current_font_ind = self.whole_fonts.index(self.font_type)
         self.font_list.selection_set(current_font_ind)
@@ -470,7 +492,7 @@ class Root(Tk):
         except:
             pass
 
-    def save(self):
+    def save(self, e=None):
         filename = filedialog.asksaveasfilename(initialdir=self.last_place,
                                                 title="保存输入文本",
                                                 filetype=(("所有文件", "*.*"), ),
@@ -691,6 +713,9 @@ class Root(Tk):
                         start_index = current_last_index
 
     def realtime_run(self):
+        global function_names
+        function_names = list(
+            set(musicpy_vars + list(locals().keys()) + list(globals().keys())))
         if self.quit or (not self.is_realtime):
             self.quit = False
             return
@@ -704,7 +729,6 @@ class Root(Tk):
             if self.inputs.edit_modified():
                 self.pre_input = self.inputs.get('1.0', END)[:-1]
                 self.runs_2()
-
         self.after(100, self.realtime_run)
 
     def check_realtime(self):
@@ -796,6 +820,100 @@ class Root(Tk):
     def stop_play_midi(self, editor, event=None):
         pygame.mixer.music.stop()
 
+    def close_search_box(self):
+        for each in self.search_inds_list:
+            ind1, ind2 = each
+            self.inputs.tag_remove('highlight', ind1, ind2)
+            self.inputs.tag_remove('highlight_select', ind1, ind2)
+        self.search_box.destroy()
+        self.search_box_open = False
+
+    def search_words(self, editor, event=None):
+        if not self.search_box_open:
+            self.search_box_open = True
+        else:
+            self.search_box.focus_set()
+            self.search_entry.focus_set()
+            return
+        self.search_box = Toplevel(self, bg=self.background_color)
+        self.search_box.protocol("WM_DELETE_WINDOW", self.close_search_box)
+        self.search_box.title('搜索')
+        self.search_box.minsize(300, 200)
+        self.search_box.geometry('250x150+350+300')
+        self.search_text = ttk.Label(self.search_box, text='请输入想要搜索的内容')
+        self.search_text.place(x=0, y=0)
+        self.search_contents = StringVar()
+        self.search_contents.trace_add('write', self.search)
+        self.search_entry = Entry(self.search_box,
+                                  textvariable=self.search_contents)
+        self.search_entry.place(x=0, y=30)
+        self.search_entry.focus_set()
+        self.search_inds = 0
+        self.search_inds_list = []
+        self.inputs.tag_configure('highlight',
+                                  background=self.search_highlight_color[0])
+        self.inputs.tag_configure('highlight_select',
+                                  background=self.search_highlight_color[1])
+        self.search_up = ttk.Button(self.search_box,
+                                    text='上一个',
+                                    command=lambda: self.change_search_ind(-1))
+        self.search_down = ttk.Button(
+            self.search_box,
+            text='下一个',
+            command=lambda: self.change_search_ind(1))
+        self.search_up.place(x=0, y=60)
+        self.search_down.place(x=100, y=60)
+        self.case_sensitive = False
+        self.check_case_sensitive = IntVar()
+        self.check_case_sensitive.set(0)
+        self.case_sensitive_box = ttk.Checkbutton(
+            self.search_box, text='区分大小写', variable=self.check_case_sensitive)
+        self.case_sensitive_box.place(x=170, y=30)
+
+    def change_search_ind(self, ind):
+        length = len(self.search_inds_list)
+        if self.search_inds in range(length):
+            current_inds = self.search_inds_list[self.search_inds]
+            self.inputs.tag_remove('highlight_select', current_inds[0],
+                                   current_inds[1])
+        self.search_inds += ind
+        if self.search_inds < 0:
+            self.search_inds = length - 1
+        elif self.search_inds >= length:
+            self.search_inds = 0
+        if self.search_inds in range(length):
+            current_inds = self.search_inds_list[self.search_inds]
+            self.inputs.tag_add('highlight_select', current_inds[0],
+                                current_inds[1])
+            self.inputs.see(current_inds[1])
+
+    def search(self, *args):
+        all_text = self.inputs.get('1.0', END)[:-1]
+
+        for each in self.search_inds_list:
+            ind1, ind2 = each
+            self.inputs.tag_remove('highlight', ind1, ind2)
+            self.inputs.tag_remove('highlight_select', ind1, ind2)
+        current = self.search_contents.get()
+        self.case_sensitive = self.check_case_sensitive.get()
+        if not self.case_sensitive:
+            all_text = all_text.lower()
+            current = current.lower()
+        self.search_inds_list = [[m.start(), m.end()]
+                                 for m in re.finditer(current, all_text)]
+        for each in self.search_inds_list:
+            ind1, ind2 = each
+            newline = "\n"
+            ind1 = f'{all_text[:ind1].count(newline)+1}.{ind1 - all_text[:ind1].rfind(newline) - 1}'
+            ind2 = f'{all_text[:ind2].count(newline)+1}.{ind2 - all_text[:ind2].rfind(newline) - 1}'
+            each[0] = ind1
+            each[1] = ind2
+        self.outputs.delete('1.0', END)
+        if self.search_inds_list:
+            for each in self.search_inds_list:
+                ind1, ind2 = each
+                self.inputs.tag_add('highlight', ind1, ind2)
+
     def rightKey(self, event, editor):
         self.menubar.delete(0, END)
         self.menubar.add_command(label='剪切',
@@ -829,8 +947,15 @@ class Root(Tk):
         self.menubar.add_command(label='停止播放',
                                  command=lambda: self.stop_play_midi(editor),
                                  foreground=self.foreground_color)
+        self.menubar.add_command(label='搜索',
+                                 command=lambda: self.search_words(editor),
+                                 foreground=self.foreground_color)
         self.menubar.post(event.x_root, event.y_root)
 
 
+function_names = list(
+    set(musicpy_vars + list(locals().keys()) + list(globals().keys())))
 root = Root()
+root.focus_force()
+root.inputs.focus_set()
 root.mainloop()
