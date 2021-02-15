@@ -426,6 +426,7 @@ class chord:
         return self[start_ind + 1:to_ind + 1]
 
     def bars(self, start_time=0):
+        first_duration = 0
         for k in range(len(self) - 1, -1, -1):
             current = self.notes[k]
             if type(current) == note:
