@@ -184,7 +184,7 @@ def read_notes(note_ls, rootpitch=4):
                 del current[2]
             else:
                 current[0] = float(current[0])
-            current_pitch_bend = pitch_bend(*current)
+            current_pitch_bend = pitch_bend(*current, mode=mode)
             notes_result.append(current_pitch_bend)
             intervals.append(0)
         else:
