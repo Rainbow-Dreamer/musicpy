@@ -339,7 +339,6 @@ class chord:
                 return chord([]) if not return_inds else (0, 0)
         current_bar = 1
         notes = self.notes
-        durations = self.get_duration()
         intervals = self.interval
         length = len(notes)
         start_ind = 0
@@ -347,14 +346,10 @@ class chord:
         find_start = False
         if ind1 == 1:
             find_start = True
-        for i in range(length - 1):
+        for i in range(length):
             current_note = notes[i]
             if type(current_note) == note:
-                if i == 0:
-                    current_bar += durations[0]
-                else:
-                    current_bar += (durations[i + 1] -
-                                    (durations[i] - intervals[i]))
+                current_bar += intervals[i]
                 if (not find_start) and current_bar >= ind1:
                     start_ind = i + 1
                     find_start = True
@@ -363,9 +358,6 @@ class chord:
                 elif ind2 and current_bar >= ind2:
                     to_ind = i + 1
                     break
-            elif ind2 and current_bar >= ind2:
-                to_ind = i + 1
-                break
         if not find_start:
             start_ind = to_ind
         if return_inds:
@@ -392,7 +384,6 @@ class chord:
                 return chord([]) if not return_inds else (0, 0)
         current_bar = 0
         notes = self.notes
-        durations = self.get_duration()
         intervals = self.interval
         length = len(notes)
         start_ind = 0
@@ -400,14 +391,10 @@ class chord:
         find_start = False
         if time1 == 0:
             find_start = True
-        for i in range(length - 1):
+        for i in range(length):
             current_note = notes[i]
             if type(current_note) == note:
-                if i == 0:
-                    current_bar += durations[0]
-                else:
-                    current_bar += (durations[i + 1] -
-                                    (durations[i] - intervals[i]))
+                current_bar += intervals[i]
                 if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
                     start_ind = i + 1
                     find_start = True
@@ -416,29 +403,21 @@ class chord:
                 elif time2 and (60 / bpm) * current_bar * 4 >= time2:
                     to_ind = i + 1
                     break
-            elif time2 and (60 / bpm) * current_bar * 4 >= time2:
-                to_ind = i + 1
-                break
         if not find_start:
             start_ind = to_ind
         if return_inds:
             return start_ind, to_ind
         return self[start_ind + 1:to_ind + 1]
 
-    def bars(self, start_time=0, mode=0):
-        if mode == 0:
-            extra = 0
-        elif mode == 1:
-            extra = 0
-            for i in range(len(self.notes) - 1, -1, -1):
-                current = self.notes[i]
-                if type(current) == note:
-                    if self.interval[i] == 0:
-                        extra = current.duration
-                    else:
-                        extra = 0
-                    break
-        return start_time + sum(self.interval) + extra
+    def last_note_standardize(self):
+        for i in range(len(self.notes) - 1, -1, -1):
+            current = self.notes[i]
+            if type(current) == note:
+                self.interval[i] = current.duration
+                break
+
+    def bars(self, start_time=0):
+        return start_time + sum(self.interval)
 
     def firstnbars(self, n, start_time=0):
         return self.cut(1, n + 1, start_time)
