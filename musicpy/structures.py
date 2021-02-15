@@ -430,7 +430,7 @@ class chord:
             extra = 0
         elif mode == 1:
             extra = 0
-            for  i in range(len(self.notes)-1, -1, -1):
+            for i in range(len(self.notes) - 1, -1, -1):
                 current = self.notes[i]
                 if type(current) == note:
                     if self.interval[i] == 0:
