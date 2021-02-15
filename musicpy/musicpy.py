@@ -468,6 +468,11 @@ def midi_to_chord(x,
                         current_note_duration = current_duration
                 if find_interval and find_duration:
                     break
+            if not find_interval:
+                current_interval /= interval_unit
+                if current_interval.is_integer():
+                    current_interval = int(current_interval)
+                current_note_interval = current_interval
             current_append_note = degree_to_note(
                 current_msg_note,
                 duration=current_note_duration,

@@ -184,7 +184,7 @@ def read_notes(note_ls, rootpitch=4):
                 del current[2]
             else:
                 current[0] = float(current[0])
-            current_pitch_bend = pitch_bend(*current, mode=mode)
+            current_pitch_bend = pitch_bend(*current)
             notes_result.append(current_pitch_bend)
             intervals.append(0)
         else:
@@ -302,7 +302,7 @@ class chord:
             self.notes.append(toNote(newnote))
             self.interval.append(self.interval[-1])
 
-    def split(self, return_type, get_time=False, sort=False, mode=0):
+    def split(self, return_type, get_time=False, sort=False):
         temp = copy(self)
         inds = [
             i for i in range(len(temp)) if type(temp.notes[i]) == return_type
@@ -315,7 +315,7 @@ class chord:
                            k for k in inds if temp.notes[k].time is None
                        ]
             for each in no_time:
-                current_time = temp[:each + 1].bars(mode=mode) + 1
+                current_time = temp[:each + 1].bars() + 1
                 current = temp.notes[each]
                 if return_type == tempo:
                     current.start_time = current_time
@@ -328,7 +328,7 @@ class chord:
                     notes.sort(key=lambda s: s.time)
         return chord(notes, interval=intervals)
 
-    def cut(self, ind1=1, ind2=None, start_time=0, return_inds=False, mode=0):
+    def cut(self, ind1=1, ind2=None, start_time=0, return_inds=False):
         # get parts of notes between two bars
         ind1 -= start_time
         if ind1 < 1:
@@ -347,36 +347,25 @@ class chord:
         find_start = False
         if ind1 == 1:
             find_start = True
-        if mode == 0:
-            for i in range(length):
-                current_note = notes[i]
-                if type(current_note) == note:
-                    current_bar += intervals[i]
-                    if (not find_start) and current_bar >= ind1:
-                        start_ind = i + 1
-                        find_start = True
-                        if ind2 is None:
-                            break
-                    elif ind2 and current_bar >= ind2:
-                        to_ind = i + 1
+        for i in range(length - 1):
+            current_note = notes[i]
+            if type(current_note) == note:
+                if i == 0:
+                    current_bar += durations[0]
+                else:
+                    current_bar += (durations[i + 1] -
+                                    (durations[i] - intervals[i]))
+                if (not find_start) and current_bar >= ind1:
+                    start_ind = i + 1
+                    find_start = True
+                    if ind2 is None:
                         break
-        elif mode == 1:
-            for i in range(length - 1):
-                current_note = notes[i]
-                if type(current_note) == note:
-                    if i == 0:
-                        current_bar += durations[0]
-                    else:
-                        current_bar += (durations[i + 1] -
-                                        (durations[i] - intervals[i]))
-                    if (not find_start) and current_bar >= ind1:
-                        start_ind = i + 1
-                        find_start = True
-                        if ind2 is None:
-                            break
-                    elif ind2 and current_bar >= ind2:
-                        to_ind = i + 1
-                        break
+                elif ind2 and current_bar >= ind2:
+                    to_ind = i + 1
+                    break
+            elif ind2 and current_bar >= ind2:
+                to_ind = i + 1
+                break
         if not find_start:
             start_ind = to_ind
         if return_inds:
@@ -389,13 +378,11 @@ class chord:
                  time2=None,
                  start_time=0,
                  return_inds=False,
-                 mode=0,
                  normalize_tempo=False):
         if normalize_tempo:
             temp = copy(self)
             temp.normalize_tempo(bpm)
-            return temp.cut_time(bpm, time1, time2, start_time, return_inds,
-                                 mode)
+            return temp.cut_time(bpm, time1, time2, start_time, return_inds)
         time1 -= start_time
         if time1 < 0:
             return chord([]) if not return_inds else (0, 0)
@@ -413,69 +400,43 @@ class chord:
         find_start = False
         if time1 == 0:
             find_start = True
-        if mode == 0:
-            for i in range(length):
-                current_note = notes[i]
-                if type(current_note) == note:
-                    current_bar += intervals[i]
-                    if (not find_start
-                        ) and (60 / bpm) * current_bar * 4 >= time1:
-                        start_ind = i + 1
-                        find_start = True
-                        if time2 is None:
-                            break
-                    elif time2 and (60 / bpm) * current_bar * 4 >= time2:
-                        to_ind = i + 1
+        for i in range(length - 1):
+            current_note = notes[i]
+            if type(current_note) == note:
+                if i == 0:
+                    current_bar += durations[0]
+                else:
+                    current_bar += (durations[i + 1] -
+                                    (durations[i] - intervals[i]))
+                if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
+                    start_ind = i + 1
+                    find_start = True
+                    if time2 is None:
                         break
-        elif mode == 1:
-            for i in range(length - 1):
-                current_note = notes[i]
-                if type(current_note) == note:
-                    if i == 0:
-                        current_bar += durations[0]
-                    else:
-                        current_bar += (durations[i + 1] -
-                                        (durations[i] - intervals[i]))
-                    if (not find_start
-                        ) and (60 / bpm) * current_bar * 4 >= time1:
-                        start_ind = i + 1
-                        find_start = True
-                        if time2 is None:
-                            break
-                    elif time2 and (60 / bpm) * current_bar * 4 >= time2:
-                        to_ind = i + 1
-                        break
+                elif time2 and (60 / bpm) * current_bar * 4 >= time2:
+                    to_ind = i + 1
+                    break
+            elif time2 and (60 / bpm) * current_bar * 4 >= time2:
+                to_ind = i + 1
+                break
         if not find_start:
             start_ind = to_ind
         if return_inds:
             return start_ind, to_ind
         return self[start_ind + 1:to_ind + 1]
 
-    def last_note_standardize(self):
-        for i in range(len(self.notes) - 1, -1, -1):
-            current = self.notes[i]
-            if type(current) == note:
-                self.interval[i] = current.duration
-                break
-
-    def bars(self, start_time=0, mode=0, standard=False):
-        # there are 2 modes to calculate the bars length of a chord,
-        # mode == 0, use sum of intervals to calculate the bars,
-        # mode == 1, use durations and relative length to calculate the bars,
-        # mode 0 is the most common use case (so mode 0 is the default),
-        # use mode 1 only when all of the intervals are 0
-        if standard:
-            self.last_note_standardize()
+    def bars(self, start_time=0):
         durations = self.get_duration()
         intervals = self.interval
+        first_duration = 0
+        for each in self.notes:
+            if type(each) == note:
+                first_duration = each.duration
         length = len(self)
-        if mode == 0:
-            return start_time + sum(intervals)
-        elif mode == 1:
-            return start_time + durations[0] + sum([
-                durations[i + 1] - (durations[i] - intervals[i])
-                for i in range(1, length - 1)
-            ])
+        return start_time + first_duration + sum([
+            durations[i + 1] - (durations[i] - intervals[i])
+            for i in range(1, length - 1)
+        ])
 
     def firstnbars(self, n, start_time=0):
         return self.cut(1, n + 1, start_time)
@@ -483,8 +444,8 @@ class chord:
     def get_bar(self, n, start_time=0):
         return self.cut(n, n + 1, start_time)
 
-    def split_bars(self, start_time=0, mode=0):
-        bars_length = int(self.bars(start_time, mode=mode))
+    def split_bars(self, start_time=0):
+        bars_length = int(self.bars(start_time))
         result = []
         for i in range(1, bars_length + 1):
             result.append(self.cut(i, i + 1, start_time))
@@ -544,17 +505,16 @@ class chord:
                   ind2=None,
                   mode='seconds',
                   start_time=0,
-                  normalize_tempo=False,
-                  bars_mode=0):
+                  normalize_tempo=False):
         if normalize_tempo:
             temp = copy(self)
             temp.normalize_tempo(bpm)
-            return temp.eval_time(bpm, ind1, ind2, mode, start_time)
+            return temp.eval_time(bpm, ind1, ind2, start_time)
         if ind1 is None:
-            whole_bars = self.bars(start_time, mode=bars_mode)
+            whole_bars = self.bars(start_time)
         else:
             if ind2 is None:
-                ind2 = self.bars(start_time, mode=bars_mode)
+                ind2 = self.bars(start_time)
             whole_bars = ind2 - ind1
         result = (60 / bpm) * whole_bars * 4
         if mode == 'seconds':
@@ -922,25 +882,29 @@ class chord:
             # calculate the absolute distances of all of the notes of the chord to add and self,
             # and then sort them, make differences between each two distances
             distance = []
+            intervals1 = temp.interval
+            intervals2 = note1.interval
+            temp.notes[-1].inds = 0
+            note1.notes[-1].inds = 1
             if start != 0:
                 note1.notes.insert(0, temp.notes[0])
-                note1.interval.insert(0, start)
-            for i in range(len(temp.notes)):
-                dis = sum(temp.interval[:i])
-                distance.append((dis, temp.notes[i]))
-            for j in range(len(note1.notes)):
-                dis = sum(inter[:j])
-                if start == 0 or j != 0:
-                    distance.append((dis, note1.notes[j]))
-            distance = sorted(distance, key=lambda x: x[0])
+                intervals2.insert(0, start)
+            counter = 0
+            for i in range(len(intervals1)):
+                distance.append([counter, temp.notes[i]])
+                counter += intervals1[i]
+            counter = 0
+            for j in range(len(intervals2)):
+                if not (j == 0 and start != 0):
+                    distance.append([counter, note1.notes[j]])
+                counter += intervals2[j]
+            distance.sort(key=lambda s: s[0])
+            newnotes = [each[1] for each in distance]
+            newinterval = [each[0] for each in distance]
             newinterval = [
-                distance[x][0] - distance[x - 1][0]
-                for x in range(1, len(distance))
+                newinterval[i] - newinterval[i - 1]
+                for i in range(1, len(newinterval))
             ] + [distance[-1][1].duration]
-            newnotes = [distance[x][1] for x in range(len(distance))]
-            for k in range(len(newnotes)):
-                if type(newnotes[k]) != note:
-                    newinterval[k] = 0
             return chord(newnotes, interval=newinterval)
         elif mode == 'after':
             if self.interval[-1] == 0:
@@ -1350,7 +1314,7 @@ class chord:
         temp.interval = [intervals[k] for k in inds]
         return temp
 
-    def normalize_tempo(self, bpm, mode=0, start_time=0):
+    def normalize_tempo(self, bpm, start_time=0):
         # choose a bpm and apply to all of the notes, if there are tempo
         # changes, use relative ratios of the chosen bpms and changes bpms
         # to re-calculate the notes durations and intervals
@@ -1361,7 +1325,7 @@ class chord:
             k for k in tempo_changes if self.notes[k].start_time is None
         ]
         for each in tempo_changes_no_time:
-            current_time = self[:each + 1].bars(mode=mode) + 1
+            current_time = self[:each + 1].bars() + 1
             current_tempo = self.notes[each]
             current_tempo.start_time = current_time
         tempo_changes = [self.notes[j] for j in tempo_changes]
@@ -1385,7 +1349,7 @@ class chord:
             for i in range(len(new_tempo_changes) - 1)
         ]
         tempo_changes_ranges.append(
-            (new_tempo_changes[-1].start_time, 1 + self.bars(mode=mode),
+            (new_tempo_changes[-1].start_time, 1 + self.bars(),
              new_tempo_changes[-1].bpm))
         whole_notes = self.notes
         intervals = self.interval
@@ -2116,8 +2080,6 @@ class piece:
     def merge_track(self, n, mode='after', start_time=0, keep_tempo=True):
         temp = copy(self)
         temp2 = copy(n)
-        for each in temp.tracks:
-            each.last_note_standardize()
         temp_length = temp.bars()
         if temp.channels is not None:
             free_channel_numbers = [
@@ -2227,7 +2189,7 @@ class piece:
         else:
             self.tracks[ind - 1].clear_tempo()
 
-    def normalize_tempo(self, bpm=None, mode=0):
+    def normalize_tempo(self, bpm=None):
         if bpm is None:
             bpm = self.tempo
         temp = copy(self)
@@ -2247,9 +2209,7 @@ class piece:
         for i in range(1, length):
             first_track &= (all_tracks[i],
                             start_time_ls[i] - first_track_start_time)
-        first_track.normalize_tempo(bpm,
-                                    mode=mode,
-                                    start_time=first_track_start_time)
+        first_track.normalize_tempo(bpm, start_time=first_track_start_time)
         start_times_inds = [[
             i for i in range(len(first_track))
             if first_track.notes[i].track_num == k
@@ -2281,7 +2241,7 @@ class piece:
         self.tracks = new_tracks
         self.start_times = new_start_times
 
-    def get_tempo_changes(self, mode=0):
+    def get_tempo_changes(self):
         temp = copy(self)
         tempo_changes = []
         for each in temp.tracks:
@@ -2291,14 +2251,14 @@ class piece:
             notes = [each.notes[i] for i in inds]
             no_time = [k for k in inds if each.notes[k].start_time is None]
             for k in no_time:
-                current_time = each[:k + 1].bars(mode=mode) + 1
+                current_time = each[:k + 1].bars() + 1
                 current = each.notes[k]
                 current.start_time = current_time
             tempo_changes += notes
         tempo_changes.sort(key=lambda s: s.start_time)
         return chord(tempo_changes)
 
-    def get_pitch_bend(self, track_number=1, mode=0):
+    def get_pitch_bend(self, track_number=1):
         temp = copy(self)
         each = temp.tracks[track_number - 1]
         inds = [
@@ -2307,7 +2267,7 @@ class piece:
         pitch_bend_changes = [each.notes[i] for i in inds]
         no_time = [k for k in inds if each.notes[k].time is None]
         for k in no_time:
-            current_time = each[:k + 1].bars(mode=mode) + 1
+            current_time = each[:k + 1].bars() + 1
             current = each.notes[k]
             current.time = current_time
         pitch_bend_changes.sort(key=lambda s: s.time)
@@ -2324,16 +2284,13 @@ class piece:
         all_tracks = temp.tracks
         length = len(all_tracks)
         start_time_ls = temp.start_times
-        first_track_start_time = min(start_time_ls)
-        first_track_ind = start_time_ls.index(first_track_start_time)
-        start_time_ls.insert(0, start_time_ls.pop(first_track_ind))
-
-        all_tracks.insert(0, all_tracks.pop(first_track_ind))
-        first_track = all_tracks[0]
-
-        for i in range(1, length):
-            first_track &= (all_tracks[i],
-                            start_time_ls[i] - first_track_start_time)
+        sort_tracks_inds = [[i, start_time_ls[i]] for i in range(length)]
+        sort_tracks_inds.sort(key=lambda s: s[1])
+        first_track_start_time = sort_tracks_inds[0][1]
+        first_track_ind = sort_tracks_inds[0][0]
+        first_track = all_tracks[first_track_ind]
+        for i in sort_tracks_inds[1:]:
+            first_track &= (all_tracks[i[0]], i[1] - first_track_start_time)
         return temp.tempo, first_track, first_track_start_time
 
     def add_track_labels(self):
@@ -2400,32 +2357,28 @@ class piece:
                   ind1=None,
                   ind2=None,
                   mode='seconds',
-                  normalize_tempo=False,
-                  bars_mode=0):
+                  normalize_tempo=False):
         temp_bpm, merged_result, start_time = self.merge()
         if bpm is not None:
             temp_bpm = bpm
         if normalize_tempo:
-            merged_result.normalize_tempo(temp_bpm,
-                                          mode=bars_mode,
-                                          start_time=start_time)
+            merged_result.normalize_tempo(temp_bpm, start_time=start_time)
         return merged_result.eval_time(temp_bpm,
                                        ind1,
                                        ind2,
                                        mode,
-                                       start_time=start_time,
-                                       bars_mode=bars_mode)
+                                       start_time=start_time)
 
-    def cut(self, ind1=1, ind2=None, mode=0):
+    def cut(self, ind1=1, ind2=None):
         temp_bpm, merged_result, start_time = self.merge()
-        result = merged_result.cut(ind1, ind2, start_time, mode=mode)
+        result = merged_result.cut(ind1, ind2, start_time)
 
         temp = copy(self)
-        tempo_changes = temp.get_tempo_changes(mode=mode)
+        tempo_changes = temp.get_tempo_changes()
         for each in tempo_changes:
             each.start_time -= (ind1 - 1)
         if ind2 is None:
-            ind2 = temp.bars(mode=mode)
+            ind2 = temp.bars()
         tempo_changes = chord([
             i for i in tempo_changes if 1 <= i.start_time <= ind2 - (ind1 - 1)
         ])
@@ -2437,7 +2390,7 @@ class piece:
         temp.tracks[0] += tempo_changes
         return temp
 
-    def cut_time(self, time1=0, time2=None, bpm=None, start_time=0, mode=0):
+    def cut_time(self, time1=0, time2=None, bpm=None, start_time=0):
         temp = copy(self)
         temp.normalize_tempo()
         if bpm is not None:
@@ -2447,7 +2400,7 @@ class piece:
         bar_left = time1 / ((60 / temp_bpm) * 4)
         bar_right = time2 / (
             (60 / temp_bpm) * 4) if time2 is not None else temp.bars()
-        result = temp.cut(1 + bar_left, 1 + bar_right, mode)
+        result = temp.cut(1 + bar_left, 1 + bar_right)
         return result
 
     def get_bar(self, n):
@@ -2458,11 +2411,9 @@ class piece:
         start_time = min(self.start_times)
         return self.cut(1 + start_time, n + 1 + start_time)
 
-    def bars(self, mode=0, standard=False):
+    def bars(self):
         return max([
-            self.tracks[i].bars(start_time=self.start_times[i],
-                                mode=mode,
-                                standard=standard)
+            self.tracks[i].bars(start_time=self.start_times[i])
             for i in range(len(self.tracks))
         ])
 
