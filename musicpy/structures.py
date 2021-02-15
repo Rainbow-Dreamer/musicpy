@@ -426,17 +426,17 @@ class chord:
         return self[start_ind + 1:to_ind + 1]
 
     def bars(self, start_time=0):
-        durations = self.get_duration()
-        intervals = self.interval
-        first_duration = 0
-        for each in self.notes:
-            if type(each) == note:
-                first_duration = each.duration
-        length = len(self)
-        return start_time + first_duration + sum([
-            durations[i + 1] - (durations[i] - intervals[i])
-            for i in range(1, length - 1)
-        ])
+        for k in range(len(self) - 1, -1, -1):
+            current = self.notes[k]
+            if type(current) == note:
+                if self.interval[k] == 0:
+                    for each in self.notes:
+                        if type(each) == note:
+                            first_duration = each.duration
+                else:
+                    first_duration = 0
+                break
+        return start_time + first_duration + sum(self.interval)
 
     def firstnbars(self, n, start_time=0):
         return self.cut(1, n + 1, start_time)
