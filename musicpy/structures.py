@@ -2284,6 +2284,8 @@ class piece:
     def reconstruct(self, track, start_time=0):
         first_track, first_track_start_time = track, start_time
         length = len(self.tracks)
+        tempo_messages = first_track.split(tempo)
+        first_track.clear_tempo()
         start_times_inds = [[
             i for i in range(len(first_track))
             if first_track.notes[i].track_num == k
@@ -2317,6 +2319,7 @@ class piece:
             chord(new_track_notes[k], interval=new_track_intervals[k])
             for k in available_tracks_inds
         ]
+        new_tracks[0] += tempo_messages
         self.tracks = new_tracks
         self.start_times = new_start_times
         self.instruments_list = [
