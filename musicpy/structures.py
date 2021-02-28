@@ -544,7 +544,7 @@ class chord:
             return temp
 
     def standardize(self):
-        temp = self.copy()
+        temp = self.only_notes()
         notenames = temp.names()
         intervals = temp.interval
         durations = temp.get_duration()
