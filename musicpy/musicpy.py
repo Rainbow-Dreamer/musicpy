@@ -329,7 +329,7 @@ def read(name,
         else:
             if not to_piece:
                 if changes:
-                    all_tracks.append(changes)
+                    all_tracks[0][1] += changes
                 return all_tracks
             else:
                 start_times_list = [j[2] for j in all_tracks]
