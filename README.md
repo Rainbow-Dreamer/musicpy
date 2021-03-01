@@ -87,7 +87,7 @@ musicpy's data sturctures, basic syntax and usage is detailed in this [wiki](htt
 
 Because of musicpy's data structure design, the `note` class is congruent to integers, which means that it can be used as int directly.
 
-The `chord` class is the set of `note`s, which means that it itself can be seen as a set of integers, a vector, or even a matrix (e.g. a set of chord progressions can be seen as a combination of multiple vectors, which results in a form of matrix with lines and columns indexed)
+The `chord` class is the set of notes, which means that it itself can be seen as a set of integers, a vector, or even a matrix (e.g. a set of chord progressions can be seen as a combination of multiple vectors, which results in a form of matrix with lines and columns indexed)
 
 Because of that, `note`, `chord` and `scale` classes can all be arithmetically used in calculation, with examples of Linear Algebra and Discrete Mathmetics. It is also possible to write an algorithm following music theory logics using this library's data structure, or to perform experiments on music with the help of pure mathematics logics.
 
