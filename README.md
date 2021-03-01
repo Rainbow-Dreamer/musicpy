@@ -1,6 +1,6 @@
-﻿# musicpy
+# musicpy
 
-[中文][[English](https://github.com/Rainbow-Dreamer/musicpy/blob/master/README-en.md)]
+[中文][[English](#English)]
 ### 你们想过用代码来写音乐吗？
 
 最近几个月学业繁忙，但是业余时间自己开发了很多python库，内容包括数学统计，各种游戏，还有音乐等等。其实还有试着写AI方面的，但是目前还是初期进度。今天我想先介绍一下我正在开发中的一个python库：**musicpy**。
@@ -50,3 +50,45 @@ AI 不必完全按照我们给他的乐理逻辑规则来创作，我们可以�
 我从去年的 10 月份开始开发 musicpy，目前这个项目还在初期进度，不过已经有一套比较完整的乐理逻辑语法了。musicpy的视频教程和wiki我都会持续更新。
 
 感谢大家的支持~
+
+# English
+
+[[中文](README.md)][English]
+
+### Ever wondered making music with codes?
+
+I've been working on many python libraries in my spare time, including those for statistics, games and music. In fact I've been trying to write something for AI but that's only in the early phase. Today I wanna introduce to you a library that lets you write music with code: **musicpy**.
+
+This library enables you to express a sequence of notes and beats in a music piece with very clean and simple syntax, along with the ability to output as midi format with ease. I recommend using this library with some pre-knowledge about music theory so it would not make confusion. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are familiar with music theory.
+
+Installation：
+
+Make sure you have at least python 3.6 installed first.  
+Execute the following command in the terminal.
+
+```shell
+pip install musicpy
+```
+Importing:
+
+Place this line at the start of the files you want to have it used in.
+
+```python
+from musicpy import *
+```
+
+Introduction and Tutorial video series part 1: [BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
+
+Demo of writing music with musicpy: [BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
+
+musicpy's data sturctures, basic syntax and usage is detailed in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear. 
+
+`note`, `chord`, `scale` are the basic classes in musicpy that builds up the base of music programming.
+
+Because of musicpy's data structure design, the `note` class is congruent to integers, which means that it can be used as int directly.
+
+The `chord` class is the set of `note`s, which means that it itself can be seen as a set of integers, a vector, or even a matrix (e.g. a set of chord progressions can be seen as a combination of multiple vectors, which results in a form of matrix with lines and columns indexed)
+
+Because of that, `note`, `chord` and `scale` classes can all be arithmetically used in calculation, with examples of Linear Algebra and Discrete Mathmetics. It is also possible to write an algorithm following music theory logics using this library's data structure, or to perform experiments on music with the help of pure mathematics logics.
+
+Many experimental music styles nowadays, like serialism, aleatoric music, postmodern music (like minimalist music), are theoretically possible to make upon the arithmetically performable data structures provided in this library. Of course this library can be used to write any kind of classical music, jazz, or pop music.
