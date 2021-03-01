@@ -1,6 +1,6 @@
 ﻿# musicpy
 
-[中文][[English](README-en.md)]
+[中文][[English](https://github.com/Rainbow-Dreamer/musicpy/blob/master/README-en.md)]
 ### 你们想过用代码来写音乐吗？
 
 最近几个月学业繁忙，但是业余时间自己开发了很多python库，内容包括数学统计，各种游戏，还有音乐等等。其实还有试着写AI方面的，但是目前还是初期进度。今天我想先介绍一下我正在开发中的一个python库：**musicpy**。
