@@ -51,9 +51,9 @@ AI 不必完全按照我们给他的乐理逻辑规则来创作，我们可以�
 
 感谢大家的支持~
 
-# English
+## English
 
-[[中文](README.md)][English]
+[[中文](musicpy)][English]
 
 ### Ever wondered making music with codes?
 
