@@ -1196,6 +1196,7 @@ class chord:
                         each.setvolume(vol[i])
             elif type(vol) == int:
                 for i in range(len(ind)):
+                    current = ind[i]
                     each = self.notes[current - 1]
                     if type(each) == note:
                         each.setvolume(vol)
