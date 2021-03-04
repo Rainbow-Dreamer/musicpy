@@ -30,6 +30,7 @@ class note:
     def set(self, duration=0.25, volume=100):
         self.duration = duration
         self.volume = volume
+        return note(self.name, self.num, duration, volume)
 
     def __mod__(self, obj):
         return self.set(*obj)
