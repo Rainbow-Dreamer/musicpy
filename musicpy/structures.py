@@ -8,6 +8,9 @@ class note:
         self.num = num
         self.degree = standard[name] + 12 * (num + 1)
         self.duration = duration
+        volume = int(volume)
+        if volume > 127:
+            volume = 127
         self.volume = volume
 
     def __str__(self):
@@ -23,6 +26,7 @@ class note:
         return self.name == other.name
 
     def setvolume(self, vol):
+        vol = int(vol)
         if vol > 127:
             vol = 127
         self.volume = vol
@@ -1205,8 +1209,7 @@ class chord:
                 available_notes = [i for i in self.notes if type(i) == note]
                 for i in range(len(vol)):
                     current = available_notes[i]
-                    if type(current) == note:
-                        current.setvolume(vol[i])
+                    current.setvolume(vol[i])
             elif type(vol) == int:
                 for each in self.notes:
                     if type(each) == note:
