@@ -1306,6 +1306,8 @@ class chord:
         tempo_changes = [
             i for i in range(len(self.notes)) if type(self.notes[i]) == tempo
         ]
+        if not tempo_changes:
+            return
         tempo_changes_no_time = [
             k for k in tempo_changes if self.notes[k].start_time is None
         ]
