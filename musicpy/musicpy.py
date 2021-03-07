@@ -268,22 +268,23 @@ def read(name,
         if any(i.type == 'set_tempo' for i in each) and all(i.type != 'note_on'
                                                             for i in each)
     ]
+    whole_bpm = 120
     if changes_track:
         changes_track = changes_track[0]
         changes = midi_to_chord(x,
                                 changes_track,
                                 add_track_num=split_channels,
                                 clear_empty_notes=clear_empty_notes)[0]
-        whole_bpm = [i.bpm for i in changes if type(i) == tempo][0]
+        whole_bpm_list = [i.bpm for i in changes if type(i) == tempo]
+        if whole_bpm_list:
+            whole_bpm = whole_bpm_list[0]
     else:
         changes = []
-        whole_bpm = 80
         for each in whole_tracks:
             curren_tempo = [i for i in each if i.type == 'set_tempo']
             if curren_tempo:
                 whole_bpm = unit.tempo2bpm(curren_tempo[0].tempo)
                 break
-            whole_bpm = None
     if mode == 'find':
         for each in whole_tracks:
             if any(each_msg.type == 'note_on' for each_msg in each):
