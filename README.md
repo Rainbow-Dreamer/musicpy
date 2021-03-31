@@ -55,7 +55,7 @@ AI 不必完全按照我们给他的乐理逻辑规则来创作，我们可以�
 
 [[中文](#musicpy)][English]
 
-### Ever wondered making music with codes?
+### Have you ever thought of writing music in codes (programming)?
 
 I've been working on many python libraries in my spare time, including those for statistics, games and music. In fact I've been trying to write something for AI but that's only in the early phase. Today I wanna introduce to you a library that lets you write music with code: **musicpy**.
 
