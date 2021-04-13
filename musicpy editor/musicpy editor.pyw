@@ -7,13 +7,16 @@ from PIL import Image, ImageTk
 from tkinter import filedialog
 import os, sys
 import re
+
 os.chdir('..')
 sys.path.append('.')
 musicpy_vars = dir(__import__('musicpy'))
 from musicpy import *
+
 os.chdir('musicpy editor')
 from io import BytesIO
 import pygame
+
 pygame.mixer.init(44100, -16, 1, 1024)
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read())
@@ -287,8 +290,23 @@ class Root(Tk):
         self.inputs.bind('<Control-g>',
                          lambda e: self.change_background_color_mode(True))
         self.inputs.bind('<Control-b>', lambda e: self.config_options())
+        self.inputs.bind('<Control-MouseWheel>',
+                         lambda e: self.change_font_size(e))
+        self.inputs.bind('<Alt-z>', lambda e: self.play_select_text(e))
+        self.inputs.bind('<Alt-x>',
+                         lambda e: self.visualize_play_select_text(e))
         self.search_box_open = False
         self.config_box_open = False
+
+    def change_font_size(self, e):
+        num = e.delta // 120
+        self.font_size += num
+        if self.font_size < 1:
+            self.font_size = 1
+        config_dict['font_size'] = self.font_size
+        self.inputs.configure(font=(self.font_type, self.font_size))
+        self.outputs.configure(font=(self.font_type, self.font_size))
+        self.save_config(True)
 
     def change_background_color_mode(self, turn=True):
         if turn:
