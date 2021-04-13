@@ -69,6 +69,29 @@ standard = {
     'Db': 1,
     'Gb': 6
 }
+
+standard_lowercase = {
+    'c': 0,
+    'c#': 1,
+    'd': 2,
+    'd#': 3,
+    'e': 4,
+    'f': 5,
+    'f#': 6,
+    'g': 7,
+    'g#': 8,
+    'a': 9,
+    'a#': 10,
+    'b': 11,
+    'bb': 10,
+    'eb': 3,
+    'ab': 8,
+    'db': 1,
+    'gb': 6
+}
+
+standard.update(standard_lowercase)
+
 standard2 = {
     'C': 0,
     'C#': 1,
@@ -86,7 +109,15 @@ standard2 = {
 
 standard_dict = {'Bb': 'A#', 'Eb': 'D#', 'Ab': 'G#', 'Db': 'C#', 'Gb': 'F#'}
 
+standard_dict2 = {
+    i: (i.upper() if not (len(i) == 2 and i[1] == 'b') else
+        standard_dict[i[0].upper() + i[1]])
+    for i in standard_lowercase
+}
+
 reverse_standard_dict = {j: i for i, j in standard_dict.items()}
+
+standard_dict.update(standard_dict2)
 
 scaleTypes = match({
     ('major', ): [2, 2, 1, 2, 2, 2, 1],
