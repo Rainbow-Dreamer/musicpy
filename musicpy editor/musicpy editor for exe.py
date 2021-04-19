@@ -266,8 +266,43 @@ class Root(Tk):
         self.inputs.bind('<Control-g>',
                          lambda e: self.change_background_color_mode(True))
         self.inputs.bind('<Control-b>', lambda e: self.config_options())
+        self.inputs.bind('<Control-MouseWheel>',
+                         lambda e: self.change_font_size(e))
+        self.inputs.bind('<Alt-z>', lambda e: self.play_select_text(e))
+        self.inputs.bind('<Alt-x>',
+                         lambda e: self.visualize_play_select_text(e))
         self.search_box_open = False
         self.config_box_open = False
+        self.current_line_number = 1
+        self.current_column_number = 1
+        self.line_column = ttk.Label(
+            self,
+            text=
+            f'Line {self.current_line_number} Col {self.current_column_number}'
+        )
+        self.line_column.place(x=750, y=500)
+        self.get_current_line_column()
+
+    def get_current_line_column(self):
+        ind = self.inputs.index(INSERT)
+        line, column = ind.split('.')
+        self.current_line_number = int(line)
+        self.current_column_number = int(column)
+        self.line_column.config(
+            text=
+            f'Line {self.current_line_number} Col {self.current_column_number}'
+        )
+        self.after(10, self.get_current_line_column)
+
+    def change_font_size(self, e):
+        num = e.delta // 120
+        self.font_size += num
+        if self.font_size < 1:
+            self.font_size = 1
+        config_dict['font_size'] = self.font_size
+        self.inputs.configure(font=(self.font_type, self.font_size))
+        self.outputs.configure(font=(self.font_type, self.font_size))
+        self.save_config(True)
 
     def change_background_color_mode(self, turn=True):
         if turn:

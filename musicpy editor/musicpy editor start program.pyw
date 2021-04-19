@@ -17,6 +17,7 @@ from pyglet.window import mouse
 from pyglet import shapes
 import pygame.midi
 import re
+
 abs_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(abs_path)
 os.chdir('..')
@@ -26,6 +27,7 @@ exec("from musicpy import *")
 os.chdir('musicpy editor')
 from io import BytesIO
 import pygame
+
 pygame.mixer.init(44100, -16, 1, 1024)
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read())

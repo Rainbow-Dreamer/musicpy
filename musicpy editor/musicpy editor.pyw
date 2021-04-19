@@ -297,6 +297,26 @@ class Root(Tk):
                          lambda e: self.visualize_play_select_text(e))
         self.search_box_open = False
         self.config_box_open = False
+        self.current_line_number = 1
+        self.current_column_number = 1
+        self.line_column = ttk.Label(
+            self,
+            text=
+            f'Line {self.current_line_number} Col {self.current_column_number}'
+        )
+        self.line_column.place(x=750, y=500)
+        self.get_current_line_column()
+
+    def get_current_line_column(self):
+        ind = self.inputs.index(INSERT)
+        line, column = ind.split('.')
+        self.current_line_number = int(line)
+        self.current_column_number = int(column)
+        self.line_column.config(
+            text=
+            f'Line {self.current_line_number} Col {self.current_column_number}'
+        )
+        self.after(10, self.get_current_line_column)
 
     def change_font_size(self, e):
         num = e.delta // 120
