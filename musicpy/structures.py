@@ -1918,7 +1918,9 @@ class piece:
                  start_times,
                  track_names=None,
                  channels=None,
-                 name=None):
+                 name=None,
+                 pan=None,
+                 volume=None):
         self.tracks = tracks
         self.instruments_list = [
             reverse_instruments[i] if isinstance(i, int) else i
@@ -1933,6 +1935,16 @@ class piece:
         self.track_names = track_names
         self.channels = channels
         self.name = name
+        self.pan = pan
+        self.volume = volume
+        if self.pan:
+            self.pan = [[i] if type(i) != list else i for i in self.pan]
+        else:
+            self.pan = [[] for i in range(self.track_number)]
+        if self.volume:
+            self.volume = [[i] if type(i) != list else i for i in self.volume]
+        else:
+            self.volume = [[] for i in range(self.track_number)]
 
     def __repr__(self):
         return (
@@ -2260,6 +2272,12 @@ class piece:
         pitch_bend_changes.sort(key=lambda s: s.time)
         return chord(pitch_bend_changes)
 
+    def add_pan(self, value, ind, start_time=0, mode='percentage'):
+        self.pan[ind].append(pan(value, start_time, mode))
+
+    def add_volume(self, value, ind, start_time=0, mode='percentage'):
+        self.volume[ind].append(volume(value, start_time, mode))
+
     def reassign_channels(self, start=0):
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
@@ -2498,5 +2516,84 @@ class tuning:
 
     def __str__(self):
         return f'tuning: {self.tuning_dict}'
+
+    __repr__ = __str__
+
+
+class track:
+    def __init__(self,
+                 content,
+                 instrument,
+                 tempo,
+                 start_time,
+                 track_name=None,
+                 channel=None,
+                 name=None):
+        self.content = content
+        self.instrument = reverse_instruments[instrument] if isinstance(
+            instrument, int) else instrument
+        self.instruments_number = instruments[self.instrument]
+        self.tempo = tempo
+        self.start_time = start_time
+        self.track_name = track_name
+        self.channel = channel
+        self.name = name
+
+    def __repr__(self):
+        return (
+            f'{self.name}\n' if self.name else ''
+        ) + f'BPM: {round(self.tempo, 3)}\n' + f'{"channel " + str(self.channel) + "| " if self.channel else ""}{self.track_name + "| " if self.track_name else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
+
+
+class pan:
+    # this is a class to set the pan position for a midi channel,
+    # it only works in piece class or track class, and must be set as one of the elements
+    # of the pan list of a piece (which could be a pan message or a list of pan messages)
+    def __init__(self, value, start_time=1, mode='percentage'):
+        # when mode == 'percentage', percentage ranges from 0% to 100%,
+        # value takes an integer or float number from 0 to 100 (inclusive),
+        # 0% means pan left most, 100% means pan right most, 50% means pan middle
+        # when mode == 'value', value takes an integer from 0 to 127 (inclusive),
+        # and corresponds to the pan positions same as percentage mode
+        self.mode = mode
+        if self.mode == 'percentage':
+            self.value = int(127 * value / 100)
+            self.value_percentage = value
+        elif self.mode == 'value':
+            self.value = value
+            self.value_percentage = round((self.value / 127) * 100, 3)
+        self.start_time = start_time
+
+    def __str__(self):
+        result = f'pan left to {round(((50-self.value_percentage)/50)*100, 3)}%' if self.value_percentage <= 50 else f'pan right to {round(((self.value_percentage-50)/50)*100, 3)}%'
+        if self.start_time is not None:
+            result += f' starts at {self.start_time}'
+        return result
+
+    __repr__ = __str__
+
+
+class volume:
+    # this is a class to set the volume for a midi channel,
+    # it only works in piece class or track class, and must be set as one of the elements
+    # of the volume list of a piece (which could be a volume message or a list of volume messages)
+    def __init__(self, value, start_time=1, mode='percentage'):
+        # when mode == 'percentage', percentage ranges from 0% to 100%,
+        # value takes an integer or float number from 0 to 100 (inclusive),
+        # when mode == 'value', value takes an integer from 0 to 127 (inclusive)
+        self.mode = mode
+        if self.mode == 'percentage':
+            self.value = int(127 * value / 100)
+            self.value_percentage = value
+        elif self.mode == 'value':
+            self.value = value
+            self.value_percentage = round((self.value / 127) * 100, 3)
+        self.start_time = start_time
+
+    def __str__(self):
+        result = f'volume set to {self.value_percentage}%'
+        if self.start_time is not None:
+            result += f' starts at {self.start_time}'
+        return result
 
     __repr__ = __str__

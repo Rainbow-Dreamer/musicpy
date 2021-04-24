@@ -13,8 +13,10 @@ from mido.midifiles.tracks import MidiTrack
 from mido.midifiles.meta import MetaMessage
 from .database import *
 from .structures import *
+
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
+
 pygame.mixer.init(44100, -16, 1, 1024)
 '''
 mido and midiutil is requried for this module, please make sure you have
@@ -347,6 +349,8 @@ def read(name,
                     else:
                         instruments_list.append(1)
                 chords_list = [each[1] for each in all_tracks]
+                pan_list = [k.pan_list for k in chords_list]
+                volume_list = [k.volume_list for k in chords_list]
                 if changes:
                     chords_list[0] += changes
                 tracks_names_list = [[
@@ -359,7 +363,8 @@ def read(name,
                 result_piece = piece(
                     chords_list, instruments_list, whole_bpm, start_times_list,
                     tracks_names_list, channels_list,
-                    os.path.splitext(os.path.basename(name))[0])
+                    os.path.splitext(os.path.basename(name))[0], pan_list,
+                    volume_list)
                 if split_channels and len(available_tracks) == 1:
                     available_tracks = available_tracks[0]
                     all_tracks = all_tracks[0]
@@ -424,6 +429,8 @@ def midi_to_chord(x,
     find_first_note = False
     start_time = 0
     current_time = 0
+    pan_list = []
+    volume_list = []
 
     counter = 0
     for i in range(notes_len):
@@ -494,6 +501,17 @@ def midi_to_chord(x,
                 current_pitch_bend.track_num = current_msg.channel
             notelist.append(current_pitch_bend)
             intervals.append(0)
+        elif current_msg.type == 'control_change':
+            if current_msg.control == 10:
+                current_pan_msg = pan(current_msg.value,
+                                      (current_time / interval_unit) + 1,
+                                      'value')
+                pan_list.append(current_pan_msg)
+            elif current_msg.control == 7:
+                current_volume_msg = volume(current_msg.value,
+                                            (current_time / interval_unit) + 1,
+                                            'value')
+                volume_list.append(current_volume_msg)
     result = chord(notelist, interval=intervals)
     if clear_empty_notes:
         result.interval = [
@@ -504,6 +522,8 @@ def midi_to_chord(x,
             each for each in result.notes
             if type(each) != note or each.duration > 0
         ]
+    result.pan_list = pan_list
+    result.volume_list = volume_list
     if bpm is not None:
         return [bpm, result, start_time]
     else:
@@ -535,8 +555,8 @@ def write(name_of_midi,
         '''
         if not isinstance(chord1, piece):
             return 'multi mode requires a piece object'
-        track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels = \
-        chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels
+        track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
+        chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels, chord1.pan, chord1.volume
         instruments_numbers = [
             i if type(i) == int else instruments[i]
             for i in instruments_numbers
@@ -552,6 +572,19 @@ def write(name_of_midi,
                                     instruments_numbers[i] - 1)
             if track_names is not None:
                 MyMIDI.addTrackName(i, 0, track_names[i])
+
+            current_pan_msg = pan_msg[i]
+            if current_pan_msg:
+                for each in current_pan_msg:
+                    MyMIDI.addControllerEvent(i, current_channel,
+                                              each.start_time - 1, 10,
+                                              each.value)
+            current_volume_msg = volume_msg[i]
+            if current_volume_msg:
+                for each in current_volume_msg:
+                    MyMIDI.addControllerEvent(i, current_channel,
+                                              each.start_time - 1, 7,
+                                              each.value)
 
             content = tracks_contents[i]
             content_notes = content.notes
