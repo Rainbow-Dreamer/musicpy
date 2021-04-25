@@ -2276,10 +2276,10 @@ class piece:
         pitch_bend_changes.sort(key=lambda s: s.time)
         return chord(pitch_bend_changes)
 
-    def add_pan(self, value, ind, start_time=0, mode='percentage'):
+    def add_pan(self, value, ind, start_time=1, mode='percentage'):
         self.pan[ind].append(pan(value, start_time, mode))
 
-    def add_volume(self, value, ind, start_time=0, mode='percentage'):
+    def add_volume(self, value, ind, start_time=1, mode='percentage'):
         self.volume[ind].append(volume(value, start_time, mode))
 
     def reassign_channels(self, start=0):
@@ -2561,10 +2561,10 @@ class track:
             f'[track] {self.name if self.name else ""}\n'
         ) + f'BPM: {round(self.tempo, 3)}\n' + f'{"channel " + str(self.channel) + "| " if self.channel else ""}{self.track_name + "| " if self.track_name else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
 
-    def add_pan(self, value, start_time=0, mode='percentage'):
+    def add_pan(self, value, start_time=1, mode='percentage'):
         self.pan.append(pan(value, start_time, mode))
 
-    def add_volume(self, value, start_time=0, mode='percentage'):
+    def add_volume(self, value, start_time=1, mode='percentage'):
         self.volume.append(volume(value, start_time, mode))
 
 
