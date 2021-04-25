@@ -546,6 +546,9 @@ def write(name_of_midi,
     time1 = start_time
     if i is not None:
         instrument = i
+    if str(type(chord1)) == "<class 'musicpy.structures.track'>":
+        return write(name_of_midi,
+                     build(chord1, bpm=chord1.tempo, name=chord1.name))
     if isinstance(chord1, piece):
         mode = 'multi'
     if mode == 'multi':
@@ -2957,17 +2960,39 @@ def guitar_chord(frets,
     return detect(result.sortchord(), **detect_args)
 
 
-def build(*tracks_list, bpm=80):
-    if len(set([len(i) for i in tracks_list])) != 1:
-        return 'every track should has the same number of variables'
-    tracks = [i[1] for i in tracks_list]
-    instruments_list = [i[0] for i in tracks_list]
-    start_times = [i[2] for i in tracks_list]
-    channels = None
-    track_names = None
-    tracks_len = len(tracks_list[0])
-    if tracks_len >= 4:
-        channels = [i[3] for i in tracks_list]
-    if tracks_len >= 5:
-        track_names = [i[4] for i in tracks_list]
-    return P(tracks, instruments_list, bpm, start_times, track_names, channels)
+def build(*tracks_list, bpm=80, name=None):
+    if all(type(i) == track for i in tracks_list):
+        tracks = [i.content for i in tracks_list]
+        instruments_list = [i.instrument for i in tracks_list]
+        start_times = [i.start_time for i in tracks_list]
+        channels = None
+        track_names = None
+        pan_msg = None
+        volume_msg = None
+        if all(i.channel for i in tracks_list):
+            channels = [i.channel for i in tracks_list]
+        if all(i.track_name for i in tracks_list):
+            track_names = [i.track_name for i in tracks_list]
+        if all(i.pan for i in tracks_list):
+            pan_msg = [i.pan for i in tracks_list]
+        if all(i.volume for i in tracks_list):
+            volume_msg = [i.volume for i in tracks_list]
+    else:
+        if len(set([len(i) for i in tracks_list])) != 1:
+            return 'every track should has the same number of variables'
+        tracks = [i[1] for i in tracks_list]
+        instruments_list = [i[0] for i in tracks_list]
+        start_times = [i[2] for i in tracks_list]
+        channels = None
+        track_names = None
+        tracks_len = len(tracks_list[0])
+        if tracks_len >= 4:
+            channels = [i[3] for i in tracks_list]
+        if tracks_len >= 5:
+            track_names = [i[4] for i in tracks_list]
+        if tracks_len >= 6:
+            pan_msg = [i[5] for i in tracks_list]
+        if tracks_len >= 7:
+            volume_msg = [i[6] for i in tracks_list]
+    return P(tracks, instruments_list, bpm, start_times, track_names, channels,
+             name, pan_msg, volume_msg)

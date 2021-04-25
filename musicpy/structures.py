@@ -1948,7 +1948,7 @@ class piece:
 
     def __repr__(self):
         return (
-            f'{self.name}\n' if self.name else ''
+            f'[piece] {self.name if self.name else ""}\n'
         ) + f'BPM: {round(self.tempo, 3)}\n' + '\n'.join([
             f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(self.track_number)
@@ -1965,13 +1965,17 @@ class piece:
     def __len__(self):
         return len(self.tracks)
 
-    def append(self, new_track, new_instrument, new_start_time):
-        self.tracks.append(new_track)
-        if isinstance(new_instrument, int):
-            new_instrument = reverse_instruments[new_instrument]
-        self.instruments_list.append(new_instrument)
-        self.instruments_numbers.append(instruments[new_instrument])
-        self.start_times.append(new_start_time)
+    def append(self, new_track):
+        if type(new_track) != track:
+            return 'must be a track type to be appended'
+        self.tracks.append(new_track.content)
+        self.instruments_list.append(new_track.instrument)
+        self.instruments_numbers.append(new_track.instruments_number)
+        self.start_times.append(new_track.start_time)
+        if self.channels and new_track.channel:
+            self.channels.append(new_track.channel)
+        if self.track_names and new_track.track_name:
+            self.track_names.append(new_track.track_name)
         self.track_number += 1
 
     def up(self, n):
@@ -2528,7 +2532,9 @@ class track:
                  start_time,
                  track_name=None,
                  channel=None,
-                 name=None):
+                 name=None,
+                 pan=None,
+                 volume=None):
         self.content = content
         self.instrument = reverse_instruments[instrument] if isinstance(
             instrument, int) else instrument
@@ -2538,11 +2544,28 @@ class track:
         self.track_name = track_name
         self.channel = channel
         self.name = name
+        self.pan = pan
+        self.volume = volume
+        if self.pan:
+            self.pan = [self.pan] if type(self.pan) != list else self.pan
+        else:
+            self.pan = []
+        if self.volume:
+            self.volume = [self.volume
+                           ] if type(self.volume) != list else self.volume
+        else:
+            self.volume = []
 
     def __repr__(self):
         return (
-            f'{self.name}\n' if self.name else ''
+            f'[track] {self.name if self.name else ""}\n'
         ) + f'BPM: {round(self.tempo, 3)}\n' + f'{"channel " + str(self.channel) + "| " if self.channel else ""}{self.track_name + "| " if self.track_name else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
+
+    def add_pan(self, value, start_time=0, mode='percentage'):
+        self.pan.append(pan(value, start_time, mode))
+
+    def add_volume(self, value, start_time=0, mode='percentage'):
+        self.volume.append(volume(value, start_time, mode))
 
 
 class pan:
