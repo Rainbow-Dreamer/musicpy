@@ -580,13 +580,13 @@ def write(name_of_midi,
             if current_pan_msg:
                 for each in current_pan_msg:
                     MyMIDI.addControllerEvent(i, current_channel,
-                                              each.start_time - 1, 10,
+                                              (each.start_time - 1) * 4, 10,
                                               each.value)
             current_volume_msg = volume_msg[i]
             if current_volume_msg:
                 for each in current_volume_msg:
                     MyMIDI.addControllerEvent(i, current_channel,
-                                              each.start_time - 1, 7,
+                                              (each.start_time - 1) * 4, 7,
                                               each.value)
 
             content = tracks_contents[i]
