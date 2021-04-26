@@ -547,8 +547,11 @@ def write(name_of_midi,
     if i is not None:
         instrument = i
     if str(type(chord1)) == "<class 'musicpy.structures.track'>":
-        return write(name_of_midi,
-                     build(chord1, bpm=chord1.tempo, name=chord1.name))
+        return write(
+            name_of_midi,
+            build(chord1,
+                  bpm=chord1.tempo if chord1.tempo is not None else bpm,
+                  name=chord1.name))
     if isinstance(chord1, piece):
         mode = 'multi'
     if mode == 'multi':

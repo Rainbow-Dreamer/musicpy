@@ -1976,10 +1976,28 @@ class piece:
         self.instruments_list.append(new_track.instrument)
         self.instruments_numbers.append(new_track.instruments_number)
         self.start_times.append(new_track.start_time)
-        if self.channels and new_track.channel:
-            self.channels.append(new_track.channel)
-        if self.track_names and new_track.track_name:
-            self.track_names.append(new_track.track_name)
+        if self.channels:
+            if new_track.channel:
+                self.channels.append(new_track.channel)
+            else:
+                self.channels.append(max(self.channels) + 1)
+        if self.track_names:
+            if new_track.track_name:
+                self.track_names.append(new_track.track_name)
+            else:
+                self.track_names.append(
+                    new_track.name if new_track.
+                    name is not None else f'track {self.track_number+1}')
+        if self.pan:
+            if new_track.pan:
+                self.pan.append(new_track.pan)
+            else:
+                self.pan.append([])
+        if self.volume:
+            if new_track.volume:
+                self.volume.append(new_track.volume)
+            else:
+                self.volume.append([])
         self.track_number += 1
 
     def up(self, n):
@@ -2570,6 +2588,10 @@ class track:
 
     def add_volume(self, value, start_time=1, mode='percentage'):
         self.volume.append(volume(value, start_time, mode))
+
+    def play(self, *args, **kwargs):
+        import musicpy
+        musicpy.play(self, *args, **kwargs)
 
 
 class pan:
