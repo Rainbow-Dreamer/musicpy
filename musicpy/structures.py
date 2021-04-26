@@ -1961,7 +1961,7 @@ class piece:
         if i == 0:
             i = 1
         return track(self.tracks[i - 1], self.instruments_list[i - 1],
-                     self.tempo, self.start_times[i - 1],
+                     self.start_times[i - 1], self.tempo,
                      self.track_names[i - 1] if self.track_names else None,
                      self.channels[i - 1] if self.channels else None,
                      self.name, self.pan[i - 1], self.volume[i - 1])
@@ -2532,8 +2532,8 @@ class track:
     def __init__(self,
                  content,
                  instrument,
-                 tempo,
                  start_time,
+                 tempo=None,
                  track_name=None,
                  channel=None,
                  name=None,
@@ -2561,9 +2561,9 @@ class track:
             self.volume = []
 
     def __repr__(self):
-        return (
-            f'[track] {self.name if self.name is not None else ""}\n'
-        ) + f'BPM: {round(self.tempo, 3)}\n' + f'{"channel " + str(self.channel) + "| " if self.channel is not None else ""}{self.track_name + "| " if self.track_name is not None else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
+        return (f'[track] {self.name if self.name is not None else ""}\n') + (
+            f'BPM: {round(self.tempo, 3)}\n' if self.tempo is not None else ""
+        ) + f'{"channel " + str(self.channel) + "| " if self.channel is not None else ""}{self.track_name + "| " if self.track_name is not None else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
 
     def add_pan(self, value, start_time=1, mode='percentage'):
         self.pan.append(pan(value, start_time, mode))
