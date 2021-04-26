@@ -29,7 +29,7 @@ musicpy 作曲示例实际演示以及 musicpy 实验作曲日常：[BV18z4y1r7P
 
 详细的 musicpy 数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚。 
 
-我写的musicpy的wiki的pdf档和markdown档全套下载可以点击[这里](https://www.jianguoyun.com/p/DWVsQSYQhPG0CBiz4-4D)下载，正在不断地更新中
+我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DWVsQSYQhPG0CBiz4-4D)下载，正在不断地更新中
 
 在 musicpy 里面，几个基本的类是 `note`（音符），`chord`（和弦）和 `scale`（音阶）。这几个类是构成音乐代码的基础。
 
