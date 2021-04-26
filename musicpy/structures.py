@@ -1960,7 +1960,11 @@ class piece:
     def __getitem__(self, i):
         if i == 0:
             i = 1
-        return f'track {i}{" channel " + str(self.channels[i-1]) if self.channels else ""} {self.track_names[i-1] if self.track_names else ""}| instrument: {self.instruments_list[i-1]} | start time: {self.start_times[i-1]} | {self.tracks[i-1]}'
+        return track(self.tracks[i - 1], self.instruments_list[i - 1],
+                     self.tempo, self.start_times[i - 1],
+                     self.track_names[i - 1] if self.track_names else None,
+                     self.channels[i - 1] if self.channels else None,
+                     self.name, self.pan[i - 1], self.volume[i - 1])
 
     def __len__(self):
         return len(self.tracks)
@@ -2077,7 +2081,7 @@ class piece:
     def __call__(self, num):
         return [
             self.tracks[num - 1], self.instruments_list[num - 1], self.tempo,
-            self.start_times[num - 1]
+            self.start_times[num - 1], self.pan[num - 1], self.volume[num - 1]
         ]
 
     def merge_track(self, n, mode='after', start_time=0, keep_tempo=True):
@@ -2558,8 +2562,8 @@ class track:
 
     def __repr__(self):
         return (
-            f'[track] {self.name if self.name else ""}\n'
-        ) + f'BPM: {round(self.tempo, 3)}\n' + f'{"channel " + str(self.channel) + "| " if self.channel else ""}{self.track_name + "| " if self.track_name else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
+            f'[track] {self.name if self.name is not None else ""}\n'
+        ) + f'BPM: {round(self.tempo, 3)}\n' + f'{"channel " + str(self.channel) + "| " if self.channel is not None else ""}{self.track_name + "| " if self.track_name is not None else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
 
     def add_pan(self, value, start_time=1, mode='percentage'):
         self.pan.append(pan(value, start_time, mode))
