@@ -227,6 +227,9 @@ class Root(Tk):
         self.file_menu.add_command(label='导入midi文件',
                                    command=self.read_midi_file,
                                    foreground=self.foreground_color)
+        self.file_menu.add_command(label='可视化钢琴设置',
+                                   command=self.visualize_config,
+                                   foreground=self.foreground_color)
         self.file_top.place(x=0, y=0)
         grammar_highlight = config_dict['grammar_highlight']
         for each in grammar_highlight:
@@ -266,6 +269,7 @@ class Root(Tk):
         self.inputs.bind('<Control-g>',
                          lambda e: self.change_background_color_mode(True))
         self.inputs.bind('<Control-b>', lambda e: self.config_options())
+        self.inputs.bind('<Control-t>', lambda e: self.visualize_config())
         self.inputs.bind('<Control-MouseWheel>',
                          lambda e: self.change_font_size(e))
         self.inputs.bind('<Alt-z>', lambda e: self.play_select_text(e))
@@ -273,6 +277,7 @@ class Root(Tk):
                          lambda e: self.visualize_play_select_text(e))
         self.search_box_open = False
         self.config_box_open = False
+        self.visualize_config_box_open = False
         self.current_line_number = 1
         self.current_column_number = 1
         self.line_column = ttk.Label(
@@ -282,6 +287,14 @@ class Root(Tk):
         )
         self.line_column.place(x=750, y=500)
         self.get_current_line_column()
+
+    def visualize_config(self):
+        if self.visualize_config_box_open:
+            return
+        self.visualize_config_box_open = True
+        os.chdir('visualization folder')
+        with open('change_settings.pyw', encoding='utf-8-sig') as f:
+            exec(f.read(), globals(), globals())
 
     def get_current_line_column(self):
         ind = self.inputs.index(INSERT)
@@ -369,6 +382,11 @@ class Root(Tk):
     def close_config_box(self):
         self.config_window.destroy()
         self.config_box_open = False
+
+    def close_visualize_config_box(self):
+        root2.destroy()
+        self.visualize_config_box_open = False
+        os.chdir('../')
 
     def config_options(self):
         if self.config_box_open:
