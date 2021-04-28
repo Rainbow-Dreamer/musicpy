@@ -598,6 +598,18 @@ class chord:
     def __str__(self):
         return f'{self.notes} with interval {self.interval}'
 
+    def info(self):
+        from fractions import Fraction
+        notes_only = self.only_notes()
+        notes_part = 'notes: ' + ', '.join([
+            f"{notes_only.notes[i]}[{Fraction(notes_only.notes[i].duration)};{Fraction(notes_only.interval[i])};{notes_only.notes[i].volume}]"
+            for i in range(len(notes_only.notes))
+        ])
+        tempo_part = 'tempo changes: ' + str(self.split(tempo, get_time=True))
+        pitch_bend_part = 'pitch bend changes: ' + str(
+            self.split(pitch_bend, get_time=True))
+        return '\n'.join([notes_part, tempo_part, pitch_bend_part])
+
     __repr__ = __str__
 
     def __contains__(self, note1):
@@ -831,6 +843,7 @@ class chord:
                     start:end][::-1] + temp.notes[end:]
                 temp.interval = temp.interval[:start] + temp.interval[
                     start:end][::-1] + temp.interval[end:]
+        temp.interval.append(temp.interval.pop(0))
         return temp
 
     def intervalof(self, cummulative=True, translate=False):
@@ -1275,19 +1288,30 @@ class chord:
             i += 1
         return temp
 
-    def retrograde(self, rhythm=False):
-        result = self.reverse()
-        if not rhythm:
-            result.interval.reverse()
+    def retrograde(self):
+        temp = self.copy()
+        tempo_changes = temp.split(tempo)
+        if tempo_changes:
+            temp.normalize_tempo(tempo_changes[1].bpm)
+        result = temp.reverse()
         return result
 
     def pitch_inversion(self):
-        pitch_intervals = self.intervalof(cummulative=False)
+        pitch_bend_changes = self.split(pitch_bend, get_time=True)
+        temp = self.copy()
+        temp.clear_pitch_bend('all')
+        tempo_changes = temp.split(tempo)
+        if tempo_changes:
+            temp.normalize_tempo(tempo_changes[1].bpm)
+        volumes = temp.get_volume()
+        pitch_intervals = temp.intervalof(cummulative=False)
         import musicpy
-        result = musicpy.getchord_by_interval(self[1],
+        result = musicpy.getchord_by_interval(temp[1],
                                               [-i for i in pitch_intervals],
-                                              self.get_duration(),
-                                              self.interval, False)
+                                              temp.get_duration(),
+                                              temp.interval, False)
+        result.setvolume(volumes)
+        result += pitch_bend_changes
         return result
 
     def only_notes(self):
