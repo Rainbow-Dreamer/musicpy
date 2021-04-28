@@ -251,6 +251,9 @@ class Root(Tk):
         self.file_menu.add_command(label='导入midi文件',
                                    command=self.read_midi_file,
                                    foreground=self.foreground_color)
+        self.file_menu.add_command(label='可视化钢琴设置',
+                                   command=self.visualize_config,
+                                   foreground=self.foreground_color)
         self.file_top.place(x=0, y=0)
         grammar_highlight = config_dict['grammar_highlight']
         for each in grammar_highlight:
@@ -306,6 +309,12 @@ class Root(Tk):
         )
         self.line_column.place(x=750, y=500)
         self.get_current_line_column()
+
+    def visualize_config(self):
+        os.chdir('visualization folder')
+        with open('change_settings.pyw', encoding='utf-8-sig') as f:
+            exec(f.read(), globals(), globals())
+        os.chdir('../')
 
     def get_current_line_column(self):
         ind = self.inputs.index(INSERT)

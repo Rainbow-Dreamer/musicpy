@@ -87,10 +87,12 @@ class Root(Tk):
         self.saved_text = ttk.Label(text='saved')
         self.search_text = ttk.Label(self, text='search for config options')
         self.search_text.place(x=0, y=450)
-        self.search_contents = StringVar()
-        self.search_contents.trace_add('write', self.search)
-        self.search_entry = Entry(self, textvariable=self.search_contents)
+        self.search_entry = Entry(self)
         self.search_entry.place(x=0, y=480)
+        self.search_button = ttk.Button(self,
+                                        text='search',
+                                        command=self.search)
+        self.search_button.place(x=100, y=400)
         self.search_inds = 0
         self.up_button = ttk.Button(
             self,
@@ -145,7 +147,7 @@ class Root(Tk):
             self.show_current_config_options(0)
 
     def search(self, *args):
-        current = self.search_contents.get()
+        current = self.search_entry.get()
         all_config_options = self.all_config_options
         self.search_inds_list = [
             i for i in range(self.options_num)
@@ -192,7 +194,7 @@ class Root(Tk):
         self.config_change(0)
 
     def show_saved(self):
-        self.saved_text.place(x=140, y=400)
+        self.saved_text.place(x=240, y=400)
         self.after(1000, self.saved_text.place_forget)
 
     def save_current(self):
