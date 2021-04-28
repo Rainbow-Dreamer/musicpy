@@ -27,9 +27,9 @@ def change(var, new, is_str=True):
     text_ls = list(text)
     var_len = len(var) + 1
     var_ind = text.index('\n' + var + ' ') + var_len
-    current_var_ind = all_config_options.index(var)
+    current_var_ind = all_config_options_ind[var]
     if current_var_ind < len(all_config_options) - 1:
-        next_var = all_config_options[current_var_ind + 1]
+        next_var = config_original[current_var_ind + 1]
         next_var_ind = text.index('\n' + next_var + ' ')
         next_comments_ind = text[var_ind:].find('\n\n')
         if next_comments_ind != -1:
@@ -49,6 +49,7 @@ def change(var, new, is_str=True):
 class Root(Tk):
     def __init__(self):
         super(Root, self).__init__()
+        self.protocol("WM_DELETE_WINDOW", root.close_visualize_config_box)
         self.title("Settings")
         self.minsize(800, 600)
         self.wm_iconbitmap('piano.ico')
@@ -62,6 +63,14 @@ class Root(Tk):
         all_config_options = get_all_config_options(text)
         self.options_num = len(all_config_options)
         self.all_config_options = all_config_options
+        global all_config_options_ind
+        all_config_options_ind = {
+            all_config_options[i]: i
+            for i in range(self.options_num)
+        }
+        global config_original
+        config_original = all_config_options.copy()
+        all_config_options.sort(key=lambda s: s.lower())
         for k in all_config_options:
             self.choose_config_options.insert(END, k)
         self.choose_config_options.place(x=0, y=30, width=220)
@@ -84,7 +93,7 @@ class Root(Tk):
         self.choose_directory_button.place(x=0, y=320)
         self.save = ttk.Button(self, text="save", command=self.save_current)
         self.save.place(x=0, y=400)
-        self.saved_text = ttk.Label(text='saved')
+        self.saved_text = ttk.Label(self, text='saved')
         self.search_text = ttk.Label(self, text='search for config options')
         self.search_text.place(x=0, y=450)
         self.search_entry = Entry(self)
@@ -211,5 +220,5 @@ class Root(Tk):
             self.show_saved()
 
 
-root = Root()
-root.mainloop()
+root2 = Root()
+root2.mainloop()
