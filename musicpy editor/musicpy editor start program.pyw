@@ -3,7 +3,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import font
 from tkinter.scrolledtext import ScrolledText
-from PIL import Image, ImageTk
+import PIL.Image, PIL.ImageTk
 from tkinter import filedialog
 import sys
 import os
@@ -17,6 +17,7 @@ from pyglet.window import mouse
 from pyglet import shapes
 import pygame.midi
 import re
+from yapf.yapflib.yapf_api import FormatCode
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(abs_path)
