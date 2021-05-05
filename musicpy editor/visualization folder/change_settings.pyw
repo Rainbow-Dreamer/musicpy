@@ -1,6 +1,3 @@
-from tkinter import *
-from tkinter import ttk
-from tkinter import filedialog
 from ast import literal_eval
 with open('config.py', encoding='utf-8-sig') as f:
     text = f.read()
@@ -46,9 +43,9 @@ def change(var, new, is_str=True):
         f.write(''.join(text_ls))
 
 
-class Root(Tk):
+class Root2(Toplevel):
     def __init__(self):
-        super(Root, self).__init__()
+        super(Root2, self).__init__(bg=root.background_color)
         self.protocol("WM_DELETE_WINDOW", root.close_visualize_config_box)
         self.title("Settings")
         self.minsize(800, 600)
@@ -71,6 +68,8 @@ class Root(Tk):
         global config_original
         config_original = all_config_options.copy()
         all_config_options.sort(key=lambda s: s.lower())
+        global alpha_config
+        alpha_config = all_config_options.copy()
         for k in all_config_options:
             self.choose_config_options.insert(END, k)
         self.choose_config_options.place(x=0, y=30, width=220)
@@ -89,19 +88,17 @@ class Root(Tk):
                                                  command=self.choose_filename)
         self.choose_directory_button = ttk.Button(
             self, text='choose directory', command=self.choose_directory)
-        self.choose_filename_button.place(x=0, y=250)
-        self.choose_directory_button.place(x=0, y=320)
+        self.choose_filename_button.place(x=0, y=250, width=120)
+        self.choose_directory_button.place(x=0, y=320, width=120)
         self.save = ttk.Button(self, text="save", command=self.save_current)
         self.save.place(x=0, y=400)
         self.saved_text = ttk.Label(self, text='saved')
         self.search_text = ttk.Label(self, text='search for config options')
         self.search_text.place(x=0, y=450)
-        self.search_entry = Entry(self)
+        self.search_contents = StringVar()
+        self.search_contents.trace_add('write', self.search)
+        self.search_entry = Entry(self, textvariable=self.search_contents)
         self.search_entry.place(x=0, y=480)
-        self.search_button = ttk.Button(self,
-                                        text='search',
-                                        command=self.search)
-        self.search_button.place(x=100, y=400)
         self.search_inds = 0
         self.up_button = ttk.Button(
             self,
@@ -116,13 +113,36 @@ class Root(Tk):
         self.up_button.place(x=170, y=480)
         self.down_button.place(x=250, y=480)
         self.search_inds_list = []
-        self.value_dict = {i: str(eval(i)) for i in self.all_config_options}
+        self.value_dict = {i: str(eval(i)) for i in all_config_options}
         self.choose_bool1 = ttk.Button(
             self, text='True', command=lambda: self.insert_bool('True'))
         self.choose_bool2 = ttk.Button(
             self, text='False', command=lambda: self.insert_bool('False'))
         self.choose_bool1.place(x=120, y=270)
         self.choose_bool2.place(x=220, y=270)
+        self.change_sort_button = ttk.Button(self,
+                                             text="sort in alphabetical order",
+                                             command=self.change_sort)
+        self.sort_mode = 0
+        self.change_sort_button.place(x=150, y=400, width=180)
+
+    def change_sort(self):
+        global all_config_options
+        if self.sort_mode == 0:
+            self.sort_mode = 1
+            self.change_sort_button.config(text='sort in order of appearance')
+            all_config_options = config_original.copy()
+            self.choose_config_options.delete(0, END)
+            for k in all_config_options:
+                self.choose_config_options.insert(END, k)
+        else:
+            self.sort_mode = 0
+            self.change_sort_button.config(text='sort in alphabetical order')
+            all_config_options = alpha_config.copy()
+            self.choose_config_options.delete(0, END)
+            for k in all_config_options:
+                self.choose_config_options.insert(END, k)
+        self.search()
 
     def insert_bool(self, content):
         self.config_contents.delete('1.0', END)
@@ -157,7 +177,6 @@ class Root(Tk):
 
     def search(self, *args):
         current = self.search_entry.get()
-        all_config_options = self.all_config_options
         self.search_inds_list = [
             i for i in range(self.options_num)
             if current in all_config_options[i]
@@ -175,14 +194,15 @@ class Root(Tk):
 
     def show_current_config_options(self, e):
         current_config = self.choose_config_options.get(ANCHOR)
-        self.config_name.configure(text=current_config)
-        self.config_contents.delete('1.0', END)
-        current_config_value = eval(current_config)
-        if type(current_config_value) == str:
-            current_config_value = f"'{current_config_value}'"
-        else:
-            current_config_value = str(current_config_value)
-        self.config_contents.insert(END, current_config_value)
+        if current_config:
+            self.config_name.configure(text=current_config)
+            self.config_contents.delete('1.0', END)
+            current_config_value = eval(current_config)
+            if type(current_config_value) == str:
+                current_config_value = f"'{current_config_value}'"
+            else:
+                current_config_value = str(current_config_value)
+            self.config_contents.insert(END, current_config_value)
 
     def choose_filename(self):
         filename = filedialog.askopenfilename(initialdir='.',
@@ -203,12 +223,12 @@ class Root(Tk):
         self.config_change(0)
 
     def show_saved(self):
-        self.saved_text.place(x=240, y=400)
+        self.saved_text.place(x=140, y=350)
         self.after(1000, self.saved_text.place_forget)
 
     def save_current(self):
         changed = False
-        for each in self.all_config_options:
+        for each in all_config_options:
             current_value = eval(each)
             current_value_str = str(current_value)
             before_value = self.value_dict[each]
@@ -220,5 +240,4 @@ class Root(Tk):
             self.show_saved()
 
 
-root2 = Root()
-root2.mainloop()
+root.visualize_config_window = Root2()

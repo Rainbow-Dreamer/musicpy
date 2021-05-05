@@ -514,6 +514,14 @@ class chord:
             else:
                 return f'{minutes} minutes, {seconds} seconds'
 
+    def count_bars(self, ind1, ind2, bars_range=True):
+        bars_length = self[ind1:ind2].bars()
+        if bars_range:
+            start = self[:ind1].bars() + 1
+            return [start, start + bars_length]
+        else:
+            return bars_length
+
     def clear_pitch_bend(self, value=0):
         length = len(self)
         whole_notes = self.notes

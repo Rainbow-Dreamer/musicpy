@@ -1562,6 +1562,7 @@ def chord_analysis(x,
                    average_degree_length=8,
                    melody_degree_tol=toNote('B4'),
                    mode='chord names',
+                   get_chord_inds=False,
                    is_chord=False,
                    new_chord_tol=minor_seventh,
                    get_original_order=False,
@@ -1580,7 +1581,7 @@ def chord_analysis(x,
                                   melody_degree_tol)
     else:
         chord_notes = x
-    if formated:
+    if formated or (mode in ['inds', 'bars', 'bars start']):
         get_original_order = True
     whole_notes = chord_notes.notes
     chord_ls = []
@@ -1606,7 +1607,19 @@ def chord_analysis(x,
             current_chord.append(next_note)
         elif current_note.degree > next_note.degree:
             if len(current_chord) < 3:
-                current_chord.append(next_note)
+                if len(current_chord) == 2:
+                    if next_note.degree > min(
+                        [k.degree for k in current_chord]):
+                        current_chord.append(next_note)
+                    else:
+                        chord_ls.append(chord(current_chord).sortchord())
+                        if get_original_order:
+                            chord_inds.append(
+                                [i + 1 - len(current_chord), i + 1])
+                        current_chord = []
+                        current_chord.append(next_note)
+                else:
+                    current_chord.append(next_note)
             else:
                 current_chord_degrees = sorted(
                     [k.degree for k in current_chord])
@@ -1645,7 +1658,7 @@ def chord_analysis(x,
                 f'chord {i+1}: {result[i]}    notes: {result_notes[i]}'
                 for i in range(len(result))
             ])
-        else:
+        elif formated_mode == 1:
             num = (len(result) // each_line_chords_number) + 1
             delimiter = ' ' * functions_interval + split_symbol + ' ' * functions_interval
             chords_formated = [
@@ -1667,6 +1680,14 @@ def chord_analysis(x,
     elif mode == 'chord names':
         result = [detect(each, **detect_args) for each in chord_ls]
         return [i if type(i) != list else i[0] for i in result]
+    elif mode == 'inds':
+        return [[i[0] + 1, i[1] + 1] for i in chord_inds]
+    elif mode == 'bars':
+        inds = [[i[0] + 1, i[1] + 1] for i in chord_inds]
+        return [chord_notes.count_bars(k[0], k[1]) for k in inds]
+    elif mode == 'bars start':
+        inds = [[i[0] + 1, i[1] + 1] for i in chord_inds]
+        return [chord_notes.count_bars(k[0], k[1])[0] for k in inds]
 
 
 def find_continuous(x, value, start=None, stop=None):
