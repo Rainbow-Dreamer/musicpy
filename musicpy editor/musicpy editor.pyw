@@ -553,6 +553,11 @@ class Root(Tk):
         if self.config_box_open:
             self.config_window.focus_set()
             return
+        self.get_config_dict = copy(config_dict)
+        self.get_config_dict = {
+            i: str(j)
+            for i, j in self.get_config_dict.items()
+        }
         self.config_box_open = True
         self.config_window = Toplevel(self, bg=self.background_color)
         self.config_window.minsize(800, 650)
@@ -665,9 +670,10 @@ class Root(Tk):
         current_font_ind = self.whole_fonts.index(self.font_type)
         self.font_list.selection_set(current_font_ind)
         self.font_list.see(current_font_ind)
-        self.change_sort_button = ttk.Button(self.config_window,
-                                             text="sort in alphabetical order",
-                                             command=self.change_sort)
+        self.change_sort_button = ttk.Button(
+            self.config_window,
+            text="sort in order of appearance",
+            command=self.change_sort)
         self.sort_mode = 1
         self.change_sort_button.place(x=150, y=330, width=180)
 
@@ -714,7 +720,7 @@ class Root(Tk):
             f.write(formated_config)
         if not outer:
             self.saved_label.place(x=360, y=400)
-            self.after(1000, self.saved_label.place_forget)
+            self.after(600, self.saved_label.place_forget)
         self.reload_config()
 
     def search_path(self, obj):
