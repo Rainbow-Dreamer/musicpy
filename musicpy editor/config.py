@@ -21,4 +21,3 @@
     'search_highlight_color': ['light blue', 'light green'],
     'button_background_color': 'light blue'
 }
-path_enable_list = ['background_image']
