@@ -18,6 +18,7 @@
     'foreground_color': 'black',
     'active_background_color': 'light green',
     'day_and_night_colors': ('white', 'gray8'),
-    'search_highlight_color': ['light blue', 'light green']
+    'search_highlight_color': ['light blue', 'light green'],
+    'button_background_color': 'light blue'
 }
 path_enable_list = ['background_image']
