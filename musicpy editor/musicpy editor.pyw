@@ -90,6 +90,9 @@ class Root(Tk):
         self.day_color, self.night_color = config_dict['day_and_night_colors']
         self.search_highlight_color = config_dict['search_highlight_color']
         self.button_background_color = config_dict['button_background_color']
+        self.active_foreground_color = config_dict['active_foreground_color']
+        self.disabled_foreground_color = config_dict[
+            'disabled_foreground_color']
         self.configure(background=self.background_color)
         style = ttk.Style()
         style.theme_use('alt')
@@ -245,10 +248,13 @@ class Root(Tk):
         self.file_top = ttk.Button(self,
                                    text='文件',
                                    command=self.file_top_make_menu)
-        self.file_menu = Menu(self,
-                              tearoff=0,
-                              bg=self.background_color,
-                              activebackground=self.active_background_color)
+        self.file_menu = Menu(
+            self,
+            tearoff=0,
+            bg=self.background_color,
+            activebackground=self.active_background_color,
+            activeforeground=self.active_foreground_color,
+            disabledforeground=self.disabled_foreground_color)
         self.file_menu.add_command(label='打开',
                                    command=self.openfile,
                                    foreground=self.foreground_color)
@@ -298,7 +304,9 @@ class Root(Tk):
         self.menubar = Menu(self,
                             tearoff=False,
                             bg=self.background_color,
-                            activebackground=self.active_background_color)
+                            activebackground=self.active_background_color,
+                            activeforeground=self.active_foreground_color,
+                            disabledforeground=self.disabled_foreground_color)
         self.inputs.bind("<Button-3>", lambda x: self.rightKey(x, self.inputs))
         self.inputs.bind('<Control-f>', self.search_words)
         self.inputs.bind('<Control-e>', self.stop_play_midi)
@@ -799,6 +807,7 @@ class Root(Tk):
                                                 filetype=(("所有文件", "*.*"), ),
                                                 defaultextension=".txt")
         if filename:
+            self.current_filename_path = filename
             memory = filename[:filename.rindex('/') + 1]
             with open('browse memory.txt', 'w', encoding='utf-8-sig') as f:
                 f.write(memory)
