@@ -466,10 +466,7 @@ class Root(Tk):
                     self.inputs.delete('1.0', END)
                     self.inputs.insert(END, f.read())
                     self.inputs.see(INSERT)
-                    self.inputs.mark_set(INSERT, '1.0')
                     self.last_save = self.inputs.get('1.0', 'end-1c')
-                    if self.is_grammar:
-                        self.after(100, self.grammar_highlight_func)
             except:
                 self.inputs.delete('1.0', END)
                 self.inputs.insert(END, '不是有效的文本文件类型')
@@ -1015,11 +1012,11 @@ class Root(Tk):
 
     def grammar_highlight_func(self):
         end_index = self.inputs.index(END)
+        start_x = self.inputs.index(INSERT).split('.')[0]
         for color, texts in self.grammar_highlight.items():
-            start_x = self.inputs.index(INSERT).split('.')[0]
             self.inputs.tag_remove(color, f'{start_x}.0', END)
             for i in texts:
-                start_index = f"{start_x}.0"
+                start_index = '1.0'
                 current_last_index = '1.0'
                 while self.inputs.compare(start_index, '<', end_index):
                     current_text_index = self.inputs.search(i,
