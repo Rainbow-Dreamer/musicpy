@@ -9,6 +9,7 @@ import midiutil
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
+
 abs_path = os.path.dirname(os.path.abspath(__file__))
 if 'visualization folder' not in abs_path:
     abs_path += '/visualization folder'
@@ -16,7 +17,7 @@ os.chdir(abs_path)
 sys.path.append(abs_path)
 os.chdir('../../musicpy')
 exec('from musicpy.musicpy import *', globals(), globals())
-os.chdir(abs_path)    
+os.chdir(abs_path)
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read(), globals(), globals())
 import pygame.midi
