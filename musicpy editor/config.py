@@ -21,5 +21,8 @@
     'search_highlight_color': ['light blue', 'light green'],
     'button_background_color': 'light grey',
     'active_foreground_color': 'black',
-    'disabled_foreground_color': 'white'
+    'disabled_foreground_color': 'white',
+    'highlight_background': 'ivory2',
+    'highlight_color': 'ivory2',
+    'highlight_thickness': 2
 }

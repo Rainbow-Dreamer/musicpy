@@ -351,7 +351,12 @@ class Root(Tk):
     def close_window(self, e=None):
         current_text = self.inputs.get('1.0', 'end-1c')
         if current_text != self.last_save:
-            self.ask_save_window = Toplevel(self, bg=self.background_color)
+            self.ask_save_window = Toplevel(
+                self,
+                bg=self.background_color,
+                highlightthickness=config_dict['highlight_thickness'],
+                highlightbackground=config_dict['highlight_background'],
+                highlightcolor=config_dict['highlight_color'])
             self.ask_save_window.wm_overrideredirect(True)
             self.ask_save_window.minsize(400, 150)
             ask_save_window_x = self.winfo_x()
