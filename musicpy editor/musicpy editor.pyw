@@ -121,11 +121,14 @@ class Root(Tk):
                         focusthickness=3,
                         focuscolor='none')
         style.map('TButton',
-                  background=[('active', self.active_background_color)])
+                  background=[('active', self.active_background_color)],
+                  foreground=[('active', self.active_foreground_color)])
         style.map('TCheckbutton',
-                  background=[('active', self.active_background_color)])
+                  background=[('active', self.active_background_color)],
+                  foreground=[('active', self.active_foreground_color)])
         style.map('New.TButton',
-                  background=[('active', self.active_background_color)])
+                  background=[('active', self.active_background_color)],
+                  foreground=[('active', self.active_foreground_color)])
         self.get_config_dict = copy(config_dict)
         self.get_config_dict = {
             i: str(j)
@@ -545,21 +548,23 @@ class Root(Tk):
         self.config_contents.insert(END, current_config_value)
 
     def choose_filename(self):
-        filename = filedialog.askopenfilename(initialdir='.',
+        filename = filedialog.askopenfilename(parent=self.config_window,
+                                              initialdir='.',
                                               title="choose filename",
                                               filetype=(("all files",
                                                          "*.*"), ))
         self.config_contents.delete('1.0', END)
-        self.config_contents.insert(END, f"'{filename}'")
+        self.config_contents.insert(END, filename)
         self.config_change(0)
 
     def choose_directory(self):
         directory = filedialog.askdirectory(
+            parent=self.config_window,
             initialdir='.',
             title="choose directory",
         )
         self.config_contents.delete('1.0', END)
-        self.config_contents.insert(END, f"'{directory}'")
+        self.config_contents.insert(END, directory)
         self.config_change(0)
 
     def config_options(self):
@@ -771,14 +776,14 @@ class Root(Tk):
                 self.bg = ''
             else:
                 self.bg = PIL.Image.open(bg_path)
-            ratio = 600 / self.bg.height
-            self.bg = self.bg.resize(
-                (int(self.bg.width * ratio), int(self.bg.height * ratio)),
-                PIL.Image.ANTIALIAS)
-            self.bg = PIL.ImageTk.PhotoImage(self.bg)
-            self.bg_label = ttk.Label(self, image=self.bg)
-            bg_places = config_dict['background_places']
-            self.bg_label.place(x=bg_places[0], y=bg_places[1])
+                ratio = 600 / self.bg.height
+                self.bg = self.bg.resize(
+                    (int(self.bg.width * ratio), int(self.bg.height * ratio)),
+                    PIL.Image.ANTIALIAS)
+                self.bg = PIL.ImageTk.PhotoImage(self.bg)
+                self.bg_label = ttk.Label(self, image=self.bg)
+                bg_places = config_dict['background_places']
+                self.bg_label.place(x=bg_places[0], y=bg_places[1])
         self.eachline_character = config_dict['eachline_character']
         self.pairing_symbols = config_dict['pairing_symbols']
         self.wraplines_number = config_dict['wraplines_number']
@@ -1011,8 +1016,10 @@ class Root(Tk):
     def grammar_highlight_func(self):
         end_index = self.inputs.index(END)
         for color, texts in self.grammar_highlight.items():
+            start_x = self.inputs.index(INSERT).split('.')[0]
+            self.inputs.tag_remove(color, f'{start_x}.0', END)
             for i in texts:
-                start_index = f"{self.inputs.index(INSERT).split('.')[0]}.0"
+                start_index = f"{start_x}.0"
                 current_last_index = '1.0'
                 while self.inputs.compare(start_index, '<', end_index):
                     current_text_index = self.inputs.search(i,
@@ -1022,16 +1029,21 @@ class Root(Tk):
                         word_length = len(i)
                         x, y = current_text_index.split('.')
                         current_last_index = f"{x}.{int(y)+word_length}"
-                        self.inputs.tag_add(color, current_text_index,
-                                            current_last_index)
+                        next_index_end = f"{x}.{int(y)+2*word_length}"
+                        last_index_start = f"{x}.{int(y)-word_length}"
+                        if self.inputs.get(
+                                current_last_index,
+                                next_index_end) != i and self.inputs.get(
+                                    last_index_start, current_text_index) != i:
+                            self.inputs.tag_add(color, current_text_index,
+                                                current_last_index)
                         start_index = current_last_index
                     else:
-                        x, y = current_last_index.split('.')
-                        if self.inputs.get(current_last_index) == '\n':
+                        x, y = start_index.split('.')
+                        if self.inputs.get(start_index) == '\n':
                             x = int(x) + 1
                         y = int(y) + 1
-                        current_last_index = f'{x}.{y}'
-                        start_index = current_last_index
+                        start_index = f'{x}.{y}'
 
     def realtime_run(self):
         global function_names
@@ -1041,7 +1053,7 @@ class Root(Tk):
             self.quit = False
             return
         if self.is_grammar and self.inputs.edit_modified():
-            self.after(100, self.grammar_highlight_func)
+            self.grammar_highlight_func()
         if self.is_auto:
             if self.changed:
                 self.changed = False

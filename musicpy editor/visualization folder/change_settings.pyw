@@ -205,7 +205,8 @@ class Root2(Toplevel):
             self.config_contents.insert(END, current_config_value)
 
     def choose_filename(self):
-        filename = filedialog.askopenfilename(initialdir='.',
+        filename = filedialog.askopenfilename(parent=self,
+                                              initialdir='.',
                                               title="choose filename",
                                               filetype=(("all files",
                                                          "*.*"), ))
@@ -215,6 +216,7 @@ class Root2(Toplevel):
 
     def choose_directory(self):
         directory = filedialog.askdirectory(
+            parent=self,
             initialdir='.',
             title="choose directory",
         )
