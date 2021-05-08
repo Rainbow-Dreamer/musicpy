@@ -185,7 +185,7 @@ class Root(Tk):
         self.outputs.configure(yscrollcommand=outputs_v.set,
                                xscrollcommand=outputs_h.set)
         outputs_v.place(x=700, y=310, height=300)
-        outputs_h.place(x=0, y=600, width=700)
+        outputs_h.place(x=0, y=610, width=700)
         self.run_button = ttk.Button(self, text='运行', command=self.runs)
         self.run_button.place(x=160, y=0)
         self.realtime = IntVar()
