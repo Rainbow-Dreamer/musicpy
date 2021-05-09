@@ -594,6 +594,24 @@ class chord:
             result.setvolume(volume, ind)
         return result
 
+    def special_set(self,
+                    duration=None,
+                    interval=None,
+                    volume=None,
+                    ind='all'):
+        if interval is None:
+            interval = copy(self.interval)
+        result = chord(copy(self.notes), duration, interval)
+        result.interval = [
+            0 if hasattr(self.notes[i], 'keep_same_time')
+            and self.notes[i].keep_same_time else result.interval[i]
+            for i in range(len(self))
+        ]
+        result.setvolume(volume)
+        if volume is not None:
+            result.setvolume(volume, ind)
+        return result
+
     def changeInterval(self, newinterval):
         if isinstance(newinterval, int) or isinstance(newinterval, float):
             self.interval = [newinterval for i in range(len(self.notes))]
@@ -1219,7 +1237,8 @@ class chord:
                     each = self.notes[current - 1]
                     if type(each) == note:
                         each.setvolume(vol[i])
-            elif type(vol) == int:
+            elif type(vol) in [int, float]:
+                vol = int(vol)
                 for i in range(len(ind)):
                     current = ind[i]
                     each = self.notes[current - 1]
@@ -1231,7 +1250,8 @@ class chord:
                 for i in range(len(vol)):
                     current = available_notes[i]
                     current.setvolume(vol[i])
-            elif type(vol) == int:
+            elif type(vol) in [int, float]:
+                vol = int(vol)
                 for each in self.notes:
                     if type(each) == note:
                         each.setvolume(vol)
@@ -2679,119 +2699,201 @@ class volume:
 
     __repr__ = __str__
 
+
 class drum:
-    def __init__(self, pattern='', mapping=drum_mapping, durations=1/8, intervals=1/8, volumes=100, name=None, notes=None):
+    def __init__(self,
+                 pattern='',
+                 mapping=drum_mapping,
+                 durations=1 / 8,
+                 intervals=1 / 8,
+                 volumes=100,
+                 name=None,
+                 notes=None):
         self.pattern = pattern
         self.mapping = mapping
         self.intervals = intervals
         self.durations = durations
         self.volumes = volumes
         self.name = name
-        self.notes = self.translate(self.pattern, self.mapping) if not notes else notes
+        self.notes = self.translate(self.pattern,
+                                    self.mapping) if not notes else notes
+
+    def __str__(self):
+        return f"[drum] {self.name if self.name else ''}\n{self.notes}"
+
+    __repr__ = __str__
+
     def translate(self, pattern, mapping):
+        import musicpy
         notes = []
         pattern_intervals = []
         pattern_durations = []
-        pattern_volumes = []        
+        pattern_volumes = []
         pattern = pattern.replace(' ', '')
         units = pattern.split(',')
         repeat_times = 1
         whole_set = False
-        left_part_symbol_inds = [i-1 for i in range(len(pattern)) if pattern[i] == '{']
-        right_part_symbol_inds = [0] + [i+2 for i in range(len(pattern)) if pattern[i] == '}'][:-1]
-        part_ranges = [[right_part_symbol_inds[k], left_part_symbol_inds[k]] for k in range(len(left_part_symbol_inds))]
+        left_part_symbol_inds = [
+            i - 1 for i in range(len(pattern)) if pattern[i] == '{'
+        ]
+        right_part_symbol_inds = [0] + [
+            i + 2 for i in range(len(pattern)) if pattern[i] == '}'
+        ][:-1]
+        part_ranges = [[right_part_symbol_inds[k], left_part_symbol_inds[k]]
+                       for k in range(len(left_part_symbol_inds))]
         parts = [pattern[k[0]:k[1]] for k in part_ranges]
         part_counter = 0
         named_dict = dict()
-        
+        part_replace_ind1 = 0
+        part_replace_ind2 = 0
         if units[0].startswith('!'):
             whole_set = True
             whole_set_values = units[0][1:].split(';')
             if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
                 whole_set_values[1] = whole_set_values[0]
-            whole_set_values = [float(k) if k != 'n' else None for k in whole_set_values]
-            return self.translate(','.join(units[1:])) % whole_set_values
+            whole_set_values = [k.replace('|', ',') for k in whole_set_values]
+            whole_set_values = [
+                eval(k) if k != 'n' else None for k in whole_set_values
+            ]
+            return self.translate(','.join(units[1:]),
+                                  mapping).special_set(*whole_set_values)
         elif units[-1].startswith('!'):
             whole_set = True
-            whole_set_values = units[0][1:].split(';')
+            whole_set_values = units[-1][1:].split(';')
             if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
                 whole_set_values[1] = whole_set_values[0]
-            whole_set_values = [float(k) if k != 'n' else None for k in whole_set_values]
-            return self.translate(','.join(units[:-1])) % whole_set_values
+            whole_set_values = [k.replace('|', ',') for k in whole_set_values]
+            whole_set_values = [
+                eval(k) if k != 'n' else None for k in whole_set_values
+            ]
+            return self.translate(','.join(units[:-1]),
+                                  mapping).special_set(*whole_set_values)
         for i in units:
             repeat_times = 1
             #if all(j not in i for j in [';','!','[','(','{']):
-                #notes.append(degree_to_note(mapping[i]))
+            #notes.append(degree_to_note(mapping[i]))
             if i[0] == '{' and i[-1] == '}':
+                part_replace_ind2 = len(notes)
                 current_part = parts[part_counter]
                 current_part_notes = self.translate(current_part, mapping)
                 part_counter += 1
                 part_settings = i[1:-1].split('|')
                 for each in part_settings:
                     if each.startswith('!'):
-                        current_settings = eval(each[1:].replace(';',',').replace('-',','))
-                        current_part_notes = current_part_notes % current_settings
+                        current_settings = each[1:].split(';')
+                        if len(current_settings
+                               ) >= 2 and current_settings[1] == '.':
+                            current_settings[1] = current_settings[0]
+                        current_settings = [
+                            k.replace('.', ',') for k in current_settings
+                        ]
+                        current_settings = [
+                            eval(k) if k != 'n' else None
+                            for k in current_settings
+                        ]
+                        current_part_notes = current_part_notes.special_set(
+                            *current_settings)
                     elif each.isdigit():
                         current_part_notes %= int(each)
                     elif each.startswith('$'):
                         named_dict[each] = current_part_notes
-                notes.append(current_part_notes.notes)
-                pattern_intervals.append(current_part_notes.interval)
-                pattern_durations.append(current_part_notes.get_duration())
-                pattern_volumes.append(pattern_volumes.get_volume())
-                
+                notes[part_replace_ind1:
+                      part_replace_ind2] = current_part_notes.notes
+                pattern_intervals[
+                    part_replace_ind1:
+                    part_replace_ind2] = current_part_notes.interval
+                pattern_durations[
+                    part_replace_ind1:
+                    part_replace_ind2] = current_part_notes.get_duration()
+                pattern_volumes[
+                    part_replace_ind1:
+                    part_replace_ind2] = current_part_notes.get_volume()
+                part_replace_ind1 = len(notes)
+            elif i[0] == '[' and i[-1] == ']':
+                current_interval = eval(i[1:-1])
+                pattern_intervals[-1] += current_interval
             elif '(' in i and i[-1] == ')':
-                repeat_times = int(i[i.index('(')+1:-1])
-                current_notes = self.translate(i[:i.index('(')], mapping) % repeat_times
-                notes.append(current_notes.notes)
-                pattern_intervals.append(current_notes.interval)
-                pattern_durations.append(current_notes.get_duration())
-                pattern_volumes.append(current_notes.get_volume())                                
+                repeat_times = int(i[i.index('(') + 1:-1])
+                repeat_part = i[:i.index('(')]
+                if repeat_part.startswith('$'):
+                    repeat_part = named_dict[repeat_part]
+                else:
+                    repeat_part = self.translate(repeat_part, mapping)
+                current_notes = repeat_part % repeat_times
+                notes.extend(current_notes.notes)
+                pattern_intervals.extend(current_notes.interval)
+                pattern_durations.extend(current_notes.get_duration())
+                pattern_volumes.extend(current_notes.get_volume())
             elif '[' in i and ']' in i:
-                current_drum_settings = (i[i.index('[')+1:i.index(']')].replace(';',',').replace('-',','))
-                if len(current_drum_settings) >= 2 and current_drum_settings[1] == '.':
+                current_drum_settings = (i[i.index('[') +
+                                           1:i.index(']')].replace(
+                                               '|', ',')).split(';')
+                if len(current_drum_settings
+                       ) >= 2 and current_drum_settings[1] == '.':
                     current_drum_settings[1] = current_drum_settings[0]
-                current_drum_settings = [eval(k) if k != 'n' else None for k in current_drum_settings]                
-                current_notes = self.translate(i[:i.index('[')], mapping) % current_drum_settings
-                notes.append(current_notes.notes)
-                pattern_intervals.append(current_notes.interval)
-                pattern_durations.append(current_notes.get_duration())
-                pattern_volumes.append(current_notes.get_volume())                   
+                current_drum_settings = [
+                    eval(k) if k != 'n' else None
+                    for k in current_drum_settings
+                ]
+                current_drum_settings = [
+                    list(i) if type(i) == tuple else i
+                    for i in current_drum_settings
+                ]
+                config_part = i[:i.index('[')]
+                if config_part.startswith('$'):
+                    config_part = named_dict[config_part]
+                else:
+                    config_part = self.translate(config_part, mapping)
+                current_notes = config_part % current_drum_settings
+                notes.extend(current_notes.notes)
+                pattern_intervals.extend(current_notes.interval)
+                pattern_durations.extend(current_notes.get_duration())
+                pattern_volumes.extend(current_notes.get_volume())
             elif ';' in i:
                 same_time_notes = i.split(';')
-                current_notes = [self.translate(k, mapping) for k in same_time_notes]
-                current_notes = concat([k.set(interval=0) for k in current_notes[:-1]] + [current_notes[-1]])
-                notes.append(current_notes.notes)
-                pattern_intervals.append(current_notes.interval)
-                pattern_durations.append(current_notes.get_duration())
-                pattern_volumes.append(current_notes.get_volume())      
+                current_notes = [
+                    self.translate(k, mapping) for k in same_time_notes
+                ]
+                current_notes = musicpy.concat(
+                    [k.set(interval=0)
+                     for k in current_notes[:-1]] + [current_notes[-1]])
+                for j in current_notes.notes[:-1]:
+                    j.keep_same_time = True
+                notes.extend(current_notes.notes)
+                pattern_intervals.extend(current_notes.interval)
+                pattern_durations.extend(current_notes.get_duration())
+                pattern_volumes.extend(current_notes.get_volume())
             elif i.startswith('$'):
                 current_notes = named_dict[i]
-                notes.append(current_notes.notes)
-                pattern_intervals.append(current_notes.interval)
-                pattern_durations.append(current_notes.get_duration())
-                pattern_volumes.append(current_notes.get_volume())                      
+                notes.extend(current_notes.notes)
+                pattern_intervals.extend(current_notes.interval)
+                pattern_durations.extend(current_notes.get_duration())
+                pattern_volumes.extend(current_notes.get_volume())
             else:
                 notes.append(degree_to_note(mapping[i]))
-                pattern_intervals.append(1/8)
-                pattern_durations.append(1/8)
-                pattern_volumes.append(100)                      
-        
-        
+                pattern_intervals.append(1 / 8)
+                pattern_durations.append(1 / 8)
+                pattern_volumes.append(100)
+
         intervals = pattern_intervals if pattern_intervals else self.intervals
         durations = pattern_durations if pattern_durations else self.durations
         volumes = pattern_volumes if pattern_volumes else self.volumes
-            
         result = chord(notes) % (durations, intervals, volumes)
         return result
-    def play(self, tempo, instrument=1, start_time=0):
+
+    def play(self, tempo=80, instrument=1, start_time=0):
         import musicpy
-        musicpy.play(P([self.notes],[instrument],tempo,[start_time],channels=[9]))
+        musicpy.play(
+            P([self.notes], [instrument], tempo, [start_time], channels=[9]))
+
     def __mul__(self, n):
-        return drum(notes=self.notes%n, mapping=self.mapping, durations=self.durations, intervals=self.intervals, volumes=self.volumes)
+        return drum(notes=self.notes % n, mapping=self.mapping)
+
     def __add__(self, other):
-        return drum(notes=self.notes + other.notes, mapping=self.mapping, intervals=self.intervals + other.intervals)
+        return drum(notes=self.notes + other.notes, mapping=self.mapping)
+
     def __mod__(self, n):
-        return drum(notes=self.notes % n, mapping=self.mapping, durations=self.durations, intervals=self.intervals, volumes=self.volumes)
+        return drum(notes=self.notes % n, mapping=self.mapping)
+
     def set(self, durations=None, intervals=None, volumes=None):
         return self % (durations, intervals, volumes)
