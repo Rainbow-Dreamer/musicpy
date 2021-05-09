@@ -2678,3 +2678,38 @@ class volume:
         return result
 
     __repr__ = __str__
+
+class drum:
+    def __init__(self, pattern='', mapping=drum_mapping, durations=1/4, intervals=1/4, volumes=100, name=None, notes=None):
+        self.pattern = pattern
+        self.mapping = mapping
+        self.intervals = intervals
+        self.durations = durations
+        self.volumes = volumes
+        self.name = name
+        self.notes = self.translate(self.pattern, self.mapping) if not notes else notes
+    def translate(self, pattern, mapping):
+        notes = []
+        pattern = pattern.replace(' ', '')
+        units = pattern.split(',')
+        notes = [degree_to_note(mapping[i]) for i in units]
+        pattern_intervals = []
+        pattern_durations = []
+        pattern_volumes = []
+        intervals = pattern_intervals if pattern_intervals else self.intervals
+        durations = pattern_durations if pattern_durations else self.durations
+        volumes = pattern_volumes if pattern_volumes else self.volumes
+            
+        result = chord(notes) % (durations, intervals, volumes)
+        return result
+    def play(self, tempo, instrument=1, start_time=0):
+        import musicpy
+        musicpy.play(P([self.notes],[instrument],tempo,[start_time],channels=[9]))
+    def __mul__(self, n):
+        return drum(notes=self.notes%n, mapping=self.mapping, durations=self.durations, intervals=self.intervals, volumes=self.volumes)
+    def __add__(self, other):
+        return drum(notes=self.notes + other.notes, mapping=self.mapping, intervals=self.intervals + other.intervals)
+    def __mod__(self, n):
+        return drum(notes=self.notes % n, mapping=self.mapping, durations=self.durations, intervals=self.intervals, volumes=self.volumes)
+    def set(self, durations=None, intervals=None, volumes=None):
+        return self % (durations, intervals, volumes)
