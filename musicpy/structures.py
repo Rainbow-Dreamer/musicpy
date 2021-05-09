@@ -2680,7 +2680,7 @@ class volume:
     __repr__ = __str__
 
 class drum:
-    def __init__(self, pattern='', mapping=drum_mapping, durations=1/4, intervals=1/4, volumes=100, name=None, notes=None):
+    def __init__(self, pattern='', mapping=drum_mapping, durations=1/8, intervals=1/8, volumes=100, name=None, notes=None):
         self.pattern = pattern
         self.mapping = mapping
         self.intervals = intervals
@@ -2690,12 +2690,94 @@ class drum:
         self.notes = self.translate(self.pattern, self.mapping) if not notes else notes
     def translate(self, pattern, mapping):
         notes = []
-        pattern = pattern.replace(' ', '')
-        units = pattern.split(',')
-        notes = [degree_to_note(mapping[i]) for i in units]
         pattern_intervals = []
         pattern_durations = []
-        pattern_volumes = []
+        pattern_volumes = []        
+        pattern = pattern.replace(' ', '')
+        units = pattern.split(',')
+        repeat_times = 1
+        whole_set = False
+        left_part_symbol_inds = [i-1 for i in range(len(pattern)) if pattern[i] == '{']
+        right_part_symbol_inds = [0] + [i+2 for i in range(len(pattern)) if pattern[i] == '}'][:-1]
+        part_ranges = [[right_part_symbol_inds[k], left_part_symbol_inds[k]] for k in range(len(left_part_symbol_inds))]
+        parts = [pattern[k[0]:k[1]] for k in part_ranges]
+        part_counter = 0
+        named_dict = dict()
+        
+        if units[0].startswith('!'):
+            whole_set = True
+            whole_set_values = units[0][1:].split(';')
+            if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
+                whole_set_values[1] = whole_set_values[0]
+            whole_set_values = [float(k) if k != 'n' else None for k in whole_set_values]
+            return self.translate(','.join(units[1:])) % whole_set_values
+        elif units[-1].startswith('!'):
+            whole_set = True
+            whole_set_values = units[0][1:].split(';')
+            if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
+                whole_set_values[1] = whole_set_values[0]
+            whole_set_values = [float(k) if k != 'n' else None for k in whole_set_values]
+            return self.translate(','.join(units[:-1])) % whole_set_values
+        for i in units:
+            repeat_times = 1
+            #if all(j not in i for j in [';','!','[','(','{']):
+                #notes.append(degree_to_note(mapping[i]))
+            if i[0] == '{' and i[-1] == '}':
+                current_part = parts[part_counter]
+                current_part_notes = self.translate(current_part, mapping)
+                part_counter += 1
+                part_settings = i[1:-1].split('|')
+                for each in part_settings:
+                    if each.startswith('!'):
+                        current_settings = eval(each[1:].replace(';',',').replace('-',','))
+                        current_part_notes = current_part_notes % current_settings
+                    elif each.isdigit():
+                        current_part_notes %= int(each)
+                    elif each.startswith('$'):
+                        named_dict[each] = current_part_notes
+                notes.append(current_part_notes.notes)
+                pattern_intervals.append(current_part_notes.interval)
+                pattern_durations.append(current_part_notes.get_duration())
+                pattern_volumes.append(pattern_volumes.get_volume())
+                
+            elif '(' in i and i[-1] == ')':
+                repeat_times = int(i[i.index('(')+1:-1])
+                current_notes = self.translate(i[:i.index('(')], mapping) % repeat_times
+                notes.append(current_notes.notes)
+                pattern_intervals.append(current_notes.interval)
+                pattern_durations.append(current_notes.get_duration())
+                pattern_volumes.append(current_notes.get_volume())                                
+            elif '[' in i and ']' in i:
+                current_drum_settings = (i[i.index('[')+1:i.index(']')].replace(';',',').replace('-',','))
+                if len(current_drum_settings) >= 2 and current_drum_settings[1] == '.':
+                    current_drum_settings[1] = current_drum_settings[0]
+                current_drum_settings = [eval(k) if k != 'n' else None for k in current_drum_settings]                
+                current_notes = self.translate(i[:i.index('[')], mapping) % current_drum_settings
+                notes.append(current_notes.notes)
+                pattern_intervals.append(current_notes.interval)
+                pattern_durations.append(current_notes.get_duration())
+                pattern_volumes.append(current_notes.get_volume())                   
+            elif ';' in i:
+                same_time_notes = i.split(';')
+                current_notes = [self.translate(k, mapping) for k in same_time_notes]
+                current_notes = concat([k.set(interval=0) for k in current_notes[:-1]] + [current_notes[-1]])
+                notes.append(current_notes.notes)
+                pattern_intervals.append(current_notes.interval)
+                pattern_durations.append(current_notes.get_duration())
+                pattern_volumes.append(current_notes.get_volume())      
+            elif i.startswith('$'):
+                current_notes = named_dict[i]
+                notes.append(current_notes.notes)
+                pattern_intervals.append(current_notes.interval)
+                pattern_durations.append(current_notes.get_duration())
+                pattern_volumes.append(current_notes.get_volume())                      
+            else:
+                notes.append(degree_to_note(mapping[i]))
+                pattern_intervals.append(1/8)
+                pattern_durations.append(1/8)
+                pattern_volumes.append(100)                      
+        
+        
         intervals = pattern_intervals if pattern_intervals else self.intervals
         durations = pattern_durations if pattern_durations else self.durations
         volumes = pattern_volumes if pattern_volumes else self.volumes
