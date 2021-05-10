@@ -6,12 +6,12 @@
 
 I've been working on many python libraries in my spare time, including those for statistics, games and music. In fact I've been trying to write something for AI but that's only in the early phase. Today I wanna introduce to you a library that lets you write music with code: **musicpy**.
 
-This library enables you to express a sequence of notes and beats in a music piece with very clean and simple syntax, along with the ability to output as midi format with ease. I recommend using this library with some pre-knowledge about music theory so it would not make confusion. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are familiar with music theory.
+This library allows you to express the note, rhythm, dynamics and other information of a piece of music with a very concise grammar. It can generate music through music theory logic and perform advanced music theory operations. It can be easily output into midi file format. Because musicpy is involved with everything in music theory, I recommend using this library with at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are familiar with music theory.
 
 Installation：
 
-Make sure you have at least python 3.6 installed first.  
-Execute the following command in the terminal.
+Make sure you have installed python (version >= 3.6) in your pc first.
+Execute the following command in the terminal to install musicpy by pip.
 
 ```shell
 pip install musicpy
