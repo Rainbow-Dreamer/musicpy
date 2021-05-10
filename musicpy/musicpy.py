@@ -552,6 +552,10 @@ def write(name_of_midi,
             build(chord1,
                   bpm=chord1.tempo if chord1.tempo is not None else bpm,
                   name=chord1.name))
+    if isinstance(chord1, drum):
+        chord1 = P([chord1.notes], [chord1.instrument],
+                   bpm, [start_time],
+                   channels=[9])
     if isinstance(chord1, piece):
         mode = 'multi'
     if mode == 'multi':
@@ -3020,3 +3024,160 @@ def build(*tracks_list, bpm=80, name=None):
             volume_msg = [i[6] for i in tracks_list]
     return P(tracks, instruments_list, bpm, start_times, track_names, channels,
              name, pan_msg, volume_msg)
+
+
+def translate(pattern):
+    notes = []
+    pattern_intervals = []
+    pattern_durations = []
+    pattern_volumes = []
+    pattern = pattern.replace(' ', '')
+    units = pattern.split(',')
+    repeat_times = 1
+    whole_set = False
+    left_part_symbol_inds = [
+        i - 1 for i in range(len(pattern)) if pattern[i] == '{'
+    ]
+    right_part_symbol_inds = [0] + [
+        i + 2 for i in range(len(pattern)) if pattern[i] == '}'
+    ][:-1]
+    part_ranges = [[right_part_symbol_inds[k], left_part_symbol_inds[k]]
+                   for k in range(len(left_part_symbol_inds))]
+    parts = [pattern[k[0]:k[1]] for k in part_ranges]
+    part_counter = 0
+    named_dict = dict()
+    part_replace_ind1 = 0
+    part_replace_ind2 = 0
+    if units[0].startswith('!'):
+        whole_set = True
+        whole_set_values = units[0][1:].split(';')
+        if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
+            whole_set_values[1] = whole_set_values[0]
+        whole_set_values = [k.replace('|', ',') for k in whole_set_values]
+        whole_set_values = [
+            eval(k) if k != 'n' else None for k in whole_set_values
+        ]
+        whole_set_values = [
+            list(i) if type(i) == tuple else i for i in whole_set_values
+        ]
+        return translate(','.join(units[1:])).special_set(*whole_set_values)
+    elif units[-1].startswith('!'):
+        whole_set = True
+        whole_set_values = units[-1][1:].split(';')
+        if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
+            whole_set_values[1] = whole_set_values[0]
+        whole_set_values = [k.replace('|', ',') for k in whole_set_values]
+        whole_set_values = [
+            eval(k) if k != 'n' else None for k in whole_set_values
+        ]
+        whole_set_values = [
+            list(i) if type(i) == tuple else i for i in whole_set_values
+        ]
+        return translate(','.join(units[:-1])).special_set(*whole_set_values)
+    for i in units:
+        if i[0] == '{' and i[-1] == '}':
+            part_replace_ind2 = len(notes)
+            current_part = parts[part_counter]
+            current_part_notes = translate(current_part)
+            part_counter += 1
+            part_settings = i[1:-1].split('|')
+            for each in part_settings:
+                if each.startswith('!'):
+                    current_settings = each[1:].split(';')
+                    if len(current_settings
+                           ) >= 2 and current_settings[1] == '.':
+                        current_settings[1] = current_settings[0]
+                    current_settings = [
+                        k.replace('.', ',') for k in current_settings
+                    ]
+                    current_settings = [
+                        eval(k) if k != 'n' else None for k in current_settings
+                    ]
+                    current_settings = [
+                        list(i) if type(i) == tuple else i
+                        for i in current_settings
+                    ]
+                    current_part_notes = current_part_notes.special_set(
+                        *current_settings)
+                elif each.isdigit():
+                    current_part_notes %= int(each)
+                elif each.startswith('$'):
+                    named_dict[each] = current_part_notes
+            notes[
+                part_replace_ind1:part_replace_ind2] = current_part_notes.notes
+            pattern_intervals[part_replace_ind1:
+                              part_replace_ind2] = current_part_notes.interval
+            pattern_durations[
+                part_replace_ind1:
+                part_replace_ind2] = current_part_notes.get_duration()
+            pattern_volumes[part_replace_ind1:
+                            part_replace_ind2] = current_part_notes.get_volume(
+                            )
+            part_replace_ind1 = len(notes)
+        elif i[0] == '[' and i[-1] == ']':
+            current_interval = eval(i[1:-1])
+            pattern_intervals[-1] += current_interval
+        elif '(' in i and i[-1] == ')':
+            repeat_times = int(i[i.index('(') + 1:-1])
+            repeat_part = i[:i.index('(')]
+            if repeat_part.startswith('$'):
+                repeat_part = named_dict[repeat_part]
+            else:
+                repeat_part = translate(repeat_part)
+            current_notes = repeat_part % repeat_times
+            notes.extend(current_notes.notes)
+            pattern_intervals.extend(current_notes.interval)
+            pattern_durations.extend(current_notes.get_duration())
+            pattern_volumes.extend(current_notes.get_volume())
+        elif '[' in i and ']' in i:
+            current_drum_settings = (i[i.index('[') + 1:i.index(']')].replace(
+                '|', ',')).split(';')
+            if len(current_drum_settings
+                   ) >= 2 and current_drum_settings[1] == '.':
+                current_drum_settings[1] = current_drum_settings[0]
+            current_drum_settings = [
+                eval(k) if k != 'n' else None for k in current_drum_settings
+            ]
+            current_drum_settings = [
+                list(i) if type(i) == tuple else i
+                for i in current_drum_settings
+            ]
+            config_part = i[:i.index('[')]
+            if config_part.startswith('$'):
+                config_part = named_dict[config_part]
+            else:
+                config_part = translate(config_part)
+            current_notes = config_part % current_drum_settings
+            notes.extend(current_notes.notes)
+            pattern_intervals.extend(current_notes.interval)
+            pattern_durations.extend(current_notes.get_duration())
+            pattern_volumes.extend(current_notes.get_volume())
+        elif ';' in i:
+            same_time_notes = i.split(';')
+            current_notes = [translate(k) for k in same_time_notes]
+            current_notes = musicpy.concat(
+                [k.set(interval=0)
+                 for k in current_notes[:-1]] + [current_notes[-1]])
+            for j in current_notes.notes[:-1]:
+                j.keep_same_time = True
+            notes.extend(current_notes.notes)
+            pattern_intervals.extend(current_notes.interval)
+            pattern_durations.extend(current_notes.get_duration())
+            pattern_volumes.extend(current_notes.get_volume())
+        elif i.startswith('$'):
+            current_notes = named_dict[i]
+            notes.extend(current_notes.notes)
+            pattern_intervals.extend(current_notes.interval)
+            pattern_durations.extend(current_notes.get_duration())
+            pattern_volumes.extend(current_notes.get_volume())
+        else:
+            notes.append(N(i))
+            pattern_intervals.append(1 / 8)
+            pattern_durations.append(1 / 8)
+            pattern_volumes.append(100)
+
+    intervals = pattern_intervals if pattern_intervals else self.intervals
+    durations = pattern_durations if pattern_durations else self.durations
+    volumes = pattern_volumes if pattern_volumes else self.volumes
+    result = chord(notes) % (durations, intervals, volumes)
+    return result

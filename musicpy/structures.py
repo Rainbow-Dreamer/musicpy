@@ -2708,7 +2708,8 @@ class drum:
                  intervals=1 / 8,
                  volumes=100,
                  name=None,
-                 notes=None):
+                 notes=None,
+                 i=1):
         self.pattern = pattern
         self.mapping = mapping
         self.intervals = intervals
@@ -2717,6 +2718,8 @@ class drum:
         self.name = name
         self.notes = self.translate(self.pattern,
                                     self.mapping) if not notes else notes
+        self.instrument = i if type(i) == int else (
+            drum_set_dict_reverse[i] if i in drum_set_dict_reverse else 1)
 
     def __str__(self):
         return f"[drum] {self.name if self.name else ''}\n{self.notes}"
@@ -2755,6 +2758,9 @@ class drum:
             whole_set_values = [
                 eval(k) if k != 'n' else None for k in whole_set_values
             ]
+            whole_set_values = [
+                list(i) if type(i) == tuple else i for i in whole_set_values
+            ]
             return self.translate(','.join(units[1:]),
                                   mapping).special_set(*whole_set_values)
         elif units[-1].startswith('!'):
@@ -2766,12 +2772,12 @@ class drum:
             whole_set_values = [
                 eval(k) if k != 'n' else None for k in whole_set_values
             ]
+            whole_set_values = [
+                list(i) if type(i) == tuple else i for i in whole_set_values
+            ]
             return self.translate(','.join(units[:-1]),
                                   mapping).special_set(*whole_set_values)
         for i in units:
-            repeat_times = 1
-            #if all(j not in i for j in [';','!','[','(','{']):
-            #notes.append(degree_to_note(mapping[i]))
             if i[0] == '{' and i[-1] == '}':
                 part_replace_ind2 = len(notes)
                 current_part = parts[part_counter]
@@ -2790,6 +2796,10 @@ class drum:
                         current_settings = [
                             eval(k) if k != 'n' else None
                             for k in current_settings
+                        ]
+                        current_settings = [
+                            list(i) if type(i) == tuple else i
+                            for i in current_settings
                         ]
                         current_part_notes = current_part_notes.special_set(
                             *current_settings)
@@ -2881,10 +2891,13 @@ class drum:
         result = chord(notes) % (durations, intervals, volumes)
         return result
 
-    def play(self, tempo=80, instrument=1, start_time=0):
+    def play(self, tempo=80, instrument=None, start_time=0):
         import musicpy
         musicpy.play(
-            P([self.notes], [instrument], tempo, [start_time], channels=[9]))
+            P([self.notes],
+              [instrument if instrument is not None else self.instrument],
+              tempo, [start_time],
+              channels=[9]))
 
     def __mul__(self, n):
         return drum(notes=self.notes % n, mapping=self.mapping)
@@ -2897,3 +2910,6 @@ class drum:
 
     def set(self, durations=None, intervals=None, volumes=None):
         return self % (durations, intervals, volumes)
+
+    def info(self):
+        return f"[drum] {self.name if self.name else ''}\ninstrument: {drum_set_dict[self.instrument] if self.instrument in drum_set_dict else 'unknown'}\n{', '.join([drum_types[k.degree] for k in self.notes])} with interval {self.notes.interval}"

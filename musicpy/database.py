@@ -583,3 +583,16 @@ drum_mapping = {
     '6': 39,
     '7': 35
 }
+
+drum_set_dict = {
+    1: 'Standard',
+    9: 'Room Kit',
+    17: 'Power Kit',
+    25: 'Electronic Kit',
+    26: 'TR-808 Kit',
+    33: 'Jazz Kit',
+    41: 'Brush Kit',
+    49: 'Orchestra Kit',
+    57: 'Sound FX Kit'
+}
+drum_set_dict_reverse = {j: i for i, j in drum_set_dict.items()}
