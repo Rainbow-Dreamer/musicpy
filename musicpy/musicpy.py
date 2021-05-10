@@ -3181,3 +3181,33 @@ def translate(pattern):
     volumes = pattern_volumes if pattern_volumes else self.volumes
     result = chord(notes) % (durations, intervals, volumes)
     return result
+
+
+def chord_progression(chords,
+                      durations=1 / 4,
+                      intervals=0,
+                      volumes=None,
+                      chords_interval=None,
+                      merge=True):
+    chords_len = len(chords)
+    if type(durations) != list:
+        durations = [durations for i in range(chords_len)]
+    if type(intervals) != list:
+        intervals = [intervals for i in range(chords_len)]
+    if volumes and type(volumes) != list:
+        volumes = [volumes for i in range(chords_len)]
+    if chords_interval and type(chords_interval) != list:
+        chords_interval = [chords_interval for i in range(chords_len)]
+    chords = [C(i) if type(i) == str else i for i in chords]
+    for i in range(chords_len):
+        chords[i] %= (durations[i], intervals[i],
+                      volumes[i] if volumes else volumes)
+    if merge:
+        result = chords[0]
+        for i in range(1, chords_len):
+            if chords_interval:
+                result |= chords_interval[i - 1]
+            result |= chords[i]
+        return result
+    else:
+        return chords

@@ -624,7 +624,7 @@ class chord:
     def __str__(self):
         return f'{self.notes} with interval {self.interval}'
 
-    def info(self):
+    def details(self):
         from fractions import Fraction
         notes_only = self.only_notes()
         notes_part = 'notes: ' + ', '.join([
@@ -1422,6 +1422,52 @@ class chord:
             self.interval[k] = new_interval_duration
 
             count_length += current_interval
+
+    def info(self, **detect_args):
+        import musicpy
+        chord_type = self.detect(**detect_args)
+        if 'sort as' in chord_type:
+            chord_speciality = 'chord voicings'
+        elif '[' in chord_type:
+            chord_speciality = 'polychord'
+        elif '/' in chord_type:
+            chord_speciality = 'inverted chord'
+        else:
+            chord_speciality = 'root position'
+        if chord_speciality == 'polychord':
+            root_note = self[1].name
+            chord_types_root = chord_type
+        else:
+            chord_types_root = chord_type.split('/')[0].split(' ')[0]
+            for each in self.names():
+                each_standard = f"{each[0].upper()}{''.join(each[1:])}"
+                if each_standard in chord_types_root:
+                    root_note = each
+                    break
+                elif each_standard in standard_dict and standard_dict[
+                        each_standard] in chord_types_root:
+                    root_note = each
+                    break
+
+            if chord_speciality == 'inverted chord':
+                inversion_msg = musicpy.inversion_from(
+                    musicpy.C(chord_type),
+                    musicpy.C(chord_types_root),
+                    num=True)
+                inversion_num = int(inversion_msg.split(' ')[0])
+                inversion_num = str(inversion_num) + {
+                    1: "st",
+                    2: "nd",
+                    3: "rd"
+                }.get(
+                    inversion_num if inversion_num < 20 else inversion_num %
+                    10, "th")
+                inversion_msg = ' '.join([inversion_num] +
+                                         inversion_msg.split(' ')[1:])
+        root_note = f"{root_note[0].upper()}{''.join(root_note[1:])}"
+        return f"chord name: {chord_type}\nroot position: {chord_types_root}\nroot: {root_note}\nchord speciality: {chord_speciality}" + (
+            f"\ninversion: {inversion_msg}"
+            if chord_speciality == 'inverted chord' else '')
 
 
 class scale:
