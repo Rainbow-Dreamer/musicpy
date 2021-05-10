@@ -1,6 +1,6 @@
 # musicpy
 
-[English [中文](#中文)]
+[English [中文](#你们想过用代码来写音乐吗)]
 
 ### Have you ever thought of writing music in codes (programming)?
 
@@ -41,8 +41,6 @@ Because of that, `note`, `chord` and `scale` classes can all be arithmetically u
 Many experimental music styles nowadays, like serialism, aleatoric music, postmodern music (like minimalist music), are theoretically possible to make upon the arithmetically performable data structures provided in this library. Of course this library can be used to write any kind of classical music, jazz, or pop music.
 
 [[English](#musicpy) 中文]
-
-## 中文
 
 ### 你们想过用代码来写音乐吗？
 
