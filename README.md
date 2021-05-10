@@ -6,7 +6,7 @@
 
 I've been working on many python libraries in my spare time, including those for statistics, games and music. In fact I've been trying to write something for AI but that's only in the early phase. Today I wanna introduce to you a library that lets you write music with code: **musicpy**.
 
-This library allows you to express the note, rhythm, dynamics and other information of a piece of music with a very concise grammar. It can generate music through music theory logic and perform advanced music theory operations. It can be easily output into midi file format. Because musicpy is involved with everything in music theory, I recommend using this library with at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are familiar with music theory.
+This library allows you to express the note, rhythm, dynamics and other information of a piece of music with a very concise syntax. It can generate music through music theory logic and perform advanced music theory operations. It can be easily output into midi file format. The syntax of musicpy is very concise and flexible, and it makes the codes written in musicpy very readable, and musicpy is fully compatible with python, which means you can write python codes to interact with musicpy. Because musicpy is involved with everything in music theory, I recommend using this library with at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are familiar with music theory.
 
 Installation：
 
@@ -23,12 +23,25 @@ Place this line at the start of the files you want to have it used in.
 ```python
 from musicpy import *
 ```
+Because musicpy has too many features to introduce, I will just give a simple example code of music programming in musicpy:
+
+```python
+# a nylon string guitar plays broken chords on a chord progression
+guitar = (C('CM7',4, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2 
+| C('A7sus', 3, 1/4, 1/8)^2 | C('Em7', 3, 1/4, 1/8)^2 | 
+C('FM7', 3, 1/4, 1/8)^2 | C('CM7', 4, 1/4, 1/8)@1 |
+C('AbM7', 3, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2)
+play((guitar * 2)-octave, 100, instrument=25)
+# or you can write
+# /(guitar * 2)-octave, 100, instrument=25
+# in the IDE I write for musicpy
+```
 
 Introduction and Tutorial video series part 1: [BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
 
 Demo of writing music with musicpy: [BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
-musicpy's data sturctures, basic syntax and usage is detailed in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear. 
+musicpy's data sturctures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
 
 `note`, `chord`, `scale` are the basic classes in musicpy that builds up the base of music programming, and there are way more musical classes in musicpy.
 
@@ -68,7 +81,7 @@ email: 2180502841@qq.com
 
 最近几个月学业繁忙，但是业余时间自己开发了很多python库，内容包括数学统计，各种游戏，还有音乐等等。其实还有试着写AI方面的，但是目前还是初期进度。今天我想先介绍一下我正在开发中的一个python库：**musicpy**。
 
-这个库可以让你用非常简洁的语法，来表达一段音乐的音符，节奏，力度等等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作，可以简单地输出成 midi 文件的格式。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki
+这个库可以让你用非常简洁的语法，来表达一段音乐的音符，节奏，力度等等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作，可以简单地输出成 midi 文件的格式。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki
 ) 正在写的教程之后你应该很快就上手了。  
 musicpy是一门基于python的邻域特定语言。
 
@@ -100,7 +113,7 @@ C('AbM7', 3, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2)
 
 musicpy 作曲示例实际演示以及 musicpy 实验作曲日常：[BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
-详细的 musicpy 数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚。 
+详细的 musicpy 数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
 
 我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DWVsQSYQhPG0CBiz4-4D)下载，正在不断地更新中
 
