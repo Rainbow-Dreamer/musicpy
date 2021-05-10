@@ -36,7 +36,7 @@ guitar = (C('CM7',4, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2
 C('FM7', 3, 1/4, 1/8)^2 | C('CM7', 4, 1/4, 1/8)@1 |
 C('AbM7', 3, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2)
 play((guitar * 2)-octave, 100, instrument=25)
-# or you can write
+# or you can also write
 # /(guitar * 2)-octave, 100, instrument=25
 # in the IDE I write for musicpy
 ```
@@ -70,6 +70,8 @@ So how do you teach AI music theory? Regarding music, the category of modernist 
 
 ### summary
 I started to develop musicpy in October 2019, and now I have a complete set of music theory logic grammar, and there are many composing and arranging functions as well as advanced music theory logic operations. For details, please refer to the wiki. I will continue to update musicpy's video tutorials and wiki.
+
+I'm working on musicpy continuously and updating musicpy very frequently, more and more musical features will be added, so that musicpy can do more with music.
 
 Thank you for your support~
 
@@ -118,7 +120,7 @@ guitar = (C('CM7',4, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2
 C('FM7', 3, 1/4, 1/8)^2 | C('CM7', 4, 1/4, 1/8)@1 |
 C('AbM7', 3, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2)
 play((guitar * 2)-octave, 100, instrument=25)
-# 或者在我为musicpy专门写的IDE里你可以写
+# 或者在我为musicpy专门写的IDE里你也可以写
 # /(guitar * 2)-octave, 100, instrument=25
 ```
 
@@ -151,6 +153,7 @@ AI 不必完全按照我们给他的乐理逻辑规则来创作，我们可以�
 
 ### 总结
 我从2019年的10月份开始开发musicpy，到现在已经有一套完整的乐理逻辑语法了，还有很多作曲编曲以及高级乐理逻辑操作的功能，详细请看wiki。musicpy的视频教程和wiki我都会持续更新。
+musicpy我一直在持续更新中，不断地加入新的乐理功能，让musicpy在音乐上能做到的事情更多。
 
 感谢大家的支持~
 
