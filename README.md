@@ -1,6 +1,6 @@
 # musicpy
 
-[English [中文](#你们想过用代码来写音乐吗)]
+[English [中文](#中文版介绍)]
 
 ### Have you ever thought of writing music in codes (programming)?
 
@@ -74,6 +74,8 @@ qq: 2180502841
 Bilibili account: Rainbow_Dreamer
 
 email: 2180502841@qq.com
+
+## 中文版介绍
 
 [[English](#musicpy) 中文]
 
