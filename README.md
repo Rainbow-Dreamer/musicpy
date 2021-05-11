@@ -2,9 +2,9 @@
 
 [English [中文](#中文版介绍)]
 
-#### Have you ever thought about writing music with codes in very concise, human-readable syntax?
-#### Musicpy is a python domain-specific language designed to write music in very handy syntax for musicians, and musicpy can do way more than just writing music, this package can use music theory logic to write music and analyze music, and you can design algorithms to explore the possbilities of music using musicpy.
-#### Musicpy is easy to learn and write, easy to read and is a fully computerized music theory system.
+#### Have you ever thought about writing music with codes in a very concise, human-readable syntax?
+#### Musicpy is a python domain-specific language designed to write music in a very handy syntax for musicians. It is easy to learn and write, easy to read, and incorporates a fully computerized music theory system.
+#### Musicpy can do way more than just writing music. This package can also be used to analyze music with a music theory logic, and you can design algorithms to explore the endless possibilities of music, all with musicpy.
 
 I've been developing many python modules and packages on my own in spare time. These python modules and packages are mainly for mathematics, statistics, games and music.
 
@@ -91,8 +91,8 @@ email: 2180502841@qq.com
 
 #### 你们有想过用代码来写音乐吗？
 #### musicpy是一个可以让你用编程写音乐的python邻域特定语言，可以让你用非常简洁并且可读性高的语法通过乐理知识写出优美的音乐。
-#### musicpy除了用来创作音乐之外，还可以从乐理层面上来创作音乐和分析音乐，并且你可以在musicpy的基础上设计乐理算法来探索音乐的可能性。
 #### musicpy容易学，容易写，可读性也比较强，并且是一个完全计算机化的乐理系统。
+#### musicpy除了用来创作音乐之外，还可以从乐理层面上来创作音乐和分析音乐，并且你可以在musicpy的基础上设计乐理算法来探索音乐的可能性。
 
 最近几个月大学的学业繁忙，但是业余时间自己开发了很多python库，内容包括数学统计，各种游戏，还有音乐等等。其实还有试着写AI方面的，但是目前还是初期进度。
 
