@@ -92,6 +92,10 @@ class note:
         if isinstance(obj, int):
             return self.down(obj)
 
+    def __call__(self, obj=''):
+        import musicpy
+        return musicpy.C(self.name + obj)
+
 
 def toNote(notename, duration=0.25, volume=100, pitch=4):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
@@ -677,8 +681,15 @@ class chord:
             import musicpy
             obj = musicpy.trans(obj)
         elif types == tuple:
-            import musicpy
-            obj = musicpy.trans(*obj)
+            first = obj[0]
+            start = obj[1] if len(obj) == 2 else 0
+            if type(first) == int:
+                temp = copy(self)
+                for k in range(first - 1):
+                    temp |= (self, start)
+                return temp
+            else:
+                return self.add(first, start=start, mode='after')
         return self.add(obj, mode='after')
 
     def __or__(self, other):
@@ -718,10 +729,20 @@ class chord:
     def __and__(self, obj):
         if type(obj) == tuple:
             if len(obj) == 2:
-                return self.add(obj[0], start=obj[1], mode='head')
+                first = obj[0]
+                if type(first) == int:
+                    temp = copy(self)
+                    for k in range(first - 1):
+                        temp &= (self, (k + 1) * obj[1])
+                    return temp
+                else:
+                    return self.add(obj[0], start=obj[1], mode='head')
             else:
                 return
-        return self.add(obj, mode='head')
+        elif type(obj) == int:
+            return self & (obj, 0)
+        else:
+            return self.add(obj, mode='head')
 
     def __matmul__(self, obj):
         types = type(obj)
@@ -800,6 +821,18 @@ class chord:
                         ]
                         if degree in self_names:
                             temp = temp.omit(degree, 2)
+            elif each.startswith('sus'):
+                num = each[3:]
+                if num.isdigit():
+                    num = int(num)
+                else:
+                    num = 4
+                temp.notes = temp.sus(num).notes
+            elif each.startswith('add'):
+                degree = each[3:]
+                if degree in degree_match:
+                    degree_ls = degree_match[degree]
+                    temp += temp[1].up(degree_ls[0])
         return temp
 
     def detect(self, *args, **kwargs):
@@ -932,9 +965,9 @@ class chord:
             return chord(newnotes, interval=newinterval)
         elif mode == 'after':
             if self.interval[-1] == 0:
-                return self.rest(0) + note1
+                return (self.rest(0) | start) + note1
             else:
-                return self + note1
+                return (self | start) + note1
 
     def inversion(self, num=1):
         if num not in range(1, len(self.notes)):
@@ -1099,6 +1132,25 @@ class chord:
         return temp
 
     omit = drop
+
+    def sus(self, num=4):
+        temp = self.copy()
+        first_note = temp[1]
+        if num == 4:
+            temp.notes = [
+                i.up() if abs(i.degree - first_note.degree) %
+                octave == major_third else
+                i.up(2) if abs(i.degree - first_note.degree) %
+                octave == minor_third else i for i in temp.notes
+            ]
+        elif num == 2:
+            temp.notes = [
+                i.down(2) if abs(i.degree - first_note.degree) %
+                octave == major_third else
+                i.down() if abs(i.degree - first_note.degree) %
+                octave == minor_third else i for i in temp.notes
+            ]
+        return temp
 
     def copy(self):
         return copy(self)

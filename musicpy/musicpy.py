@@ -3155,7 +3155,7 @@ def translate(pattern):
         elif ';' in i:
             same_time_notes = i.split(';')
             current_notes = [translate(k) for k in same_time_notes]
-            current_notes = musicpy.concat(
+            current_notes = concat(
                 [k.set(interval=0)
                  for k in current_notes[:-1]] + [current_notes[-1]])
             for j in current_notes.notes[:-1]:
@@ -3172,7 +3172,7 @@ def translate(pattern):
             pattern_volumes.extend(current_notes.get_volume())
         else:
             notes.append(N(i))
-            pattern_intervals.append(1 / 8)
+            pattern_intervals.append(0)
             pattern_durations.append(1 / 8)
             pattern_volumes.append(100)
 
