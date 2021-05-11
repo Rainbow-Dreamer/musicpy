@@ -2,9 +2,9 @@
 
 [English [中文](#中文版介绍)]
 
-**Have you ever thought about writing music with codes in very concise, human-readable syntax?**  
-**Musicpy is a python domain-specific language designed to write music in very handy syntax for musicians, and musicpy can do way more than just writing music, this package can use music theory logic to write music and analyze music, and you can design algorithms to explore the possbilities of music using musicpy.**  
-**Musicpy is easy to learn and write, easy to read and is a fully computerized music theory system.**
+### Have you ever thought about writing music with codes in very concise, human-readable syntax?
+### Musicpy is a python domain-specific language designed to write music in very handy syntax for musicians, and musicpy can do way more than just writing music, this package can use music theory logic to write music and analyze music, and you can design algorithms to explore the possbilities of music using musicpy.
+### Musicpy is easy to learn and write, easy to read and is a fully computerized music theory system.
 
 I've been developing many python modules and packages on my own in spare time. These python modules and packages are mainly for mathematics, statistics, games and music.
 
