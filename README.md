@@ -77,7 +77,7 @@ I'm working on musicpy continuously and updating musicpy very frequently, more a
 
 Thank you for your support~
 
-### Contact:
+### Contact
 
 qq: 2180502841  
 Bilibili account: Rainbow_Dreamer  
@@ -158,7 +158,7 @@ musicpy我一直在持续更新中，不断地加入新的乐理功能，让musi
 
 感谢大家的支持~
 
-### 联系方式:
+### 联系方式
 
 qq: 2180502841  
 B站账号: Rainbow_Dreamer  
