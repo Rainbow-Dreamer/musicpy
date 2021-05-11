@@ -61,7 +61,7 @@ Because of that, `note`, `chord` and `scale` classes can all be arithmetically u
 
 Many experimental music styles nowadays, like serialism, aleatoric music, postmodern music (like minimalist music), are theoretically possible to make upon the arithmetically performable data structures provided in musicpy. Of course musicpy can be used to write any kind of classical music, jazz, or pop music.
 
-### [you can skip this part if you are not interested in the main reasons why I develop this language and keep working on this project](#summary)
+### [Reasons Why I Develop This Language and Keep Working on This Project (feel free to skip this part if you are not interested)](#summary)
 There are two main reasons why I developed this language. First, compared to engineering files and midi files, simply storing unitized information such as notes, strength, and speed. If you can express a piece of music from the perspective of composition from the perspective of music theory, How it is achieved is more meaningful. Moreover, as long as it is not modernist atonal music, most of the music is extremely regular in music theory, which can be greatly simplified by abstracting these rules into logical sentences of music theory. (For example, a midi file with 1000 notes may actually be simplified to a few lines of code from the perspective of music theory). Second, this language was developed to allow the composition AI to compose music when it really understands music theory (rather than deep learning and feeding a lot of data). This language is also an interface. AI only needs to understand the grammar of music theory. Composing will have the same thinking as people. We can tell AI about the rules of music theory, what to do or not to do. These things can still be quantified, so musicpy can also be used as a music theory interface to communicate music between people and AI. Therefore, for example, if you want AI to learn a person’s composition style, you can also quantify the person’s style in music theory. Each style corresponds to some different music theory logic rules. These only need to be written to AI. Through musicpy, AI You can imitate that person's style. If it is AI's own original style, it is to look for possibilities in various complicated composition rules.
 
 I am thinking that without using deep learning and neural networks to directly teach AI music theory and someone’s stylized music theory rules, then AI may be able to do better than deep learning and big data training. Because big data training is just to imitate the data itself for AI, so that in fact, AI does not really understand what composition is and what music theory is like human beings, so I want to use musicpy to teach human's music theory to AI, so that AI could truly understands music theory. In this way, the composition will not be blunt, and there will be no sense of machine and randomness. So one of my original intentions for writing musicpy is to avoid too much deep learning. But I feel that it is really difficult to abstract the music theory rules of different musicians. I will work hard to write the qwq of this algorithm. In addition, the musician himself can tell the AI how he likes to write in music theory (that is, his own unique music theory preference rules) , Then AI will imitate it well, because AI did understand music theory at that time, it is impossible to have a sense of machine and randomness in composition. At this time, what AI thinks in his mind is exactly the same as what he thinks in the mind of musicians.
@@ -77,12 +77,10 @@ I'm working on musicpy continuously and updating musicpy very frequently, more a
 
 Thank you for your support~
 
-Contact:
+### Contact:
 
-qq: 2180502841
-
-Bilibili account: Rainbow_Dreamer
-
+qq: 2180502841  
+Bilibili account: Rainbow_Dreamer  
 email: 2180502841@qq.com
 
 ## 中文版介绍
@@ -145,7 +143,7 @@ musicpy作曲示例实际演示以及 musicpy实验作曲日常：[BV18z4y1r7Pk]
 
 现代音乐领域的很多实验性质的音乐，比如序列主义，偶然音乐，后现代主义音乐（比如极简主义音乐），理论上全部都可以在这门语言的纯数字化的数据结构的基础上进行严格的创作。即使不提实验性质的音乐，这门语言也可以写任何的古典音乐，爵士音乐，流行音乐。
 
-### [如果你对于我开发musicpy的初衷不感兴趣的话可以跳过这部分内容](#总结)
+### [我开发musicpy的初衷(如果你对于不感兴趣的话可以跳过这部分内容)](#总结)
 我开发这个语言主要的初衷有两点，第一，比起工程文件和 midi 文件单纯存储音符，力度，速度等单位化的信息，如果能够按照乐理上的角度来表示一段音乐从作曲上的角度是如何实现的，那就更加有表示的意义了。而且只要不是现代主义无调性音乐，大部分的音乐都是极其具有乐理上的规律性的，这些规律抽象成乐理逻辑语句可以大大地精简化。（比如一个 midi 文件 1000 个音符，实际上按照乐理角度可能可以简化到几句代码）。第二，开发这个语言是为了让作曲 AI 能够在真正懂得乐理的情况下来作曲（而不是深度学习，喂大量的数据），这个语言也算是一个接口，AI 只要把乐理的语法搞懂了，那作曲就会拥有和人一样的思维。我们可以把乐理上的规则，做什么好不做什么好告诉 AI，这些东西还是可以量化的，所以这个乐理库也可以作为一个乐理接口，沟通人和 AI 之间的音乐。因此，比如想让 AI 学习某个人的作曲风格，那么在乐理上面也同样可以量化这个人的风格，每种风格对应着一些不同的乐理逻辑规则，这些只要写给 AI，经过我这个库，AI 就可以实现模仿那个人的风格了。如果是 AI 自己原创风格，那就是从各种复杂的作曲规则里寻找可能性。
 
 我在想不用深度学习，神经网络这些东西，直接教给 AI 乐理和某个人的风格化的乐理规则，那么 AI 或许可以做的比深度学习大数据训练出来的更好。因为大数据训练只是给 AI 模仿数据本身而已，这样其实 AI 并没有真正地和人类自己一样理解作曲是什么，乐理是什么，所以我才想通过这个库实现把人的乐理同样教给 AI，让 AI 真正意义上地理解乐理，这样的话，作曲起来就不会生硬了，没有机器和随机的感觉了。所以我写这个库的初衷之一就是避开深度学习那一套。但是感觉抽象出不同音乐人的乐理规则确实很有难度，我会加油写好这个算法的qwq 另外其实也可以音乐人自己告诉 AI 他自己乐理上喜欢怎么写（也就是自己独特的乐理偏好规则），那么 AI 就会模仿的很到位，因为 AI 那时候确实懂得乐理了，作曲不可能会有机器感和随机感，此时 AI 脑子里想的就和音乐人脑子里想的是完全一样的东西。
@@ -160,10 +158,8 @@ musicpy我一直在持续更新中，不断地加入新的乐理功能，让musi
 
 感谢大家的支持~
 
-联系方式:
+### 联系方式:
 
-qq: 2180502841
-
-B站账号: Rainbow_Dreamer
-
+qq: 2180502841  
+B站账号: Rainbow_Dreamer  
 邮箱: 2180502841@qq.com
