@@ -2802,17 +2802,11 @@ class drum:
     def __init__(self,
                  pattern='',
                  mapping=drum_mapping,
-                 durations=1 / 8,
-                 intervals=1 / 8,
-                 volumes=100,
                  name=None,
                  notes=None,
                  i=1):
         self.pattern = pattern
         self.mapping = mapping
-        self.intervals = intervals
-        self.durations = durations
-        self.volumes = volumes
         self.name = name
         self.notes = self.translate(self.pattern,
                                     self.mapping) if not notes else notes
@@ -2983,9 +2977,9 @@ class drum:
                 pattern_durations.append(1 / 8)
                 pattern_volumes.append(100)
 
-        intervals = pattern_intervals if pattern_intervals else self.intervals
-        durations = pattern_durations if pattern_durations else self.durations
-        volumes = pattern_volumes if pattern_volumes else self.volumes
+        intervals = pattern_intervals
+        durations = pattern_durations
+        volumes = pattern_volumes
         result = chord(notes) % (durations, intervals, volumes)
         return result
 

@@ -3178,9 +3178,9 @@ def translate(pattern):
             pattern_durations.append(1 / 8)
             pattern_volumes.append(100)
 
-    intervals = pattern_intervals if pattern_intervals else self.intervals
-    durations = pattern_durations if pattern_durations else self.durations
-    volumes = pattern_volumes if pattern_volumes else self.volumes
+    intervals = pattern_intervals
+    durations = pattern_durations
+    volumes = pattern_volumes
     result = chord(notes) % (durations, intervals, volumes)
     return result
 
