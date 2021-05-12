@@ -3191,6 +3191,7 @@ def chord_progression(chords,
                       volumes=None,
                       chords_interval=None,
                       merge=True):
+    chords = [(i, ) if type(i) == str else i for i in chords]
     chords_len = len(chords)
     if type(durations) != list:
         durations = [durations for i in range(chords_len)]
@@ -3200,7 +3201,7 @@ def chord_progression(chords,
         volumes = [volumes for i in range(chords_len)]
     if chords_interval and type(chords_interval) != list:
         chords_interval = [chords_interval for i in range(chords_len)]
-    chords = [C(i) if type(i) == str else i for i in chords]
+    chords = [C(*i) if type(i) == tuple else i for i in chords]
     for i in range(chords_len):
         chords[i] %= (durations[i], intervals[i],
                       volumes[i] if volumes else volumes)
