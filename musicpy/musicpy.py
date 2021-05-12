@@ -3013,6 +3013,8 @@ def build(*tracks_list, bpm=80, name=None):
         start_times = [i[2] for i in tracks_list]
         channels = None
         track_names = None
+        pan_msg = None
+        volume_msg = None
         tracks_len = len(tracks_list[0])
         if tracks_len >= 4:
             channels = [i[3] for i in tracks_list]
