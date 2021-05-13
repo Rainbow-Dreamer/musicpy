@@ -1483,7 +1483,10 @@ class chord:
         elif '[' in chord_type:
             chord_speciality = 'polychord'
         elif '/' in chord_type:
-            chord_speciality = 'inverted chord'
+            if 'top' in chord_type:
+                chord_speciality = 'chord voicings'
+            else:
+                chord_speciality = 'inverted chord'
         else:
             chord_speciality = 'root position'
         if chord_speciality == 'polychord':
