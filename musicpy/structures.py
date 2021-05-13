@@ -1586,7 +1586,20 @@ class scale:
             return self.names()
 
     def __contains__(self, note1):
-        return note1 in self.getScale()
+        names = self.names()
+        names = [standard_dict[i] if i in standard_dict else i for i in names]
+        if type(note1) == chord:
+            chord_names = note1.names()
+            chord_names = [
+                standard_dict[i] if i in standard_dict else i
+                for i in chord_names
+            ]
+            return all(i in names for i in chord_names)
+        else:
+            if type(note1) == note:
+                note1 = note1.name
+            return (standard_dict[note1]
+                    if note1 in standard_dict else note1) in self.getScale()
 
     def __getitem__(self, ind):
         if isinstance(ind, slice):
