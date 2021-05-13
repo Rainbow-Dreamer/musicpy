@@ -1598,8 +1598,10 @@ class scale:
         else:
             if type(note1) == note:
                 note1 = note1.name
+            else:
+                note1 = trans_note(note1).name
             return (standard_dict[note1]
-                    if note1 in standard_dict else note1) in self.getScale()
+                    if note1 in standard_dict else note1) in names
 
     def __getitem__(self, ind):
         if isinstance(ind, slice):
