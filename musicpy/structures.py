@@ -94,7 +94,7 @@ class note:
 
     def __call__(self, obj=''):
         import musicpy
-        return musicpy.C(self.name + obj)
+        return musicpy.C(self.name + obj, self.num)
 
 
 def toNote(notename, duration=0.25, volume=100, pitch=4):
