@@ -49,7 +49,7 @@ Demo of writing music with musicpy: [BV18z4y1r7Pk](https://www.bilibili.com/vide
 
 musicpy's data sturctures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
 
-you can click [here](https://www.jianguoyun.com/p/DWVsQSYQhPG0CBiz4-4D) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
+you can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
 
 `note`, `chord`, `scale` are the basic classes in musicpy that builds up the base of music programming, and there are way more musical classes in musicpy.
 
@@ -131,7 +131,7 @@ musicpy作曲示例实际演示以及 musicpy实验作曲日常：[BV18z4y1r7Pk]
 
 详细的 musicpy数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
 
-我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DWVsQSYQhPG0CBiz4-4D)下载，正在不断地更新中
+我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD)下载，正在不断地更新中
 
 在 musicpy里面，几个基本的类是 `note`（音符），`chord`（和弦）和 `scale`（音阶）。这几个类是构成音乐代码的基础。除此之外，musicpy还有很多其他的乐理类型。
 
