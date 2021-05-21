@@ -102,12 +102,12 @@ class Root2(Toplevel):
         self.search_inds = 0
         self.up_button = ttk.Button(
             self,
-            text='up',
+            text='Previous',
             command=lambda: self.change_search_inds(-1),
             width=8)
         self.down_button = ttk.Button(
             self,
-            text='down',
+            text='Next',
             command=lambda: self.change_search_inds(1),
             width=8)
         self.up_button.place(x=170, y=480)
