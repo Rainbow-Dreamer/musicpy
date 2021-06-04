@@ -252,7 +252,8 @@ def read(name,
          get_off_drums=True,
          to_piece=False,
          split_channels=False,
-         clear_empty_notes=False):
+         clear_empty_notes=False,
+         clear_pitch_bend=True):
     # read from a midi file and return a notes list
 
     # if mode is set to 'find', then will automatically search for
@@ -319,6 +320,9 @@ def read(name,
             for j in available_tracks
         ]
         if merge:
+            if clear_pitch_bend:
+                for each in all_tracks:
+                    each[1].clear_pitch_bend(value=0)
             start_time_ls = [j[2] for j in all_tracks]
             first_track_ind = start_time_ls.index(min(start_time_ls))
             all_tracks.insert(0, all_tracks.pop(first_track_ind))

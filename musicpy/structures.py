@@ -2480,12 +2480,15 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def merge(self, add_labels=True):
+    def merge(self, add_labels=True, clear_pitch_bend=True):
         temp = copy(self)
         if add_labels:
             temp.add_track_labels()
         all_tracks = temp.tracks
         length = len(all_tracks)
+        if clear_pitch_bend:
+            for each in all_tracks:
+                each.clear_pitch_bend(value=0)
         start_time_ls = temp.start_times
         sort_tracks_inds = [[i, start_time_ls[i]] for i in range(length)]
         sort_tracks_inds.sort(key=lambda s: s[1])
