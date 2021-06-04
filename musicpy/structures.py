@@ -558,6 +558,8 @@ class chord:
             for i in range(alist - 1):
                 temp //= self
             return temp
+        elif types in [str, note]:
+            return self.on(alist)
 
     def standardize(self):
         temp = self.only_notes()
@@ -722,6 +724,8 @@ class chord:
                 if types != note:
                     obj = trans_note(obj)
                 notenames = self.names()
+                if obj.name not in standard2:
+                    obj.name = standard_dict[obj.name]
                 if obj.name in notenames and obj.name != notenames[0]:
                     return self.inversion(notenames.index(obj.name))
             return self.on(obj)

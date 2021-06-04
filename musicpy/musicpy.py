@@ -1857,6 +1857,8 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
             elif part2[-1] == '!' and part2[:-1].isdigit():
                 return first_chord @ int(part2[:-1])
             elif part2 in standard:
+                if part2 not in standard2:
+                    part2 = standard_dict[part2]
                 first_chord_notenames = first_chord.names()
                 if part2 in first_chord_notenames and part2 != first_chord_notenames[
                         0]:
