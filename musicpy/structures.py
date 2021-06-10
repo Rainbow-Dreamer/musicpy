@@ -517,6 +517,8 @@ class chord:
                 return f'{hours} hours, {minutes} minutes, {seconds} seconds'
             else:
                 return f'{minutes} minutes, {seconds} seconds'
+        elif mode == 'number':
+            return result
 
     def count_bars(self, ind1, ind2, bars_range=True):
         bars_length = self[ind1:ind2].bars()
