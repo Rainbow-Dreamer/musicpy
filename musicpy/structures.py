@@ -425,13 +425,18 @@ class chord:
                 break
 
     def bars(self, start_time=0):
-        current_durations = self.get_duration()
-        current_intervals = self.interval
+        temp = self.only_notes()
+        current_durations = temp.get_duration()
+        if not current_durations:
+            return 0
+        current_intervals = temp.interval
         result = current_durations[0]
-        for i in range(1, len(self)):
-            if current_intervals[i - 1] != 0:
-                result += current_durations[i] - (current_durations[i - 1] -
-                                                  current_intervals[i - 1])
+        for i in range(1, len(temp)):
+            last_duration = current_durations[i-1]
+            current_duration = current_durations[i]
+            last_interval = current_intervals[i-1]
+            if last_interval + current_duration > last_duration:
+                result += (current_duration - (last_duration - last_interval))
         return start_time + result
 
     def firstnbars(self, n, start_time=0):
