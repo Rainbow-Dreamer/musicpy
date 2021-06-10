@@ -425,7 +425,14 @@ class chord:
                 break
 
     def bars(self, start_time=0):
-        return start_time + sum(self.interval)
+        current_durations = self.get_duration()
+        current_intervals = self.interval
+        result = current_durations[0]
+        for i in range(1, len(self)):
+            if current_intervals[i - 1] != 0:
+                result += current_durations[i] - (current_durations[i - 1] -
+                                                  current_intervals[i - 1])
+        return start_time + result
 
     def firstnbars(self, n, start_time=0):
         return self.cut(1, n + 1, start_time)
