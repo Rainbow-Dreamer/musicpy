@@ -2813,6 +2813,11 @@ class pan:
             result += f' starts at {self.start_time}'
         return result
 
+    def get_pan_value(self):
+        return -((50 - self.value_percentage) /
+                 50) if self.value_percentage <= 50 else (
+                     self.value_percentage - 50) / 50
+
     __repr__ = __str__
 
 
