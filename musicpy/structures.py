@@ -2967,7 +2967,28 @@ class drum:
                 repeat_times = int(i[i.index('(') + 1:-1])
                 repeat_part = i[:i.index('(')]
                 if repeat_part.startswith('$'):
-                    repeat_part = named_dict[repeat_part]
+                    if '[' in repeat_part and ']' in repeat_part:
+                        current_drum_settings = (
+                            repeat_part[repeat_part.index('[') +
+                                        1:repeat_part.index(']')].replace(
+                                            '|', ',')).split(';')
+                        repeat_part = repeat_part[:repeat_part.index('[')]
+                        if len(current_drum_settings
+                               ) >= 2 and current_drum_settings[1] == '.':
+                            current_drum_settings[1] = current_drum_settings[0]
+                        current_drum_settings = [
+                            eval(k) if k != 'n' else None
+                            for k in current_drum_settings
+                        ]
+                        current_drum_settings = [
+                            list(i) if type(i) == tuple else i
+                            for i in current_drum_settings
+                        ]
+
+                        repeat_part = named_dict[repeat_part].special_set(
+                            *current_drum_settings)
+                    else:
+                        repeat_part = named_dict[repeat_part]
                 else:
                     repeat_part = self.translate(repeat_part, mapping)
                 current_notes = repeat_part % repeat_times
@@ -2992,10 +3013,16 @@ class drum:
                 ]
                 config_part = i[:i.index('[')]
                 if config_part.startswith('$'):
-                    config_part = named_dict[config_part]
+                    if '(' in config_part and ')' in config_part:
+                        repeat_times = int(config_part[config_part.index('(') +
+                                                       1:-1])
+                        config_part = config_part[:config_part.index('(')]
+                        config_part = named_dict[config_part] % repeat_times
+                    else:
+                        config_part = named_dict[config_part]
                 else:
                     config_part = self.translate(config_part, mapping)
-                current_notes = config_part % current_drum_settings
+                current_notes = config_part.special_set(*current_drum_settings)
                 notes.extend(current_notes.notes)
                 pattern_intervals.extend(current_notes.interval)
                 pattern_durations.extend(current_notes.get_duration())
