@@ -213,7 +213,7 @@ def play(chord1,
          start_time=0,
          track_num=1,
          name='temp.mid',
-         modes='quick',
+         mode='quick',
          instrument=None,
          i=None,
          save_as_file=True,
@@ -226,7 +226,7 @@ def play(chord1,
                  channel=channel,
                  start_time=time1,
                  track_num=track_num,
-                 mode=modes,
+                 mode=mode,
                  instrument=instrument,
                  i=i,
                  save_as_file=save_as_file,
@@ -739,7 +739,7 @@ def write(name_of_midi,
         for g in range(track_num + 1):
             newmidi.add_track()
         newmidi.tracks[0] = MidiTrack([
-            MetaMessage('set_tempo', bpm=newtempo, time=0),
+            MetaMessage('set_tempo', tempo=newtempo, time=0),
             MetaMessage('end_of_track', time=0)
         ])
         if save_as_file:
