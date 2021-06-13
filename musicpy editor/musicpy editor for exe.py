@@ -269,7 +269,7 @@ class Root(Tk):
             with open('browse memory.txt', encoding='utf-8-sig') as f:
                 self.last_place = f.read()
         except:
-            self.last_place = "/"
+            self.last_place = "."
         self.bg_mode = config_dict['background_mode']
         self.turn_bg_mode = ttk.Button(
             self,
