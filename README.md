@@ -1,6 +1,7 @@
-# musicpy
+musicpy
+=======
 
-[English [中文](#中文版介绍)]
+[English [中文](#musicpy-1)]
 
 #### Have you ever thought about writing music with codes in a very concise, human-readable syntax?
 #### Musicpy is a python domain-specific music programming language designed to write music in a very handy syntax for musicians. It is easy to learn and write, easy to read, and incorporates a fully computerized music theory system.
@@ -12,8 +13,14 @@ Today I wanna introduce to you a python domain-specific language developed by me
 
 This python package allows you to express notes, rhythms, dynamics and other information of a piece of music with a very concise syntax. It can generate music through music theory logic and perform advanced music theory operations. You can easily output musicpy codes into midi file format, and you can also easily input any midi files and convert to musicpy's data structures to do a lot of advanced music theory operations. The syntax of musicpy is very concise and flexible, and it makes the codes written in musicpy very human-readable, and musicpy is fully compatible with python, which means you can write python codes to interact with musicpy. Because musicpy is involved with everything in music theory, I recommend using this package after learning at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are already familiar with music theory.
 
-### Installation：
+Documentation
+-------------
+See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) for complete and detailed tutorials about syntax, data structures and usages of musicpy.  
+This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly. The syntax and abilities of this wiki is synchronized with  
+the latest released version of musicpy.
 
+Installation
+-------------
 Make sure you have installed python (version >= 3.6) in your pc first.
 Execute the following command in the terminal to install musicpy by pip.
 
@@ -21,8 +28,8 @@ Execute the following command in the terminal to install musicpy by pip.
 pip install musicpy
 ```
 
-### Importing:
-
+Importing
+-------------
 Place this line at the start of the files you want to have it used in.
 
 ```python
@@ -61,7 +68,8 @@ Because of that, `note`, `chord` and `scale` classes can all be arithmetically u
 
 Many experimental music styles nowadays, like serialism, aleatoric music, postmodern music (like minimalist music), are theoretically possible to make upon the arithmetically performable data structures provided in musicpy. Of course musicpy can be used to write any kind of classical music, jazz, or pop music.
 
-### [Reasons Why I Develop This Language and Keep Working on This Project (feel free to skip this part if you are not interested)](#summary)
+[Reasons Why I Develop This Language and Keep Working on This Project (feel free to skip this part if you are not interested)](#summary)
+-------------
 There are two main reasons why I develop this language. Firstly, compared with project files and midi files that simply store unitary information such as notes, intensity, tempo, etc., it would be more meaningful to represent how a piece of music is realized from a compositional point of view, in terms of music theory. Most music is extremely regular in music theory, as long as it is not modernist atonal music, and these rules can be greatly simplified by abstracting them into logical statements of music theory. (A midi file with 1000 notes, for example, can actually be reduced to a few lines of code from a music theory perspective.) Secondly, the language was developed so that the composing AI could compose with a real understanding of music theory (instead of deep learning and feeding a lot of data), and the language is also an interface that allows the AI to compose with a human-like mind once it understands the syntax of music theory. We can tell AI the rules on music theory, what is good to do and what is not, and these things can still be quantified, so this music theory library can also be used as a music theory interface to communicate music between people and AI. So, for example, if you want AI to learn someone's composing style, you can also quantify that person's style in music theory, and each style corresponds to some different music theory logic rules, which can be written to AI, and after this library, AI can realize imitating that person's style. If it is the AI's own original style, then it is looking for possibilities from various complex composition rules.
 
 I am thinking that without deep learning, neural network, teaching AI music theory and someone's stylized music theory rules, AI may be able to do better than deep learning and big data training. That's why I want to use this library to teach AI human music theory, so that AI can understand music theory in a real sense, so that composing music won't be hard and random. That's why one of my original reasons for writing this library was to avoid the deep learning. But I feel that it is really difficult to abstract the rules of music theory of different musicians, I will cheer up to write this algorithm qwq In addition, in fact, the musician himself can tell the AI how he likes to write his own music theory (that is, his own unique rules of music theory preference), then the AI will imitate it very well, because the AI does know music theory at that time, composition is not likely to have a sense of machine and random. At this point, what the AI is thinking in its head is exactly the same as what the musician is thinking in his head.
@@ -70,20 +78,22 @@ The AI does not have to follow the logical rules of music theory that we give it
 
 So how do we teach music theory to an AI? In music, ignoring the category of modernist music for the moment, most music follows some very basic rules of music theory. The rules here refer to how to write music theory OK and how to write music theory mistakes. For example, when writing harmonies, four-part homophony is often to be avoided, especially when writing orchestral parts in arrangements. For example, when writing a chord, if the note inside the chord has a minor second (or minor ninth) it will sound more fighting. For example, when the AI decides to write a piece starting from A major, it should pick chords from the A major scale in steps, possibly off-key, add a few subordinate chords, and after writing the main song part, it may modulate by circle of fifths, or major/minor thirds, modulate in the parallel major and minor keys, etc. What we need to do is to tell the AI how to write the music correctly, and furthermore, how to write it in a way that sounds good, and that the AI will learn music theory well, will not forget it, and will be less likely to make mistakes, so they can write music that is truly their own. They will really know what music is and what music theory is. Because what the language of this library does is to abstract the music theory into logical statements, then every time we give "lessons" to the AI, we are expressing the person's own music theory concepts in the language of this library, and then writing them into the AI's database. In this way, the AI really learns the music theory. Composing AI in this way does not need deep learning, training set, or big data, compared to composing AI trained by deep learning, which actually does not know what music theory is and has no concept of music, but just draws from the huge amount of training data. Another point is that since things can be described by concrete logic, there is no need for machine learning. If it is text recognition, image classification, which is more difficult to use abstract logic to describe things, that is the place where deep learning is useful.
 
-### summary
+Summary
+-------------
 I started to develop musicpy in October 2019, and now I have a complete set of music theory logic syntax, and there are many composing and arranging functions as well as advanced music theory logic operations. For details, please refer to the wiki. I will continue to update musicpy's video tutorials and wiki.
 
 I'm working on musicpy continuously and updating musicpy very frequently, more and more musical features will be added, so that musicpy can do more with music.
 
 Thank you for your support~
 
-### Contact
-
+Contact
+-------------
 qq: 2180502841  
 Bilibili account: Rainbow_Dreamer  
 email: 2180502841@qq.com
 
-## 中文版介绍
+musicpy
+=======
 
 [[English](#musicpy) 中文]
 
@@ -97,7 +107,13 @@ email: 2180502841@qq.com
 这个库可以让你用非常简洁的语法，来表达一段音乐的音符，节奏，力度等等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作，可以简单地输出成 midi 文件的格式，也可以很简单地输入midi文件并且转换为musicpy的数据结构进行高级乐理的操作。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki
 ) 正在写的教程之后你应该很快就上手了。
 
-### 安装musicpy：
+使用说明文档
+-------------
+你可以看[musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，这里有完整并且详细的使用教程，你可以了解并且学习musicpy的语法，数据结构与具体使用。  
+这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。wiki里的语法与功能与最新版本的musicpy是同步的。
+
+安装musicpy
+-------------
 先确定电脑里有安装python，python版本最好是 >= 3.6，
 打开电脑的cmd然后输入
 
@@ -105,7 +121,8 @@ email: 2180502841@qq.com
 pip install musicpy
 ```
 
-### import这个库：
+import这个库
+-------------
 在你喜欢用的python的IDE里面输入
 
 ```python
@@ -143,7 +160,8 @@ musicpy作曲示例实际演示以及 musicpy实验作曲日常：[BV18z4y1r7Pk]
 
 现代音乐领域的很多实验性质的音乐，比如序列主义，偶然音乐，后现代主义音乐（比如极简主义音乐），理论上全部都可以在这门语言的纯数字化的数据结构的基础上进行严格的创作。即使不提实验性质的音乐，这门语言也可以写任何的古典音乐，爵士音乐，流行音乐。
 
-### [我开发musicpy的初衷(如果你不感兴趣的话可以跳过这部分内容)](#总结)
+[我开发musicpy的初衷(如果你不感兴趣的话可以跳过这部分内容)](#总结)
+-------------
 我开发这个语言主要的初衷有两点，第一，比起工程文件和 midi 文件单纯存储音符，力度，速度等单位化的信息，如果能够按照乐理上的角度来表示一段音乐从作曲上的角度是如何实现的，那就更加有表示的意义了。而且只要不是现代主义无调性音乐，大部分的音乐都是极其具有乐理上的规律性的，这些规律抽象成乐理逻辑语句可以大大地精简化。（比如一个 midi 文件 1000 个音符，实际上按照乐理角度可能可以简化到几句代码）。第二，开发这个语言是为了让作曲 AI 能够在真正懂得乐理的情况下来作曲（而不是深度学习，喂大量的数据），这个语言也算是一个接口，AI 只要把乐理的语法搞懂了，那作曲就会拥有和人一样的思维。我们可以把乐理上的规则，做什么好不做什么好告诉 AI，这些东西还是可以量化的，所以这个乐理库也可以作为一个乐理接口，沟通人和 AI 之间的音乐。因此，比如想让 AI 学习某个人的作曲风格，那么在乐理上面也同样可以量化这个人的风格，每种风格对应着一些不同的乐理逻辑规则，这些只要写给 AI，经过我这个库，AI 就可以实现模仿那个人的风格了。如果是 AI 自己原创风格，那就是从各种复杂的作曲规则里寻找可能性。
 
 我在想不用深度学习，神经网络这些东西，直接教给 AI 乐理和某个人的风格化的乐理规则，那么 AI 或许可以做的比深度学习大数据训练出来的更好。因为大数据训练只是给 AI 模仿数据本身而已，这样其实 AI 并没有真正地和人类自己一样理解作曲是什么，乐理是什么，所以我才想通过这个库实现把人的乐理同样教给 AI，让 AI 真正意义上地理解乐理，这样的话，作曲起来就不会生硬了，没有机器和随机的感觉了。所以我写这个库的初衷之一就是避开深度学习那一套。但是感觉抽象出不同音乐人的乐理规则确实很有难度，我会加油写好这个算法的qwq 另外其实也可以音乐人自己告诉 AI 他自己乐理上喜欢怎么写（也就是自己独特的乐理偏好规则），那么 AI 就会模仿的很到位，因为 AI 那时候确实懂得乐理了，作曲不可能会有机器感和随机感，此时 AI 脑子里想的就和音乐人脑子里想的是完全一样的东西。
@@ -152,14 +170,15 @@ AI 不必完全按照我们给他的乐理逻辑规则来创作，我们可以�
 
 那么怎么教给 AI 乐理呢？在音乐上面，暂时不考虑现代主义音乐的范畴，那么绝大部分的音乐都是遵循着一些很基本的乐理规则的。这里的规则指的是，怎么样写乐理上 OK，怎么样写犯了乐理上的错误。比如写和声的时候，四部同向往往是要避免的，尤其是在编曲时写管弦乐的部分。比如写一个和弦，如果和弦里面的音出现小二度（或者小九度）会听着比较打架。比如当 AI 自己决定一首曲子要从 A 大调开始写，那么他应该从 A 大调音阶里按照级数来选取和弦，有可能适当地离调一下，加几个副属和弦，写完主歌部分可能按照五度圈转个调，或者大三度/小三度转调，同主音大小调转调等等。我们需要做的事情就是告诉 AI 作曲的时候怎么写是正确的，更进一步的，怎么写听着比较有水平。AI 学好了乐理，不会忘记，也比较难犯错，因此可以写出真正属于 AI 自己的音乐。他们会真正懂得音乐是什么，乐理是什么。因为这个库的语言做的事情就是把乐理抽象成逻辑语句，那么我们每次给 AI “上课”，就是把人自己的乐理概念用这个库的语言来表述，然后写进 AI 的数据库里。通过这种方式，AI 真正的学习到了乐理。这样的作曲 AI，不需要深度学习，不需要训练集，不需要大数据，而与之相比，那些深度学习训练出来的作曲 AI 实际上根本就不懂乐理是什么，也没有音乐的概念，他们只是从海量的训练数据里面照葫芦画瓢而已。还有一个重点是，既然可以用具体的逻辑来描述的事情，其实是不需要机器学习的。如果是文字识别，图像分类这些比较难以用抽象的逻辑来描述的事情，那才是深度学习的用武之地。
 
-### 总结
+总结
+-------------
 我从2019年的10月份开始开发musicpy，到现在已经有一套完整的乐理逻辑语法了，还有很多作曲编曲以及高级乐理逻辑操作的功能，详细请看wiki。musicpy的视频教程和wiki我都会持续更新。
 musicpy我一直在持续更新中，不断地加入新的乐理功能，让musicpy在音乐上能做到的事情更多。
 
 感谢大家的支持~
 
-### 联系方式
-
+联系方式
+-------------
 qq: 2180502841  
 B站账号: Rainbow_Dreamer  
 邮箱: 2180502841@qq.com
