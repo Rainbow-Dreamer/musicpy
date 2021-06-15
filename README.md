@@ -16,8 +16,7 @@ This python package allows you to express notes, rhythms, dynamics and other inf
 Documentation
 -------------
 See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) for complete and detailed tutorials about syntax, data structures and usages of musicpy.  
-This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly. The syntax and abilities of this wiki is synchronized with  
-the latest released version of musicpy.
+This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly. The syntax and abilities of this wiki is synchronized with the latest released version of musicpy.
 
 Installation
 -------------
