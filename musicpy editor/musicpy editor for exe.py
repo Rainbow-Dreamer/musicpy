@@ -58,7 +58,7 @@ class Root(Tk):
     def __init__(self):
         super(Root, self).__init__()
         self.minsize(1200, 640)
-        self.title('musicpy 编辑器')
+        self.title('Musicpy 编辑器')
         self.background_color = config_dict['background_color']
         self.foreground_color = config_dict['foreground_color']
         self.active_background_color = config_dict['active_background_color']
@@ -74,14 +74,12 @@ class Root(Tk):
         style.configure('TButton',
                         background=self.background_color,
                         foreground=self.foreground_color,
-                        width=10,
                         borderwidth=0,
                         focusthickness=3,
                         focuscolor='none')
         style.configure('TCheckbutton',
                         background=self.background_color,
                         foreground=self.foreground_color,
-                        width=12,
                         borderwidth=0,
                         focusthickness=3,
                         focuscolor='none')
@@ -91,7 +89,6 @@ class Root(Tk):
         style.configure('New.TButton',
                         background=self.button_background_color,
                         foreground=self.foreground_color,
-                        width=10,
                         borderwidth=0,
                         focusthickness=3,
                         focuscolor='none')
@@ -321,9 +318,9 @@ class Root(Tk):
     def check_if_edited(self):
         current_text = self.inputs.get('1.0', 'end-1c')
         if current_text != self.last_save:
-            self.title('musicpy 编辑器 *')
+            self.title('Musicpy 编辑器 *')
         else:
-            self.title('musicpy 编辑器')
+            self.title('Musicpy 编辑器')
         self.after(100, self.check_if_edited)
 
     def close_window(self, e=None):
@@ -781,7 +778,7 @@ class Root(Tk):
                     f.write(self.last_save)
             else:
                 self.save()
-            self.title('musicpy 编辑器')
+            self.title('Musicpy 编辑器')
 
     def save(self, e=None):
         filename = filedialog.asksaveasfilename(initialdir=self.last_place,
