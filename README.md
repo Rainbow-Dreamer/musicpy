@@ -110,7 +110,8 @@ musicpy
 使用说明文档
 -------------
 你可以看[musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，这里有完整并且详细的使用教程，你可以了解并且学习musicpy的语法，数据结构与具体使用。  
-这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。wiki里的语法与功能与最新版本的musicpy是同步的。
+这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。  
+wiki里的语法与功能与最新版本的musicpy是同步的。
 
 安装musicpy
 -------------
