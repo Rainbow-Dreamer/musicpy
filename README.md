@@ -29,7 +29,7 @@ pip install musicpy
 ```
 In addition, I also wrote a musicpy editor for writing and compiling musicpy code more easily than regular python IDE with real-time automatic compilation and execution,
 there are some syntactic sugar and you can listen to the music generating from your musicpy code on the fly, it is more convenient and interactive.  
-I strongly recommend to use this musicpy editor to write musicpy code (English version will be released soon).  
+I strongly recommend to use this musicpy editor to write musicpy code.  
 You can download this musicpy editor at the [latest release](https://github.com/Rainbow-Dreamer/musicpy/releases/latest) of musicpy.  
 For more details including abilities and usages of this musicpy editor, see the [documentation](https://github.com/Rainbow-Dreamer/musicpy/wiki/How-to-use-musicpy#I-wrote-an-efficient-IDE-specifically-for-musicpy-for-everyone-to-use) here.
 
@@ -127,7 +127,7 @@ wiki里的语法与功能与最新版本的musicpy是同步的。
 pip install musicpy
 ```
 除此之外，我为musicpy专门写了一个编辑器，你可以在这里写musicpy的代码，这个编辑器可以实时自动编译和运行，比在常规的python IDE里更加方便。这个编辑器有一些语法糖，并且你可以实时地听到你写的musicpy代码生成的音乐，更加地方便与互动。  
-我强烈推荐大家使用这个musicpy编辑器来写musicpy代码(英文版即将推出)。  
+我强烈推荐大家使用这个musicpy编辑器来写musicpy代码。  
 你可以到muscipy的[最新发布版本](https://github.com/Rainbow-Dreamer/musicpy/releases/latest)下载这个musicpy编辑器。  
 如果想要了解这个musicpy编辑器的更多细节(包括功能和使用说明)，可以看这个[文档](https://github.com/Rainbow-Dreamer/musicpy/wiki/How-to-use-musicpy-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8musicpy#%E6%88%91%E4%B8%93%E9%97%A8%E4%B8%BAmusicpy%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E5%86%99%E4%BA%86%E4%B8%80%E4%B8%AA%E9%AB%98%E6%95%88%E7%9A%84IDE%E4%BE%9B%E5%A4%A7%E5%AE%B6%E4%BD%BF%E7%94%A8)。
 

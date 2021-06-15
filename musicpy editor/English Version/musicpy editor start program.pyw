@@ -21,11 +21,11 @@ from yapf.yapflib.yapf_api import FormatCode
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(abs_path)
-os.chdir('..')
+os.chdir('../..')
 sys.path.append('.')
 musicpy_vars = dir(__import__('musicpy'))
 exec("from musicpy import *")
-os.chdir('musicpy editor')
+os.chdir(abs_path)
 from io import BytesIO
 import pygame
 
