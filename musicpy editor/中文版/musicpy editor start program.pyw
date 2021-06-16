@@ -28,6 +28,7 @@ exec("from musicpy import *")
 os.chdir(abs_path)
 from io import BytesIO
 import pygame
+from ast import literal_eval
 
 pygame.mixer.init(44100, -16, 1, 1024)
 with open('config.py', encoding='utf-8-sig') as f:

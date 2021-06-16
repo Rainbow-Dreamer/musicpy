@@ -692,6 +692,15 @@ class Root(Tk):
         self.sort_mode = 1
         self.change_sort_button.place(x=150, y=330, width=180)
 
+        self.reload_button = ttk.Button(self.config_window,
+                                        text='Reload',
+                                        command=self.reload)
+        self.reload_button.place(x=230, y=510)
+
+    def reload(self):
+        self.destroy()
+        os.startfile(__file__)
+
     def change_sort(self):
         global all_config_options
         if self.sort_mode == 0:

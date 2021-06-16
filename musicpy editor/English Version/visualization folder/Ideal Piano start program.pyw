@@ -17,7 +17,7 @@ if 'visualization folder' not in abs_path:
 
 os.chdir(abs_path)
 sys.path.append(abs_path)
-os.chdir('../../musicpy')
+os.chdir('../../../musicpy')
 
 exec('from musicpy.musicpy import *', globals(), globals())
 os.chdir(abs_path)
