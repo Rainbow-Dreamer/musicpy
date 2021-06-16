@@ -665,7 +665,7 @@ class Root(Tk):
         self.change_sort_button.place(x=150, y=330, width=180)
 
         self.reload_button = ttk.Button(self.config_window,
-                                        text='Reload',
+                                        text='重新加载',
                                         command=self.reload)
         self.reload_button.place(x=230, y=510)
 
