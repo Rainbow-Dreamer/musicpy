@@ -911,20 +911,33 @@ class chord:
             temp += unit
         return temp
 
-    def reverse(self, end=None, start=0, cut=False):
+    def reverse(self, start=None, end=None, cut=False):
         temp = copy(self)
-        if end is None:
+        if start is None:
+            intervals = temp.interval
+            durations = temp.get_duration()
+            length = len(temp)
+            last_interval = intervals[-1]
+            temp.interval = [
+                durations[length - 1 - i] -
+                (durations[length - 2 - i] - intervals[length - 2 - i])
+                for i in range(length - 1)
+            ]
+            temp.interval.append(last_interval)
             temp.notes = temp.notes[::-1]
-            temp.interval = temp.interval[::-1]
+            return temp
         else:
-            if cut:
-                temp.notes = temp.notes[start:end][::-1]
-                temp.interval = temp.interval[start:end][::-1]
+            if end is None:
+                result = temp[:start] + temp[start:].reverse()
+                return result[start:] if cut else result
             else:
-                temp.notes = temp.notes[:start] + temp.notes[
-                    start:end][::-1] + temp.notes[end:]
-                temp.interval = temp.interval[:start] + temp.interval[
-                    start:end][::-1] + temp.interval[end:]
+                result = temp[:start] + temp[start:end].reverse() + temp[end:]
+                return result[start:end] if cut else result
+
+    def reverse_chord(self):
+        temp = copy(self)
+        temp.notes = temp.notes[::-1]
+        temp.interval = temp.interval[::-1]
         temp.interval.append(temp.interval.pop(0))
         return temp
 
