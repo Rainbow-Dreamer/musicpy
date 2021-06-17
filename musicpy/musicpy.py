@@ -499,6 +499,7 @@ def midi_to_chord(x,
             intervals.append(0)
         elif current_msg.type == 'pitchwheel':
             current_pitch_bend = pitch_bend(current_msg.pitch,
+                                            (current_time / interval_unit) + 1,
                                             channel=current_msg.channel,
                                             mode='values')
             if add_track_num and hasattr(current_msg, 'channel'):
