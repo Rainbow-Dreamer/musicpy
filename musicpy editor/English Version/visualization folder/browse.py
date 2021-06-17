@@ -39,4 +39,6 @@ def setup():
             all_track_notes &= (current_track,
                                 current[2] - first_track_start_time)
     all_track_notes.normalize_tempo(tempo, start_time=first_track_start_time)
+    if clear_all_pitch_bend:
+        all_track_notes = all_track_notes.only_notes()
     read_result = tempo, all_track_notes, first_track_start_time

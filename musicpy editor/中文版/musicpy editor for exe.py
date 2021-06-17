@@ -283,17 +283,17 @@ class Root(Tk):
                             activeforeground=self.active_foreground_color,
                             disabledforeground=self.disabled_foreground_color)
         self.inputs.bind("<Button-3>", lambda x: self.rightKey(x, self.inputs))
-        self.inputs.bind('<Control-f>', self.search_words)
-        self.inputs.bind('<Control-e>', self.stop_play_midi)
-        self.inputs.bind('<Control-d>', self.read_midi_file)
-        self.inputs.bind('<Control-w>', self.openfile)
-        self.inputs.bind('<Control-s>', self.save_current_file)
-        self.inputs.bind('<Control-q>', lambda e: self.close_window())
-        self.inputs.bind('<Control-r>', lambda e: self.runs())
-        self.inputs.bind('<Control-g>',
-                         lambda e: self.change_background_color_mode(True))
-        self.inputs.bind('<Control-b>', lambda e: self.config_options())
-        self.inputs.bind('<Control-t>', lambda e: self.visualize_config())
+        self.bind('<Control-f>', self.search_words)
+        self.bind('<Control-e>', self.stop_play_midi)
+        self.bind('<Control-d>', self.read_midi_file)
+        self.bind('<Control-w>', self.openfile)
+        self.bind('<Control-s>', self.save_current_file)
+        self.bind('<Control-q>', lambda e: self.close_window())
+        self.bind('<Control-r>', lambda e: self.runs())
+        self.bind('<Control-g>',
+                  lambda e: self.change_background_color_mode(True))
+        self.bind('<Control-b>', lambda e: self.config_options())
+        self.bind('<Control-t>', lambda e: self.visualize_config())
         self.inputs.bind('<Control-MouseWheel>',
                          lambda e: self.change_font_size(e))
         self.inputs.bind('<Alt-z>', lambda e: self.play_select_text(e))

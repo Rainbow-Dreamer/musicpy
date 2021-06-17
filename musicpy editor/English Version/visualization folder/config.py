@@ -299,7 +299,7 @@ note_place = [(-5.0, 50), (10, 102), (19.6, 50), (44.2, 50), (59.0, 102),
 load_sound = True
 
 # detect chord types when the current notes change
-show_chord = False
+show_chord = True
 show_notes = True
 
 # names of intervals
@@ -404,3 +404,4 @@ tracks_colors = [(0, 255, 0), (255, 255, 0), (0, 0, 255), (0, 255, 255),
 
 use_default_tracks_colors = True
 clear_pitch_bend = True
+clear_all_pitch_bend = True
