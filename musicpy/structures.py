@@ -415,11 +415,11 @@ class chord:
                 self.interval[i] = current.duration
                 break
 
-    def bars(self, start_time=0, mode=1):
+    def bars(self, start_time=0, mode=1, audio_mode=0):
         if mode == 0:
             max_length = sum(self.interval)
         elif mode == 1:
-            temp = self.only_notes()
+            temp = self.only_notes(audio_mode=audio_mode)
             current_durations = temp.get_duration()
             if not current_durations:
                 return 0
@@ -502,16 +502,22 @@ class chord:
                   ind2=None,
                   mode='seconds',
                   start_time=0,
-                  normalize_tempo=False):
+                  normalize_tempo=False,
+                  audio_mode=0):
         if normalize_tempo:
             temp = copy(self)
             temp.normalize_tempo(bpm)
-            return temp.eval_time(bpm, ind1, ind2, start_time)
+            return temp.eval_time(bpm,
+                                  ind1,
+                                  ind2,
+                                  start_time,
+                                  mode=mode,
+                                  audio_mode=audio_mode)
         if ind1 is None:
-            whole_bars = self.bars(start_time)
+            whole_bars = self.bars(start_time, audio_mode=audio_mode)
         else:
             if ind2 is None:
-                ind2 = self.bars(start_time)
+                ind2 = self.bars(start_time, audio_mode=audio_mode)
             whole_bars = ind2 - ind1
         result = (60 / bpm) * whole_bars * 4
         if mode == 'seconds':
@@ -1431,11 +1437,20 @@ class chord:
         result += pitch_bend_changes
         return result
 
-    def only_notes(self):
+    def only_notes(self, audio_mode=0):
         temp = copy(self)
         whole_notes = temp.notes
         intervals = temp.interval
-        inds = [i for i in range(len(temp)) if type(whole_notes[i]) == note]
+        if audio_mode == 0:
+            inds = [
+                i for i in range(len(temp)) if type(whole_notes[i]) == note
+            ]
+        else:
+            from pydub import AudioSegment
+            inds = [
+                i for i in range(len(temp))
+                if type(whole_notes[i]) in [note, AudioSegment]
+            ]
         temp.notes = [whole_notes[k] for k in inds]
         temp.interval = [intervals[k] for k in inds]
         return temp
@@ -2596,7 +2611,8 @@ class piece:
                   ind1=None,
                   ind2=None,
                   mode='seconds',
-                  normalize_tempo=False):
+                  normalize_tempo=False,
+                  audio_mode=0):
         temp_bpm, merged_result, start_time = self.merge()
         if bpm is not None:
             temp_bpm = bpm
@@ -2606,7 +2622,8 @@ class piece:
                                        ind1,
                                        ind2,
                                        mode,
-                                       start_time=start_time)
+                                       start_time=start_time,
+                                       audio_mode=audio_mode)
 
     def cut(self, ind1=1, ind2=None):
         temp_bpm, merged_result, start_time = self.merge()
@@ -2650,9 +2667,11 @@ class piece:
         start_time = min(self.start_times)
         return self.cut(1 + start_time, n + 1 + start_time)
 
-    def bars(self, mode=1):
+    def bars(self, mode=1, audio_mode=0):
         return max([
-            self.tracks[i].bars(start_time=self.start_times[i], mode=mode)
+            self.tracks[i].bars(start_time=self.start_times[i],
+                                mode=mode,
+                                audio_mode=audio_mode)
             for i in range(len(self.tracks))
         ])
 

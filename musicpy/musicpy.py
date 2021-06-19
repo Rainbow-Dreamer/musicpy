@@ -64,10 +64,20 @@ def totuple(x):
         return (x, )
 
 
-def getf(y):
+def get_freq(y, standard=440):
     if type(y) != note:
         y = toNote(y)
-    return 440 * math.exp((y.degree - 57) * math.log(2) / 12)
+    semitones = y.degree - 69
+    return standard * 2**(semitones / 12)
+
+
+def freq_to_note(freq, to_str=False, standard=440):
+    quotient = freq / standard
+    semitones = round(math.log(quotient, 2) * 12)
+    result = N('A4') + semitones
+    if to_str:
+        return str(result)
+    return result
 
 
 def secondary_dom(root, mode='major'):
