@@ -152,86 +152,89 @@ def read_notes(note_ls, rootpitch=4):
             notes_result.append(each)
         elif isinstance(each, tempo) or isinstance(each, pitch_bend):
             notes_result.append(each)
-        elif each.startswith('tempo'):
-            current = each.split(';')[1:]
-            if len(current) == 2:
-                current_bpm, current_start_time = current
-            else:
-                current_bpm, current_start_time = current[0], None
-            if current_bpm[0] == '[':
-                current_bpm = current_bpm[1:-1].split(':')
-                current_bpm = [float(i) for i in current_bpm]
-                current_start_time = current_start_time[1:-1].split(':')
-                current_start_time = [float(i) for i in current_start_time]
-            else:
-                current_bpm = float(current_bpm)
-                if current_start_time:
-                    current_start_time = float(current_start_time)
-            notes_result.append(tempo(current_bpm, current_start_time))
-            intervals.append(0)
-        elif each.startswith('pitch'):
-            current = each.split(';')[1:]
-            length = len(current)
-            mode = 'cents'
-            if length > 1:
-                current_time = current[1]
-                if current_time == 'None':
-                    current[1] = None
+        elif isinstance(each, str):
+            if each.startswith('tempo'):
+                current = each.split(';')[1:]
+                if len(current) == 2:
+                    current_bpm, current_start_time = current
                 else:
-                    current[1] = float(current_time)
-            if length > 2:
-                mode = current[2]
-                if mode != 'cents' and mode != 'semitones':
-                    current[0] = int(current[0])
+                    current_bpm, current_start_time = current[0], None
+                if current_bpm[0] == '[':
+                    current_bpm = current_bpm[1:-1].split(':')
+                    current_bpm = [float(i) for i in current_bpm]
+                    current_start_time = current_start_time[1:-1].split(':')
+                    current_start_time = [float(i) for i in current_start_time]
+                else:
+                    current_bpm = float(current_bpm)
+                    if current_start_time:
+                        current_start_time = float(current_start_time)
+                notes_result.append(tempo(current_bpm, current_start_time))
+                intervals.append(0)
+            elif each.startswith('pitch'):
+                current = each.split(';')[1:]
+                length = len(current)
+                mode = 'cents'
+                if length > 1:
+                    current_time = current[1]
+                    if current_time == 'None':
+                        current[1] = None
+                    else:
+                        current[1] = float(current_time)
+                if length > 2:
+                    mode = current[2]
+                    if mode != 'cents' and mode != 'semitones':
+                        current[0] = int(current[0])
+                    else:
+                        current[0] = float(current[0])
+                    if length > 3:
+                        current[3] = int(current[3])
+                    if length > 4:
+                        current[4] = int(current[3])
+                    del current[2]
                 else:
                     current[0] = float(current[0])
-                if length > 3:
-                    current[3] = int(current[3])
-                if length > 4:
-                    current[4] = int(current[3])
-                del current[2]
+                current_pitch_bend = pitch_bend(*current, mode=mode)
+                notes_result.append(current_pitch_bend)
+                intervals.append(0)
             else:
-                current[0] = float(current[0])
-            current_pitch_bend = pitch_bend(*current, mode=mode)
-            notes_result.append(current_pitch_bend)
-            intervals.append(0)
-        else:
-            if any(all(i in each for i in j) for j in ['()', '[]', '{}']):
-                split_symbol = '(' if '(' in each else (
-                    '[' if '[' in each else '{')
-                notename, info = each.split(split_symbol)
-                volume = 100
-                info = info[:-1].split(';')
-                info_len = len(info)
-                if info_len == 1:
-                    duration = info[0]
-                    if duration[0] == '.':
-                        duration = 1 / eval(duration[1:])
-                    else:
-                        duration = eval(duration)
-                else:
-                    if info_len == 2:
-                        duration, interval = info
-                    else:
-                        duration, interval, volume = info
-                        volume = eval(volume)
-                    if duration[0] == '.':
-                        duration = 1 / eval(duration[1:])
-                    else:
-                        duration = eval(duration)
-                    if interval[0] == '.':
-                        if len(interval) > 1 and interval[1].isdigit():
-                            interval = 1 / eval(interval[1:])
+                if any(all(i in each for i in j) for j in ['()', '[]', '{}']):
+                    split_symbol = '(' if '(' in each else (
+                        '[' if '[' in each else '{')
+                    notename, info = each.split(split_symbol)
+                    volume = 100
+                    info = info[:-1].split(';')
+                    info_len = len(info)
+                    if info_len == 1:
+                        duration = info[0]
+                        if duration[0] == '.':
+                            duration = 1 / eval(duration[1:])
                         else:
-                            interval = eval(
-                                interval.replace('.', str(duration)))
+                            duration = eval(duration)
                     else:
-                        interval = eval(interval)
-                    intervals.append(interval)
-                notes_result.append(
-                    toNote(notename, duration, volume, rootpitch))
-            else:
-                notes_result.append(toNote(each, pitch=rootpitch))
+                        if info_len == 2:
+                            duration, interval = info
+                        else:
+                            duration, interval, volume = info
+                            volume = eval(volume)
+                        if duration[0] == '.':
+                            duration = 1 / eval(duration[1:])
+                        else:
+                            duration = eval(duration)
+                        if interval[0] == '.':
+                            if len(interval) > 1 and interval[1].isdigit():
+                                interval = 1 / eval(interval[1:])
+                            else:
+                                interval = eval(
+                                    interval.replace('.', str(duration)))
+                        else:
+                            interval = eval(interval)
+                        intervals.append(interval)
+                    notes_result.append(
+                        toNote(notename, duration, volume, rootpitch))
+                else:
+                    notes_result.append(toNote(each, pitch=rootpitch))
+        else:
+            notes_result.append(each)
     if len(intervals) != len(notes_result):
         intervals = []
     return notes_result, intervals
