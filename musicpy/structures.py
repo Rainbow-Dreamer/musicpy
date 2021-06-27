@@ -1206,10 +1206,15 @@ class chord:
     def __setitem__(self, ind, value):
         if type(value) == str:
             value = toNote(value)
-        self.notes[ind - 1] = value
+        if ind > 0:
+            ind -= 1
+        self.notes[ind] = value
 
     def __delitem__(self, ind):
-        del self.notes[ind - 1]
+        if ind > 0:
+            ind -= 1
+        del self.notes[ind]
+        del self.interval[ind]
 
     def index(self, value):
         if type(value) == str:
@@ -1239,6 +1244,17 @@ class chord:
         if interval is None:
             interval = self.interval[-1]
         self.interval.append(interval)
+
+    def extend(self, values, intervals=None):
+        values = [
+            toNote(value) if type(value) == str else value for value in values
+        ]
+        if intervals is None:
+            intervals = self.interval[-1]
+        if type(intervals) == int:
+            intervals = [intervals for i in range(len(values))]
+        self.notes.extend(values)
+        self.interval.extend(intervals)
 
     def delete(self, ind):
         del self.notes[ind - 1]
@@ -1312,7 +1328,7 @@ class chord:
         if ind != 0:
             if ind > 0:
                 ind -= 1
-            return temp.notes[ind]
+        return temp.notes[ind]
 
     def __iter__(self):
         for i in self.notes:
@@ -1666,7 +1682,7 @@ class scale:
         if ind != 0:
             if ind > 0:
                 ind -= 1
-            return self.notes[ind]
+        return self.notes[ind]
 
     def __iter__(self):
         for i in self.notes:
@@ -2183,16 +2199,64 @@ class piece:
         return isinstance(other, piece) and self.__dict__ == other.__dict__
 
     def __getitem__(self, i):
-        if i == 0:
-            i = 1
-        return track(self.tracks[i - 1], self.instruments_list[i - 1],
-                     self.start_times[i - 1], self.tempo,
-                     self.track_names[i - 1] if self.track_names else None,
-                     self.channels[i - 1] if self.channels else None,
-                     self.name, self.pan[i - 1], self.volume[i - 1])
+        if i > 0:
+            i -= 1
+        return track(self.tracks[i], self.instruments_list[i],
+                     self.start_times[i], self.tempo,
+                     self.track_names[i] if self.track_names else None,
+                     self.channels[i] if self.channels else None, self.name,
+                     self.pan[i], self.volume[i])
+
+    def __delitem__(self, i):
+        if i > 0:
+            i -= 1
+        del self.tracks[i]
+        del self.instruments_list[i]
+        del self.start_times[i]
+        if self.track_names:
+            del self.track_names[i]
+        if self.channels:
+            del self.channels[i]
+        del self.pan[i]
+        del self.volume[i]
+        self.track_number -= 1
+
+    def __setitem__(self, i, new_track):
+        if i > 0:
+            i -= 1
+        self.tracks[i] = new_track.content
+        self.instruments_list[i] = new_track.instrument
+        self.start_times[i] = new_track.start_time
+        if self.track_names and new_track.track_name:
+            self.track_names[i] = new_track.track_name
+        if self.channels and new_track.channel is not None:
+            self.channels[i] = new_track.channel
+        self.pan[i] = new_track.pan
+        self.volume[i] = new_track.volume
 
     def __len__(self):
         return len(self.tracks)
+
+    def mute(self, i=None):
+        self.muted_msg = [each.get_volume() for each in self.tracks]
+        if i is None:
+            for k in range(len(self.tracks)):
+                self.tracks[k].setvolume(0)
+        else:
+            if i > 0:
+                i -= 1
+            self.tracks[i].setvolume(0)
+
+    def unmute(self, i=None):
+        if not hasattr(self, 'muted_msg'):
+            return
+        if i is None:
+            for k in range(len(self.tracks)):
+                self.tracks[k].setvolume(self.muted_msg[k])
+        else:
+            if i > 0:
+                i -= 1
+            self.tracks[i].setvolume(self.muted_msg[i])
 
     def append(self, new_track):
         if type(new_track) != track:
@@ -2951,6 +3015,28 @@ class track:
 
     def __neg__(self):
         return self.down()
+
+    def __add__(self, i):
+        if type(i) == int:
+            return self.up(i)
+        else:
+            temp = copy(self)
+            temp.content += i
+            return temp
+
+    def __sub__(self, i):
+        if type(i) == int:
+            return self.down(i)
+
+    def __or__(self, i):
+        temp = copy(self)
+        temp.content |= i
+        return temp
+
+    def __and__(self, i):
+        temp = copy(self)
+        temp.content &= i
+        return temp
 
     def set(self, duration=None, interval=None, volume=None, ind='all'):
         temp = copy(self)
