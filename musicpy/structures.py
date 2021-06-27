@@ -966,6 +966,8 @@ class chord:
 
     def add(self, note1=None, mode='tail', start=0, duration=0.25):
         temp = copy(self)
+        if len(note1) == 0:
+            return temp
         if type(note1) == int:
             temp += temp[1].up(note1)
             return temp
