@@ -1344,33 +1344,28 @@ class chord:
     def setvolume(self, vol, ind='all'):
         if type(ind) == int:
             each = self.notes[ind - 1]
-            if type(each) == note:
-                each.setvolume(vol)
+            each.setvolume(vol)
         elif type(ind) == list:
             if type(vol) == list:
                 for i in range(len(ind)):
                     current = ind[i]
                     each = self.notes[current - 1]
-                    if type(each) == note:
-                        each.setvolume(vol[i])
+                    each.setvolume(vol[i])
             elif type(vol) in [int, float]:
                 vol = int(vol)
                 for i in range(len(ind)):
                     current = ind[i]
                     each = self.notes[current - 1]
-                    if type(each) == note:
-                        each.setvolume(vol)
+                    each.setvolume(vol)
         elif ind == 'all':
             if type(vol) == list:
-                available_notes = [i for i in self.notes if type(i) == note]
                 for i in range(len(vol)):
-                    current = available_notes[i]
+                    current = self.notes[i]
                     current.setvolume(vol[i])
             elif type(vol) in [int, float]:
                 vol = int(vol)
                 for each in self.notes:
-                    if type(each) == note:
-                        each.setvolume(vol)
+                    each.setvolume(vol)
 
     def move(self, x):
         # x could be a dict or list of (index, move_steps)
@@ -2832,6 +2827,12 @@ class tempo:
             result += f' starts at {self.start_time}'
         return result
 
+    def setvolume(self, vol):
+        vol = int(vol)
+        if vol > 127:
+            vol = 127
+        self.volume = vol
+
     __repr__ = __str__
 
 
@@ -2868,6 +2869,12 @@ class pitch_bend:
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
         return result
+
+    def setvolume(self, vol):
+        vol = int(vol)
+        if vol > 127:
+            vol = 127
+        self.volume = vol
 
     __repr__ = __str__
 
