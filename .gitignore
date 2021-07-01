@@ -128,3 +128,6 @@ dmypy.json
 .pyre/
 test.py
 LICENSE.txt
+ffmpeg.exe
+ffplay.exe
+ffprobe.exe
