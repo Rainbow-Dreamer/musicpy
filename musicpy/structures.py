@@ -2158,13 +2158,21 @@ class piece:
                  pan=None,
                  volume=None):
         self.tracks = tracks
-        self.instruments_list = [
-            reverse_instruments[i] if isinstance(i, int) else i
-            for i in instruments_list
-        ]
-        self.instruments_numbers = [
-            instruments[j] for j in self.instruments_list
-        ]
+        if instruments_list is None:
+            self.instruments_list = [
+                reverse_instruments[1] for i in range(len(self.tracks))
+            ]
+            self.instruments_numbers = [
+                instruments[j] for j in self.instruments_list
+            ]
+        else:
+            self.instruments_list = [
+                reverse_instruments[i] if isinstance(i, int) else i
+                for i in instruments_list
+            ]
+            self.instruments_numbers = [
+                instruments[j] for j in self.instruments_list
+            ]
         self.tempo = tempo
         self.start_times = start_times
         self.track_number = len(tracks)
