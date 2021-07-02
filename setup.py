@@ -4,9 +4,7 @@ from os import path
 setup(
     name='musicpy',
     packages=find_packages(),
-    package_data={
-        'musicpy': ['./*']
-    },
+    package_data={'musicpy': ['./*']},
     version='2.65',
     license='AGPLv3',
     description=
