@@ -1,1 +1,2 @@
 include musicpy/*.txt
+include musicpy/simpleaudio/_simpleaudio.cp37-win32.pyd
