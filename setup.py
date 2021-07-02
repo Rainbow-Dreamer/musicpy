@@ -1,13 +1,13 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from os import path
 
 setup(
     name='musicpy',
-    packages=['musicpy'],
+    packages=find_packages(),
     package_data={
-        'musicpy': ['./*'],
+        'musicpy': ['./*']
     },
-    version='2.64',
+    version='2.65',
     license='AGPLv3',
     description=
     'Musicpy is a python domain-specific language designed to write music in very handy syntax for musicians. 这是一门可以让你用编程写音乐的python邻域特定语言，可以让你用简洁的语法通过乐理知识写出优美的音乐。',
@@ -15,7 +15,7 @@ setup(
     author_email='1036889495@qq.com',
     url='https://github.com/Rainbow-Dreamer/musicpy.git',
     download_url=
-    'https://github.com/Rainbow-Dreamer/musicpy/archive/2.64.tar.gz',
+    'https://github.com/Rainbow-Dreamer/musicpy/archive/2.65.tar.gz',
     keywords=[
         'music language', 'use codes to write music', 'music language for AI'
     ],
