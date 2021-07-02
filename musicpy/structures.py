@@ -2917,8 +2917,8 @@ class tuning:
 class track:
     def __init__(self,
                  content,
-                 instrument,
-                 start_time,
+                 instrument=1,
+                 start_time=0,
                  tempo=None,
                  track_name=None,
                  channel=None,

@@ -935,6 +935,15 @@ def detect_in_scale(x,
             ]
             if len(major_or_minor_inds) > 1:
                 results.insert(1, results.pop(major_or_minor_inds[1]))
+            else:
+                if len(major_or_minor_inds) > 0:
+                    first_major_minor_ind = major_or_minor_inds[0]
+                    if results[first_major_minor_ind].mode == 'major':
+                        results.insert(first_major_minor_ind + 1,
+                                       results[first_major_minor_ind] - 3)
+                    elif results[first_major_minor_ind].mode == 'minor':
+                        results.insert(first_major_minor_ind + 1,
+                                       results[first_major_minor_ind] + 3)
 
     results = results[:most_like_num]
     if get_scales:
@@ -3231,3 +3240,54 @@ def chord_progression(chords,
         return result
     else:
         return chords
+
+
+def find_chords_for_melody(melody,
+                           mode=None,
+                           num=3,
+                           chord_num=8,
+                           get_pattern=False,
+                           chord_length=None,
+                           down_octave=1):
+    if type(melody) in [str, list]:
+        melody = chord(melody)
+    possible_scales = detect_in_scale(melody, num, get_scales=True)
+    if not possible_scales:
+        return 'cannot find a scale suitable for this melody'
+    current_scale = possible_scales[0]
+    if current_scale.mode != 'major' and current_scale.mode in modern_modes:
+        current_scale = current_scale.inversion(
+            8 - modern_modes.index(current_scale.mode))
+    chordtypes = list(chordTypes.dic.keys())
+    result = []
+    if get_pattern:
+        choose_patterns = [
+            '6451', '1645', '6415', '1564', '4565', '4563', '6545', '6543',
+            '4536', '6251'
+        ]
+        roots = [
+            current_scale[i]
+            for i in [int(k) for k in random.choice(choose_patterns)]
+        ]
+        length = len(roots)
+        counter = 0
+    for i in range(chord_num):
+        if not get_pattern:
+            current_root = random.choice(current_scale.notes[:6])
+        else:
+            current_root = roots[counter]
+            counter += 1
+            if counter >= length:
+                counter = 0
+        current_chord_type = random.choice(chordtypes)[0]
+        current_chord = chd(current_root, current_chord_type)
+        while current_chord not in current_scale or current_chord_type == '5' or current_chord in result or (
+                chord_length is not None
+                and len(current_chord) < chord_length):
+            current_chord_type = random.choice(chordtypes)[0]
+            current_chord = chd(current_root, current_chord_type)
+        result.append(current_chord)
+    if chord_length is not None:
+        result = [each[:chord_length + 1] for each in result]
+    result = [each - octave * down_octave for each in result]
+    return result
