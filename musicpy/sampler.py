@@ -985,6 +985,8 @@ def audio(obj, sampler, channel_num=1):
         channel_num -= 1
     if type(obj) == note:
         obj = chord([obj])
+    elif type(obj) == track:
+        obj = build(obj, bpm=obj.tempo, name=obj.name)
     result = sampler.export(obj, action='get', channel_num=channel_num)
     return result
 
