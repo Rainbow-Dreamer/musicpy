@@ -1,5 +1,7 @@
 import sys
 import os
+import threading
+from ast import literal_eval
 
 sys.path.append('musicpy')
 from musicpy import *
@@ -106,6 +108,11 @@ default_notedict = {
     'C8': 'C8'
 }
 
+pygame.quit()
+pygame.init()
+pygame.mixer.init(44100, -16, 2, 4096)
+pygame.mixer.set_num_channels(1000)
+
 
 class sampler:
     def __init__(self, num=1, name=None, bpm=120):
@@ -118,11 +125,14 @@ class sampler:
         self.channel_dict = []
         self.name = name
         self.bpm = bpm
-        self.current_playing = False
-        self.piece_playing = False
+        self.current_playing = []
+        self.piece_playing = []
         self.export_fadeout_use_ratio = True
         self.export_audio_fadeout_time_ratio = 2
         self.export_audio_fadeout_time = 500
+        self.play_audio_fadeout_time_ratio = 2
+        self.play_audio_fadeout_time = 800
+        self.play_fadeout_use_ratio = True
         for i in range(self.channel_num):
             current_channel_name = f'Channel {i+1}'
             self.channel_names.append(current_channel_name)
@@ -178,12 +188,16 @@ class sampler:
     def __delitem__(self, i):
         self.delete_channel(i)
 
-    def load(self, current_ind, path):
-        current_ind -= 1
+    def load(self, current_ind, path=None, esi=None, ess=None):
+        if current_ind > 0:
+            current_ind -= 1
+        if esi is not None and ess is not None:
+            self.load_esi_file(current_ind, esi, ess)
+            return
         sound_path = path
         notedict = self.channel_dict[current_ind]
         note_sounds = load(notedict, sound_path)
-        note_sounds_path = load_sounds(note_sounds)
+        note_sounds_path = load_sounds(notedict, sound_path)
         self.channel_sound_modules[current_ind] = note_sounds
         self.channel_note_sounds_path[current_ind] = note_sounds_path
         self.channel_sound_modules_name[current_ind] = sound_path
@@ -234,8 +248,7 @@ class sampler:
             current_bpm = self.bpm if bpm is None else bpm
             for each in current_chord:
                 if type(each) == AudioSegment:
-                    each.duration = self.real_time_to_bar(
-                        len(each), current_bpm)
+                    each.duration = real_time_to_bar(len(each), current_bpm)
                     each.volume = 127
             apply_fadeout_obj = self.apply_fadeout(current_chord, current_bpm)
             whole_duration = apply_fadeout_obj.eval_time(
@@ -272,7 +285,7 @@ class sampler:
                 each_channel = each_channel.only_notes(audio_mode=1)
                 for each in each_channel:
                     if type(each) == AudioSegment:
-                        each.duration = self.real_time_to_bar(
+                        each.duration = real_time_to_bar(
                             len(each), current_bpm)
                         each.volume = 127
                 current_chord.tracks[i] = each_channel
@@ -335,7 +348,7 @@ class sampler:
                     if self.export_fadeout_use_ratio:
                         current_fadeout_time = each.duration * self.export_audio_fadeout_time_ratio
                     else:
-                        current_fadeout_time = self.real_time_to_bar(
+                        current_fadeout_time = real_time_to_bar(
                             self.export_audio_fadeout_time, bpm)
                     each.duration += current_fadeout_time
             return temp
@@ -547,11 +560,11 @@ class sampler:
         pygame.mixer.stop()
         if self.current_playing:
             for each in self.current_playing:
-                self.after_cancel(each)
+                each.cancel()
             self.current_playing.clear()
         if self.piece_playing:
             for each in self.piece_playing:
-                self.after_cancel(each)
+                each.cancel()
             self.piece_playing.clear()
         try:
             simpleaudio.stop_all()
@@ -561,6 +574,184 @@ class sampler:
             pygame.mixer.music.stop()
         except:
             pass
+
+    def load_esi_file(self, channel_num, file_path, split_file_path):
+        abs_path = os.getcwd()
+        with open(split_file_path, 'r', encoding='utf-8-sig') as f:
+            unzip = f.read()
+        unzip_ind, filenames = literal_eval(unzip)
+        sound_files = []
+        channel_settings = None
+        with open(file_path, 'rb') as file:
+            for each in range(len(filenames)):
+                current_filename = filenames[each]
+                current_length = unzip_ind[each]
+                current = file.read(current_length)
+                if current_filename[-4:] != '.txt':
+                    sound_files.append(current)
+                else:
+                    channel_settings = current.decode('utf-8-sig').replace(
+                        '\r', '')
+        filenames = [i for i in filenames if i[-4:] != '.txt']
+        sound_files_pygame = []
+        for each in sound_files:
+            with open('temp', 'wb') as f:
+                f.write(each)
+            sound_files_pygame.append(pygame.mixer.Sound('temp'))
+        os.remove('temp')
+        sound_files_audio = [
+            AudioSegment.from_file(
+                BytesIO(sound_files[i]),
+                format=filenames[i][filenames[i].rfind('.') + 1:])
+            for i in range(len(sound_files))
+        ]
+        self.channel_dict[channel_num] = copy(default_notedict)
+        if channel_settings is not None:
+            self.load_channel_settings(text=channel_settings)
+        current_dict = self.channel_dict[channel_num]
+        filenames = [i[:i.rfind('.')] for i in filenames]
+        result_pygame = {
+            filenames[i]: sound_files_pygame[i]
+            for i in range(len(sound_files))
+        }
+        result_audio = {
+            filenames[i]: sound_files_audio[i]
+            for i in range(len(sound_files))
+        }
+        note_sounds = {
+            i: (result_pygame[current_dict[i]]
+                if current_dict[i] in result_pygame else None)
+            for i in current_dict
+        }
+        self.channel_sound_modules[channel_num] = note_sounds
+
+        self.channel_sound_audiosegments[channel_num] = {
+            i: (result_audio[current_dict[i]]
+                if current_dict[i] in result_audio else None)
+            for i in current_dict
+        }
+        #self.channel_note_sounds_path[channel_num] = load_sounds(current_dict, path)
+
+    def reload_channel_sounds(self, current_ind):
+        try:
+            sound_path = self.channel_sound_modules_name[current_ind]
+            notedict = self.channel_dict[current_ind]
+            note_sounds = load(notedict, sound_path)
+            note_sounds_path = load_sounds(notedict, sound_path)
+            self.channel_sound_modules[current_ind] = note_sounds
+            self.channel_sound_audiosegments[current_ind] = load_audiosegments(
+                notedict, sound_path)
+            self.channel_note_sounds_path[current_ind] = note_sounds_path
+        except Exception as e:
+            print(str(e))
+
+    def play_note_func(self, name, duration, volume, channel=0):
+        note_sounds_path = self.channel_note_sounds_path[channel]
+        note_sounds = self.channel_sound_modules[channel]
+        if name in note_sounds:
+            current_sound = note_sounds[name]
+            if current_sound:
+                #current_sound = pygame.mixer.Sound(note_sounds_path[name])
+                duration_time = bar_to_real_time(duration, self.bpm, 1)
+                current_sound.play()
+                current_fadeout_time = int(
+                    duration_time * self.play_audio_fadeout_time_ratio
+                ) if self.play_fadeout_use_ratio else int(
+                    self.play_audio_fadeout_time)
+                current_id = threading.Timer(
+                    duration_time / 1000,
+                    lambda: current_sound.fadeout(current_fadeout_time)
+                    if current_fadeout_time != 0 else current_sound.stop())
+                current_id.start()
+                self.current_playing.append(current_id)
+
+    def play(self, current_chord, channel_num=1, bpm=None):
+        if not self.channel_sound_modules:
+            return
+        self.stop_playing()
+        if channel_num > 0:
+            channel_num -= 1
+        current_channel_num = channel_num
+        current_bpm = self.bpm if bpm is None else bpm
+        self.play_musicpy_sounds(current_chord, current_channel_num,
+                                 current_bpm)
+
+    def play_musicpy_sounds(self,
+                            current_chord,
+                            current_channel_num=None,
+                            bpm=None):
+        if type(current_chord) == note:
+            has_reverse = check_reverse(current_chord)
+            has_offset = check_offset(current_chord)
+            current_chord = chord([current_chord])
+            if has_reverse:
+                current_chord.reverse_audio = True
+            if has_offset:
+                current_chord.offset = has_offset
+        elif type(current_chord) == list and all(
+                type(i) == chord for i in current_chord):
+            current_chord = concat(current_chord, mode='|')
+        if type(current_chord) == chord:
+            if check_special(current_chord):
+                self.export_audio_file(action='play',
+                                       channel_num=current_channel_num)
+            else:
+                self.play_channel(current_chord, current_channel_num, bpm)
+        elif type(current_chord) == track:
+            has_reverse = check_reverse(current_chord)
+            has_offset = check_offset(current_chord)
+            current_chord = build(current_chord,
+                                  bpm=current_chord.tempo
+                                  if current_chord.tempo is not None else bpm,
+                                  name=current_chord.name)
+            if has_reverse:
+                current_chord.reverse_audio = True
+            if has_offset:
+                current_chord.offset = has_offset
+        if type(current_chord) == piece:
+            if check_special(current_chord):
+                self.export_audio_file(action='play')
+                return
+            current_tracks = current_chord.tracks
+            current_channel_nums = current_chord.channels if current_chord.channels else [
+                i for i in range(len(current_chord))
+            ]
+            bpm = current_chord.tempo
+            current_start_times = current_chord.start_times
+            for each in range(len(current_chord)):
+                current_id = threading.Timer(
+                    bar_to_real_time(current_start_times[each], bpm, 1) / 1000,
+                    lambda each=each, bpm=bpm: self.play_channel(
+                        current_tracks[each], current_channel_nums[each], bpm))
+                current_id.start()
+                self.piece_playing.append(current_id)
+
+    def play_channel(self, current_chord, current_channel_num=0, bpm=None):
+        if not self.channel_sound_modules[current_channel_num]:
+            return
+        current_chord = current_chord.only_notes()
+        current_intervals = current_chord.interval
+        current_durations = current_chord.get_duration()
+        current_volumes = current_chord.get_volume()
+        current_time = 0
+        for i in range(len(current_chord)):
+            each = current_chord.notes[i]
+            if i == 0:
+                self.play_note_func(f'{standardize_note(each.name)}{each.num}',
+                                    current_durations[i], current_volumes[i],
+                                    current_channel_num)
+            else:
+                duration = current_durations[i]
+                volume = current_volumes[i]
+                current_time += bar_to_real_time(current_intervals[i - 1], bpm,
+                                                 1)
+                current_id = threading.Timer(
+                    current_time / 1000,
+                    lambda each=each, duration=duration, volume=volume: self.
+                    play_note_func(f'{standardize_note(each.name)}{each.num}',
+                                   duration, volume, current_channel_num))
+                self.current_playing.append(current_id)
+                current_id.start()
 
 
 class pitch:
@@ -775,8 +966,17 @@ def load_audiosegments(current_dict, current_sound_path):
     return current_sounds
 
 
-def load_sounds(dic):
-    wavedict = {i: (dic[i].get_raw() if dic[i] else None) for i in dic}
+def load_sounds(dic, current_path):
+    files = os.listdir(current_path)
+    current_sound_filenames = [i[:i.rfind('.')] for i in files]
+    filenames_only = [i[:i.rfind('.')] for i in files]
+    current_path += '/'
+    wavedict = {}
+    for i in dic:
+        try:
+            wavedict[i] = current_path + files[filenames_only.index(dic[i])]
+        except:
+            wavedict[i] = None
     return wavedict
 
 
@@ -1007,3 +1207,46 @@ def audio_chord(audio_list, interval=0, duration=1 / 4, volume=127):
         result.notes[i].duration = durations[i]
         result.notes[i].volume = volumes[i]
     return result
+
+
+def make_esi(file_path, name='untitled'):
+    abs_path = os.getcwd()
+    filenames = os.listdir(file_path)
+    if not filenames:
+        print('There are no sound files to make ESI files')
+        return
+    length_list = []
+    with open(f'{name}.esi', 'wb') as file:
+        os.chdir(file_path)
+        for t in filenames:
+            with open(t, 'rb') as f:
+                each = f.read()
+                length_list.append(len(each))
+                file.write(each)
+    os.chdir(abs_path)
+    with open(f'{name}.ess', 'w', encoding='utf-8-sig') as f:
+        f.write(
+            str(length_list) + ',' +
+            str([os.path.basename(i) for i in filenames]))
+    print(
+        f'Successfully made ESI file and ESS file: {name}.esi and {name}.ess')
+
+
+def unzip_esi(file_path, split_file_path, folder_name=None):
+    with open(split_file_path, 'r', encoding='utf-8-sig') as f:
+        unzip = f.read()
+    unzip_ind, filenames = literal_eval(unzip)
+    if folder_name is None:
+        folder_name = os.path.basename(file_path)
+        folder_name = folder_name[:folder_name.rfind('.')]
+    if folder_name not in os.listdir():
+        os.mkdir(folder_name)
+    with open(file_path, 'rb') as file:
+        os.chdir(folder_name)
+        for each in range(len(filenames)):
+            current_filename = filenames[each]
+            print(f'Currently unzip file {current_filename}')
+            current_length = unzip_ind[each]
+            with open(current_filename, 'wb') as f:
+                f.write(file.read(current_length))
+    print(f'Unzip {os.path.basename(file_path)} successfully')
