@@ -195,7 +195,10 @@ class sampler:
                mode='wav',
                action='export',
                filename='Untitled.wav',
-               channel_num=0):
+               channel_num=1,
+               bpm=None):
+        if channel_num > 0:
+            channel_num -= 1
         if not self.channel_sound_modules:
             if action == 'export':
                 print(
@@ -228,7 +231,7 @@ class sampler:
 
         if types == 'chord':
             current_channel_num = result[2]
-            current_bpm = self.bpm
+            current_bpm = self.bpm if bpm is None else bpm
             for each in current_chord:
                 if type(each) == AudioSegment:
                     each.duration = self.real_time_to_bar(
@@ -392,6 +395,8 @@ class sampler:
                 if each_name not in current_sounds:
                     each_name = str(~each)
                 current_sound = current_sounds[each_name]
+                if current_sound is None:
+                    continue
                 current_max_time = min(len(current_sound),
                                        duration + current_fadeout_time)
                 current_max_fadeout_time = min(len(current_sound),
@@ -975,7 +980,9 @@ def get_wave(sound, mode='sine', bpm=120, volume=None):
     return temp
 
 
-def audio(obj, sampler, channel_num=0):
+def audio(obj, sampler, channel_num=1):
+    if channel_num > 0:
+        channel_num -= 1
     if type(obj) == note:
         obj = chord([obj])
     result = sampler.export(obj, action='get', channel_num=channel_num)
