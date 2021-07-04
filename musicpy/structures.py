@@ -965,6 +965,8 @@ class chord:
         return [INTERVAL[x % octave][0] for x in result]
 
     def add(self, note1=None, mode='tail', start=0, duration=0.25):
+        if len(self) == 0:
+            return note1
         temp = copy(self)
         if len(note1) == 0:
             return temp
