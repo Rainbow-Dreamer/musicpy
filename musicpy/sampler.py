@@ -697,8 +697,7 @@ class sampler:
             current_chord = concat(current_chord, mode='|')
         if type(current_chord) == chord:
             if check_special(current_chord):
-                self.export_audio_file(action='play',
-                                       channel_num=current_channel_num)
+                self.export(action='play', channel_num=current_channel_num)
             else:
                 self.play_channel(current_chord, current_channel_num, bpm)
         elif type(current_chord) == track:
@@ -714,7 +713,7 @@ class sampler:
                 current_chord.offset = has_offset
         if type(current_chord) == piece:
             if check_special(current_chord):
-                self.export_audio_file(action='play')
+                self.export(action='play')
                 return
             current_tracks = current_chord.tracks
             current_channel_nums = current_chord.channels if current_chord.channels else [
