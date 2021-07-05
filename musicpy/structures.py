@@ -1545,54 +1545,128 @@ class chord:
 
             count_length += current_interval
 
-    def info(self, **detect_args):
-        import musicpy
-        chord_type = self.detect(**detect_args)
-        if 'sort as' in chord_type:
-            chord_speciality = 'chord voicings'
-        elif '[' in chord_type:
-            chord_speciality = 'polychord'
-        elif '/' in chord_type:
-            if 'top' in chord_type:
+    def get_chord_speciality(self, chord_type):
+        if '/' in chord_type:
+            has_split = True
+            if chord_type[0] == '[':
+                chord_speciality = 'polychord'
+            elif 'top' in chord_type:
                 chord_speciality = 'chord voicings'
             else:
                 chord_speciality = 'inverted chord'
+        elif 'sort as' in chord_type:
+            chord_speciality = 'chord voicings'
         else:
-            chord_speciality = 'root position'
-        if chord_speciality == 'polychord':
-            root_note = self[1].name
-            chord_types_root = chord_type
-        else:
-            chord_types_root = chord_type.split('/')[0].split(' ')[0]
-            for each in self.names():
-                each_standard = f"{each[0].upper()}{''.join(each[1:])}"
-                if each_standard in chord_types_root:
-                    root_note = each
-                    break
-                elif each_standard in standard_dict and standard_dict[
-                        each_standard] in chord_types_root:
-                    root_note = each
-                    break
+            alter_notes = chord_type.split(' ')
+            if len(alter_notes) > 1 and alter_notes[1][0] in ['#', 'b']:
+                chord_speciality = 'altered chord'
+            else:
+                chord_speciality = 'root position'
+        return chord_speciality
 
-            if chord_speciality == 'inverted chord':
+    def info(self, alter_notes_show_degree=True, **detect_args):
+        import musicpy
+        chord_type = self.detect(
+            alter_notes_show_degree=alter_notes_show_degree, **detect_args)
+        original_chord_type = copy(chord_type)
+        other_msg = ''
+        has_split = False
+        if '/' in chord_type:
+            has_split = True
+            if chord_type[0] == '[':
+                chord_speciality = 'polychord'
+            elif 'top' in chord_type:
+                chord_speciality = 'chord voicings'
+            else:
+                chord_speciality = 'inverted chord'
+        elif 'sort as' in chord_type:
+            chord_speciality = 'chord voicings'
+        else:
+            alter_notes = chord_type.split(' ')
+            if len(alter_notes) > 1 and alter_notes[1][0] in ['#', 'b']:
+                chord_speciality = 'altered chord'
+            else:
+                chord_speciality = 'root position'
+        if 'omit' in chord_type:
+            other_msg += ' (with omitted notes)'
+        if has_split:
+            inversion_split = chord_type.split('/')
+            first_part = inversion_split[0]
+            if first_part[0] == '[':
+                current_type = first_part[1:-1].split(' ')
+            else:
+                current_type = first_part.split(' ')
+            current_type = [i for i in current_type if i]
+            if len(current_type) > 1 and current_type[1][0] in ['#', 'b']:
+                other_msg += ' (with altered notes)'
+                chord_types_root = ','.join(current_type)
+                if len(inversion_split) > 1:
+                    chord_type = '/'.join(
+                        [chord_types_root, inversion_split[1]])
+            else:
+                chord_types_root = current_type[0]
+        else:
+            chord_types_root = chord_type.split(' ')[0]
+        for each in self.names():
+            each_standard = f"{each[0].upper()}{''.join(each[1:])}"
+            if each_standard in chord_types_root:
+                root_note = each
+                break
+            elif each_standard in standard_dict and standard_dict[
+                    each_standard] in chord_types_root:
+                root_note = each
+                break
+        if has_split:
+            try:
                 inversion_msg = musicpy.inversion_from(
                     musicpy.C(chord_type),
                     musicpy.C(chord_types_root),
                     num=True)
-                inversion_num = int(inversion_msg.split(' ')[0])
-                inversion_num = str(inversion_num) + {
-                    1: "st",
-                    2: "nd",
-                    3: "rd"
-                }.get(
-                    inversion_num if inversion_num < 20 else inversion_num %
-                    10, "th")
-                inversion_msg = ' '.join([inversion_num] +
-                                         inversion_msg.split(' ')[1:])
+            except:
+                if 'omit' in first_part and first_part[0] != '[':
+                    temp_ind = first_part.index(' ')
+                    current_chord_types_root = first_part[:
+                                                          temp_ind] + ',' + first_part[
+                                                              temp_ind:]
+                else:
+                    current_chord_types_root = chord_types_root
+                inversion_msg = musicpy.inversion_from(
+                    self, musicpy.C(current_chord_types_root), num=True)
+                if 'could not get chord' in inversion_msg:
+                    if inversion_split[1][0] == '[':
+                        chord_type = original_chord_type
+                        chord_types_root = chord_type
+                        other_msg = ''
+                    else:
+                        other_msg += ' (with a non-chord bass note)'
+                        first_part = chord_type.split('/')[0]
+                        if first_part[0] == '[':
+                            first_part = first_part[1:-1]
+                        chord_speciality = self.get_chord_speciality(
+                            first_part)
+                else:
+                    inversion_num = int(inversion_msg.split(' ')[0])
+                    inversion_num = str(inversion_num) + {
+                        1: "st",
+                        2: "nd",
+                        3: "rd"
+                    }.get(
+                        inversion_num
+                        if inversion_num < 20 else inversion_num % 10, "th")
+                    inversion_msg = ' '.join([inversion_num] +
+                                             inversion_msg.split(' ')[1:])
+        else:
+            if chord_speciality == 'chord voicings':
+                current_type = chord_type.split(' ')
+                if len(current_type) > 1 and current_type[1][0] in ['#', 'b']:
+                    other_msg += ' (with altered notes)'
         root_note = f"{root_note[0].upper()}{''.join(root_note[1:])}"
+        if 'altered' in other_msg:
+            chord_types_root = chord_types_root.split(',')[0]
+            chord_type = original_chord_type
         return f"chord name: {chord_type}\nroot position: {chord_types_root}\nroot: {root_note}\nchord speciality: {chord_speciality}" + (
-            f"\ninversion: {inversion_msg}"
-            if chord_speciality == 'inverted chord' else '')
+            f"\ninversion: {inversion_msg}{other_msg}"
+            if chord_speciality == 'inverted chord' else other_msg)
 
 
 class scale:
