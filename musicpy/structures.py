@@ -903,7 +903,7 @@ class chord:
         if isinstance(obj, int) or isinstance(obj, list):
             return self.down(obj)
         if isinstance(obj, tuple):
-            return self.up(*obj)
+            return self.down(*obj)
         if not isinstance(obj, note):
             obj = toNote(obj)
         temp = copy(self)
@@ -1217,13 +1217,25 @@ class chord:
     def __setitem__(self, ind, value):
         if type(value) == str:
             value = toNote(value)
-        if ind > 0:
-            ind -= 1
+        if type(ind) != slice:
+            if ind > 0:
+                ind -= 1
+        else:
+            ind = slice(
+                ind.start - 1 if (ind.start and ind.start > 0) else ind.start,
+                ind.stop - 1 if (ind.stop and ind.stop > 0) else ind.stop)
         self.notes[ind] = value
+        if type(value) == chord:
+            self.interval[ind] = value.interval
 
     def __delitem__(self, ind):
-        if ind > 0:
-            ind -= 1
+        if type(ind) != slice:
+            if ind > 0:
+                ind -= 1
+        else:
+            ind = slice(
+                ind.start - 1 if (ind.start and ind.start > 0) else ind.start,
+                ind.stop - 1 if (ind.stop and ind.stop > 0) else ind.stop)
         del self.notes[ind]
         del self.interval[ind]
 
@@ -3165,6 +3177,15 @@ class track:
         temp = copy(self)
         temp.content = temp.content.set(duration, interval, volume, ind)
         return temp
+
+    def __getitem__(self, i):
+        return self.content[i]
+
+    def __setitem__(self, i, value):
+        self.content[i] = value
+
+    def __delitem__(self, i):
+        del self.content[i]
 
 
 class pan:
