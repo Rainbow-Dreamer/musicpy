@@ -3187,6 +3187,9 @@ class track:
     def __delitem__(self, i):
         del self.content[i]
 
+    def __len__(self):
+        return len(self.content)
+
 
 class pan:
     # this is a class to set the pan position for a midi channel,
