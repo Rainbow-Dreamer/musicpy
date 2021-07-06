@@ -828,8 +828,7 @@ def add_other_messages(MyMIDI, other_messages):
             MyMIDI.addCopyright(each.track, each.time, each.notice)
         elif current_type == key_signature:
             MyMIDI.addKeySignature(each.track, each.time, each.accidentals,
-                                   each.accidental_type, each.mode,
-                                   each.insertion_order)
+                                   each.accidental_type, each.mode)
         elif current_type == sysex:
             MyMIDI.addSysEx(each.track, each.time, each.manID, each.payload)
         elif current_type == text_event:
