@@ -250,7 +250,7 @@ class chord:
                  duration=None,
                  interval=None,
                  rootpitch=4,
-                 other_messages=None):
+                 other_messages=[]):
         self.other_messages = other_messages
         standardize_msg = False
         if type(notes) == str:
@@ -2273,7 +2273,7 @@ class piece:
                  name=None,
                  pan=None,
                  volume=None,
-                 other_messages=None):
+                 other_messages=[]):
         self.tracks = tracks
         if instruments_list is None:
             self.instruments_list = [
