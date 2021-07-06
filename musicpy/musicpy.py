@@ -595,11 +595,34 @@ def read_other_messages(message, other_messages, time):
                                 payload=struct.pack(f">{len(message.data)-1}B",
                                                     *(message.data[1:])),
                                 manID=message.data[0])
+    elif current_type == 'track_name':
+        current_message = track_name(time=time, name=message.name)
+    elif current_type == 'time_signature':
+        current_message = time_signature(
+            time=time,
+            numerator=message.numerator,
+            denominator=message.denominator,
+            clocks_per_tick=message.clocks_per_click,
+            notes_per_quarter=message.notated_32nd_notes_per_beat)
+    elif current_type == 'key_signature':
+        current_key = message.key
+        if current_key[-1] == 'm':
+            current_mode = MINOR
+            current_key = scale(current_key[:-1], 'minor')
+        else:
+            current_mode = MAJOR
+            current_key = scale(current_key, 'major')
+        current_accidental_type = SHARPS
+        current_accidentals = len(
+            [i for i in current_key.names() if i[-1] == '#'])
+        current_message = key_signature(
+            time=time,
+            accidentals=current_accidentals,
+            accidental_type=current_accidental_type,
+            mode=current_mode)
+    elif current_type == 'text':
+        current_message = text_event(time=time, text=message.text)
     else:
-        if current_type not in [
-                'note_on', 'note_off', 'end_of_track', 'track_name'
-        ]:
-            print(current_type)
         return
     other_messages.append(current_message)
 
@@ -842,6 +865,8 @@ def add_other_messages(MyMIDI, other_messages):
         elif current_type == program_change:
             MyMIDI.addChannelPressure(each.track, each.channel, each.time,
                                       each.program)
+        elif current_type == track_name:
+            MyMIDI.addTrackName(each.track, each.time, each.name)
 
 
 def detect_in_scale(x,

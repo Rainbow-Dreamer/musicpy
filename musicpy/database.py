@@ -119,6 +119,11 @@ reverse_standard_dict = {j: i for i, j in standard_dict.items()}
 
 standard_dict.update(standard_dict2)
 
+reverse_standard_dict.update({
+    i: reverse_standard_dict[standard_dict2[i]]
+    for i in standard_dict2 if standard_dict2[i] in reverse_standard_dict
+})
+
 scaleTypes = match({
     ('major', ): [2, 2, 1, 2, 2, 2, 1],
     ('minor', ): [2, 1, 2, 2, 1, 2, 2],

@@ -71,7 +71,10 @@ class note:
     def __invert__(self):
         name = self.name
         if name in standard_dict:
-            return note(standard_dict[name], self.num)
+            if '#' in name:
+                return note(reverse_standard_dict[name], self.num)
+            else:
+                return note(standard_dict[name], self.num)
         elif name in reverse_standard_dict:
             return note(reverse_standard_dict[name], self.num)
         else:
@@ -1681,6 +1684,17 @@ class chord:
         return f"chord name: {chord_type}\nroot position: {chord_types_root}\nroot: {root_note}\nchord speciality: {chord_speciality}" + (
             f"\ninversion: {inversion_msg}{other_msg}"
             if chord_speciality == 'inverted chord' else other_msg)
+
+    def same_accidentals(self, mode='#'):
+        temp = copy(self)
+        for each in temp.notes:
+            if mode == '#':
+                if len(each.name) > 1 and each.name[-1] == 'b':
+                    each.name = standard_dict[each.name]
+            elif mode == 'b':
+                if each.name[-1] == '#':
+                    each.name = reverse_standard_dict[each.name]
+        return temp
 
 
 class scale:
@@ -3476,6 +3490,8 @@ def event(mode='controller', *args, **kwargs):
         return channel_pressure(*args, **kwargs)
     elif mode == 'program change':
         return program_change(*args, **kwargs)
+    elif mode == 'track name':
+        return track_name(*args, **kwargs)
 
 
 class controller_event:
@@ -3505,14 +3521,12 @@ class key_signature:
                  time=1,
                  accidentals=None,
                  accidental_type=None,
-                 mode=None,
-                 insertion_order=0):
+                 mode=None):
         self.track = track
         self.time = (time - 1) * 4
         self.accidentals = accidentals
         self.accidental_type = accidental_type
         self.mode = mode
-        self.insertion_order = insertion_order
 
 
 class sysex:
@@ -3628,3 +3642,10 @@ class program_change:
         self.channel = channel
         self.time = (time - 1) * 4
         self.program = program
+
+
+class track_name:
+    def __init__(self, track=0, time=1, name=''):
+        self.track = track
+        self.time = (time - 1) * 4
+        self.name = name
