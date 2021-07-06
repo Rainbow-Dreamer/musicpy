@@ -242,7 +242,13 @@ def read_notes(note_ls, rootpitch=4):
 
 class chord:
     ''' This class can contain a chord with many notes played simultaneously and either has intervals, the default interval is 0.'''
-    def __init__(self, notes, duration=None, interval=None, rootpitch=4):
+    def __init__(self,
+                 notes,
+                 duration=None,
+                 interval=None,
+                 rootpitch=4,
+                 other_messages=None):
+        self.other_messages = other_messages
         standardize_msg = False
         if type(notes) == str:
             notes = notes.replace(' ', '').split(',')
@@ -2240,7 +2246,8 @@ class piece:
                  channels=None,
                  name=None,
                  pan=None,
-                 volume=None):
+                 volume=None,
+                 other_messages=None):
         self.tracks = tracks
         if instruments_list is None:
             self.instruments_list = [
@@ -2275,6 +2282,7 @@ class piece:
             self.volume = [[i] if type(i) != list else i for i in self.volume]
         else:
             self.volume = [[] for i in range(self.track_number)]
+        self.other_messages = other_messages
 
     def __repr__(self):
         return (
@@ -3438,3 +3446,185 @@ class drum:
 
     def info(self):
         return f"[drum] {self.name if self.name else ''}\ninstrument: {drum_set_dict[self.instrument] if self.instrument in drum_set_dict else 'unknown'}\n{', '.join([drum_types[k.degree] for k in self.notes])} with interval {self.notes.interval}"
+
+
+def event(mode='controller', *args, **kwargs):
+    # a general class of midi events (midi messages)
+    if mode == 'controller':
+        return controller_event(*args, **kwargs)
+    elif mode == 'copyright':
+        return copyright_event(*args, **kwargs)
+    elif mode == 'key signature':
+        return key_signature(*args, **kwargs)
+    elif mode == 'sysex':
+        return sysex(*args, **kwargs)
+    elif mode == 'text':
+        return text_event(*args, **kwargs)
+    elif mode == 'time signature':
+        return time_signature(*args, **kwargs)
+    elif mode == 'universal sysex':
+        return universal_sysex(*args, **kwargs)
+    elif mode == 'nrpn':
+        return rpn(*args, **kwargs, registered=False)
+    elif mode == 'rpn':
+        return rpn(*args, **kwargs, registered=True)
+    elif mode == 'tuning bank':
+        return tuning_bank(*args, **kwargs)
+    elif mode == 'tuning program':
+        return tuning_program(*args, **kwargs)
+    elif mode == 'channel pressure':
+        return channel_pressure(*args, **kwargs)
+    elif mode == 'program change':
+        return program_change(*args, **kwargs)
+
+
+class controller_event:
+    def __init__(self,
+                 track=0,
+                 channel=0,
+                 time=1,
+                 controller_number=None,
+                 parameter=None):
+        self.track = track
+        self.channel = channel
+        self.time = (time - 1) * 4
+        self.controller_number = controller_number
+        self.parameter = parameter
+
+
+class copyright_event:
+    def __init__(self, track=0, time=1, notice=None):
+        self.track = track
+        self.time = (time - 1) * 4
+        self.notice = notice
+
+
+class key_signature:
+    def __init__(self,
+                 track=0,
+                 time=1,
+                 accidentals=None,
+                 accidental_type=None,
+                 mode=None,
+                 insertion_order=0):
+        self.track = track
+        self.time = (time - 1) * 4
+        self.accidentals = accidentals
+        self.accidental_type = accidental_type
+        self.mode = mode
+        self.insertion_order = insertion_order
+
+
+class sysex:
+    def __init__(self, track=0, time=1, manID=None, payload=None):
+        self.track = track
+        self.time = (time - 1) * 4
+        self.manID = manID
+        self.payload = payload
+
+
+class text_event:
+    def __init__(self, track=0, time=1, text=''):
+        self.track = track
+        self.time = (time - 1) * 4
+        self.text = text
+
+
+class time_signature:
+    def __init__(self,
+                 track=0,
+                 time=1,
+                 numerator=None,
+                 denominator=None,
+                 clocks_per_tick=None,
+                 notes_per_quarter=8):
+        self.track = track
+        self.time = (time - 1) * 4
+        self.numerator = numerator
+        self.denominator = denominator
+        self.clocks_per_tick = clocks_per_tick
+        self.notes_per_quarter = notes_per_quarter
+
+
+class universal_sysex:
+    def __init__(self,
+                 track=0,
+                 time=1,
+                 code=None,
+                 subcode=None,
+                 payload=None,
+                 sysExChannel=127,
+                 realTime=False):
+        self.track = track
+        self.time = (time - 1) * 4
+        self.code = code
+        self.subcode = subcode
+        self.payload = payload
+        self.sysExChannel = sysExChannel
+        self.realTime = realTime
+
+
+class rpn:
+    def __init__(self,
+                 track=0,
+                 channel=0,
+                 time=1,
+                 controller_msb=None,
+                 controller_lsb=None,
+                 data_msb=None,
+                 data_lsb=None,
+                 time_order=False,
+                 registered=True):
+        self.track = track
+        self.channel = channel
+        self.time = (time - 1) * 4
+        self.controller_msb = controller_msb
+        self.controller_lsb = controller_lsb
+        self.data_msb = data_msb
+        self.data_lsb = data_lsb
+        self.time_order = time_order
+        self.registered = registered
+
+
+class tuning_bank:
+    def __init__(self,
+                 track=0,
+                 channel=0,
+                 time=1,
+                 bank=None,
+                 time_order=False):
+        self.track = track
+        self.channel = channel
+        self.time = (time - 1) * 4
+        self.bank = bank
+        self.time_order = time_order
+
+
+class tuning_program:
+    def __init__(self,
+                 track=0,
+                 channel=0,
+                 time=1,
+                 program=None,
+                 time_order=False):
+        self.track = track
+        self.channel = channel
+        self.time = (time - 1) * 4
+        self.program = program
+        self.time_order = time_order
+
+
+class channel_pressure:
+    def __init__(self, track=0, channel=0, time=1, pressure_value=None):
+        self.track = track
+        self.channel = channel
+        self.time = (time - 1) * 4
+        self.pressure_value = pressure_value
+
+
+class program_change:
+    def __init__(self, track=0, channel=0, time=1, program=0):
+        self.track = track
+        self.channel = channel
+        self.time = (time - 1) * 4
+        self.program = program

@@ -44,41 +44,6 @@ def direct_play(filename):
             pass
 
 
-def play(chord1,
-         tempo=80,
-         track=0,
-         channel=0,
-         start_time=0,
-         track_num=1,
-         name='temp.mid',
-         modes='quick',
-         instrument=None,
-         i=None,
-         save_as_file=True,
-         deinterleave=False):
-    file = write(name,
-                 chord1,
-                 tempo,
-                 track=0,
-                 channel=0,
-                 start_time=0,
-                 track_num=1,
-                 mode=modes,
-                 instrument=instrument,
-                 i=i,
-                 save_as_file=save_as_file,
-                 deinterleave=deinterleave)
-    if save_as_file:
-        result_file = name
-        pygame.mixer.music.load(result_file)
-        pygame.mixer.music.play()
-    else:
-        file.seek(0)
-        pygame.mixer.music.load(file)
-        file.close()
-        pygame.mixer.music.play()
-
-
 class Root(Tk):
     def __init__(self):
         super(Root, self).__init__()
