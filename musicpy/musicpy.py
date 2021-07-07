@@ -120,8 +120,8 @@ def getchord_by_interval(start,
     return chord(result, duration, interval)
 
 
-def inversion(chord1, num=1):
-    return chord1.inversion(num)
+def inversion(current_chord, num=1):
+    return current_chord.inversion(num)
 
 
 def getchord(start,
@@ -212,9 +212,9 @@ def concat(chordlist, mode='+', extra=None):
     return temp
 
 
-def play(chord1,
+def play(current_chord,
          bpm=80,
-         track=0,
+         track_ind=0,
          channel=0,
          start_time=0,
          track_num=1,
@@ -230,9 +230,9 @@ def play(chord1,
          eventtime_is_ticks=False,
          other_messages=None):
     file = write(name_of_midi=name,
-                 chord1=chord1,
+                 current_chord=current_chord,
                  bpm=bpm,
-                 track=track,
+                 track_ind=track_ind,
                  channel=channel,
                  start_time=start_time,
                  track_num=track_num,
@@ -282,17 +282,18 @@ def read(name,
     whole_tracks = x.tracks
     t = None
     changes_track = [
-        each for each in whole_tracks
-        if any(i.type == 'set_tempo' for i in each) and all(i.type != 'note_on'
-                                                            for i in each)
+        each for each in whole_tracks if all(i.type != 'note_on' for i in each)
     ]
     whole_bpm = 120
     if changes_track:
-        changes_track = changes_track[0]
-        changes = midi_to_chord(x,
-                                changes_track,
-                                add_track_num=split_channels,
-                                clear_empty_notes=clear_empty_notes)[0]
+        changes = [
+            midi_to_chord(x,
+                          each,
+                          add_track_num=split_channels,
+                          clear_empty_notes=clear_empty_notes,
+                          track_ind=0)[0] for each in changes_track
+        ]
+        changes = concat(changes)
         whole_bpm_list = [i.bpm for i in changes if type(i) == tempo]
         if whole_bpm_list:
             whole_bpm = whole_bpm_list[0]
@@ -319,14 +320,16 @@ def read(name,
             each for each in whole_tracks
             if any(each_msg.type == 'note_on' for each_msg in each)
         ]
+        for each in range(len(available_tracks)):
+            current_channel = [
+                i.channel for i in available_tracks[each]
+                if i.type == 'note_on'
+            ][0]
         if get_off_drums:
             available_tracks = [
-                each for each in available_tracks if not (any(
-                    hasattr(j, 'channel') and j.channel == 9
-                    for j in each) or any(
-                        hasattr(j, 'program') and 'drum' in
-                        reverse_instruments[j.program + 1].lower()
-                        for j in each))
+                each for each in available_tracks
+                if not any(j.type == 'note_on' and j.channel == 9
+                           for j in each)
             ]
         all_tracks = [
             midi_to_chord(x,
@@ -578,22 +581,28 @@ def midi_to_chord(x,
 def read_other_messages(message, other_messages, time, track_ind):
     current_type = message.type
     if current_type == 'control_change':
-        current_message = controller_event(channel=message.channel,
+        current_message = controller_event(track=track_ind,
+                                           channel=message.channel,
                                            time=time,
                                            controller_number=message.control,
                                            parameter=message.value)
     elif current_type == 'aftertouch':
-        current_message = channel_pressure(channel=message.channel,
+        current_message = channel_pressure(track=track_ind,
+                                           channel=message.channel,
                                            time=time,
                                            pressure_value=message.value)
     elif current_type == 'program_change':
-        current_message = program_change(channel=message.channel,
+        current_message = program_change(track=track_ind,
+                                         channel=message.channel,
                                          time=time,
                                          program=message.program)
     elif current_type == 'copyright':
-        current_message = copyright_event(time=time, notice=message.text)
+        current_message = copyright_event(track=track_ind,
+                                          time=time,
+                                          notice=message.text)
     elif current_type == 'sysex':
-        current_message = sysex(time=time,
+        current_message = sysex(track=track_ind,
+                                time=time,
                                 payload=struct.pack(f">{len(message.data)-1}B",
                                                     *(message.data[1:])),
                                 manID=message.data[0])
@@ -603,6 +612,7 @@ def read_other_messages(message, other_messages, time, track_ind):
                                      name=message.name)
     elif current_type == 'time_signature':
         current_message = time_signature(
+            track=track_ind,
             time=time,
             numerator=message.numerator,
             denominator=message.denominator,
@@ -620,21 +630,24 @@ def read_other_messages(message, other_messages, time, track_ind):
         current_accidentals = len(
             [i for i in current_key.names() if i[-1] == '#'])
         current_message = key_signature(
+            track=track_ind,
             time=time,
             accidentals=current_accidentals,
             accidental_type=current_accidental_type,
             mode=current_mode)
     elif current_type == 'text':
-        current_message = text_event(time=time, text=message.text)
+        current_message = text_event(track=track_ind,
+                                     time=time,
+                                     text=message.text)
     else:
         return
     other_messages.append(current_message)
 
 
 def write(name_of_midi,
-          chord1,
+          current_chord,
           bpm=80,
-          track=0,
+          track_ind=0,
           channel=0,
           start_time=0,
           track_num=1,
@@ -651,17 +664,18 @@ def write(name_of_midi,
           other_messages=None):
     if i is not None:
         instrument = i
-    if str(type(chord1)) == "<class 'musicpy.structures.track'>":
-        chord1 = build(chord1,
-                       bpm=chord1.tempo if chord1.tempo is not None else bpm,
-                       name=chord1.name)
-    elif isinstance(chord1, drum):
-        chord1 = P([chord1.notes], [chord1.instrument],
-                   bpm, [start_time],
-                   channels=[9])
-    if isinstance(chord1, piece):
+    if type(current_chord) == track:
+        current_chord = build(current_chord,
+                              bpm=current_chord.tempo
+                              if current_chord.tempo is not None else bpm,
+                              name=current_chord.name)
+    elif isinstance(current_chord, drum):
+        current_chord = P([current_chord.notes], [current_chord.instrument],
+                          bpm, [start_time],
+                          channels=[9])
+    if isinstance(current_chord, piece):
         track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
-        chord1.track_number, chord1.start_times, chord1.instruments_numbers, chord1.tempo, chord1.tracks, chord1.track_names, chord1.channels, chord1.pan, chord1.volume
+        current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.tempo, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
         instruments_numbers = [
             i if type(i) == int else instruments[i]
             for i in instruments_numbers
@@ -673,12 +687,12 @@ def write(name_of_midi,
                           file_format=file_format,
                           adjust_origin=adjust_origin,
                           eventtime_is_ticks=eventtime_is_ticks)
+        MyMIDI.addTempo(track_ind, 0, bpm)
         for i in range(track_number):
             if channels is not None:
                 current_channel = channels[i]
             else:
                 current_channel = i
-            MyMIDI.addTempo(track, 0, bpm)
             MyMIDI.addProgramChange(i, current_channel, 0,
                                     instruments_numbers[i] - 1)
             if track_names is not None:
@@ -692,6 +706,7 @@ def write(name_of_midi,
                                               each.value)
             current_volume_msg = volume_msg[i]
             if current_volume_msg:
+
                 for each in current_volume_msg:
                     MyMIDI.addControllerEvent(i, current_channel,
                                               (each.start_time - 1) * 4, 7,
@@ -711,18 +726,14 @@ def write(name_of_midi,
                                    current_note.volume)
                     current_start_time += content_intervals[j] * 4
                 elif current_type == tempo:
-                    if type(current_note.bpm) == list:
-                        for k in range(len(current_note.bpm)):
-                            MyMIDI.addTempo(
-                                0, (current_note.start_time[k] - 1) * 4,
-                                current_note.bpm[k])
-                    else:
-                        if current_note.start_time is not None:
-                            MyMIDI.addTempo(track,
+                    if current_note.start_time is not None:
+                        if current_note.start_time != 1:
+                            MyMIDI.addTempo(track_ind,
                                             (current_note.start_time - 1) * 4,
                                             current_note.bpm)
-                        else:
-                            MyMIDI.addTempo(track, current_start_time,
+                    else:
+                        if current_start_time != 0:
+                            MyMIDI.addTempo(track_ind, current_start_time,
                                             current_note.bpm)
                 elif current_type == pitch_bend:
                     if current_note.start_time is not None:
@@ -734,8 +745,8 @@ def write(name_of_midi,
                                               pitch_bend_time,
                                               current_note.value)
 
-        if chord1.other_messages:
-            add_other_messages(MyMIDI, chord1.other_messages)
+        if current_chord.other_messages:
+            add_other_messages(MyMIDI, current_chord.other_messages)
         elif other_messages:
             add_other_messages(MyMIDI, other_messages)
         if save_as_file:
@@ -748,9 +759,10 @@ def write(name_of_midi,
             MyMIDI.writeFile(current_io)
             return current_io
     else:
-        if isinstance(chord1, note):
-            chord1 = chord([chord1])
-        content = concat(chord1, '|') if isinstance(chord1, list) else chord1
+        if isinstance(current_chord, note):
+            current_chord = chord([current_chord])
+        content = concat(current_chord, '|') if isinstance(
+            current_chord, list) else current_chord
         MyMIDI = MIDIFile(track_num,
                           deinterleave=deinterleave,
                           ticks_per_quarternote=ticks_per_quarternote,
@@ -759,13 +771,13 @@ def write(name_of_midi,
                           adjust_origin=adjust_origin,
                           eventtime_is_ticks=eventtime_is_ticks)
         current_channel = channel
-        MyMIDI.addTempo(track, 0, bpm)
+        MyMIDI.addTempo(track_ind, 0, bpm)
         if instrument is None:
             instrument = 1
         if type(instrument) != int:
             instrument = instruments[instrument]
         instrument -= 1
-        MyMIDI.addProgramChange(track, current_channel, 0, instrument)
+        MyMIDI.addProgramChange(track_ind, current_channel, 0, instrument)
         content_notes = content.notes
         content_intervals = content.interval
         current_start_time = start_time * 4
@@ -774,34 +786,29 @@ def write(name_of_midi,
             current_note = content_notes[j]
             current_type = type(current_note)
             if current_type == note:
-                MyMIDI.addNote(track, current_channel, current_note.degree,
+                MyMIDI.addNote(track_ind, current_channel, current_note.degree,
                                current_start_time, current_note.duration * 4,
                                current_note.volume)
                 current_start_time += content_intervals[j] * 4
             elif current_type == tempo:
-                if type(current_note.bpm) == list:
-                    for k in range(len(current_note.bpm)):
-                        MyMIDI.addTempo(track,
-                                        (current_note.start_time[k] - 1) * 4,
-                                        current_note.bpm[k])
-                else:
-                    if current_note.start_time is not None:
-                        MyMIDI.addTempo(track,
+                if current_note.start_time is not None:
+                    if current_note.start_time != 1:
+                        MyMIDI.addTempo(track_ind,
                                         (current_note.start_time - 1) * 4,
                                         current_note.bpm)
-                    else:
-                        MyMIDI.addTempo(track, current_start_time,
+                else:
+                    if current_start_time != 0:
+                        MyMIDI.addTempo(track_ind, current_start_time,
                                         current_note.bpm)
             elif current_type == pitch_bend:
                 if current_note.start_time is not None:
                     pitch_bend_time = (current_note.start_time - 1) * 4
                 else:
                     pitch_bend_time = current_start_time
-                MyMIDI.addPitchWheelEvent(current_note.track, current_channel,
+                MyMIDI.addPitchWheelEvent(track_ind, current_channel,
                                           pitch_bend_time, current_note.value)
             elif current_type == tuning:
-                MyMIDI.changeNoteTuning(current_note.track,
-                                        current_note.tunings,
+                MyMIDI.changeNoteTuning(track_ind, current_note.tunings,
                                         current_note.sysExChannel,
                                         current_note.realTime,
                                         current_note.tuningProgam)
@@ -865,8 +872,8 @@ def add_other_messages(MyMIDI, other_messages):
             MyMIDI.addChannelPressure(each.track, each.channel, each.time,
                                       each.pressure_value)
         elif current_type == program_change:
-            MyMIDI.addChannelPressure(each.track, each.channel, each.time,
-                                      each.program)
+            MyMIDI.addProgramChange(each.track, each.channel, each.time,
+                                    each.program)
         elif current_type == track_name:
             MyMIDI.addTrackName(each.track, each.time, each.name)
 
@@ -1824,11 +1831,11 @@ def add_to_last_index(x, value, start=None, stop=None, step=1):
     return ind
 
 
-def modulation(chord1, old_scale, new_scale):
+def modulation(current_chord, old_scale, new_scale):
     # change notes (including both of melody and chords) in the given piece
     # of music from a given scale to another given scale, and return
     # the new changing piece of music.
-    return chord1.modulation(old_scale, new_scale)
+    return current_chord.modulation(old_scale, new_scale)
 
 
 def exp(form, obj_name='x', mode='tail'):

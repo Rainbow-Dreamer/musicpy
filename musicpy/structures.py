@@ -2713,6 +2713,24 @@ class piece:
     def add_volume(self, value, ind, start_time=1, mode='percentage'):
         self.volume[ind].append(volume(value, start_time, mode))
 
+    def clear_pan(self, ind='all'):
+        if ind == 'all':
+            for each in self.pan:
+                each.clear()
+        else:
+            if ind > 0:
+                ind -= 1
+            self.pan[ind].clear()
+
+    def clear_volume(self, ind='all'):
+        if ind == 'all':
+            for each in self.volume:
+                each.clear()
+        else:
+            if ind > 0:
+                ind -= 1
+            self.volume[ind].clear()
+
     def reassign_channels(self, start=0):
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
@@ -3495,7 +3513,6 @@ class drum:
 
 
 def event(mode='controller', *args, **kwargs):
-    # a general class of midi events (midi messages)
     if mode == 'controller':
         return controller_event(*args, **kwargs)
     elif mode == 'copyright':
