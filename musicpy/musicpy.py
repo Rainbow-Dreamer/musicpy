@@ -330,11 +330,11 @@ def read(name,
             ]
         all_tracks = [
             midi_to_chord(x,
-                          j,
+                          available_tracks[j],
                           whole_bpm,
                           add_track_num=split_channels,
-                          clear_empty_notes=clear_empty_notes)
-            for j in available_tracks
+                          clear_empty_notes=clear_empty_notes,
+                          track_ind=j) for j in range(len(available_tracks))
         ]
         if merge:
             if clear_pitch_bend:
@@ -455,7 +455,8 @@ def midi_to_chord(x,
                   t,
                   bpm=None,
                   add_track_num=False,
-                  clear_empty_notes=False):
+                  clear_empty_notes=False,
+                  track_ind=0):
     interval_unit = x.ticks_per_beat * 4
     intervals = []
     notelist = []
@@ -550,10 +551,11 @@ def midi_to_chord(x,
                 volume_list.append(current_volume_msg)
             else:
                 read_other_messages(current_msg, other_messages,
-                                    (current_time / interval_unit) + 1)
+                                    (current_time / interval_unit) + 1,
+                                    track_ind)
         else:
             read_other_messages(current_msg, other_messages,
-                                (current_time / interval_unit) + 1)
+                                (current_time / interval_unit) + 1, track_ind)
     result = chord(notelist, interval=intervals)
     if clear_empty_notes:
         result.interval = [
@@ -573,7 +575,7 @@ def midi_to_chord(x,
         return [result, start_time]
 
 
-def read_other_messages(message, other_messages, time):
+def read_other_messages(message, other_messages, time, track_ind):
     current_type = message.type
     if current_type == 'control_change':
         current_message = controller_event(channel=message.channel,
@@ -596,7 +598,9 @@ def read_other_messages(message, other_messages, time):
                                                     *(message.data[1:])),
                                 manID=message.data[0])
     elif current_type == 'track_name':
-        current_message = track_name(time=time, name=message.name)
+        current_message = track_name(track=track_ind,
+                                     time=time,
+                                     name=message.name)
     elif current_type == 'time_signature':
         current_message = time_signature(
             time=time,
@@ -818,7 +822,6 @@ def write(name_of_midi,
 
 
 def add_other_messages(MyMIDI, other_messages):
-    MyMIDI.addChannelPressure(0, 0, 0, 5)
     for each in other_messages:
         current_type = type(each)
         if current_type == controller_event:
