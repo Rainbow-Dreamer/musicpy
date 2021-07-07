@@ -2314,7 +2314,7 @@ class piece:
         return (
             f'[piece] {self.name if self.name else ""}\n'
         ) + f'BPM: {round(self.tempo, 3)}\n' + '\n'.join([
-            f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
+            f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] + " " if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(self.track_number)
         ])
 
@@ -3065,9 +3065,17 @@ class track:
             self.volume = []
 
     def __repr__(self):
+        msg = []
+        if self.channel is not None:
+            msg.append(f'{"channel " + str(self.channel)}')
+        if self.track_name:
+            msg.append(self.track_name)
+        msg = ' '.join(msg)
+        if msg:
+            msg += ' | '
         return (f'[track] {self.name if self.name is not None else ""}\n') + (
             f'BPM: {round(self.tempo, 3)}\n' if self.tempo is not None else ""
-        ) + f'{"channel " + str(self.channel) + "| " if self.channel is not None else ""}{self.track_name + "| " if self.track_name is not None else ""}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
+        ) + f'{msg}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
 
     def add_pan(self, value, start_time=1, mode='percentage'):
         self.pan.append(pan(value, start_time, mode))
