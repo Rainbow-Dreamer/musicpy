@@ -228,7 +228,8 @@ def play(current_chord,
          file_format=1,
          adjust_origin=False,
          eventtime_is_ticks=False,
-         other_messages=None):
+         other_messages=None,
+         ignore_other_messages=False):
     file = write(name_of_midi=name,
                  current_chord=current_chord,
                  bpm=bpm,
@@ -245,7 +246,8 @@ def play(current_chord,
                  file_format=file_format,
                  adjust_origin=adjust_origin,
                  eventtime_is_ticks=eventtime_is_ticks,
-                 other_messages=other_messages)
+                 other_messages=other_messages,
+                 ignore_other_messages=ignore_other_messages)
     if save_as_file:
         result_file = name
         pygame.mixer.music.load(result_file)
@@ -661,15 +663,24 @@ def write(name_of_midi,
           file_format=1,
           adjust_origin=False,
           eventtime_is_ticks=False,
-          other_messages=None):
+          other_messages=None,
+          ignore_other_messages=False):
     if i is not None:
         instrument = i
+    is_track_type = False
     if type(current_chord) == track:
+        is_track_type = True
+        if hasattr(current_chord, 'other_messages'):
+            other_messages = current_chord.other_messages
+        else:
+            other_messages = current_chord.content.other_messages
         current_chord = build(current_chord,
                               bpm=current_chord.tempo
                               if current_chord.tempo is not None else bpm,
                               name=current_chord.name)
     elif isinstance(current_chord, drum):
+        if hasattr(current_chord, 'other_messages'):
+            other_messages = current_chord.other_messages
         current_chord = P([current_chord.notes], [current_chord.instrument],
                           bpm, [start_time],
                           channels=[9])
@@ -745,10 +756,13 @@ def write(name_of_midi,
                                               pitch_bend_time,
                                               current_note.value)
 
-        if current_chord.other_messages:
-            add_other_messages(MyMIDI, current_chord.other_messages)
-        elif other_messages:
-            add_other_messages(MyMIDI, other_messages)
+        if not ignore_other_messages:
+            if current_chord.other_messages:
+                add_other_messages(MyMIDI, current_chord.other_messages,
+                                   'piece' if not is_track_type else 'track')
+            elif other_messages:
+                add_other_messages(MyMIDI, other_messages,
+                                   'piece' if not is_track_type else 'track')
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -813,10 +827,11 @@ def write(name_of_midi,
                                         current_note.realTime,
                                         current_note.tuningProgam)
 
-        if content.other_messages:
-            add_other_messages(MyMIDI, content.other_messages)
-        elif other_messages:
-            add_other_messages(MyMIDI, other_messages)
+        if not ignore_other_messages:
+            if content.other_messages:
+                add_other_messages(MyMIDI, content.other_messages, 'chord')
+            elif other_messages:
+                add_other_messages(MyMIDI, other_messages, 'chord')
         if save_as_file:
             with open(name_of_midi, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
@@ -828,54 +843,55 @@ def write(name_of_midi,
             return current_io
 
 
-def add_other_messages(MyMIDI, other_messages):
+def add_other_messages(MyMIDI, other_messages, write_type='piece'):
     for each in other_messages:
         current_type = type(each)
+        curernt_track = each.track if write_type == 'piece' else 0
         if current_type == controller_event:
-            MyMIDI.addControllerEvent(each.track, each.channel, each.time,
+            MyMIDI.addControllerEvent(curernt_track, each.channel, each.time,
                                       each.controller_number, each.parameter)
         elif current_type == copyright_event:
-            MyMIDI.addCopyright(each.track, each.time, each.notice)
+            MyMIDI.addCopyright(curernt_track, each.time, each.notice)
         elif current_type == key_signature:
-            MyMIDI.addKeySignature(each.track, each.time, each.accidentals,
+            MyMIDI.addKeySignature(curernt_track, each.time, each.accidentals,
                                    each.accidental_type, each.mode)
         elif current_type == sysex:
-            MyMIDI.addSysEx(each.track, each.time, each.manID, each.payload)
+            MyMIDI.addSysEx(curernt_track, each.time, each.manID, each.payload)
         elif current_type == text_event:
-            MyMIDI.addText(each.track, each.time, each.text)
+            MyMIDI.addText(curernt_track, each.time, each.text)
         elif current_type == time_signature:
-            MyMIDI.addTimeSignature(each.track, each.time, each.numerator,
+            MyMIDI.addTimeSignature(curernt_track, each.time, each.numerator,
                                     each.denominator, each.clocks_per_tick,
                                     each.notes_per_quarter)
         elif current_type == universal_sysex:
-            MyMIDI.addUniversalSysEx(each.track, each.time, each.code,
+            MyMIDI.addUniversalSysEx(curernt_track, each.time, each.code,
                                      each.subcode, each.payload,
                                      each.sysExChannel, each.realTime)
         elif current_type == rpn:
             if each.registered:
-                MyMIDI.makeRPNCall(each.track, each.channel, each.time,
+                MyMIDI.makeRPNCall(curernt_track, each.channel, each.time,
                                    each.controller_msb, each.controller_lsb,
                                    each.data_msb, each.data_lsb,
                                    each.time_order)
             else:
-                MyMIDI.makeNRPNCall(each.track, each.channel, each.time,
+                MyMIDI.makeNRPNCall(curernt_track, each.channel, each.time,
                                     each.controller_msb, each.controller_lsb,
                                     each.data_msb, each.data_lsb,
                                     each.time_order)
         elif current_type == tuning_bank:
-            MyMIDI.changeTuningBank(each.track, each.channel, each.time,
+            MyMIDI.changeTuningBank(curernt_track, each.channel, each.time,
                                     each.bank, each.time_order)
         elif current_type == tuning_program:
-            MyMIDI.changeTuningProgram(each.track, each.channel, each.time,
+            MyMIDI.changeTuningProgram(curernt_track, each.channel, each.time,
                                        each.program, each.time_order)
         elif current_type == channel_pressure:
-            MyMIDI.addChannelPressure(each.track, each.channel, each.time,
+            MyMIDI.addChannelPressure(curernt_track, each.channel, each.time,
                                       each.pressure_value)
         elif current_type == program_change:
-            MyMIDI.addProgramChange(each.track, each.channel, each.time,
+            MyMIDI.addProgramChange(curernt_track, each.channel, each.time,
                                     each.program)
         elif current_type == track_name:
-            MyMIDI.addTrackName(each.track, each.time, each.name)
+            MyMIDI.addTrackName(curernt_track, each.time, each.name)
 
 
 def detect_in_scale(x,
@@ -3048,7 +3064,7 @@ def build(*tracks_list, bpm=80, name=None):
         track_names = None
         pan_msg = None
         volume_msg = None
-        if all(i.channel for i in tracks_list):
+        if all(i.channel is not None for i in tracks_list):
             channels = [i.channel for i in tracks_list]
         if all(i.track_name for i in tracks_list):
             track_names = [i.track_name for i in tracks_list]

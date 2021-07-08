@@ -3220,7 +3220,7 @@ class track:
 class pan:
     # this is a class to set the pan position for a midi channel,
     # it only works in piece class or track class, and must be set as one of the elements
-    # of the pan list of a piece (which could be a pan message or a list of pan messages)
+    # of the pan list of a piece
     def __init__(self, value, start_time=1, mode='percentage'):
         # when mode == 'percentage', percentage ranges from 0% to 100%,
         # value takes an integer or float number from 0 to 100 (inclusive),
@@ -3253,7 +3253,7 @@ class pan:
 class volume:
     # this is a class to set the volume for a midi channel,
     # it only works in piece class or track class, and must be set as one of the elements
-    # of the volume list of a piece (which could be a volume message or a list of volume messages)
+    # of the volume list of a piece
     def __init__(self, value, start_time=1, mode='percentage'):
         # when mode == 'percentage', percentage ranges from 0% to 100%,
         # value takes an integer or float number from 0 to 100 (inclusive),
