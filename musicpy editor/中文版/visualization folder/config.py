@@ -27,7 +27,7 @@ play_midi_place = 50, 340
 button_resize_num = 2.3
 fps = 1000
 
-# the key settings for playing 88 notes (from A1 to C9)
+# the key settings for playing 88 notes (from A0 to C8)
 # (if you have sound files that beyond these range then you can
 # modify this dictionary to play them)
 
