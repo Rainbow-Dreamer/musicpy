@@ -3185,7 +3185,8 @@ def translate(pattern):
             part_replace_ind1 = len(notes)
         elif i[0] == '[' and i[-1] == ']':
             current_interval = eval(i[1:-1])
-            pattern_intervals[-1] += current_interval
+            if pattern_intervals:
+                pattern_intervals[-1] += current_interval
         elif '(' in i and i[-1] == ')':
             repeat_times = int(i[i.index('(') + 1:-1])
             repeat_part = i[:i.index('(')]
