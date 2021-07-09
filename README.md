@@ -147,10 +147,10 @@ Musicpy对于Windows, macOS和Linux都是兼容的, 但是这里有一些在Linu
 情况1: 如果你在Linux上遇到```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` 的错误, 这里是一个解决办法,
 打开终端并且运行`sudo apt-get install freepats`即可解决这个问题。
 
-Note2: 如果你使用的是macOS,请确定使用python 3.7.1来运行musicpy,因为在macOS上有一些musicpy的依赖库貌似和一些更新的python版本不太兼容(比如python 3.9)。  
+情况2: 如果你使用的是macOS,请确定使用python 3.7.1来运行musicpy,因为在macOS上有一些musicpy的依赖库貌似和一些更新的python版本不太兼容(比如python 3.9)。  
 经过我的朋友测试，在macOS上python 3.7.1运行musicpy不会报错，但是其他的版本也许不一定，所以如果你使用的是macOS,请确定使用python 3.7.1来运行musicpy。
 
-Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
+情况3: 在Windows, macOS和Linux上，你都可以在终端(cmd/terminal)里使用pip安装musicpy。
 
 import这个库
 -------------
