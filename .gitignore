@@ -3,7 +3,7 @@ temp.mid
 .vscode
 browse memory.txt
 # Byte-compiled / optimized / DLL files
-*.py[cod]
+*.py[co]
 *$py.class
 
 # C extensions
