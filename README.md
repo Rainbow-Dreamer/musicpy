@@ -21,7 +21,7 @@ The syntax and abilities of this wiki is synchronized with the latest released v
 
 Installation
 -------------
-Make sure you have installed python (version >= 3.6) in your pc first.
+Make sure you have installed python (version >= 3.7) in your pc first.
 Execute the following command in the terminal to install musicpy by pip.
 
 ```shell
@@ -120,7 +120,7 @@ wiki里的语法与功能与最新版本的musicpy是同步的。
 
 安装musicpy
 -------------
-先确定电脑里有安装python，python版本最好是 >= 3.6，
+先确定电脑里有安装python，python版本最好是 >= 3.7，
 打开电脑的cmd然后输入
 
 ```shell
