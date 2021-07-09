@@ -27,11 +27,21 @@ Execute the following command in the terminal to install musicpy by pip.
 ```shell
 pip install musicpy
 ```
+
 In addition, I also wrote a musicpy editor for writing and compiling musicpy code more easily than regular python IDE with real-time automatic compilation and execution,
 there are some syntactic sugar and you can listen to the music generating from your musicpy code on the fly, it is more convenient and interactive.  
 I strongly recommend to use this musicpy editor to write musicpy code.  
 You can download this musicpy editor at the [latest release](https://github.com/Rainbow-Dreamer/musicpy/releases/latest) of musicpy.  
 For more details including abilities and usages of this musicpy editor, see the [documentation](https://github.com/Rainbow-Dreamer/musicpy/wiki/How-to-use-musicpy#I-wrote-an-efficient-IDE-specifically-for-musicpy-for-everyone-to-use) here.
+
+Musicpy is all compatible with Windows, macOS and Linux, but there are some important notes if you encounter some errors on Linux or macOS.
+
+Note1: If you encounter ```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` errors on Linux, here is the solutions to fix it,
+open the terminal and run `sudo apt-get install freepats` and it will fix the errors.
+
+Note2: If you are using macOS, please be sure to use python 3.7.1 to run musicpy, because it seems that on macOS, some of the requirements python modules of musicpy may not be compatible with some of the newer python versions (for example python 3.9). It is tested by my friend that on macOS with python 3.7.1, musicpy could run and play the musicpy codes without any errors, but other versions may not, so please be sure to use python 3.7.1 to run musicpy if you are using macOS.
+
+Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
 
 Importing
 -------------
@@ -126,10 +136,21 @@ wiki里的语法与功能与最新版本的musicpy是同步的。
 ```shell
 pip install musicpy
 ```
+
 除此之外，我为musicpy专门写了一个编辑器，你可以在这里写musicpy的代码，这个编辑器可以实时自动编译和运行，比在常规的python IDE里更加方便。这个编辑器有一些语法糖，并且你可以实时地听到你写的musicpy代码生成的音乐，更加地方便与互动。  
 我强烈推荐大家使用这个musicpy编辑器来写musicpy代码。  
 你可以到muscipy的[最新发布版本](https://github.com/Rainbow-Dreamer/musicpy/releases/latest)下载这个musicpy编辑器。  
 如果想要了解这个musicpy编辑器的更多细节(包括功能和使用说明)，可以看这个[文档](https://github.com/Rainbow-Dreamer/musicpy/wiki/How-to-use-musicpy-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8musicpy#%E6%88%91%E4%B8%93%E9%97%A8%E4%B8%BAmusicpy%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E5%86%99%E4%BA%86%E4%B8%80%E4%B8%AA%E9%AB%98%E6%95%88%E7%9A%84IDE%E4%BE%9B%E5%A4%A7%E5%AE%B6%E4%BD%BF%E7%94%A8)。
+
+Musicpy对于Windows, macOS和Linux都是兼容的, 但是这里有一些在Linux或者macOS上可能会遇到的问题的解决方案。
+
+情况1: 如果你在Linux上遇到```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` 的错误, 这里是一个解决办法,
+打开终端并且运行`sudo apt-get install freepats`即可解决这个问题。
+
+Note2: 如果你使用的是macOS,请确定使用python 3.7.1来运行musicpy,因为在macOS上有一些musicpy的依赖库貌似和一些更新的python版本不太兼容(比如python 3.9)。  
+经过我的朋友测试，在macOS上python 3.7.1运行musicpy不会报错，但是其他的版本也许不一定，所以如果你使用的是macOS,请确定使用python 3.7.1来运行musicpy。
+
+Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
 
 import这个库
 -------------
