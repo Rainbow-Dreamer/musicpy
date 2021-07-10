@@ -209,7 +209,7 @@ class Root2(Toplevel):
                                               initialdir='.',
                                               title="choose filename",
                                               filetypes=(("all files",
-                                                         "*.*"), ))
+                                                          "*.*"), ))
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, f"'{filename}'")
         self.config_change(0)

@@ -511,7 +511,7 @@ class Root(Tk):
                                               initialdir='.',
                                               title="Choose Filename",
                                               filetypes=(("all files",
-                                                         "*.*"), ))
+                                                          "*.*"), ))
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, filename)
         self.config_change(0)
@@ -1107,7 +1107,7 @@ class Root(Tk):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
                                               title="选择MIDI文件",
                                               filetypes=(("MIDI文件", "*.mid"),
-                                                        ("所有文件", "*.*")))
+                                                         ("所有文件", "*.*")))
         if filename:
             memory = filename[:filename.rindex('/') + 1]
             with open('browse memory.txt', 'w', encoding='utf-8-sig') as f:

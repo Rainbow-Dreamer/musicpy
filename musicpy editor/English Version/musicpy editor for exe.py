@@ -392,7 +392,7 @@ class Root(Tk):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
                                               title="Choose Files",
                                               filetypes=(("All Files",
-                                                         "*.*"), ))
+                                                          "*.*"), ))
         if filename:
             self.current_filename_path = filename
             memory = filename[:filename.rindex('/') + 1]
@@ -488,7 +488,7 @@ class Root(Tk):
                                               initialdir='.',
                                               title="Choose Filename",
                                               filetypes=(("all files",
-                                                         "*.*"), ))
+                                                          "*.*"), ))
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, filename)
         self.config_change(0)
@@ -692,7 +692,7 @@ class Root(Tk):
                                               parent=self.config_window,
                                               title="Choose Files",
                                               filetypes=(("All Files",
-                                                         "*.*"), ))
+                                                          "*.*"), ))
         if filename:
             memory = filename[:filename.rindex('/') + 1]
             with open('browse memory.txt', 'w', encoding='utf-8-sig') as f:
@@ -762,7 +762,7 @@ class Root(Tk):
         filename = filedialog.asksaveasfilename(initialdir=self.last_place,
                                                 title="Save Input Text",
                                                 filetypes=(("All Files",
-                                                           "*.*"), ),
+                                                            "*.*"), ),
                                                 defaultextension=".txt")
         if filename:
             self.current_filename_path = filename
@@ -1086,8 +1086,9 @@ class Root(Tk):
     def read_midi_file(self, editor=None, event=None):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
                                               title="Choose MIDI File",
-                                              filetypes=(("MIDI File", "*.mid"),
-                                                        ("All Files", "*.*")))
+                                              filetypes=(("MIDI File",
+                                                          "*.mid"),
+                                                         ("All Files", "*.*")))
         if filename:
             memory = filename[:filename.rindex('/') + 1]
             with open('browse memory.txt', 'w', encoding='utf-8-sig') as f:
