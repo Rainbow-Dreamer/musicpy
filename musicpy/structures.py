@@ -1116,6 +1116,7 @@ class chord:
             temp.notes = [temp.notes[k].up(unit[k]) for k in range(len(unit))]
             return temp
         if type(ind) != int and ind is not None:
+            ind = [i - 1 if i > 0 else i for i in ind]
             temp.notes = [
                 temp.notes[i].up(unit) if i in ind else temp.notes[i]
                 for i in range(len(temp.notes))
