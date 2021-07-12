@@ -2042,11 +2042,16 @@ class scale:
             if type(ind) == int:
                 notes[ind - 1] = notes[ind - 1].up(unit)
             else:
+                ind = [i - 1 if i > 0 else i for i in ind]
                 notes = [
                     notes[i].up(unit) if i in ind else notes[i]
                     for i in range(len(notes))
                 ]
-            return scale(notels=notes)
+            result = scale(notels=notes)
+            current_mode = result.detect()
+            if current_mode != 'not found':
+                result.mode = current_mode
+            return result
 
     def down(self, unit=1, ind=None, ind2=None):
         return self.up(-unit, ind, ind2)
