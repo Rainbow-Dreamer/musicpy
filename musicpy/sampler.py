@@ -579,6 +579,21 @@ class sampler:
         except:
             pass
 
+    def load_channel_settings(self, channel_num=1, text=None, path=None):
+        if text is None:
+            with open(path, encoding='utf-8-sig') as f:
+                data = f.read()
+        else:
+            data = text
+        data = data.split('\n')
+        current_dict = self.channel_dict[channel_num]
+        for each in data:
+            if ',' in each:
+                current_key, current_value = each.split(',')
+                current_dict[current_key] = current_value
+        if text is None:
+            self.reload_channel_sounds(channel_num)
+
     def load_esi_file(self, channel_num, file_path, split_file_path):
         abs_path = os.getcwd()
         with open(split_file_path, 'r', encoding='utf-8-sig') as f:
@@ -611,7 +626,7 @@ class sampler:
         ]
         self.channel_dict[channel_num] = copy(default_notedict)
         if channel_settings is not None:
-            self.load_channel_settings(text=channel_settings)
+            self.load_channel_settings(channel_num, channel_settings)
         current_dict = self.channel_dict[channel_num]
         filenames = [i[:i.rfind('.')] for i in filenames]
         result_pygame = {
@@ -634,7 +649,6 @@ class sampler:
                 if current_dict[i] in result_audio else None)
             for i in current_dict
         }
-        #self.channel_note_sounds_path[channel_num] = load_sounds(current_dict, path)
 
     def reload_channel_sounds(self, current_ind):
         try:
@@ -655,7 +669,6 @@ class sampler:
         if name in note_sounds:
             current_sound = note_sounds[name]
             if current_sound:
-                #current_sound = pygame.mixer.Sound(note_sounds_path[name])
                 duration_time = bar_to_real_time(duration, self.bpm, 1)
                 current_sound.play()
                 current_fadeout_time = int(
@@ -802,7 +815,6 @@ class pitch:
                             self.sample_rate,
                             format='wav')
             result = AudioSegment.from_wav(current_sound)
-            #result = result.set_channels(self.channels)
         elif mode == 'pydub':
             new_sample_rate = int(self.sample_rate * (2**(semitones / 12)))
             result = self.sounds._spawn(
