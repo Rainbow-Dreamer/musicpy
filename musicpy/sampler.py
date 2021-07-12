@@ -157,12 +157,8 @@ class sampler:
         self.channel_num += 1
 
     def delete_channel(self, i):
-        if i < 0:
-            i += self.channel_num
         if i > 0:
             i -= 1
-        if not (0 <= i < self.channel_num):
-            return
         del self.channel_names[i]
         del self.channel_sound_modules_name[i]
         del self.channel_sound_modules[i]
@@ -170,6 +166,28 @@ class sampler:
         del self.channel_note_sounds_path[i]
         del self.channel_dict[i]
         self.channel_num -= 1
+
+    def clear_channel(self, i):
+        current_ind = i
+        if current_ind < self.channel_num:
+            self.channel_names[current_ind] = f'Channel {current_ind+1}'
+            self.channel_sound_modules_name[current_ind] = 'not loaded'
+            self.channel_sound_modules[current_ind] = None
+            self.channel_sound_audiosegments[current_ind] = None
+            self.channel_note_sounds_path[current_ind] = None
+            self.channel_dict[current_ind] = copy(default_notedict)
+
+    def clear_all_channels(self):
+        self.stop_playing()
+        self.channel_names.clear()
+        self.channel_sound_modules_name = [
+            'not loaded' for i in range(self.channel_num)
+        ]
+        self.channel_sound_modules.clear()
+        self.channel_sound_audiosegments.clear()
+        self.channel_note_sounds_path.clear()
+        self.channel_dict.clear()
+        self.channel_num = 0
 
     def __len__(self):
         return len(self.channel_names)
