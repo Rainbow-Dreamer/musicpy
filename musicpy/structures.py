@@ -1242,16 +1242,18 @@ class chord:
 
     def index(self, value):
         if type(value) == str:
-            try:
+            if value not in standard:
                 value = toNote(value)
                 if value not in self:
                     return -1
                 return self.notes.index(value) + 1
-            except:
+            else:
                 note_names = self.names()
                 if value not in note_names:
                     return -1
                 return note_names.index(value) + 1
+        else:
+            return self.index(str(value))
 
     def remove(self, note1):
         if type(note1) == str:
@@ -1281,16 +1283,20 @@ class chord:
         self.interval.extend(intervals)
 
     def delete(self, ind):
-        del self.notes[ind - 1]
-        del self.interval[ind - 1]
+        if ind > 0:
+            ind -= 1
+        del self.notes[ind]
+        del self.interval[ind]
 
     def insert(self, ind, value, interval=None):
+        if ind > 0:
+            ind -= 1
         if type(value) == str:
             value = toNote(value)
-        self.notes.insert(ind - 1, value)
+        self.notes.insert(ind, value)
         if interval is None:
             interval = self.interval[-1]
-        self.interval.insert(ind - 1, interval)
+        self.interval.insert(ind, interval)
 
     def drops(self, ind):
         temp = self.copy()
