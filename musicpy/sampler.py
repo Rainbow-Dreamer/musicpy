@@ -149,7 +149,7 @@ class sampler:
     def add_new_channel(self, name=None):
         current_channel_name = f'Channel {self.channel_num+1}' if name is None else name
         self.channel_names.append(current_channel_name)
-        self.channel_sound_modules_name.append('')
+        self.channel_sound_modules_name.append('not loaded')
         self.channel_sound_modules.append(None)
         self.channel_sound_audiosegments.append(None)
         self.channel_note_sounds_path.append(None)
@@ -168,6 +168,10 @@ class sampler:
         self.channel_num -= 1
 
     def clear_channel(self, i):
+        if i > 0:
+            i -= 1
+        elif i < 0:
+            i += self.channel_num
         current_ind = i
         if current_ind < self.channel_num:
             self.channel_names[current_ind] = f'Channel {current_ind+1}'
@@ -188,6 +192,14 @@ class sampler:
         self.channel_note_sounds_path.clear()
         self.channel_dict.clear()
         self.channel_num = 0
+
+    def set_channel_name(self, i, name):
+        if i > 0:
+            i -= 1
+        self.channel_names[i] = name
+
+    def __call__(self, obj, channel_num=1, bpm=None):
+        return audio(obj, self, channel_num, bpm)
 
     def __len__(self):
         return len(self.channel_names)
@@ -1213,14 +1225,15 @@ def get_wave(sound, mode='sine', bpm=120, volume=None):
     return temp
 
 
-def audio(obj, sampler, channel_num=1):
-    if channel_num > 0:
-        channel_num -= 1
+def audio(obj, sampler, channel_num=1, bpm=None):
     if type(obj) == note:
         obj = chord([obj])
     elif type(obj) == track:
         obj = build(obj, bpm=obj.tempo, name=obj.name)
-    result = sampler.export(obj, action='get', channel_num=channel_num)
+    result = sampler.export(obj,
+                            action='get',
+                            channel_num=channel_num,
+                            bpm=bpm)
     return result
 
 
