@@ -699,6 +699,7 @@ class sampler:
         if name in note_sounds:
             current_sound = note_sounds[name]
             if current_sound:
+                current_sound.set_volume(volume / 127)
                 duration_time = bar_to_real_time(duration, self.bpm, 1)
                 current_sound.play()
                 current_fadeout_time = int(
@@ -740,7 +741,9 @@ class sampler:
             current_chord = concat(current_chord, mode='|')
         if type(current_chord) == chord:
             if check_special(current_chord):
-                self.export(action='play', channel_num=current_channel_num)
+                self.export(current_chord,
+                            action='play',
+                            channel_num=current_channel_num)
             else:
                 self.play_channel(current_chord, current_channel_num, bpm)
         elif type(current_chord) == track:
@@ -756,7 +759,7 @@ class sampler:
                 current_chord.offset = has_offset
         if type(current_chord) == piece:
             if check_special(current_chord):
-                self.export(action='play')
+                self.export(current_chord, action='play')
                 return
             current_tracks = current_chord.tracks
             current_channel_nums = current_chord.channels if current_chord.channels else [
@@ -875,11 +878,7 @@ class pitch:
             pitch = N(pitch)
         self.note = pitch
 
-    def generate_dict(self,
-                      start='A0',
-                      end='C8',
-                      mode='librosa',
-                      pitch_shifter=False):
+    def generate_dict(self, start='A0', end='C8', mode='librosa'):
         if type(start) != note:
             start = N(start)
         if type(end) != note:
@@ -888,10 +887,7 @@ class pitch:
         result = {}
         for i in range(end.degree - start.degree + 1):
             current_note_name = str(start + i)
-            if pitch_shifter:
-                print(f'Converting note: {current_note_name} ...', flush=True)
-            else:
-                print(f'Converting note: {current_note_name} ...', flush=True)
+            print(f'Converting note: {current_note_name} ...', flush=True)
             result[current_note_name] = self.pitch_shift(start.degree + i -
                                                          degree,
                                                          mode=mode)
@@ -903,22 +899,18 @@ class pitch:
                            start='A0',
                            end='C8',
                            format='wav',
-                           mode='librosa',
-                           pitch_shifter=False):
+                           mode='librosa'):
         if folder_name is None:
             folder_name = 'Untitled'
         os.chdir(path)
         if folder_name not in os.listdir():
             os.mkdir(folder_name)
         os.chdir(folder_name)
-        current_dict = self.generate_dict(start,
-                                          end,
-                                          mode=mode,
-                                          pitch_shifter=pitch_shifter)
+        current_dict = self.generate_dict(start, end, mode=mode)
         for each in current_dict:
-            if pitch_shifter:
-                print(f'Exporting {each} ...', flush=True)
+            print(f'Exporting {each} ...', flush=True)
             current_dict[each].export(f'{each}.{format}', format=format)
+        print('finished')
         os.chdir(abs_path)
 
     def __len__(self):
