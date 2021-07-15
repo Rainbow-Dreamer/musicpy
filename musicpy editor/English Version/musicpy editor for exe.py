@@ -360,6 +360,7 @@ class Root(Tk):
             self.ask_save_window.cancel_button.place(x=200, y=100)
         else:
             self.destroy()
+            self.save_config(True, False)
 
     def save_and_quit(self):
         self.save_current_file()
@@ -675,6 +676,7 @@ class Root(Tk):
 
     def reload(self):
         self.destroy()
+        self.save_config(True, False)
         os.startfile(__file__)
 
     def change_sort(self):
