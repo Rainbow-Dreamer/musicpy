@@ -176,15 +176,15 @@ class Root(Tk):
         self.changed = False
         self.auto_complete_menu = Listbox(self)
         self.auto_complete_menu.bind("<<ListboxSelect>>",
-                                     lambda e: self.enter_choose(e))
+                                     lambda e: self.enter_choose())
         self.update()
         self.select_ind = 0
         self.show_select = False
         self.bind('<Up>', lambda e: self.change_select(-1))
         self.bind('<Down>', lambda e: self.change_select(1))
-        self.bind('<Left>', self.close_select)
-        self.bind('<Right>', self.close_select)
-        self.bind('<Return>', lambda e: self.get_current_select(e))
+        self.bind('<Left>', lambda e: self.close_select())
+        self.bind('<Right>', lambda e: self.close_select())
+        self.bind('<Return>', lambda e: self.get_current_select())
         self.file_top = ttk.Button(self,
                                    text='文件',
                                    command=self.file_top_make_menu)
@@ -294,9 +294,9 @@ class Root(Tk):
         self.bind('<Control-n>', lambda e: self.visualize_config())
         self.inputs.bind('<Control-MouseWheel>',
                          lambda e: self.change_font_size(e))
-        self.inputs.bind('<Alt-z>', lambda e: self.play_select_text(e))
+        self.inputs.bind('<Alt-z>', lambda e: self.play_select_text())
         self.inputs.bind('<Alt-x>',
-                         lambda e: self.visualize_play_select_text(e))
+                         lambda e: self.visualize_play_select_text())
         self.protocol("WM_DELETE_WINDOW", self.close_window)
         self.check_if_edited()
         self.current_filename_path = None
@@ -321,7 +321,7 @@ class Root(Tk):
             self.title('Musicpy 编辑器')
         self.after(100, self.check_if_edited)
 
-    def close_window(self, e=None):
+    def close_window(self):
         current_text = self.inputs.get('1.0', 'end-1c')
         if current_text != self.last_save:
             self.ask_save_window = Toplevel(
@@ -424,7 +424,7 @@ class Root(Tk):
         if turn:
             config_dict['background_mode'] = self.bg_mode
 
-    def openfile(self, e=None):
+    def openfile(self):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
                                               title="选择文件",
                                               filetypes=(("所有文件", "*.*"), ))
@@ -472,7 +472,7 @@ class Root(Tk):
         self.config_contents.insert(END, content)
         self.config_change(0)
 
-    def config_change(self, e):
+    def config_change(self):
         current = self.config_contents.get('1.0', 'end-1c')
         current_config = self.config_window.choose_config_options.get(ANCHOR)
         self.get_config_dict[current_config] = current
@@ -511,7 +511,7 @@ class Root(Tk):
         else:
             self.config_window.choose_config_options.selection_clear(0, END)
 
-    def show_current_config_options(self, e):
+    def show_current_config_options(self):
         current_config = self.config_window.choose_config_options.get(ANCHOR)
         self.config_window.config_name.configure(text=current_config)
         self.config_contents.delete('1.0', END)
@@ -582,12 +582,13 @@ class Root(Tk):
         self.config_window.config_name = ttk.Label(self.config_window, text='')
         self.config_window.config_name.place(x=300, y=20)
         self.config_window.choose_config_options.bind(
-            '<<ListboxSelect>>', self.show_current_config_options)
+            '<<ListboxSelect>>', lambda e: self.show_current_config_options())
         self.config_contents = Text(self.config_window,
                                     undo=True,
                                     autoseparators=True,
                                     maxundo=-1)
-        self.config_contents.bind('<KeyRelease>', self.config_change)
+        self.config_contents.bind('<KeyRelease>',
+                                  lambda e: self.config_change())
         self.config_contents.place(x=350, y=50, width=400, height=200)
         self.config_window.choose_filename_button = ttk.Button(
             self.config_window,
@@ -778,7 +779,7 @@ class Root(Tk):
         except:
             pass
 
-    def save_current_file(self, e=None):
+    def save_current_file(self):
         current_text = self.inputs.get('1.0', 'end-1c')
         if current_text != self.last_save:
             if self.current_filename_path:
@@ -791,7 +792,7 @@ class Root(Tk):
                 self.save()
             self.title('Musicpy 编辑器')
 
-    def save(self, e=None):
+    def save(self):
         filename = filedialog.asksaveasfilename(initialdir=self.last_place,
                                                 title="保存输入文本",
                                                 filetypes=(("所有文件", "*.*"), ),
@@ -808,7 +809,7 @@ class Root(Tk):
                 f.write(current_text)
             self.last_save = current_text
 
-    def get_current_select(self, e):
+    def get_current_select(self):
         if self.show_select:
             text = self.auto_complete_menu.get(self.select_ind)
             self.auto_complete_menu.destroy()
@@ -825,7 +826,7 @@ class Root(Tk):
                 self.changed = True
                 self.realtime_run()
 
-    def close_select(self, e):
+    def close_select(self):
         if self.show_select:
             self.auto_complete_menu.destroy()
             self.show_select = False
@@ -850,7 +851,7 @@ class Root(Tk):
                     self.auto_complete_menu.selection_set(self.select_ind)
                     self.auto_complete_menu.see(self.select_ind)
 
-    def enter_choose(self, e):
+    def enter_choose(self):
         text = self.auto_complete_menu.get(ANCHOR)
         self.auto_complete_menu.destroy()
         self.show_select = False
@@ -933,7 +934,7 @@ class Root(Tk):
     def auto_complete(self, find_similar):
         self.auto_complete_menu = Listbox(self)
         self.auto_complete_menu.bind("<<ListboxSelect>>",
-                                     lambda e: self.enter_choose(e))
+                                     lambda e: self.enter_choose())
         places = self.get_input_place()
         for each in find_similar:
             self.auto_complete_menu.insert(END, each)
@@ -1064,7 +1065,7 @@ class Root(Tk):
         if self.is_auto:
             self.auto_complete_run()
         else:
-            self.close_select(1)
+            self.close_select()
 
     def check_grammar(self):
         self.is_grammar = self.grammar.get()
