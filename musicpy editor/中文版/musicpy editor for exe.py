@@ -247,18 +247,51 @@ class Root(Tk):
                             activebackground=self.active_background_color,
                             activeforeground=self.active_foreground_color,
                             disabledforeground=self.disabled_foreground_color)
-        self.inputs.bind("<Button-3>", lambda x: self.rightKey(x, self.inputs))
-        self.bind('<Control-f>', self.search_words)
-        self.bind('<Control-e>', self.stop_play_midi)
-        self.bind('<Control-d>', self.read_midi_file)
-        self.bind('<Control-w>', self.openfile)
-        self.bind('<Control-s>', self.save_current_file)
+        self.menubar.add_command(label='剪切',
+                                 command=self.cut,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='复制',
+                                 command=self.copy,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='粘贴',
+                                 command=self.paste,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='全选',
+                                 command=self.choose_all,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='撤销',
+                                 command=self.inputs_undo,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='恢复',
+                                 command=self.inputs_redo,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='播放选中语句',
+                                 command=self.play_select_text,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='可视化播放选中语句',
+                                 command=self.visualize_play_select_text,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='导入MIDI文件',
+                                 command=self.read_midi_file,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='停止播放',
+                                 command=self.stop_play_midi,
+                                 foreground=self.foreground_color)
+        self.menubar.add_command(label='搜索',
+                                 command=self.search_words,
+                                 foreground=self.foreground_color)
+        self.inputs.bind("<Button-3>", lambda e: self.rightKey(e))
+        self.bind('<Control-f>', lambda e: self.search_words())
+        self.bind('<Control-e>', lambda e: self.stop_play_midi())
+        self.bind('<Control-d>', lambda e: self.read_midi_file())
+        self.bind('<Control-w>', lambda e: self.openfile())
+        self.bind('<Control-s>', lambda e: self.save_current_file())
         self.bind('<Control-q>', lambda e: self.close_window())
         self.bind('<Control-r>', lambda e: self.runs())
         self.bind('<Control-g>',
                   lambda e: self.change_background_color_mode(True))
         self.bind('<Control-b>', lambda e: self.config_options())
-        self.bind('<Control-t>', lambda e: self.visualize_config())
+        self.bind('<Control-n>', lambda e: self.visualize_config())
         self.inputs.bind('<Control-MouseWheel>',
                          lambda e: self.change_font_size(e))
         self.inputs.bind('<Alt-z>', lambda e: self.play_select_text(e))
@@ -314,7 +347,7 @@ class Root(Tk):
             self.ask_save_window.not_save_button = ttk.Button(
                 self.ask_save_window,
                 text='丢弃',
-                command=self.destroy,
+                command=self.destroy_and_quit,
                 style='New.TButton')
             self.ask_save_window.cancel_button = ttk.Button(
                 self.ask_save_window,
@@ -331,6 +364,11 @@ class Root(Tk):
         self.save_current_file()
         if self.current_filename_path:
             self.destroy()
+            self.save_config(True, False)
+
+    def destroy_and_quit(self):
+        self.destroy()
+        self.save_config(True, False)
 
     def visualize_config(self):
         if self.visualize_config_box_open:
@@ -360,7 +398,6 @@ class Root(Tk):
         self.get_config_dict['font_size'] = str(self.font_size)
         self.inputs.configure(font=(self.font_type, self.font_size))
         self.outputs.configure(font=(self.font_type, self.font_size))
-        self.save_config(True)
 
     def change_background_color_mode(self, turn=True):
         if turn:
@@ -385,7 +422,6 @@ class Root(Tk):
             self.turn_bg_mode.configure(text='开灯')
         if turn:
             config_dict['background_mode'] = self.bg_mode
-            self.save_config(True)
 
     def openfile(self, e=None):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
@@ -484,9 +520,8 @@ class Root(Tk):
     def choose_filename(self):
         filename = filedialog.askopenfilename(parent=self.config_window,
                                               initialdir='.',
-                                              title="Choose Filename",
-                                              filetypes=(("all files",
-                                                          "*.*"), ))
+                                              title="选择文件",
+                                              filetypes=(("所有文件", "*.*"), ))
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, filename)
         self.config_change(0)
@@ -495,7 +530,7 @@ class Root(Tk):
         directory = filedialog.askdirectory(
             parent=self.config_window,
             initialdir='.',
-            title="Choose Directory",
+            title="选择文件夹",
         )
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, directory)
@@ -664,9 +699,8 @@ class Root(Tk):
         self.get_config_dict['font_type'] = str(self.font_type)
         config_dict['font_type'] = self.font_type
         config_dict['font_size'] = self.font_size
-        self.save_config(True)
 
-    def save_config(self, outer=False):
+    def save_config(self, outer=False, reload=True):
         if not outer:
             for each in config_dict:
                 original = config_dict[each]
@@ -682,7 +716,8 @@ class Root(Tk):
         if not outer:
             self.saved_label.place(x=360, y=400)
             self.after(600, self.saved_label.place_forget)
-        self.reload_config()
+        if reload:
+            self.reload_config()
 
     def search_path(self, obj):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
@@ -758,7 +793,8 @@ class Root(Tk):
         filename = filedialog.asksaveasfilename(initialdir=self.last_place,
                                                 title="保存输入文本",
                                                 filetypes=(("所有文件", "*.*"), ),
-                                                defaultextension=".txt")
+                                                defaultextension=".txt",
+                                                initialfile='Untitled.txt')
         if filename:
             self.current_filename_path = filename
             memory = filename[:filename.rindex('/') + 1]
@@ -1031,33 +1067,33 @@ class Root(Tk):
     def check_grammar(self):
         self.is_grammar = self.grammar.get()
 
-    def cut(self, editor, event=None):
-        editor.event_generate("<<Cut>>")
+    def cut(self):
+        self.inputs.event_generate("<<Cut>>")
 
-    def copy(self, editor, event=None):
-        editor.event_generate("<<Copy>>")
+    def copy(self):
+        self.inputs.event_generate("<<Copy>>")
 
-    def paste(self, editor, event=None):
-        editor.event_generate('<<Paste>>')
+    def paste(self):
+        self.inputs.event_generate('<<Paste>>')
 
-    def choose_all(self, editor, event=None):
-        editor.tag_add(SEL, '1.0', END)
-        editor.mark_set(INSERT, END)
-        editor.see(INSERT)
+    def choose_all(self):
+        self.inputs.tag_add(SEL, '1.0', END)
+        self.inputs.mark_set(INSERT, END)
+        self.inputs.see(INSERT)
 
-    def inputs_undo(self, editor, event=None):
+    def inputs_undo(self):
         try:
-            editor.edit_undo()
+            self.inputs.edit_undo()
         except:
             pass
 
-    def inputs_redo(self, editor, event=None):
+    def inputs_redo(self):
         try:
-            editor.edit_redo()
+            self.inputs.edit_redo()
         except:
             pass
 
-    def play_select_text(self, editor, event=None):
+    def play_select_text(self):
         try:
             selected_text = self.inputs.selection_get()
             exec(f"play({selected_text})")
@@ -1065,7 +1101,7 @@ class Root(Tk):
             self.outputs.delete('1.0', END)
             self.outputs.insert(END, '选中的语句无法播放')
 
-    def visualize_play_select_text(self, editor, event=None):
+    def visualize_play_select_text(self):
         try:
             selected_text = self.inputs.selection_get()
             exec(f"write('temp.mid', {selected_text})")
@@ -1078,7 +1114,7 @@ class Root(Tk):
             exec(f.read(), globals(), globals())
         os.chdir('../')
 
-    def read_midi_file(self, editor=None, event=None):
+    def read_midi_file(self):
         filename = filedialog.askopenfilename(initialdir=self.last_place,
                                               title="选择MIDI文件",
                                               filetypes=(("MIDI文件", "*.mid"),
@@ -1093,7 +1129,7 @@ class Root(Tk):
                 f"new_midi_file = read(\"{filename}\", mode='all', to_piece=True, get_off_drums=False)\n"
             )
 
-    def stop_play_midi(self, editor, event=None):
+    def stop_play_midi(self):
         pygame.mixer.music.stop()
 
     def close_search_box(self):
@@ -1104,7 +1140,7 @@ class Root(Tk):
         self.search_box.destroy()
         self.search_box_open = False
 
-    def search_words(self, editor, event=None):
+    def search_words(self):
         if not self.search_box_open:
             self.search_box_open = True
         else:
@@ -1190,43 +1226,8 @@ class Root(Tk):
                 ind1, ind2 = each
                 self.inputs.tag_add('highlight', ind1, ind2)
 
-    def rightKey(self, event, editor):
-        self.menubar.delete(0, END)
-        self.menubar.add_command(label='剪切',
-                                 command=lambda: self.cut(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='复制',
-                                 command=lambda: self.copy(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='粘贴',
-                                 command=lambda: self.paste(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='全选',
-                                 command=lambda: self.choose_all(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='撤销',
-                                 command=lambda: self.inputs_undo(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='恢复',
-                                 command=lambda: self.inputs_redo(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='播放选中语句',
-                                 command=lambda: self.play_select_text(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(
-            label='可视化播放选中语句',
-            command=lambda: self.visualize_play_select_text(editor),
-            foreground=self.foreground_color)
-        self.menubar.add_command(label='导入MIDI文件',
-                                 command=lambda: self.read_midi_file(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='停止播放',
-                                 command=lambda: self.stop_play_midi(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.add_command(label='搜索',
-                                 command=lambda: self.search_words(editor),
-                                 foreground=self.foreground_color)
-        self.menubar.post(event.x_root, event.y_root)
+    def rightKey(self, event):
+        self.menubar.tk_popup(event.x_root, event.y_root)
 
 
 function_names = list(
