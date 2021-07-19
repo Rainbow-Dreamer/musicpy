@@ -554,26 +554,41 @@ class chord:
         else:
             return bars_length
 
-    def clear_pitch_bend(self, value=0):
+    def clear_pitch_bend(self, value=0, cond=None):
         length = len(self)
         whole_notes = self.notes
-        if value == 0:
+        if cond is None:
+            if value == 0:
+                inds = [
+                    i for i in range(length)
+                    if not (type(whole_notes[i]) == pitch_bend
+                            and whole_notes[i].value == 0)
+                ]
+            elif value == 'all':
+                inds = [
+                    i for i in range(length)
+                    if type(whole_notes[i]) != pitch_bend
+                ]
+        else:
             inds = [
                 i for i in range(length)
-                if not (type(whole_notes[i]) == pitch_bend
-                        and whole_notes[i].value == 0)
-            ]
-        elif value == 'all':
-            inds = [
-                i for i in range(length) if type(whole_notes[i]) != pitch_bend
+                if not (type(whole_notes[i]) == pitch_bend) or (
+                    not cond(whole_notes[i]))
             ]
         self.notes = [whole_notes[k] for k in inds]
         self.interval = [self.interval[k] for k in inds]
 
-    def clear_tempo(self):
+    def clear_tempo(self, cond=None):
         length = len(self)
         whole_notes = self.notes
-        inds = [i for i in range(length) if type(whole_notes[i]) != tempo]
+        if cond is None:
+            inds = [i for i in range(length) if type(whole_notes[i]) != tempo]
+        else:
+            inds = [
+                i for i in range(length)
+                if (type(whole_notes[i]) != tempo) or (
+                    not cond(whole_notes[i]))
+            ]
         self.notes = [whole_notes[k] for k in inds]
         self.interval = [self.interval[k] for k in inds]
 
@@ -2621,19 +2636,19 @@ class piece:
         else:
             self.tracks[0] += chord([tempo(bpm, start_time)])
 
-    def clear_pitch_bend(self, ind='all', value=0):
+    def clear_pitch_bend(self, ind='all', value=0, cond=None):
         if ind == 'all':
             for each in self.tracks:
-                each.clear_pitch_bend(value)
+                each.clear_pitch_bend(value, cond)
         else:
-            self.tracks[ind - 1].clear_pitch_bend(value)
+            self.tracks[ind - 1].clear_pitch_bend(value, cond)
 
-    def clear_tempo(self, ind='all'):
+    def clear_tempo(self, ind='all', cond=None):
         if ind == 'all':
             for each in self.tracks:
-                each.clear_tempo()
+                each.clear_tempo(cond)
         else:
-            self.tracks[ind - 1].clear_tempo()
+            self.tracks[ind - 1].clear_tempo(cond)
 
     def normalize_tempo(self, bpm=None):
         if bpm is None:
