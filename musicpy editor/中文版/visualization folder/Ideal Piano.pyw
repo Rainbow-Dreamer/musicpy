@@ -211,11 +211,6 @@ if draw_piano_keys:
     bar_offset_x = 0
 
 
-def has_load():
-    global midi_device_load
-    midi_device_load = True
-
-
 @window.event
 def on_draw():
     window.clear()
@@ -315,7 +310,8 @@ def mode_show(dt):
                             x=places[0] + bar_offset_x,
                             y=screen_height,
                             width=bar_width,
-                            height=bar_unit * current_note.duration,
+                            height=bar_unit * current_note.duration /
+                            (bpm2 / 130),
                             color=current_note.own_color
                             if use_track_colors else
                             (bar_color if color_mode == 'normal' else
@@ -355,7 +351,8 @@ def mode_show(dt):
                                 x=places[0] + bar_offset_x,
                                 y=bar_y,
                                 width=bar_width,
-                                height=bar_unit * current_note.duration,
+                                height=bar_unit * current_note.duration /
+                                (bpm2 / 130),
                                 color=current_note.own_color
                                 if use_track_colors else
                                 (bar_color if color_mode == 'normal' else
@@ -560,49 +557,6 @@ def initialize(musicsheet, unit_time, start_time):
     return playls
 
 
-def init_self_pc():
-    global wavdic
-    global last
-    global changed
-    if delay:
-        global stillplay
-    global lastshow
-    pygame.mixer.set_num_channels(maxinum_channels)
-    wavdic = load(notedic, sound_path, sound_format, global_volume)
-    last = []
-    changed = False
-    if delay:
-        stillplay = []
-    lastshow = None
-
-
-def init_self_midi():
-    global stillplay
-    global current_play
-    global wavdic
-    global device
-    global last
-    if not midi_device_load:
-        device = None
-        has_load()
-        pygame.mixer.set_num_channels(maxinum_channels)
-        pygame.midi.init()
-        device = pygame.midi.Input(midi_device_id)
-    else:
-        if device:
-            device.close()
-            device = pygame.midi.Input(midi_device_id)
-    notenames = os.listdir(sound_path)
-    notenames = [x[:x.index('.')] for x in notenames]
-    if load_sound:
-        wavdic = load({i: i
-                       for i in notenames}, sound_path, sound_format,
-                      global_volume)
-    current_play = []
-    stillplay = []
-    last = current_play.copy()
-
-
 melody_notes = []
 
 if show_music_analysis:
@@ -640,6 +594,7 @@ def init_show():
     global unit_time
     global melody_notes
     global path
+    global bpm2
     setup()
     path = file_path
     if read_result != 'error':

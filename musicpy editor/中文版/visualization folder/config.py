@@ -351,7 +351,7 @@ opacity_change_by_velocity = True
 # color mode: choose one from 'normal' and 'rainbow'
 color_mode = 'normal'
 bar_steps = 6
-bar_unit = 200
+bar_unit = 400
 bar_hold_increase = 5
 bars_drop_interval = 2
 bars_drop_place = 173
