@@ -760,7 +760,7 @@ def write(name_of_midi,
                                               pitch_bend_time,
                                               current_note.value)
                 elif current_type == tuning:
-                    MyMIDI.changeNoteTuning(track_ind, current_note.tunings,
+                    MyMIDI.changeNoteTuning(i, current_note.tunings,
                                             current_note.sysExChannel,
                                             current_note.realTime,
                                             current_note.tuningProgam)
