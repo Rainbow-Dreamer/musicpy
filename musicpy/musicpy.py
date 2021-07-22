@@ -759,6 +759,11 @@ def write(name_of_midi,
                     MyMIDI.addPitchWheelEvent(i, pitch_bend_channel,
                                               pitch_bend_time,
                                               current_note.value)
+                elif current_type == tuning:
+                    MyMIDI.changeNoteTuning(track_ind, current_note.tunings,
+                                            current_note.sysExChannel,
+                                            current_note.realTime,
+                                            current_note.tuningProgam)
 
         if not ignore_other_messages:
             if current_chord.other_messages:
