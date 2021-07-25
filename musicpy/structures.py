@@ -2766,6 +2766,8 @@ class piece:
         temp = copy(self)
         if add_labels:
             temp.add_track_labels()
+        tempo_changes = temp.get_tempo_changes()
+        temp.clear_tempo()
         all_tracks = temp.tracks
         length = len(all_tracks)
         if clear_pitch_bend:
@@ -2779,6 +2781,7 @@ class piece:
         first_track = all_tracks[first_track_ind]
         for i in sort_tracks_inds[1:]:
             first_track &= (all_tracks[i[0]], i[1] - first_track_start_time)
+        first_track += tempo_changes
         return temp.tempo, first_track, first_track_start_time
 
     def add_track_labels(self):

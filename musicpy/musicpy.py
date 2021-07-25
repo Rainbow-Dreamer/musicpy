@@ -306,10 +306,6 @@ def read(name,
             if curren_tempo:
                 whole_bpm = unit.tempo2bpm(curren_tempo[0].tempo)
                 break
-    if len(changes) == 1:
-        first_change = changes[0]
-        if first_change.bpm == whole_bpm and first_change.start_time == 1:
-            changes = []
     if mode == 'find':
         for each in whole_tracks:
             if any(each_msg.type == 'note_on' for each_msg in each):
@@ -540,7 +536,6 @@ def midi_to_chord(x,
             intervals.append(0)
         elif current_msg.type == 'pitchwheel':
             current_pitch_bend = pitch_bend(current_msg.pitch,
-                                            (current_time / interval_unit) + 1,
                                             channel=current_msg.channel,
                                             mode='values')
             if add_track_num and hasattr(current_msg, 'channel'):
@@ -742,14 +737,12 @@ def write(name_of_midi,
                     current_start_time += content_intervals[j] * 4
                 elif current_type == tempo:
                     if current_note.start_time is not None:
-                        if current_note.start_time != 1:
-                            MyMIDI.addTempo(track_ind,
-                                            (current_note.start_time - 1) * 4,
-                                            current_note.bpm)
+                        MyMIDI.addTempo(track_ind,
+                                        (current_note.start_time - 1) * 4,
+                                        current_note.bpm)
                     else:
-                        if current_start_time != 0:
-                            MyMIDI.addTempo(track_ind, current_start_time,
-                                            current_note.bpm)
+                        MyMIDI.addTempo(track_ind, current_start_time,
+                                        current_note.bpm)
                 elif current_type == pitch_bend:
                     if current_note.start_time is not None:
                         pitch_bend_time = (current_note.start_time - 1) * 4
@@ -815,14 +808,12 @@ def write(name_of_midi,
                 current_start_time += content_intervals[j] * 4
             elif current_type == tempo:
                 if current_note.start_time is not None:
-                    if current_note.start_time != 1:
-                        MyMIDI.addTempo(track_ind,
-                                        (current_note.start_time - 1) * 4,
-                                        current_note.bpm)
+                    MyMIDI.addTempo(track_ind,
+                                    (current_note.start_time - 1) * 4,
+                                    current_note.bpm)
                 else:
-                    if current_start_time != 0:
-                        MyMIDI.addTempo(track_ind, current_start_time,
-                                        current_note.bpm)
+                    MyMIDI.addTempo(track_ind, current_start_time,
+                                    current_note.bpm)
             elif current_type == pitch_bend:
                 if current_note.start_time is not None:
                     pitch_bend_time = (current_note.start_time - 1) * 4
