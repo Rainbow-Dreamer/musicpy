@@ -472,7 +472,7 @@ class Root(Tk):
     def insert_bool(self, content):
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, content)
-        self.config_change(0)
+        self.config_change()
 
     def config_change(self):
         current = self.config_contents.get('1.0', 'end-1c')
@@ -493,7 +493,7 @@ class Root(Tk):
             self.config_window.choose_config_options.selection_set(first)
             self.config_window.choose_config_options.selection_anchor(first)
             self.config_window.choose_config_options.see(first)
-            self.show_current_config_options(0)
+            self.show_current_config_options()
 
     def search_config(self, *args):
         current = self.config_window.search_entry.get()
@@ -509,7 +509,7 @@ class Root(Tk):
             self.config_window.choose_config_options.selection_set(first)
             self.config_window.choose_config_options.selection_anchor(first)
             self.config_window.choose_config_options.see(first)
-            self.show_current_config_options(0)
+            self.show_current_config_options()
         else:
             self.config_window.choose_config_options.selection_clear(0, END)
 
@@ -528,7 +528,7 @@ class Root(Tk):
                                                           "*.*"), ))
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, filename)
-        self.config_change(0)
+        self.config_change()
 
     def choose_directory(self):
         directory = filedialog.askdirectory(
@@ -538,7 +538,7 @@ class Root(Tk):
         )
         self.config_contents.delete('1.0', END)
         self.config_contents.insert(END, directory)
-        self.config_change(0)
+        self.config_change()
 
     def config_options(self):
         if self.config_box_open:
