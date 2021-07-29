@@ -25,7 +25,7 @@ self_midi_place = 50, 410
 play_midi_image = 'play_midi.png'
 play_midi_place = 50, 340
 button_resize_num = 2.3
-fps = 1000
+fps = 60
 
 # the key settings for playing 88 notes (from A0 to C8)
 # (if you have sound files that beyond these range then you can
