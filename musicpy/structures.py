@@ -1730,6 +1730,53 @@ class chord:
                     each.name = reverse_standard_dict[each.name]
         return temp
 
+    def filter(self, cond, action=None, mode=0, action_mode=0):
+        temp = self.copy()
+        available_inds = [k for k in range(len(temp)) if cond(temp.notes[k])]
+        if mode == 1:
+            return available_inds
+        if action is None:
+            new_interval = []
+            N = len(available_inds) - 1
+            for i in range(N):
+                new_interval.append(
+                    sum(temp.interval[available_inds[i]:available_inds[i +
+                                                                       1]]))
+            new_interval.append(sum(temp.interval[available_inds[-1]:]))
+            new_notes = [temp.notes[j] for j in available_inds]
+            result = chord(new_notes, interval=new_interval)
+            start_time = sum(temp.interval[:available_inds[0]])
+            return result, start_time
+        else:
+            if action_mode == 0:
+                for each in available_inds:
+                    temp.notes[each] = action(temp.notes[each])
+            elif action_mode == 1:
+                for each in available_inds:
+                    action(temp.notes[each])
+            return temp
+
+    def pitch_filter(self, x='A0', y='C8'):
+        temp = self.copy()
+        if type(x) == str:
+            x = trans_note(x)
+        if type(y) == str:
+            y = trans_note(y)
+        available_inds = [
+            k for k in range(len(temp))
+            if x.degree <= temp.notes[k].degree <= y.degree
+        ]
+        new_interval = []
+        N = len(available_inds) - 1
+        for i in range(N):
+            new_interval.append(
+                sum(temp.interval[available_inds[i]:available_inds[i + 1]]))
+        new_interval.append(sum(temp.interval[available_inds[-1]:]))
+        new_notes = [temp.notes[j] for j in available_inds]
+        result = chord(new_notes, interval=new_interval)
+        start_time = sum(temp.interval[:available_inds[0]])
+        return result, start_time
+
 
 class scale:
     def __init__(self,

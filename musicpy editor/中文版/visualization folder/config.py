@@ -405,3 +405,4 @@ tracks_colors = [(0, 255, 0), (255, 255, 0), (0, 0, 255), (0, 255, 255),
 use_default_tracks_colors = True
 clear_pitch_bend = True
 clear_all_pitch_bend = True
+pitch_range = ('A0', 'C8')

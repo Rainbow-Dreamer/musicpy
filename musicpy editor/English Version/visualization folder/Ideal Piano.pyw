@@ -599,6 +599,9 @@ def init_show():
     path = file_path
     if read_result != 'error':
         bpm2, musicsheet, start_time = read_result
+        musicsheet, new_start_time = musicsheet.pitch_filter(*pitch_range)
+        start_time += new_start_time
+        sheetlen = len(musicsheet)
     sheetlen = len(musicsheet)
     pygame.mixer.set_num_channels(sheetlen)
     wholenotes = musicsheet.notes
