@@ -441,8 +441,12 @@ class sampler:
                 each_name = str(each)
                 if each_name not in current_sounds:
                     each_name = str(~each)
+                if each_name not in current_sounds:
+                    current_position += interval
+                    continue
                 current_sound = current_sounds[each_name]
                 if current_sound is None:
+                    current_position += interval
                     continue
                 current_max_time = min(len(current_sound),
                                        duration + current_fadeout_time)
@@ -1218,10 +1222,9 @@ def get_wave(sound, mode='sine', bpm=120, volume=None):
                     bar_to_real_time(current_note.duration, bpm, 1),
                     volume[i - 1])
             else:
-                temp[i] = mode(
-                    get_freq(current_note),
-                    bar_to_real_time(current_note.duration, bpm, 1),
-                    volume[i - 1])                
+                temp[i] = mode(get_freq(current_note),
+                               bar_to_real_time(current_note.duration, bpm, 1),
+                               volume[i - 1])
     return temp
 
 
