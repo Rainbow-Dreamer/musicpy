@@ -906,18 +906,21 @@ class Root(Tk):
 
                         current_word = current_text2[start_min:]
                         original_current_word = current_word
+                        self.start = start_min
                         if '=' in current_word:
-                            new_current_word = current_word.split(
-                                '=')[1].replace(' ', '')
+                            new_current_word = current_word.split('=')[1]
                             if ',' in new_current_word:
                                 new_current_word = new_current_word.split(
-                                    ',')[-1].replace(' ', '')
+                                    ',')[-1].split(' ')[-1]
+                            else:
+                                new_current_word = new_current_word.split(
+                                    ' ')[-1]
                             self.start = start_min + current_word.rindex(
                                 new_current_word)
                             current_word = new_current_word
                         elif ',' in current_word:
                             new_current_word = current_word.split(
-                                ',')[-1].replace(' ', '')
+                                ',')[-1].split(' ')[-1]
                             self.start = start_min + current_word.rindex(
                                 new_current_word)
                             current_word = new_current_word
@@ -975,18 +978,20 @@ class Root(Tk):
                         is_special = False
                         if '=' in current_word:
                             is_special = True
-                            new_current_word = current_word.split(
-                                '=')[1].replace(' ', '')
+                            new_current_word = current_word.split('=')[1]
                             if ',' in new_current_word:
                                 new_current_word = new_current_word.split(
-                                    ',')[-1].replace(' ', '')
+                                    ',')[-1].split(' ')[-1]
+                            else:
+                                new_current_word = new_current_word.split(
+                                    ' ')[-1]
                             self.start = start + current_word.rindex(
                                 new_current_word)
                             current_word = new_current_word
                         elif ',' in current_word:
                             is_special = True
                             new_current_word = current_word.split(
-                                ',')[-1].replace(' ', '')
+                                ',')[-1].split(' ')[-1]
                             self.start = start + current_word.rindex(
                                 new_current_word)
                             current_word = new_current_word
