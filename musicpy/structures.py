@@ -103,6 +103,15 @@ class note:
         result = chord([copy(self), self + interval])
         return result
 
+    def getchord_by_interval(start,
+                             interval1,
+                             duration=0.25,
+                             interval=0,
+                             cummulative=True):
+        import musicpy
+        return musicpy.getchord_by_interval(start, interval1, duration,
+                                            interval, cummulative)
+
 
 def toNote(notename, duration=0.25, volume=100, pitch=4):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):

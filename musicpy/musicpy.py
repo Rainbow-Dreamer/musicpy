@@ -101,7 +101,7 @@ def getchord_by_interval(start,
                          interval=0,
                          cummulative=True):
 
-    if type(start) not in [note, pitch_bend, tempo]:
+    if type(start) == str:
         start = toNote(start)
     result = [start]
     if cummulative:
