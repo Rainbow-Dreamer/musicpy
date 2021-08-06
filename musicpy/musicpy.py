@@ -2504,7 +2504,7 @@ def interval_check(a, two_show_interval=True):
         TIMES, DIST = divmod((a.notes[1].degree - a.notes[0].degree), 12)
         if DIST == 0 and TIMES != 0:
             DIST = 12
-        interval_name = INTERVAL[DIST][0]
+        interval_name = INTERVAL[DIST]
         root_note_name = a[1].name
         if interval_name == 'perfect fifth':
             return f'{root_note_name}5 ({root_note_name} power chord) ({root_note_name} with perfect fifth)'

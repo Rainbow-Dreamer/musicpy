@@ -99,6 +99,10 @@ class note:
         import musicpy
         return musicpy.C(self.name + obj, self.num)
 
+    def with_interval(self, interval):
+        result = chord([copy(self), self + interval])
+        return result
+
 
 def toNote(notename, duration=0.25, volume=100, pitch=4):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
@@ -690,7 +694,9 @@ class chord:
     def __contains__(self, note1):
         if not isinstance(note1, note):
             note1 = toNote(note1)
-        return note1 in self.notes
+            if note1.name in standard_dict:
+                note1.name = standard_dict[note1.name]
+        return note1 in self.same_accidentals().notes
 
     def __add__(self, obj):
         if isinstance(obj, int) or isinstance(obj, list):
@@ -986,7 +992,7 @@ class chord:
             result = [i - root for i in others]
         if not translate:
             return result
-        return [INTERVAL[x % octave][0] for x in result]
+        return [INTERVAL[x % octave] for x in result]
 
     def add(self, note1=None, mode='tail', start=0, duration=0.25):
         if len(self) == 0:
@@ -1163,50 +1169,55 @@ class chord:
             return self.up(unit, ind, ind2)
         return self.up(-unit, ind, ind2)
 
-    def drop(self, ind, mode=0):
-        # if mode is 0, then drop notes by index,
-        # if mode is 1, then drop notes by the names of notes,
-        # if mode is 2, then drop notes by only name (ignoring pitch)
-
-        if mode == 0:
-            if type(ind) == list:
-                return self.drop([self[i] for i in ind], mode=1)
-            else:
-                return self.drop(self[ind], mode=1)
-        elif mode == 1:
-            temp = copy(self)
-            if type(ind) == list:
-                ind = [toNote(x) if type(x) != note else x for x in ind]
-                for each in ind:
-                    if each in temp.notes:
-                        current = temp.notes.index(each)
-                        del temp.notes[current]
-                        del temp.interval[current]
-            else:
-                if type(ind) != note:
-                    ind = toNote(ind)
-                if ind in temp.notes:
-                    current = temp.notes.index(ind)
-                    del temp.notes[current]
-                    del temp.interval[current]
-        elif mode == 2:
-            temp = copy(self)
-            if type(ind) == list:
-                for each in ind:
-                    self_notenames = temp.names()
-                    if each in self_notenames:
-                        current = self_notenames.index(each)
-                        del temp.notes[current]
-                        del temp.interval[current]
-            else:
+    def drop(self, ind):
+        if type(ind) != list:
+            ind = [ind]
+        if ind:
+            if type(ind[0]) == int:
+                temp = copy(self)
+                ind = [k - 1 for k in ind]
+                temp.notes = [
+                    temp.notes[k] for k in range(len(temp)) if k not in ind
+                ]
+                temp.interval = [
+                    temp.interval[k] for k in range(len(temp)) if k not in ind
+                ]
+                return temp
+            elif type(ind[0]) == note or (type(ind[0]) == str and any(
+                    i for i in ind[0] if i.isdigit())):
+                temp = self.same_accidentals()
+                ind = chord(ind).same_accidentals().notes
+                current_ind = [
+                    k + 1 for k in range(len(temp)) if temp.notes[k] in ind
+                ]
+                return self.drop(current_ind)
+            elif type(
+                    ind[0]) == str and not any(i
+                                               for i in ind[0] if i.isdigit()):
+                temp = self.same_accidentals()
                 self_notenames = temp.names()
-                if ind in self_notenames:
-                    current = self_notenames.index(ind)
-                    del temp.notes[current]
-                    del temp.interval[current]
-        return temp
+                ind = chord(ind).same_accidentals().names()
+                current_ind = [
+                    k + 1 for k in range(len(self_notenames))
+                    if self_notenames[k] in ind
+                ]
+                return self.drop(current_ind)
+            else:
+                return self
+        else:
+            return self
 
-    omit = drop
+    def omit(self, ind, mode=0):
+        if type(ind) != list:
+            ind = [ind]
+        if ind and type(ind[0]) == int:
+            if mode == 0:
+                return self.drop([self.interval_note(i) for i in ind])
+            elif mode == 1:
+                current_ind = [self.notes[0] + i for i in ind]
+                return self.drop(current_ind)
+        else:
+            return self.drop(ind)
 
     def sus(self, num=4):
         temp = self.copy()
@@ -1776,6 +1787,101 @@ class chord:
         result = chord(new_notes, interval=new_interval)
         start_time = sum(temp.interval[:available_inds[0]])
         return result, start_time
+
+    def interval_note(self, interval, mode=0):
+        if mode == 0:
+            interval = str(interval)
+            if interval in degree_match:
+                degrees = degree_match[interval]
+                self_notes = self.same_accidentals().notes
+                for each in degrees:
+                    current_note = self_notes[0] + each
+                    if current_note in self_notes:
+                        return current_note
+        elif mode == 1:
+            return self[1] + interval
+
+    def get_voicing(self, voicing):
+        notes = [self.interval_note(i).name for i in voicing]
+        pitch = self.notes[self.names().index(notes[0])].num
+        return chord(notes, interval=copy(self.interval), rootpitch=pitch)
+
+    def near_voicing(self, other, keep_root=True, root_lower=False):
+        temp = self.standardize()
+        other = other.standardize()
+        if keep_root:
+            root_note = temp.notes[0]
+            other_root_note = other.notes[0]
+            root_note_step = standard2[root_note.name] - standard2[
+                other_root_note.name]
+            root_note_steps = [abs(root_note_step), 12 - abs(root_note_step)]
+            nearest_step = min(root_note_steps)
+            if root_lower:
+                if root_note_step < 0:
+                    root_note = other_root_note + root_note_step
+                else:
+                    root_note = other_root_note - root_note_steps[1]
+            else:
+                if nearest_step == root_note_steps[0]:
+                    root_note = other_root_note + root_note_step
+                else:
+                    if root_note_step < 0:
+                        root_note = other_root_note + root_note_steps[1]
+                    else:
+                        root_note = other_root_note - root_note_steps[1]
+            remain_notes = []
+            for each in temp.notes[1:]:
+                note_steps = [
+                    standard2[each.name] - standard2[i.name]
+                    for i in other.notes[1:]
+                ]
+                note_steps_path = [
+                    min([abs(i), 12 - abs(i)]) for i in note_steps
+                ]
+                most_near_note_steps = min(note_steps_path)
+                most_near_note = other.notes[
+                    note_steps_path.index(most_near_note_steps) + 1]
+                current_step = standard2[each.name] - standard2[
+                    most_near_note.name]
+                current_steps = [abs(current_step), 12 - abs(current_step)]
+                if most_near_note_steps == current_steps[0]:
+                    new_note = most_near_note + current_step
+                else:
+                    if current_step < 0:
+                        new_note = most_near_note + current_steps[1]
+                    else:
+                        new_note = most_near_note - current_steps[1]
+                remain_notes.append(new_note)
+            remain_notes.insert(0, root_note)
+            temp.notes = remain_notes
+            temp = temp.sortchord()
+            return temp
+        else:
+            remain_notes = []
+            for each in temp.notes:
+                note_steps = [
+                    standard2[each.name] - standard2[i.name]
+                    for i in other.notes
+                ]
+                note_steps_path = [
+                    min([abs(i), 12 - abs(i)]) for i in note_steps
+                ]
+                most_near_note_steps = min(note_steps_path)
+                most_near_note = other.notes[note_steps_path.index(
+                    most_near_note_steps)]
+                current_step = standard2[each.name] - standard2[
+                    most_near_note.name]
+                current_steps = [abs(current_step), 12 - abs(current_step)]
+                if most_near_note_steps == current_steps[0]:
+                    new_note = most_near_note + current_step
+                else:
+                    if current_step < 0:
+                        new_note = most_near_note + current_steps[1]
+                    else:
+                        new_note = most_near_note - current_steps[1]
+            temp.notes = remain_notes
+            temp = temp.sortchord()
+            return temp
 
 
 class scale:

@@ -1,54 +1,48 @@
 from .match import match
-perfect_unison, minor_second, augmented_unison, major_second,\
-    diminished_third, minor_third, augmented_second, major_third,\
-    diminished_fourth, perfect_fourth, augmented_third, diminished_fifth,\
-    augmented_fourth, perfect_fifth, diminished_sixth, minor_sixth,\
-    augmented_fifth, major_sixth, diminished_seventh, minor_seventh,\
-    augmented_sixth, major_seventh, diminished_octave, perfect_octave,\
-    octave, augmented_seventh = 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7,\
-    7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 12
+
+perfect_unison = diminished_second = P1 = d2 = 0
+minor_second = augmented_unison = m2 = A1 = 1
+major_second = diminished_third = M2 = d3 = 2
+minor_third = augmented_second = m3 = A2 = 3
+major_third = diminished_fourth = M3 = d4 = 4
+perfect_fourth = augmented_third = P4 = A3 = 5
+diminished_fifth = augmented_fourth = d5 = A4 = 6
+perfect_fifth = diminished_sixth = P5 = d6 = 7
+minor_sixth = augmented_fifth = m6 = A5 = 8
+major_sixth = diminished_seventh = M6 = d7 = 9
+minor_seventh = augmented_sixth = m7 = A6 = 10
+major_seventh = diminished_octave = M7 = d8 = 11
+perfect_octave = octave = augmented_seventh = P8 = A7 = 12
+
 INTERVAL = {
-    0: ('perfect unison', ),
-    1: ('minor second', 'augmented unison'),
-    2: ('major second', 'diminished third'),
-    3: ('minor third', 'augmented second'),
-    4: ('major third', 'diminished fourth'),
-    5: ('perfect fourth', 'augmented third'),
-    6: ('diminished fifth', 'augmented fourth'),
-    7: ('perfect fifth', 'diminished sixth'),
-    8: ('minor sixth', 'augmented fifth'),
-    9: ('major sixth', 'diminished seventh'),
-    10: ('minor seventh', 'augmented sixth'),
-    11: ('major seventh', 'diminished octave'),
-    12: ('perfect octave', 'octave', 'augmented seventh')
+    0: 'perfect unison',
+    1: 'minor second',
+    2: 'major second',
+    3: 'minor third',
+    4: 'major third',
+    5: 'perfect fourth',
+    6: 'diminished fifth',
+    7: 'perfect fifth',
+    8: 'minor sixth',
+    9: 'major sixth',
+    10: 'minor seventh',
+    11: 'major seventh',
+    12: 'perfect octave'
 }
 NAME_OF_INTERVAL = {
     'perfect unison': 0,
     'minor second': 1,
-    'augmented unison': 1,
     'major second': 2,
-    'diminished third': 2,
     'minor third': 3,
-    'augmented second': 3,
     'major third': 4,
-    'diminished fourth': 4,
     'perfect fourth': 5,
-    'augmented third': 5,
     'diminished fifth': 6,
-    'augmented fourth': 6,
     'perfect fifth': 7,
-    'diminished sixth': 7,
     'minor sixth': 8,
-    'augmented fifth': 8,
     'major sixth': 9,
-    'diminished seventh': 9,
     'minor seventh': 10,
-    'augmented sixth': 10,
     'major seventh': 11,
-    'diminished octave': 11,
-    'perfect octave': 12,
-    'octave': 12,
-    'augmented seventh': 12
+    'perfect octave': 12
 }
 standard = {
     'C': 0,
