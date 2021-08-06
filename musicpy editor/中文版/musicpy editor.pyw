@@ -305,6 +305,7 @@ class Root(Tk):
         self.menubar.add_command(label='搜索',
                                  command=self.search_words,
                                  foreground=self.foreground_color)
+        self.inputs.bind("<Button-1>", lambda e: self.close_select())
         self.inputs.bind("<Button-3>", lambda e: self.rightKey(e))
         self.bind('<Control-f>', lambda e: self.search_words())
         self.bind('<Control-e>', lambda e: self.stop_play_midi())
@@ -878,18 +879,20 @@ class Root(Tk):
 
     def enter_choose(self):
         text = self.auto_complete_menu.get(ANCHOR)
-        self.auto_complete_menu.destroy()
-        self.show_select = False
-        self.inputs.delete('1.0', END)
-        self.pre_input = self.pre_input[:self.start] + text + self.pre_input[
-            self.start2:]
-        self.inputs.insert(END, self.pre_input)
-        self.inputs.mark_set(INSERT,
-                             '1.0' + f' + {self.start + len(text)} chars')
-        self.inputs.see(INSERT)
-        if self.is_realtime:
-            self.changed = True
-            self.realtime_run()
+        if text:
+            self.auto_complete_menu.destroy()
+            self.show_select = False
+            self.inputs.delete('1.0', END)
+            self.pre_input = self.pre_input[:self.
+                                            start] + text + self.pre_input[
+                                                self.start2:]
+            self.inputs.insert(END, self.pre_input)
+            self.inputs.mark_set(INSERT,
+                                 '1.0' + f' + {self.start + len(text)} chars')
+            self.inputs.see(INSERT)
+            if self.is_realtime:
+                self.changed = True
+                self.realtime_run()
 
     def auto_complete_run(self):
         if not self.is_auto:
@@ -919,13 +922,36 @@ class Root(Tk):
                         if current_text2[dot_word_ind] in ['/', '?']:
                             dot_word_ind += 1
                         current_word = current_text2[dot_word_ind:dot_ind - 1]
+                        original_current_word = current_word
+                        is_special = False
+                        if '=' in current_word:
+                            is_special = True
+                            new_current_word = current_word.split(
+                                '=')[1].replace(' ', '')
+                            if ',' in new_current_word:
+                                new_current_word = new_current_word.split(
+                                    ',')[-1].replace(' ', '')
+                            current_word = new_current_word
+                        elif ',' in current_word:
+                            is_special = True
+                            new_current_word = current_word.split(
+                                ',')[-1].replace(' ', '')
+                            current_word = new_current_word
                         dot_content = current_text2[dot_ind:].lower()
                         try:
                             current_func = dir(eval(current_word))
                             find_similar = [
                                 x for x in current_func
-                                if dot_content in x.lower()
+                                if x.lower().startswith(dot_content)
                             ]
+                            find_similar.sort()
+                            find_similar2 = [
+                                x for x in current_func
+                                if dot_content in x.lower()
+                                and not x.lower().startswith(dot_content)
+                            ]
+                            find_similar2.sort()
+                            find_similar += find_similar2
                             if find_similar:
                                 self.start = start
                                 self.start2 = start + len(dot_content)
@@ -936,13 +962,41 @@ class Root(Tk):
                         if current_text2[start] in ['/', '?']:
                             start += 1
                         current_word = current_text2[start:].lower()
+                        original_current_word = current_word
+                        is_special = False
+                        if '=' in current_word:
+                            is_special = True
+                            new_current_word = current_word.split(
+                                '=')[1].replace(' ', '')
+                            if ',' in new_current_word:
+                                new_current_word = new_current_word.split(
+                                    ',')[-1].replace(' ', '')
+                            self.start = start + current_word.rindex(
+                                new_current_word)
+                            current_word = new_current_word
+                        elif ',' in current_word:
+                            is_special = True
+                            new_current_word = current_word.split(
+                                ',')[-1].replace(' ', '')
+                            self.start = start + current_word.rindex(
+                                new_current_word)
+                            current_word = new_current_word
                         find_similar = [
                             x for x in function_names
-                            if current_word in x.lower()
+                            if x.lower().startswith(current_word)
                         ]
+                        find_similar.sort()
+                        find_similar2 = [
+                            x for x in function_names
+                            if current_word in x.lower()
+                            and not x.lower().startswith(current_word)
+                        ]
+                        find_similar2.sort()
+                        find_similar += find_similar2
                         if find_similar:
-                            self.start = start
-                            self.start2 = start + len(current_word)
+                            if not is_special:
+                                self.start = start
+                            self.start2 = start + len(original_current_word)
                             self.auto_complete(find_similar)
         else:
             if not self.is_realtime:
