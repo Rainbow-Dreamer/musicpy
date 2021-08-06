@@ -921,7 +921,9 @@ class Root(Tk):
                         dot_word_ind = newline_ind
                         if current_text2[dot_word_ind] in ['/', '?']:
                             dot_word_ind += 1
-                        current_word = current_text2[dot_word_ind:dot_ind - 1]
+
+                        current_word = current_text2[min(newline_ind, dot_ind
+                                                         ):]
                         original_current_word = current_word
                         is_special = False
                         if '=' in current_word:
@@ -931,33 +933,63 @@ class Root(Tk):
                             if ',' in new_current_word:
                                 new_current_word = new_current_word.split(
                                     ',')[-1].replace(' ', '')
+                            self.start = start + current_word.rindex(
+                                new_current_word)
                             current_word = new_current_word
                         elif ',' in current_word:
                             is_special = True
                             new_current_word = current_word.split(
                                 ',')[-1].replace(' ', '')
+                            self.start = start + current_word.rindex(
+                                new_current_word)
                             current_word = new_current_word
-                        dot_content = current_text2[dot_ind:].lower()
-                        try:
-                            current_func = dir(eval(current_word))
+                        if '.' in current_word:
+                            new_dot_ind = current_word.rindex('.')
+                            new_current_word = current_word[:new_dot_ind]
+                            dot_content = current_word[new_dot_ind +
+                                                       1:].lower()
+                            current_word = new_current_word
+                            try:
+                                current_func = dir(eval(current_word))
+                                find_similar = [
+                                    x for x in current_func
+                                    if x.lower().startswith(dot_content)
+                                ]
+                                find_similar.sort()
+                                find_similar2 = [
+                                    x for x in current_func
+                                    if dot_content in x.lower()
+                                    and not x.lower().startswith(dot_content)
+                                ]
+                                find_similar2.sort()
+                                find_similar += find_similar2
+                                if find_similar:
+                                    self.start = start
+                                    self.start2 = start + len(dot_content)
+                                    self.auto_complete(find_similar)
+                            except:
+                                pass
+                        else:
+                            current_word = current_word.lower()
                             find_similar = [
-                                x for x in current_func
-                                if x.lower().startswith(dot_content)
+                                x for x in function_names
+                                if x.lower().startswith(current_word)
                             ]
                             find_similar.sort()
                             find_similar2 = [
-                                x for x in current_func
-                                if dot_content in x.lower()
-                                and not x.lower().startswith(dot_content)
+                                x for x in function_names
+                                if current_word in x.lower()
+                                and not x.lower().startswith(current_word)
                             ]
                             find_similar2.sort()
                             find_similar += find_similar2
                             if find_similar:
-                                self.start = start
-                                self.start2 = start + len(dot_content)
+                                if not is_special:
+                                    self.start = start
+                                self.start2 = start + len(
+                                    original_current_word)
                                 self.auto_complete(find_similar)
-                        except:
-                            pass
+
                     else:
                         if current_text2[start] in ['/', '?']:
                             start += 1
