@@ -1801,14 +1801,38 @@ class chord:
         if mode == 0:
             interval = str(interval)
             if interval in degree_match:
-                degrees = degree_match[interval]
                 self_notes = self.same_accidentals().notes
+                degrees = degree_match[interval]
                 for each in degrees:
                     current_note = self_notes[0] + each
                     if current_note in self_notes:
                         return current_note
+            if interval in precise_degree_match:
+                self_notes = self.same_accidentals().notes
+                degrees = precise_degree_match[interval]
+                current_note = self_notes[0] + degrees
+                if current_note in self_notes:
+                    return current_note
         elif mode == 1:
             return self[1] + interval
+
+    def note_interval(self, current_note, mode=0):
+        if type(current_note) == str:
+            if not any(i.isdigit() for i in current_note):
+                current_note = toNote(current_note)
+                current_chord = chord([self[1].name, current_note.name])
+                current_interval = current_chord[2].degree - current_chord[
+                    1].degree
+            else:
+                current_note = toNote(current_note)
+                current_interval = current_note.degree - self[1].degree
+        else:
+            current_interval = current_note.degree - self[1].degree
+        if mode == 0:
+            if current_interval in reverse_precise_degree_match:
+                return reverse_precise_degree_match[current_interval]
+        elif mode == 1:
+            return INTERVAL[current_interval]
 
     def get_voicing(self, voicing):
         notes = [self.interval_note(i).name for i in voicing]
