@@ -1912,6 +1912,7 @@ class chord:
                         new_note = most_near_note + current_steps[1]
                     else:
                         new_note = most_near_note - current_steps[1]
+                remain_notes.append(new_note)
             temp.notes = remain_notes
             temp = temp.sortchord()
             return temp
