@@ -22,9 +22,9 @@ def setup():
     first_track_ind = start_time_ls.index(min(start_time_ls))
     all_tracks.insert(0, all_tracks.pop(first_track_ind))
     if use_track_colors:
+        color_num = len(all_tracks)
+        import random
         if not use_default_tracks_colors:
-            color_num = len(all_tracks)
-            import random
             colors = []
             for i in range(color_num):
                 current_color = tuple(
@@ -35,6 +35,16 @@ def setup():
                 colors.append(current_color)
         else:
             colors = tracks_colors
+            colors_len = len(colors)
+            if colors_len < color_num:
+                for k in range(color_num - colors_len):
+                    current_color = tuple(
+                        [random.randint(0, 255) for j in range(3)])
+                    while (colors == (255, 255, 255)) or (current_color
+                                                          in colors):
+                        current_color = tuple(
+                            [random.randint(0, 255) for j in range(3)])
+                    colors.append(current_color)
     first_track = all_tracks[0]
     tempo, all_track_notes, first_track_start_time = first_track
     for i in range(len(all_tracks)):
