@@ -1842,6 +1842,8 @@ class chord:
     def near_voicing(self, other, keep_root=True, root_lower=False):
         temp = self.standardize()
         other = other.standardize()
+        original_duration = temp.get_duration()
+        original_volume = temp.get_volume()
         if keep_root:
             root_note = temp.notes[0]
             other_root_note = other.notes[0]
@@ -1888,6 +1890,11 @@ class chord:
             remain_notes.insert(0, root_note)
             temp.notes = remain_notes
             temp = temp.sortchord()
+            temp = temp.set(duration=original_duration, volume=original_volume)
+            if temp[1].name != root_note.name:
+                temp[1] += octave * (
+                    (12 - (temp[1].degree - root_note.degree)) // octave)
+                temp = temp.sortchord()
             return temp
         else:
             remain_notes = []
@@ -1915,6 +1922,7 @@ class chord:
                 remain_notes.append(new_note)
             temp.notes = remain_notes
             temp = temp.sortchord()
+            temp = temp.set(duration=original_duration, volume=original_volume)
             return temp
 
 
