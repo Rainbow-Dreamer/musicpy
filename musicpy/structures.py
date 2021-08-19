@@ -3527,7 +3527,7 @@ class drum:
         pattern_intervals = []
         pattern_durations = []
         pattern_volumes = []
-        pattern = pattern.replace(' ', '')
+        pattern = pattern.replace(' ', '').replace('\n', '')
         units = pattern.split(',')
         repeat_times = 1
         whole_set = False
@@ -3551,7 +3551,9 @@ class drum:
                 whole_set_values[1] = whole_set_values[0]
             whole_set_values = [k.replace('|', ',') for k in whole_set_values]
             whole_set_values = [
-                eval(k) if k != 'n' else None for k in whole_set_values
+                (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                 and k[1].isdigit() else eval(k)) if k != 'n' else None
+                for k in whole_set_values
             ]
             whole_set_values = [
                 list(i) if type(i) == tuple else i for i in whole_set_values
@@ -3565,7 +3567,9 @@ class drum:
                 whole_set_values[1] = whole_set_values[0]
             whole_set_values = [k.replace('|', ',') for k in whole_set_values]
             whole_set_values = [
-                eval(k) if k != 'n' else None for k in whole_set_values
+                (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                 and k[1].isdigit() else eval(k)) if k != 'n' else None
+                for k in whole_set_values
             ]
             whole_set_values = [
                 list(i) if type(i) == tuple else i for i in whole_set_values
@@ -3589,8 +3593,9 @@ class drum:
                             k.replace('.', ',') for k in current_settings
                         ]
                         current_settings = [
-                            eval(k) if k != 'n' else None
-                            for k in current_settings
+                            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                             and k[1].isdigit() else eval(k))
+                            if k != 'n' else None for k in current_settings
                         ]
                         current_settings = [
                             list(i) if type(i) == tuple else i
@@ -3615,7 +3620,11 @@ class drum:
                     part_replace_ind2] = current_part_notes.get_volume()
                 part_replace_ind1 = len(notes)
             elif i[0] == '[' and i[-1] == ']':
-                current_interval = eval(i[1:-1])
+                current_content = i[1:-1]
+                current_interval = 1 / float(current_content[1:]) if len(
+                    current_content) > 1 and current_content[
+                        0] == '.' and current_content[1].isdigit() else eval(
+                            current_content)
                 if pattern_intervals:
                     pattern_intervals[-1] += current_interval
             elif '(' in i and i[-1] == ')':
@@ -3632,7 +3641,9 @@ class drum:
                                ) >= 2 and current_drum_settings[1] == '.':
                             current_drum_settings[1] = current_drum_settings[0]
                         current_drum_settings = [
-                            eval(k) if k != 'n' else None
+                            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                             and k[1].isdigit() else eval(k))
+                            if k != 'n' else None
                             for k in current_drum_settings
                         ]
                         current_drum_settings = [
@@ -3659,7 +3670,8 @@ class drum:
                        ) >= 2 and current_drum_settings[1] == '.':
                     current_drum_settings[1] = current_drum_settings[0]
                 current_drum_settings = [
-                    eval(k) if k != 'n' else None
+                    (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                     and k[1].isdigit() else eval(k)) if k != 'n' else None
                     for k in current_drum_settings
                 ]
                 current_drum_settings = [
@@ -3723,13 +3735,19 @@ class drum:
               channels=[9]))
 
     def __mul__(self, n):
-        return drum(notes=self.notes % n, mapping=self.mapping)
+        temp = copy(self)
+        temp.notes %= n
+        return temp
 
     def __add__(self, other):
-        return drum(notes=self.notes + other.notes, mapping=self.mapping)
+        temp = copy(self)
+        temp.notes += other.notes
+        return temp
 
     def __mod__(self, n):
-        return drum(notes=self.notes % n, mapping=self.mapping)
+        temp = copy(self)
+        temp.notes %= n
+        return temp
 
     def set(self, durations=None, intervals=None, volumes=None):
         return self % (durations, intervals, volumes)

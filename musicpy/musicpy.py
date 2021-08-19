@@ -3100,7 +3100,7 @@ def translate(pattern):
     pattern_intervals = []
     pattern_durations = []
     pattern_volumes = []
-    pattern = pattern.replace(' ', '')
+    pattern = pattern.replace(' ', '').replace('\n', '')
     units = pattern.split(',')
     repeat_times = 1
     whole_set = False
@@ -3124,7 +3124,8 @@ def translate(pattern):
             whole_set_values[1] = whole_set_values[0]
         whole_set_values = [k.replace('|', ',') for k in whole_set_values]
         whole_set_values = [
-            eval(k) if k != 'n' else None for k in whole_set_values
+            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.' and k[1].isdigit()
+             else eval(k)) if k != 'n' else None for k in whole_set_values
         ]
         whole_set_values = [
             list(i) if type(i) == tuple else i for i in whole_set_values
@@ -3137,7 +3138,8 @@ def translate(pattern):
             whole_set_values[1] = whole_set_values[0]
         whole_set_values = [k.replace('|', ',') for k in whole_set_values]
         whole_set_values = [
-            eval(k) if k != 'n' else None for k in whole_set_values
+            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.' and k[1].isdigit()
+             else eval(k)) if k != 'n' else None for k in whole_set_values
         ]
         whole_set_values = [
             list(i) if type(i) == tuple else i for i in whole_set_values
@@ -3160,7 +3162,9 @@ def translate(pattern):
                         k.replace('.', ',') for k in current_settings
                     ]
                     current_settings = [
-                        eval(k) if k != 'n' else None for k in current_settings
+                        (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                         and k[1].isdigit() else eval(k)) if k != 'n' else None
+                        for k in current_settings
                     ]
                     current_settings = [
                         list(i) if type(i) == tuple else i
@@ -3184,14 +3188,40 @@ def translate(pattern):
                             )
             part_replace_ind1 = len(notes)
         elif i[0] == '[' and i[-1] == ']':
-            current_interval = eval(i[1:-1])
+            current_content = i[1:-1]
+            current_interval = 1 / float(current_content[1:]) if len(
+                current_content
+            ) > 1 and current_content[0] == '.' and current_content[1].isdigit(
+            ) else eval(current_content)
             if pattern_intervals:
                 pattern_intervals[-1] += current_interval
         elif '(' in i and i[-1] == ')':
             repeat_times = int(i[i.index('(') + 1:-1])
             repeat_part = i[:i.index('(')]
             if repeat_part.startswith('$'):
-                repeat_part = named_dict[repeat_part]
+                if '[' in repeat_part and ']' in repeat_part:
+                    current_drum_settings = (
+                        repeat_part[repeat_part.index('[') +
+                                    1:repeat_part.index(']')].replace(
+                                        '|', ',')).split(';')
+                    repeat_part = repeat_part[:repeat_part.index('[')]
+                    if len(current_drum_settings
+                           ) >= 2 and current_drum_settings[1] == '.':
+                        current_drum_settings[1] = current_drum_settings[0]
+                    current_drum_settings = [
+                        (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                         and k[1].isdigit() else eval(k)) if k != 'n' else None
+                        for k in current_drum_settings
+                    ]
+                    current_drum_settings = [
+                        list(i) if type(i) == tuple else i
+                        for i in current_drum_settings
+                    ]
+
+                    repeat_part = named_dict[repeat_part].special_set(
+                        *current_drum_settings)
+                else:
+                    repeat_part = named_dict[repeat_part]
             else:
                 repeat_part = translate(repeat_part)
             current_notes = repeat_part % repeat_times
@@ -3206,7 +3236,9 @@ def translate(pattern):
                    ) >= 2 and current_drum_settings[1] == '.':
                 current_drum_settings[1] = current_drum_settings[0]
             current_drum_settings = [
-                eval(k) if k != 'n' else None for k in current_drum_settings
+                (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
+                 and k[1].isdigit() else eval(k)) if k != 'n' else None
+                for k in current_drum_settings
             ]
             current_drum_settings = [
                 list(i) if type(i) == tuple else i
@@ -3214,7 +3246,13 @@ def translate(pattern):
             ]
             config_part = i[:i.index('[')]
             if config_part.startswith('$'):
-                config_part = named_dict[config_part]
+                if '(' in config_part and ')' in config_part:
+                    repeat_times = int(config_part[config_part.index('(') +
+                                                   1:-1])
+                    config_part = config_part[:config_part.index('(')]
+                    config_part = named_dict[config_part] % repeat_times
+                else:
+                    config_part = named_dict[config_part]
             else:
                 config_part = translate(config_part)
             current_notes = config_part % current_drum_settings
