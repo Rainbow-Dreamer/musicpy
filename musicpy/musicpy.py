@@ -3255,7 +3255,7 @@ def translate(pattern):
                     config_part = named_dict[config_part]
             else:
                 config_part = translate(config_part)
-            current_notes = config_part % current_drum_settings
+            current_notes = config_part.special_set(*current_drum_settings)
             notes.extend(current_notes.notes)
             pattern_intervals.extend(current_notes.interval)
             pattern_durations.extend(current_notes.get_duration())
