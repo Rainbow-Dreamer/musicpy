@@ -1924,6 +1924,9 @@ class chord:
             temp = temp.sortchord()
             temp = temp.set(duration=original_duration, volume=original_volume)
             return temp
+    def reset_octave(self, num):
+        diff = num - self[1].num
+        return self + diff * octave
 
 
 class scale:

@@ -3371,3 +3371,17 @@ def find_chords_for_melody(melody,
         result = [each[:chord_length + 1] for each in result]
     result = [each - octave * down_octave for each in result]
     return result
+
+def arpeggio(chord_type, start=3, stop=7, durations=1/4, intervals=1/32, first_half=True, second_half=False):
+    if type(chord_type) == str:
+        rule = lambda chord_type, start, stop: concat([C(chord_type, i) % (durations, intervals) for i in range(start, stop)], '|')
+    else:
+        rule = lambda chord_type, start, stop: concat([chord_type.reset_octave(i) % (durations, intervals) for i in range(start, stop)], '|')
+    result = chord([])
+    first_half_part = rule(chord_type, start, stop)
+    second_half_part = ~first_half_part[:-1]    
+    if first_half:
+        result += first_half_part
+    if second_half:
+        result += second_half_part
+    return result
