@@ -46,14 +46,15 @@ def percentage_to_db(vol):
     return math.log(abs(vol / 100), 10) * 20
 
 
-def process_effect(current_audio, other_effects):
+def process_effect(current_audio, other_effects, bpm):
     for each in other_effects:
         current_type = each.effect
         current_values = each.value
         if current_type == 'reverse':
             current_audio = current_audio.reverse()
         elif current_type == 'offset':
-            current_audio = current_audio[current_values:]
+            current_audio = current_audio[
+                bar_to_real_time(current_values, bpm, 1):]
         elif current_type == 'fade':
             fade_in_time, fade_out_time = current_values
             if fade_in_time > 0:
@@ -75,7 +76,7 @@ def process_effect(current_audio, other_effects):
                     current_audio[attack:] + change_db)
             if release > 0:
                 current_audio = current_audio.fade_out(release)
-        return current_audio
+    return current_audio
 
 
 def get_timestamps(current_chord,
@@ -111,7 +112,7 @@ def get_timestamps(current_chord,
     result = noteon_part + noteoff_part + pitch_bend_part
     if not ignore_other_messages:
         other_messages_part = [
-            general_event('other',
+            general_event('message',
                           bar_to_real_time(i.time / 4, bpm, 1) / 1000, i)
             for i in current_chord.other_messages
         ]
@@ -119,7 +120,7 @@ def get_timestamps(current_chord,
     if pan:
         pan_part = [
             general_event(
-                'other',
+                'message',
                 bar_to_real_time(i.start_time - 1, bpm, 1) / 1000,
                 mp.controller_event(controller_number=10, parameter=i.value))
             for i in pan
@@ -128,13 +129,28 @@ def get_timestamps(current_chord,
     if volume:
         volume_part = [
             general_event(
-                'other',
+                'message',
                 bar_to_real_time(i.start_time - 1, bpm, 1) / 1000,
                 mp.controller_event(controller_number=7, parameter=i.value))
             for i in volume
         ]
         result += volume_part
-    result.sort(key=lambda s: s.start_time)
+    result.sort(key=lambda s: (s.start_time, s.event_type))
+    return result
+
+
+def convert_effect(current_chord):
+    result = []
+    if hasattr(current_chord, 'reverse_audio'):
+        result.append(effect('reverse'))
+    if hasattr(current_chord, 'offset'):
+        result.append(effect('offset', current_chord.offset))
+    if hasattr(current_chord, 'fade_in_time'):
+        result.append(
+            effect('fade',
+                   (current_chord.fade_in_time, current_chord.fade_out_time)))
+    if hasattr(current_chord, 'adsr'):
+        result.append(effect('adsr', current_chord.adsr))
     return result
 
 
@@ -293,7 +309,7 @@ class sf2_loader:
         self.program_select()
         self.synth.get_samples(int(frame_rate * 1))
         if other_effects:
-            current_audio = process_effect(current_audio, other_effects)
+            current_audio = process_effect(current_audio, other_effects, bpm)
         if name is None:
             name = f'{current_note}.{format}'
         if not get_audio:
@@ -314,7 +330,9 @@ class sf2_loader:
                      bpm=80,
                      get_audio=False,
                      fixed_decay=False,
-                     other_effects=None):
+                     other_effects=None,
+                     pan=None,
+                     volume=None):
         if type(decay) != list:
             current_decay = [
                 decay * i for i in current_chord.get_duration()
@@ -333,7 +351,10 @@ class sf2_loader:
                                                    bpm, 1) / 1000
 
         self.audio_array = []
-        current_timestamps = get_timestamps(current_chord, bpm)
+        current_timestamps = get_timestamps(current_chord,
+                                            bpm,
+                                            pan=pan,
+                                            volume=volume)
         current_timestamps_length = len(current_timestamps)
         current_length = 0
         current_silent_audio = AudioSegment.silent(
@@ -384,10 +405,12 @@ class sf2_loader:
                     self.synth.noteoff(track, each.degree)
             elif current.event_type == 'pitch_bend':
                 self.synth.pitch_bend(track, each.value)
-            elif current.event_type == 'other':
-                if type(current.value) == mp.controller_event:
+            elif current.event_type == 'message':
+                if type(each) == mp.controller_event:
                     self.synth.cc(each.channel, each.controller_number,
                                   each.parameter)
+                elif type(each) == mp.program_change:
+                    self.synth.program_change(each.channel, each.program)
             if k != current_timestamps_length - 1:
                 append_time = current_timestamps[
                     k + 1].start_time - current.start_time
@@ -413,7 +436,7 @@ class sf2_loader:
         self.synth.get_samples(int(frame_rate * 1))
         if other_effects:
             current_silent_audio = process_effect(current_silent_audio,
-                                                  other_effects)
+                                                  other_effects, bpm)
 
         if name is None:
             name = f'Untitled.{format}'
@@ -434,8 +457,65 @@ class sf2_loader:
                      format='wav',
                      get_audio=False,
                      fixed_decay=False,
-                     other_effects=None):
-        pass
+                     other_effects=None,
+                     clear_program_change=True):
+        bpm = current_chord.tempo
+        current_chord.normalize_tempo()
+        if clear_program_change:
+            current_chord.clear_program_change()
+        whole_duration = current_chord.eval_time(bpm, mode='number') * 1000
+        silent_audio = AudioSegment.silent(duration=whole_duration)
+        for i in range(len(current_chord.tracks)):
+            each = current_chord.tracks[i]
+            current_start_time = bar_to_real_time(current_chord.start_times[i],
+                                                  bpm, 1)
+            current_pan = current_chord.pan[i]
+            current_volume = current_chord.volume[i]
+            current_instrument = current_chord.instruments_numbers[i]
+            # instrument of a track of the piece type could be preset_num or [preset_num, bank_num, (track), (sfid)]
+            if type(current_instrument) == int:
+                current_instrument = [
+                    current_instrument - 1, self.current_bank_num
+                ]
+            else:
+                current_instrument[0] -= 1
+
+            current_track = copy(self.current_track)
+            current_sfid = copy(self.current_sfid)
+            current_bank_num = copy(self.current_bank_num)
+            current_preset_num = copy(self.current_preset_num)
+
+            self.program_select(track=(current_instrument[2] if
+                                       len(current_instrument) > 2 else None),
+                                sfid=(current_instrument[3] if
+                                      len(current_instrument) > 3 else None),
+                                bank_num=current_instrument[1],
+                                preset_num=current_instrument[0])
+
+            current_audio = self.export_chord(each, decay, track, 0,
+                                              sample_width, channels,
+                                              frame_rate, None, format, bpm,
+                                              True, fixed_decay,
+                                              convert_effect(each),
+                                              current_pan, current_volume)
+            silent_audio = silent_audio.overlay(current_audio,
+                                                position=current_start_time)
+
+            self.program_select(current_track, current_sfid, current_bank_num,
+                                current_preset_num)
+
+        self.synth.system_reset()
+        self.program_select()
+        self.synth.get_samples(int(frame_rate * 1))
+        if other_effects:
+            silent_audio = process_effect(silent_audio, other_effects, bpm)
+
+        if name is None:
+            name = f'Untitled.{format}'
+        if not get_audio:
+            silent_audio.export(name, format=format)
+        else:
+            return silent_audio
 
     def export_midi_file(self,
                          current_chord,
@@ -449,8 +529,27 @@ class sf2_loader:
                          format='wav',
                          get_audio=False,
                          fixed_decay=False,
-                         other_effects=None):
-        pass
+                         other_effects=None,
+                         clear_program_change=True,
+                         instruments=None,
+                         **read_args):
+        current_chord = mp.read(current_chord,
+                                mode='all',
+                                to_piece=True,
+                                **read_args)
+        if instruments:
+            current_chord.change_instruments(instruments)
+        result = self.export_piece(current_chord, decay, track, start_time,
+                                   sample_width, channels, frame_rate, name,
+                                   format, True, fixed_decay, other_effects,
+                                   clear_program_change)
+
+        if name is None:
+            name = f'Untitled.{format}'
+        if not get_audio:
+            result.export(name, format=format)
+        else:
+            return result
 
     def play_note(self,
                   note_name,
@@ -484,11 +583,14 @@ class sf2_loader:
                    format='wav',
                    bpm=80,
                    fixed_decay=False,
-                   other_effects=None):
+                   other_effects=None,
+                   pan=None,
+                   volume=None):
         current_audio = self.export_chord(current_chord, decay, track,
                                           start_time, sample_width, channels,
                                           frame_rate, name, format, bpm, True,
-                                          fixed_decay, other_effects)
+                                          fixed_decay, other_effects, pan,
+                                          volume)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -503,11 +605,13 @@ class sf2_loader:
                    name=None,
                    format='wav',
                    fixed_decay=False,
-                   other_effects=None):
+                   other_effects=None,
+                   clear_program_change=True):
         current_audio = self.export_piece(current_chord, decay, track,
                                           start_time, sample_width, channels,
                                           frame_rate, name, format, True,
-                                          fixed_decay, other_effects)
+                                          fixed_decay, other_effects,
+                                          clear_program_change)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -522,12 +626,14 @@ class sf2_loader:
                        name=None,
                        format='wav',
                        fixed_decay=False,
-                       other_effects=None):
-        current_audio = self.export_midi_file(current_chord, decay, track,
-                                              start_time, sample_width,
-                                              channels, frame_rate, name,
-                                              format, True, fixed_decay,
-                                              other_effects)
+                       other_effects=None,
+                       clear_program_change=True,
+                       instruments=None,
+                       **read_args):
+        current_audio = self.export_midi_file(
+            current_chord, decay, track, start_time, sample_width, channels,
+            frame_rate, name, format, True, fixed_decay, other_effects,
+            clear_program_change, instruments, **read_args)
         simpleaudio.stop_all()
         play_sound(current_audio)
 

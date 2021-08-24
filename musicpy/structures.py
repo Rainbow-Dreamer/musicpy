@@ -1543,7 +1543,8 @@ class chord:
         tempo_changes = [
             i for i in range(len(self.notes)) if type(self.notes[i]) == tempo
         ]
-        if not tempo_changes:
+        if (not tempo_changes) or all(self.notes[i].bpm == bpm
+                                      for i in tempo_changes):
             return
         tempo_changes_no_time = [
             k for k in tempo_changes if self.notes[k].start_time is None
@@ -1554,7 +1555,6 @@ class chord:
             current_tempo.start_time = current_time
         tempo_changes = [self.notes[j] for j in tempo_changes]
         self.clear_tempo()
-        self.clear_pitch_bend()
         tempo_changes.sort(key=lambda s: s.start_time)
         for each in tempo_changes:
             each.start_time -= start_time
@@ -1933,6 +1933,19 @@ class chord:
         temp = copy(self)
         temp.other_messages = other_messages
         return temp
+
+    def clear_program_change(self):
+        self.other_messages = [
+            i for i in self.other_messages if type(i) != program_change
+        ]
+
+    def clear_other_messages(self, types=None):
+        if types is None:
+            self.other_messages.clear()
+        else:
+            self.other_messages = [
+                i for i in self.other_messages if type(i) != types
+            ]
 
 
 class scale:
@@ -2900,7 +2913,9 @@ class piece:
             new_track_intervals[i].append(
                 sum(whole_interval[new_track_inds[i][-1]:]))
         new_tracks = [
-            chord(new_track_notes[k], interval=new_track_intervals[k])
+            chord(new_track_notes[k],
+                  interval=new_track_intervals[k],
+                  other_messages=temp.tracks[k].other_messages)
             for k in range(length)
         ]
         self.tracks = new_tracks
@@ -3185,6 +3200,41 @@ class piece:
 
     def __invert__(self):
         return self.reverse()
+
+    def clear_program_change(self, apply_tracks=True):
+        if apply_tracks:
+            for each in self.tracks:
+                each.clear_program_change()
+        self.other_messages = [
+            i for i in self.other_messages if type(i) != program_change
+        ]
+
+    def clear_other_messages(self, types=None, apply_tracks=True):
+        if apply_tracks:
+            for each in self.tracks:
+                each.clear_other_messages(types)
+        if types is None:
+            self.other_messages.clear()
+        else:
+            self.other_messages = [
+                i for i in self.other_messages if type(i) != types
+            ]
+
+    def change_instruments(self, instruments_list):
+        if all(type(i) == int for i in instruments_list):
+            self.instruments_numbers = copy(instruments_list)
+            self.instruments_list = [
+                reverse_instruments[i] for i in self.instruments_numbers
+            ]
+        elif all(type(i) == str for i in instruments_list):
+            self.instruments_list = copy(instruments_list)
+            self.instruments_numbers = [
+                instruments[i] for i in self.instruments_list
+            ]
+        elif any(
+                type(i) == list and all(type(j) == int for j in i)
+                for i in instruments_list):
+            self.instruments_numbers = copy(instruments_list)
 
 
 P = piece
