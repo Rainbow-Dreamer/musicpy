@@ -139,7 +139,7 @@ def get_timestamps(current_chord,
     return result
 
 
-def convert_effect(current_chord):
+def convert_effect(current_chord, add=False):
     result = []
     if hasattr(current_chord, 'reverse_audio'):
         result.append(effect('reverse'))
@@ -151,6 +151,8 @@ def convert_effect(current_chord):
                    (current_chord.fade_in_time, current_chord.fade_out_time)))
     if hasattr(current_chord, 'adsr'):
         result.append(effect('adsr', current_chord.adsr))
+    if add:
+        current_chord.other_effects = result
     return result
 
 
@@ -303,7 +305,8 @@ class sf2_loader:
                     name=None,
                     format='wav',
                     get_audio=False,
-                    other_effects=None):
+                    other_effects=None,
+                    bpm=80):
         self.audio_array = []
         if type(note_name) != mp.note:
             current_note = mp.N(note_name)
@@ -405,7 +408,8 @@ class sf2_loader:
                     frame_rate=frame_rate,
                     format=format,
                     get_audio=True,
-                    other_effects=each.other_effects)
+                    other_effects=each.other_effects,
+                    bpm=bpm)
                 current_silent_audio = current_silent_audio.overlay(
                     current_note_audio,
                     position=(start_time + current.start_time) * 1000)
@@ -584,11 +588,12 @@ class sf2_loader:
                   frame_rate=44100,
                   name=None,
                   format='wav',
-                  other_effects=None):
+                  other_effects=None,
+                  bpm=80):
         current_audio = self.export_note(note_name, duration, decay, volume,
                                          track, start_time, sample_width,
                                          channels, frame_rate, name, format,
-                                         True, other_effects)
+                                         True, other_effects, bpm)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -672,7 +677,9 @@ class sf2_loader:
                              channels=2,
                              frame_rate=44100,
                              format='wav',
-                             folder_name='Untitled'):
+                             folder_name='Untitled',
+                             other_effects=None,
+                             bpm=80):
         try:
             os.mkdir(folder_name)
             os.chdir(folder_name)
@@ -699,7 +706,9 @@ class sf2_loader:
                              sample_width=sample_width,
                              channels=channels,
                              frame_rate=frame_rate,
-                             format=format)
+                             format=format,
+                             other_effects=other_effects,
+                             bpm=bpm)
         print('exporting finished')
         self.program_select(current_track, current_sfid, current_bank_num,
                             current_preset_num)
