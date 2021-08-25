@@ -192,7 +192,12 @@ class sf2_loader:
                        track=None,
                        sfid=None,
                        bank_num=None,
-                       preset_num=None):
+                       preset_num=None,
+                       correct=True):
+        current_track = copy(self.current_track)
+        current_sfid = copy(self.current_sfid)
+        current_bank_num = copy(self.current_bank_num)
+        current_preset_num = copy(self.current_preset_num)
         if track is None:
             track = self.current_track
         if sfid is None:
@@ -203,14 +208,22 @@ class sf2_loader:
             preset_num = self.current_preset_num
         select_status = self.synth.program_select(track, sfid, bank_num,
                                                   preset_num)
-        self.current_track = track
-        self.current_sfid = sfid
-        self.current_bank_num = bank_num
-        self.current_preset_num = preset_num
+        if not (correct and select_status == -1):
+            self.current_track = track
+            self.current_sfid = sfid
+            self.current_bank_num = bank_num
+            self.current_preset_num = preset_num
+        else:
+            self.synth.program_select(current_track, current_sfid,
+                                      current_bank_num, current_preset_num)
         return select_status
 
     def __lt__(self, preset_num):
-        self.program_select(preset_num=preset_num)
+        if type(preset_num) == tuple and len(preset_num) == 2:
+            self.program_select(bank_num=preset_num[1],
+                                preset_num=preset_num[0])
+        else:
+            self.program_select(preset_num=preset_num)
 
     def __mod__(self, value):
         self.program_select(track=value[0],
@@ -247,27 +260,35 @@ class sf2_loader:
             return result
 
     def get_all_instrument_names(self,
-                                 track=0,
+                                 track=None,
                                  sfid=None,
-                                 bank_num=0,
+                                 bank_num=None,
                                  num=0,
-                                 max_num=128):
+                                 max_num=128,
+                                 get_ind=False,
+                                 mode=0):
         current_track = copy(self.current_track)
         current_sfid = copy(self.current_sfid)
         current_bank_num = copy(self.current_bank_num)
         current_preset_num = copy(self.current_preset_num)
         preset_num = 0
         select_status = self.program_select(track, sfid, bank_num, preset_num)
-        result = [self.synth.channel_info(num)[3]]
-        for preset_num in range(1, max_num):
+        result = []
+        ind = []
+        if select_status != -1:
+            result.append(self.synth.channel_info(num)[3])
+            ind.append(preset_num)
+
+        for i in range(max_num - 1):
             preset_num += 1
             select_status = self.program_select(track, sfid, bank_num,
                                                 preset_num)
             if select_status != -1:
                 result.append(self.synth.channel_info(num)[3])
+                ind.append(preset_num)
         self.program_select(current_track, current_sfid, current_bank_num,
-                            current_preset_num)
-        return result
+                            ind[0] if mode == 1 else current_preset_num)
+        return result if not get_ind else (result, ind)
 
     def export_note(self,
                     note_name,
@@ -638,10 +659,10 @@ class sf2_loader:
         play_sound(current_audio)
 
     def export_sound_modules(self,
-                             track=0,
+                             track=None,
                              sfid=None,
-                             bank_num=0,
-                             preset_num=0,
+                             bank_num=None,
+                             preset_num=None,
                              start='A0',
                              stop='C8',
                              duration=6,
