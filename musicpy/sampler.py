@@ -234,14 +234,18 @@ class sampler:
             self.load_esi_file(current_ind, esi, ess)
             return
         sound_path = path
-        notedict = self.channel_dict[current_ind]
-        note_sounds = load(notedict, sound_path)
-        note_sounds_path = load_sounds(notedict, sound_path)
-        self.channel_sound_modules[current_ind] = note_sounds
-        self.channel_note_sounds_path[current_ind] = note_sounds_path
-        self.channel_sound_modules_name[current_ind] = sound_path
-        self.channel_sound_audiosegments[current_ind] = load_audiosegments(
-            notedict, sound_path)
+        if os.path.isdir(sound_path):
+            notedict = self.channel_dict[current_ind]
+            note_sounds = load(notedict, sound_path)
+            note_sounds_path = load_sounds(notedict, sound_path)
+            self.channel_sound_modules[current_ind] = note_sounds
+            self.channel_note_sounds_path[current_ind] = note_sounds_path
+            self.channel_sound_modules_name[current_ind] = sound_path
+            self.channel_sound_audiosegments[current_ind] = load_audiosegments(
+                notedict, sound_path)
+        elif os.path.isfile(sound_path):
+            self.channel_sound_modules[current_ind] = rs.sf2_loader(sound_path)
+            self.channel_sound_modules_name[current_ind] = sound_path
 
     def export(self,
                obj,
@@ -289,17 +293,31 @@ class sampler:
                 if type(each) == AudioSegment:
                     each.duration = real_time_to_bar(len(each), current_bpm)
                     each.volume = 127
-            apply_fadeout_obj = self.apply_fadeout(current_chord, current_bpm)
-            whole_duration = apply_fadeout_obj.eval_time(
-                current_bpm, mode='number', audio_mode=1) * 1000
-            current_start_times = 0
-            current_chord = current_chord.only_notes(audio_mode=1)
-            silent_audio = AudioSegment.silent(duration=whole_duration)
-            silent_audio = self.channel_to_audio(current_chord,
-                                                 current_channel_num,
-                                                 silent_audio,
-                                                 current_bpm,
-                                                 mode=action)
+
+            current_sound_modules = self.channel_sound_modules[
+                current_channel_num]
+            if type(current_sound_modules) == rs.sf2_loader:
+                for k in current_chord.notes:
+                    if check_reverse(k) or check_fade(k) or check_offset(
+                            k) or check_adsr(k):
+                        rs.convert_effect(k, add=True)
+                silent_audio = current_sound_modules.export_chord(
+                    current_chord,
+                    bpm=current_bpm,
+                    get_audio=True,
+                    other_effects=rs.convert_effect(current_chord))
+            else:
+                apply_fadeout_obj = self.apply_fadeout(current_chord,
+                                                       current_bpm)
+                whole_duration = apply_fadeout_obj.eval_time(
+                    current_bpm, mode='number', audio_mode=1) * 1000
+                current_start_times = 0
+                silent_audio = AudioSegment.silent(duration=whole_duration)
+                silent_audio = self.channel_to_audio(current_chord,
+                                                     current_channel_num,
+                                                     silent_audio,
+                                                     current_bpm,
+                                                     mode=action)
             try:
                 if action == 'export':
                     silent_audio.export(filename, format=mode)
@@ -321,7 +339,6 @@ class sampler:
             ]
             for i in range(len(current_chord.tracks)):
                 each_channel = current_chord.tracks[i]
-                each_channel = each_channel.only_notes(audio_mode=1)
                 for each in each_channel:
                     if type(each) == AudioSegment:
                         each.duration = real_time_to_bar(
@@ -333,14 +350,34 @@ class sampler:
                 current_bpm, mode='number', audio_mode=1) * 1000
             silent_audio = AudioSegment.silent(duration=whole_duration)
             for i in range(len(current_chord)):
-                silent_audio = self.channel_to_audio(current_tracks[i],
-                                                     current_channels[i],
-                                                     silent_audio,
-                                                     current_bpm,
-                                                     current_pan[i],
-                                                     current_volume[i],
-                                                     current_start_times[i],
-                                                     mode=action)
+                current_sound_modules = self.channel_sound_modules[
+                    current_channels[i]]
+                current_track = current_tracks[i]
+                if type(current_sound_modules) == rs.sf2_loader:
+                    for k in current_track.notes:
+                        if check_reverse(k) or check_fade(k) or check_offset(
+                                k) or check_adsr(k):
+                            rs.convert_effect(k, add=True)
+                    silent_audio = silent_audio.overlay(
+                        current_sound_modules.export_chord(
+                            current_track,
+                            bpm=current_bpm,
+                            get_audio=True,
+                            other_effects=rs.convert_effect(current_track),
+                            pan=current_pan[i],
+                            volume=current_volume[i]),
+                        position=bar_to_real_time(current_start_times[i],
+                                                  current_bpm, 1))
+                else:
+                    silent_audio = self.channel_to_audio(
+                        current_tracks[i],
+                        current_channels[i],
+                        silent_audio,
+                        current_bpm,
+                        current_pan[i],
+                        current_volume[i],
+                        current_start_times[i],
+                        mode=action)
             if check_adsr(current_chord):
                 current_adsr = current_chord.adsr
                 attack, decay, sustain, release = current_adsr
@@ -428,67 +465,74 @@ class sampler:
         whole_length = len(current_chord)
         for i in range(whole_length):
             each = current_chord.notes[i]
-            interval = bar_to_real_time(current_intervals[i], current_bpm, 1)
-            duration = bar_to_real_time(
-                current_durations[i], current_bpm,
-                1) if type(each) != AudioSegment else len(each)
-            volume = velocity_to_db(current_volumes[i])
-            current_offset = 0
-            if check_offset(each):
-                current_offset = bar_to_real_time(each.offset, current_bpm, 1)
-            current_fadeout_time = int(
-                duration * self.export_audio_fadeout_time_ratio
-            ) if self.export_fadeout_use_ratio else int(
-                self.export_audio_fadeout_time)
-            if type(each) == AudioSegment:
-                current_sound = each[current_offset:duration]
-            else:
-                each_name = str(each)
-                if each_name not in current_sounds:
-                    each_name = str(~each)
-                if each_name not in current_sounds:
-                    current_position += interval
-                    continue
-                current_sound = current_sounds[each_name]
-                if current_sound is None:
-                    current_position += interval
-                    continue
-                current_max_time = min(len(current_sound),
-                                       duration + current_fadeout_time)
-                current_max_fadeout_time = min(len(current_sound),
-                                               current_fadeout_time)
-                current_sound = current_sound[current_offset:current_max_time]
-            if check_adsr(each):
-                current_adsr = each.adsr
-                attack, decay, sustain, release = current_adsr
-                change_db = percentage_to_db(sustain)
-                result_db = current_sound.dBFS + change_db
-                if attack > 0:
-                    current_sound = current_sound.fade_in(attack)
-                if decay > 0:
-                    current_sound = current_sound.fade(to_gain=result_db,
-                                                       start=attack,
-                                                       duration=decay)
+            current_type = type(each)
+            if current_type == note or current_type == AudioSegment:
+                interval = bar_to_real_time(current_intervals[i], current_bpm,
+                                            1)
+                duration = bar_to_real_time(
+                    current_durations[i], current_bpm,
+                    1) if type(each) != AudioSegment else len(each)
+                volume = velocity_to_db(current_volumes[i])
+                current_offset = 0
+                if check_offset(each):
+                    current_offset = bar_to_real_time(each.offset, current_bpm,
+                                                      1)
+                current_fadeout_time = int(
+                    duration * self.export_audio_fadeout_time_ratio
+                ) if self.export_fadeout_use_ratio else int(
+                    self.export_audio_fadeout_time)
+                if type(each) == AudioSegment:
+                    current_sound = each[current_offset:duration]
                 else:
-                    current_sound = current_sound[:attack].append(
-                        current_sound[attack:] + change_db)
-                if release > 0:
-                    current_sound = current_sound.fade_out(release)
-            if check_fade(each):
-                if each.fade_in_time > 0:
-                    current_sound = current_sound.fade_in(each.fade_in_time)
-                if each.fade_out_time > 0:
-                    current_sound = current_sound.fade_out(each.fade_out_time)
-            if check_reverse(each):
-                current_sound = current_sound.reverse()
+                    each_name = str(each)
+                    if each_name not in current_sounds:
+                        each_name = str(~each)
+                    if each_name not in current_sounds:
+                        current_position += interval
+                        continue
+                    current_sound = current_sounds[each_name]
+                    if current_sound is None:
+                        current_position += interval
+                        continue
+                    current_max_time = min(len(current_sound),
+                                           duration + current_fadeout_time)
+                    current_max_fadeout_time = min(len(current_sound),
+                                                   current_fadeout_time)
+                    current_sound = current_sound[
+                        current_offset:current_max_time]
+                if check_adsr(each):
+                    current_adsr = each.adsr
+                    attack, decay, sustain, release = current_adsr
+                    change_db = percentage_to_db(sustain)
+                    result_db = current_sound.dBFS + change_db
+                    if attack > 0:
+                        current_sound = current_sound.fade_in(attack)
+                    if decay > 0:
+                        current_sound = current_sound.fade(to_gain=result_db,
+                                                           start=attack,
+                                                           duration=decay)
+                    else:
+                        current_sound = current_sound[:attack].append(
+                            current_sound[attack:] + change_db)
+                    if release > 0:
+                        current_sound = current_sound.fade_out(release)
+                if check_fade(each):
+                    if each.fade_in_time > 0:
+                        current_sound = current_sound.fade_in(
+                            each.fade_in_time)
+                    if each.fade_out_time > 0:
+                        current_sound = current_sound.fade_out(
+                            each.fade_out_time)
+                if check_reverse(each):
+                    current_sound = current_sound.reverse()
 
-            if current_fadeout_time != 0 and type(each) != AudioSegment:
-                current_sound = current_sound.fade_out(
-                    duration=current_max_fadeout_time)
-            current_sound += volume
-            current_silent_audio = current_silent_audio.overlay(
-                current_sound, position=current_position)
-            current_position += interval
+                if current_fadeout_time != 0 and type(each) != AudioSegment:
+                    current_sound = current_sound.fade_out(
+                        duration=current_max_fadeout_time)
+                current_sound += volume
+                current_silent_audio = current_silent_audio.overlay(
+                    current_sound, position=current_position)
+                current_position += interval
         if current_pan:
             pan_ranges = [
                 bar_to_real_time(i.start_time - 1, current_bpm, 1)
@@ -767,7 +811,9 @@ class sampler:
             if has_offset:
                 current_chord.offset = has_offset
         if type(current_chord) == piece:
-            if check_special(current_chord):
+            if check_special(current_chord) or any(
+                    type(self.channel_sound_modules[i]) == rs.sf2_loader
+                    for i in current_chord.channels):
                 self.export(current_chord, action='play')
                 return
             current_tracks = current_chord.tracks
@@ -787,29 +833,46 @@ class sampler:
     def play_channel(self, current_chord, current_channel_num=0, bpm=None):
         if not self.channel_sound_modules[current_channel_num]:
             return
-        current_chord = current_chord.only_notes()
         current_intervals = current_chord.interval
         current_durations = current_chord.get_duration()
         current_volumes = current_chord.get_volume()
         current_time = 0
-        for i in range(len(current_chord)):
-            each = current_chord.notes[i]
-            if i == 0:
-                self.play_note_func(f'{standardize_note(each.name)}{each.num}',
-                                    current_durations[i], current_volumes[i],
-                                    current_channel_num)
-            else:
-                duration = current_durations[i]
-                volume = current_volumes[i]
-                current_time += bar_to_real_time(current_intervals[i - 1], bpm,
-                                                 1)
-                current_id = threading.Timer(
-                    current_time / 1000,
-                    lambda each=each, duration=duration, volume=volume: self.
-                    play_note_func(f'{standardize_note(each.name)}{each.num}',
-                                   duration, volume, current_channel_num))
-                self.current_playing.append(current_id)
-                current_id.start()
+        current_sound_modules = self.channel_sound_modules[current_channel_num]
+        if type(current_sound_modules) == rs.sf2_loader:
+            current_sound_modules.play_chord(
+                current_chord, bpm=self.current_bpm if bpm is None else bpm)
+        else:
+            for i in range(len(current_chord)):
+                each = current_chord.notes[i]
+                if type(each) == note:
+                    if i == 0:
+                        self.play_note_func(
+                            f'{standardize_note(each.name)}{each.num}',
+                            current_durations[i], current_volumes[i],
+                            current_channel_num)
+                    else:
+                        duration = current_durations[i]
+                        volume = current_volumes[i]
+                        current_time += bar_to_real_time(
+                            current_intervals[i - 1], bpm, 1)
+                        current_id = threading.Timer(
+                            current_time / 1000,
+                            lambda each=each, duration=duration, volume=volume:
+                            self.play_note_func(
+                                f'{standardize_note(each.name)}{each.num}',
+                                duration, volume, current_channel_num))
+                        self.current_playing.append(current_id)
+                        current_id.start()
+
+    def modules(self, ind):
+        if ind > 0:
+            ind -= 1
+        return self.channel_sound_modules[ind]
+
+    def module_names(self, ind):
+        if ind > 0:
+            ind -= 1
+        return self.channel_sound_modules_name[ind]
 
 
 class pitch:
