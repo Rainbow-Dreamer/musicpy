@@ -1,2 +1,4 @@
 include musicpy/*.txt
 include musicpy/simpleaudio/*.pyd
+include musicpy/sf2_loader/read_sf2/*
+include musicpy/sf2_loader/read_sf2_32bit/*

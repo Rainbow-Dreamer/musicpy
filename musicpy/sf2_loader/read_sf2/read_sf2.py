@@ -4,7 +4,7 @@ import sys
 abs_path = os.path.abspath(os.path.dirname(__file__))
 os.chdir(abs_path)
 os.environ['PATH'] += os.pathsep + abs_path
-os.chdir('../..')
+os.chdir('../../..')
 sys.path.append('.')
 
 import musicpy.musicpy as mp
@@ -14,7 +14,7 @@ os.chdir('musicpy')
 import simpleaudio
 from pydub.playback import _play_with_simpleaudio as play_sound
 
-os.chdir('read_sf2')
+os.chdir('sf2_loader/read_sf2')
 
 import time
 import numpy
