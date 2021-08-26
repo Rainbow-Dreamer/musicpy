@@ -212,6 +212,17 @@ def concat(chordlist, mode='+', extra=None):
     return temp
 
 
+def multi_voice(*current_chord, method='translate', start_times=None):
+    current_chord = [method(i) if type(i) == str else i for i in current_chord]
+    if start_times is None:
+        return concat(current_chord, mode='&')
+    else:
+        result = current_chord[0]
+        for i in range(1, len(current_chord)):
+            result &= (current_chord[i], start_times[i - 1])
+        return result
+
+
 def play(current_chord,
          bpm=80,
          track_ind=0,
@@ -3120,32 +3131,18 @@ def translate(pattern):
     if units[0].startswith('!'):
         whole_set = True
         whole_set_values = units[0][1:].split(';')
-        if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
-            whole_set_values[1] = whole_set_values[0]
         whole_set_values = [k.replace('|', ',') for k in whole_set_values]
-        whole_set_values = [
-            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.' and k[1].isdigit()
-             else eval(k)) if k != 'n' else None for k in whole_set_values
-        ]
-        whole_set_values = [
-            list(i) if type(i) == tuple else i for i in whole_set_values
-        ]
+        whole_set_values = process_settings(whole_set_values)
         return translate(','.join(units[1:])).special_set(*whole_set_values)
     elif units[-1].startswith('!'):
         whole_set = True
         whole_set_values = units[-1][1:].split(';')
-        if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
-            whole_set_values[1] = whole_set_values[0]
         whole_set_values = [k.replace('|', ',') for k in whole_set_values]
-        whole_set_values = [
-            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.' and k[1].isdigit()
-             else eval(k)) if k != 'n' else None for k in whole_set_values
-        ]
-        whole_set_values = [
-            list(i) if type(i) == tuple else i for i in whole_set_values
-        ]
+        whole_set_values = process_settings(whole_set_values)
         return translate(','.join(units[:-1])).special_set(*whole_set_values)
     for i in units:
+        if i == '':
+            continue
         if i[0] == '{' and i[-1] == '}':
             part_replace_ind2 = len(notes)
             current_part = parts[part_counter]
@@ -3155,21 +3152,10 @@ def translate(pattern):
             for each in part_settings:
                 if each.startswith('!'):
                     current_settings = each[1:].split(';')
-                    if len(current_settings
-                           ) >= 2 and current_settings[1] == '.':
-                        current_settings[1] = current_settings[0]
                     current_settings = [
                         k.replace('.', ',') for k in current_settings
                     ]
-                    current_settings = [
-                        (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                         and k[1].isdigit() else eval(k)) if k != 'n' else None
-                        for k in current_settings
-                    ]
-                    current_settings = [
-                        list(i) if type(i) == tuple else i
-                        for i in current_settings
-                    ]
+                    current_part_notes = process_settings(current_part_notes)
                     current_part_notes = current_part_notes.special_set(
                         *current_settings)
                 elif each.isdigit():
@@ -3189,10 +3175,7 @@ def translate(pattern):
             part_replace_ind1 = len(notes)
         elif i[0] == '[' and i[-1] == ']':
             current_content = i[1:-1]
-            current_interval = 1 / float(current_content[1:]) if len(
-                current_content
-            ) > 1 and current_content[0] == '.' and current_content[1].isdigit(
-            ) else eval(current_content)
+            current_interval = process_settings([current_content])[0]
             if pattern_intervals:
                 pattern_intervals[-1] += current_interval
         elif '(' in i and i[-1] == ')':
@@ -3205,19 +3188,8 @@ def translate(pattern):
                                     1:repeat_part.index(']')].replace(
                                         '|', ',')).split(';')
                     repeat_part = repeat_part[:repeat_part.index('[')]
-                    if len(current_drum_settings
-                           ) >= 2 and current_drum_settings[1] == '.':
-                        current_drum_settings[1] = current_drum_settings[0]
-                    current_drum_settings = [
-                        (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                         and k[1].isdigit() else eval(k)) if k != 'n' else None
-                        for k in current_drum_settings
-                    ]
-                    current_drum_settings = [
-                        list(i) if type(i) == tuple else i
-                        for i in current_drum_settings
-                    ]
-
+                    current_drum_settings = process_settings(
+                        current_drum_settings)
                     repeat_part = named_dict[repeat_part].special_set(
                         *current_drum_settings)
                 else:
@@ -3232,18 +3204,7 @@ def translate(pattern):
         elif '[' in i and ']' in i:
             current_drum_settings = (i[i.index('[') + 1:i.index(']')].replace(
                 '|', ',')).split(';')
-            if len(current_drum_settings
-                   ) >= 2 and current_drum_settings[1] == '.':
-                current_drum_settings[1] = current_drum_settings[0]
-            current_drum_settings = [
-                (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                 and k[1].isdigit() else eval(k)) if k != 'n' else None
-                for k in current_drum_settings
-            ]
-            current_drum_settings = [
-                list(i) if type(i) == tuple else i
-                for i in current_drum_settings
-            ]
+            current_drum_settings = process_settings(current_drum_settings)
             config_part = i[:i.index('[')]
             if config_part.startswith('$'):
                 if '(' in config_part and ')' in config_part:
@@ -3398,3 +3359,38 @@ def arpeggio(chord_type,
     if second_half:
         result += second_half_part
     return result
+
+
+def distribute(current_chord,
+               length=1 / 4,
+               start=1,
+               stop=None,
+               method=translate,
+               mode=0):
+    if type(current_chord) == str:
+        current_chord = method(current_chord)
+    elif type(current_chord) == list:
+        current_chord = chord(current_chord)
+    if start > 0:
+        start -= 1
+    if stop is None:
+        stop = len(current_chord)
+    temp = copy(current_chord)
+    part = temp.notes[start:stop]
+    intervals = temp.interval[start:stop]
+    durations = [i.duration for i in part]
+    whole_duration = sum(durations)
+    whole_interval = sum(intervals)
+    durations = [length * (i / whole_duration) for i in durations]
+    if whole_interval != 0:
+        intervals = [length * (i / whole_interval) for i in intervals]
+    else:
+        intervals = [0 for i in intervals]
+    if mode == 1:
+        intervals = durations
+    new_duration = temp.get_duration()
+    new_duration[start:stop] = durations
+    new_interval = temp.interval
+    new_interval[start:stop] = intervals
+    temp %= (new_duration, new_interval)
+    return temp

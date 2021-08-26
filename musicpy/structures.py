@@ -164,6 +164,8 @@ def read_notes(note_ls, rootpitch=4):
     intervals = []
     notes_result = []
     for each in note_ls:
+        if each == '':
+            continue
         if isinstance(each, note):
             notes_result.append(each)
         elif isinstance(each, tempo) or isinstance(each, pitch_bend):
@@ -223,9 +225,25 @@ def read_notes(note_ls, rootpitch=4):
                     if info_len == 1:
                         duration = info[0]
                         if duration[0] == '.':
-                            duration = 1 / eval(duration[1:])
+                            if '.' in duration[1:]:
+                                dotted_notes = duration[1:].count('.')
+                                duration = duration.replace('.', '')
+                                duration = (1 / eval(duration)) * sum([
+                                    (1 / 2)**i for i in range(dotted_notes + 1)
+                                ])
+                            else:
+                                duration = 1 / eval(duration[1:])
                         else:
-                            duration = eval(duration)
+                            if duration[-1] == '.':
+                                dotted_notes = duration.count('.')
+                                duration = duration.replace('.', '')
+                                duration = eval(duration) * sum([
+                                    (1 / 2)**i for i in range(dotted_notes + 1)
+                                ])
+                            else:
+                                duration = eval(duration)
+                        if notename != 'r':
+                            intervals.append(0)
                     else:
                         if info_len == 2:
                             duration, interval = info
@@ -233,27 +251,119 @@ def read_notes(note_ls, rootpitch=4):
                             duration, interval, volume = info
                             volume = eval(volume)
                         if duration[0] == '.':
-                            duration = 1 / eval(duration[1:])
+                            if '.' in duration[1:]:
+                                dotted_notes = duration[1:].count('.')
+                                duration = duration.replace('.', '')
+                                duration = (1 / eval(duration)) * sum([
+                                    (1 / 2)**i for i in range(dotted_notes + 1)
+                                ])
+                            else:
+                                duration = 1 / eval(duration[1:])
                         else:
-                            duration = eval(duration)
+                            if duration[-1] == '.':
+                                dotted_notes = duration.count('.')
+                                duration = duration.replace('.', '')
+                                duration = eval(duration) * sum([
+                                    (1 / 2)**i for i in range(dotted_notes + 1)
+                                ])
+                            else:
+                                duration = eval(duration)
                         if interval[0] == '.':
                             if len(interval) > 1 and interval[1].isdigit():
-                                interval = 1 / eval(interval[1:])
+                                if '.' in interval[1:]:
+                                    dotted_notes = interval[1:].count('.')
+                                    interval = interval.replace('.', '')
+                                    interval = (1 / eval(interval)) * sum(
+                                        [(1 / 2)**i
+                                         for i in range(dotted_notes + 1)])
+                                else:
+                                    interval = 1 / eval(interval[1:])
                             else:
                                 interval = eval(
                                     interval.replace('.', str(duration)))
                         else:
-                            interval = eval(interval)
-                        intervals.append(interval)
-                    notes_result.append(
-                        toNote(notename, duration, volume, rootpitch))
+                            if interval[-1] == '.':
+                                dotted_notes = interval.count('.')
+                                interval = interval.replace('.', '')
+                                interval = eval(interval) * sum([
+                                    (1 / 2)**i for i in range(dotted_notes + 1)
+                                ])
+                            else:
+                                interval = eval(interval)
+                        if notename != 'r':
+                            intervals.append(interval)
+                    if notename == 'r':
+                        if intervals:
+                            intervals[-1] += duration
+                    else:
+                        notes_result.append(
+                            toNote(notename, duration, volume, rootpitch))
                 else:
-                    notes_result.append(toNote(each, pitch=rootpitch))
+                    if each == 'r':
+                        if intervals:
+                            intervals[-1] += 1 / 4
+                    else:
+                        intervals.append(0)
+                        notes_result.append(toNote(each, pitch=rootpitch))
         else:
             notes_result.append(each)
     if len(intervals) != len(notes_result):
         intervals = []
     return notes_result, intervals
+
+
+def process_settings(settings):
+    length = len(settings)
+    if length == 1:
+        settings += ['n', 'n']
+    elif length == 2:
+        settings += ['n']
+    if length >= 2 and settings[1] == '.':
+        settings[1] = settings[0]
+    duration = settings[0]
+    interval = settings[1]
+    if duration[-1] == '.':
+        if duration[0] != '.':
+            dotted_notes = duration.count('.')
+            duration = duration.replace('.', '')
+            duration = eval(duration) * sum([(1 / 2)**i
+                                             for i in range(dotted_notes + 1)])
+        elif len(duration) > 1:
+            dotted_notes = duration[1:].count('.')
+            duration = duration.replace('.', '')
+            duration = (1 / eval(duration)) * sum(
+                [(1 / 2)**i for i in range(dotted_notes + 1)])
+        settings[0] = duration
+    elif duration[0] == '.':
+        settings[0] = (1 / eval(duration[1:]))
+    elif duration == 'n':
+        settings[0] = None
+    else:
+        settings[0] = eval(duration)
+    if interval[-1] == '.':
+        if interval[0] != '.':
+            dotted_notes = interval.count('.')
+            interval = interval.replace('.', '')
+            interval = eval(interval) * sum([(1 / 2)**i
+                                             for i in range(dotted_notes + 1)])
+        elif len(interval) > 1:
+            dotted_notes = interval[1:].count('.')
+            interval = interval.replace('.', '')
+            interval = (1 / eval(interval)) * sum(
+                [(1 / 2)**i for i in range(dotted_notes + 1)])
+        settings[1] = interval
+    elif interval[0] == '.':
+        settings[1] = (1 / eval(interval[1:]))
+    elif interval == 'n':
+        settings[1] = None
+    else:
+        settings[1] = eval(interval)
+    if settings[2] == 'n':
+        settings[2] = None
+    else:
+        settings[2] = eval(settings[2])
+    settings = [list(i) if type(i) == tuple else i for i in settings]
+    return settings
 
 
 class chord:
@@ -750,6 +860,8 @@ class chord:
                 return temp
             else:
                 return self.add(first, start=start, mode='after')
+        elif types == list:
+            return self.rest(*obj)
         return self.add(obj, mode='after')
 
     def __or__(self, other):
@@ -1326,12 +1438,32 @@ class chord:
     def insert(self, ind, value, interval=None):
         if ind > 0:
             ind -= 1
-        if type(value) == str:
-            value = toNote(value)
-        self.notes.insert(ind, value)
-        if interval is None:
-            interval = self.interval[-1]
-        self.interval.insert(ind, interval)
+        if type(value) == chord:
+            self.notes[ind:ind] = value.notes
+            self.interval[ind:ind] = value.interval
+        else:
+            if type(value) == str:
+                value = toNote(value)
+            self.notes.insert(ind, value)
+            if interval is None:
+                interval = self.interval[-1]
+            self.interval.insert(ind, interval)
+
+    def replace(self, ind1, ind2=None, value=None, interval=None):
+        if ind1 > 0:
+            ind1 -= 1
+        if ind2 is None:
+            ind2 = ind1 + (len(value) if type(value) == chord else 1)
+        if type(value) == chord:
+            self.notes[ind1:ind2] = value.notes
+            self.interval[ind1:ind2] = value.interval
+        else:
+            if type(value) == str:
+                value = toNote(value)
+            self.notes[ind1] = value
+            if interval is None:
+                interval = self.interval[-1]
+            self.interval[ind1] = interval
 
     def drops(self, ind):
         temp = self.copy()
@@ -1341,9 +1473,11 @@ class chord:
         temp.interval.insert(0, dropinterval)
         return temp
 
-    def rest(self, length):
+    def rest(self, length, dotted=None):
         temp = copy(self)
         last_interval = temp.interval[-1]
+        if dotted is not None:
+            length = length * sum([(1 / 2)**i for i in range(dotted + 1)])
         if last_interval != 0:
             temp.interval[-1] += length
         else:
@@ -1946,6 +2080,18 @@ class chord:
             self.other_messages = [
                 i for i in self.other_messages if type(i) != types
             ]
+
+    def dotted(self, ind=-1, num=1, interval=False):
+        temp = copy(self)
+        if ind > 0:
+            ind -= 1
+        if not interval:
+            temp.notes[ind].duration = temp.notes[ind].duration * sum(
+                [(1 / 2)**i for i in range(num + 1)])
+        else:
+            temp.interval[ind] = temp.interval[ind] * sum(
+                [(1 / 2)**i for i in range(num + 1)])
+        return temp
 
 
 class scale:
@@ -3606,36 +3752,20 @@ class drum:
         if units[0].startswith('!'):
             whole_set = True
             whole_set_values = units[0][1:].split(';')
-            if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
-                whole_set_values[1] = whole_set_values[0]
             whole_set_values = [k.replace('|', ',') for k in whole_set_values]
-            whole_set_values = [
-                (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                 and k[1].isdigit() else eval(k)) if k != 'n' else None
-                for k in whole_set_values
-            ]
-            whole_set_values = [
-                list(i) if type(i) == tuple else i for i in whole_set_values
-            ]
+            whole_set_values = process_settings(whole_set_values)
             return self.translate(','.join(units[1:]),
                                   mapping).special_set(*whole_set_values)
         elif units[-1].startswith('!'):
             whole_set = True
             whole_set_values = units[-1][1:].split(';')
-            if len(whole_set_values) >= 2 and whole_set_values[1] == '.':
-                whole_set_values[1] = whole_set_values[0]
             whole_set_values = [k.replace('|', ',') for k in whole_set_values]
-            whole_set_values = [
-                (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                 and k[1].isdigit() else eval(k)) if k != 'n' else None
-                for k in whole_set_values
-            ]
-            whole_set_values = [
-                list(i) if type(i) == tuple else i for i in whole_set_values
-            ]
+            whole_set_values = process_settings(whole_set_values)
             return self.translate(','.join(units[:-1]),
                                   mapping).special_set(*whole_set_values)
         for i in units:
+            if i == '':
+                continue
             if i[0] == '{' and i[-1] == '}':
                 part_replace_ind2 = len(notes)
                 current_part = parts[part_counter]
@@ -3645,21 +3775,11 @@ class drum:
                 for each in part_settings:
                     if each.startswith('!'):
                         current_settings = each[1:].split(';')
-                        if len(current_settings
-                               ) >= 2 and current_settings[1] == '.':
-                            current_settings[1] = current_settings[0]
                         current_settings = [
                             k.replace('.', ',') for k in current_settings
                         ]
-                        current_settings = [
-                            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                             and k[1].isdigit() else eval(k))
-                            if k != 'n' else None for k in current_settings
-                        ]
-                        current_settings = [
-                            list(i) if type(i) == tuple else i
-                            for i in current_settings
-                        ]
+                        current_part_notes = process_settings(
+                            current_part_notes)
                         current_part_notes = current_part_notes.special_set(
                             *current_settings)
                     elif each.isdigit():
@@ -3680,10 +3800,7 @@ class drum:
                 part_replace_ind1 = len(notes)
             elif i[0] == '[' and i[-1] == ']':
                 current_content = i[1:-1]
-                current_interval = 1 / float(current_content[1:]) if len(
-                    current_content) > 1 and current_content[
-                        0] == '.' and current_content[1].isdigit() else eval(
-                            current_content)
+                current_interval = process_settings([current_content])[0]
                 if pattern_intervals:
                     pattern_intervals[-1] += current_interval
             elif '(' in i and i[-1] == ')':
@@ -3696,20 +3813,8 @@ class drum:
                                         1:repeat_part.index(']')].replace(
                                             '|', ',')).split(';')
                         repeat_part = repeat_part[:repeat_part.index('[')]
-                        if len(current_drum_settings
-                               ) >= 2 and current_drum_settings[1] == '.':
-                            current_drum_settings[1] = current_drum_settings[0]
-                        current_drum_settings = [
-                            (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                             and k[1].isdigit() else eval(k))
-                            if k != 'n' else None
-                            for k in current_drum_settings
-                        ]
-                        current_drum_settings = [
-                            list(i) if type(i) == tuple else i
-                            for i in current_drum_settings
-                        ]
-
+                        current_drum_settings = process_settings(
+                            current_drum_settings)
                         repeat_part = named_dict[repeat_part].special_set(
                             *current_drum_settings)
                     else:
@@ -3725,18 +3830,7 @@ class drum:
                 current_drum_settings = (i[i.index('[') +
                                            1:i.index(']')].replace(
                                                '|', ',')).split(';')
-                if len(current_drum_settings
-                       ) >= 2 and current_drum_settings[1] == '.':
-                    current_drum_settings[1] = current_drum_settings[0]
-                current_drum_settings = [
-                    (1 / float(k[1:]) if len(k) > 1 and k[0] == '.'
-                     and k[1].isdigit() else eval(k)) if k != 'n' else None
-                    for k in current_drum_settings
-                ]
-                current_drum_settings = [
-                    list(i) if type(i) == tuple else i
-                    for i in current_drum_settings
-                ]
+                current_drum_settings = process_settings(current_drum_settings)
                 config_part = i[:i.index('[')]
                 if config_part.startswith('$'):
                     if '(' in config_part and ')' in config_part:
@@ -3800,7 +3894,23 @@ class drum:
 
     def __add__(self, other):
         temp = copy(self)
-        temp.notes += other.notes
+        if type(other) == tuple and type(other[0]) == drum:
+            other = (other[0].notes, ) + other[1:]
+        temp.notes += (other.notes if type(other) == drum else other)
+        return temp
+
+    def __and__(self, other):
+        temp = copy(self)
+        if type(other) == tuple and type(other[0]) == drum:
+            other = (other[0].notes, ) + other[1:]
+        temp.notes &= (other.notes if type(other) == drum else other)
+        return temp
+
+    def __or__(self, other):
+        temp = copy(self)
+        if type(other) == tuple and type(other[0]) == drum:
+            other = (other[0].notes, ) + other[1:]
+        temp.notes |= (other.notes if type(other) == drum else other)
         return temp
 
     def __mod__(self, n):
