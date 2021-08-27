@@ -179,16 +179,35 @@ class general_event:
 
 
 class sf2_loader:
-    def __init__(self, file):
-        self.file = [file]
+    def __init__(self, file=None):
+        self.file = []
         self.synth = fluidsynth.Synth()
-        self.sfid = self.synth.sfload(file)
+        self.sfid_list = []
+        self.sfid = 1
+        if file:
+            self.file.append(file)
+            self.sfid = self.synth.sfload(file)
+            self.sfid_list.append(copy(self.sfid))
         self.current_track = 0
         self.current_sfid = copy(self.sfid)
         self.current_bank_num = 0
         self.current_preset_num = 0
-        self.program_select()
+        if file:
+            self.program_select()
         self.audio_array = []
+        self.instruments = []
+        self.instruments_ind = []
+
+    def __repr__(self):
+        return f'''[soundfont loader]
+loaded soundfonts: {self.file}
+soundfonts id: {self.sfid_list}
+current track: {self.current_track}
+current soundfont id: {self.current_sfid}
+current soundfont name: {os.path.basename(self.file[self.sfid_list.index(self.current_sfid)])}
+current bank number: {self.current_bank_num}
+current preset number: {self.current_preset_num}
+current preset name: {self.get_current_instrument()}'''
 
     def program_select(self,
                        track=None,
@@ -206,6 +225,8 @@ class sf2_loader:
             sfid = self.current_sfid
         if bank_num is None:
             bank_num = self.current_bank_num
+        else:
+            self.instruments.clear()
         if preset_num is None:
             preset_num = self.current_preset_num
         select_status = self.synth.program_select(track, sfid, bank_num,
@@ -222,10 +243,19 @@ class sf2_loader:
 
     def __lt__(self, preset_num):
         if type(preset_num) == tuple and len(preset_num) == 2:
-            self.program_select(bank_num=preset_num[1],
-                                preset_num=preset_num[0])
+            self.program_select(bank_num=preset_num[1])
+            self < preset_num[0]
         else:
-            self.program_select(preset_num=preset_num)
+            if type(preset_num) == str:
+                if not self.instruments:
+                    self.instruments, self.instruments_ind = self.get_all_instrument_names(
+                        get_ind=True)
+                if preset_num in self.instruments:
+                    current_ind = self.instruments_ind[self.instruments.index(
+                        preset_num)]
+                    self.program_select(preset_num=current_ind)
+            else:
+                self.program_select(preset_num=preset_num)
 
     def __mod__(self, value):
         self.program_select(track=value[0],
@@ -233,7 +263,11 @@ class sf2_loader:
                             preset_num=value[2])
 
     def get_current_instrument(self, num=0):
-        return self.synth.channel_info(num)[3]
+        try:
+            result = self.synth.channel_info(num)[3]
+        except:
+            result = ''
+        return result
 
     def preset_name(self, sfid=None, bank_num=None, preset_num=None):
         if sfid is None:
@@ -291,6 +325,37 @@ class sf2_loader:
         self.program_select(current_track, current_sfid, current_bank_num,
                             ind[0] if mode == 1 else current_preset_num)
         return result if not get_ind else (result, ind)
+
+    def change_preset(self, preset):
+        if type(preset) == str:
+            if not self.instruments:
+                self.instruments, self.instruments_ind = self.get_all_instrument_names(
+                    get_ind=True)
+            if preset in self.instruments:
+                current_ind = self.instruments_ind[self.instruments.index(
+                    preset)]
+                self.program_select(preset_num=current_ind)
+        else:
+            self.program_select(preset_num=preset)
+
+    def change_bank(self, bank):
+        self.program_select(bank_num=bank, correct=False)
+
+    def change_track(self, track):
+        self.program_select(track=track)
+
+    def change_sfid(self, sfid):
+        self.program_select(sfid=sfid, correct=False)
+
+    def change_soundfont(self, name):
+        if name in self.file:
+            ind = self.file.index(name)
+            self.change_sfid(self.sfid_list[ind])
+        else:
+            names = [os.path.basename(i) for i in self.file]
+            if name in names:
+                ind = names.index(name)
+                self.change_sfid(self.sfid_list[ind])
 
     def export_note(self,
                     note_name,
@@ -717,6 +782,7 @@ class sf2_loader:
         self.file = [file]
         self.synth = fluidsynth.Synth()
         self.sfid = self.synth.sfload(file)
+        self.sfid_list = [copy(self.sfid)]
         self.program_select(preset_num=0)
         self.current_track = 0
         self.current_sfid = copy(self.sfid)
@@ -726,8 +792,15 @@ class sf2_loader:
 
     def load(self, file):
         self.file.append(file)
-        self.synth.sfload(file)
+        current_sfid = self.synth.sfload(file)
+        self.sfid_list.append(current_sfid)
+        if len(self.file) == 1:
+            self.program_select()
 
-    def unload(self, sfid):
-        del self.file[sfid - 1]
-        self.synth.sfunload(sfid)
+    def unload(self, ind):
+        if ind > 0:
+            ind -= 1
+        del self.file[ind]
+        current_sfid = self.sfid_list[ind]
+        self.synth.sfunload(current_sfid)
+        del self.sfid_list[ind]
