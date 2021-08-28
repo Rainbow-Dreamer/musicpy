@@ -568,7 +568,8 @@ current preset name: {self.get_current_instrument()}'''
                     current_instrument - 1, self.current_bank_num
                 ]
             else:
-                current_instrument[0] -= 1
+                current_instrument = [current_instrument[0] - 1
+                                      ] + current_instrument[1:]
 
             current_track = copy(self.current_track)
             current_sfid = copy(self.current_sfid)
