@@ -3366,21 +3366,35 @@ class piece:
                 i for i in self.other_messages if type(i) != types
             ]
 
-    def change_instruments(self, instruments_list):
-        if all(type(i) == int for i in instruments_list):
-            self.instruments_numbers = copy(instruments_list)
-            self.instruments_list = [
-                reverse_instruments[i] for i in self.instruments_numbers
-            ]
-        elif all(type(i) == str for i in instruments_list):
-            self.instruments_list = copy(instruments_list)
-            self.instruments_numbers = [
-                instruments[i] for i in self.instruments_list
-            ]
-        elif any(
-                type(i) == list and all(type(j) == int for j in i)
-                for i in instruments_list):
-            self.instruments_numbers = copy(instruments_list)
+    def change_instruments(self, instruments_list, ind=None):
+        if ind is None:
+            if all(type(i) == int for i in instruments_list):
+                self.instruments_numbers = copy(instruments_list)
+                self.instruments_list = [
+                    reverse_instruments[i] for i in self.instruments_numbers
+                ]
+            elif all(type(i) == str for i in instruments_list):
+                self.instruments_list = copy(instruments_list)
+                self.instruments_numbers = [
+                    instruments[i] for i in self.instruments_list
+                ]
+            elif any(
+                    type(i) == list and all(type(j) == int for j in i)
+                    for i in instruments_list):
+                self.instruments_numbers = copy(instruments_list)
+        else:
+            if ind > 0:
+                ind -= 1
+            if type(instruments_list) == int:
+                self.instruments_numbers[ind] = instruments_list
+                self.instruments_list[ind] = reverse_instruments[
+                    instruments_list]
+            elif type(instruments_list) == str:
+                self.instruments_list[ind] = instruments_list
+                self.instruments_numbers[ind] = instruments[instruments_list]
+            elif type(instruments_list) == list and all(
+                    type(j) == int for j in instruments_list):
+                self.instruments_numbers[ind] = copy(instruments_list)
 
 
 P = piece
