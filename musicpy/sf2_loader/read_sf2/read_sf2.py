@@ -745,7 +745,9 @@ current preset name: {self.get_current_instrument()}'''
                              format='wav',
                              folder_name='Untitled',
                              other_effects=None,
-                             bpm=80):
+                             bpm=80,
+                             name=None,
+                             show_full_path=False):
         try:
             os.mkdir(folder_name)
             os.chdir(folder_name)
@@ -756,25 +758,37 @@ current preset name: {self.get_current_instrument()}'''
         current_bank_num = copy(self.current_bank_num)
         current_preset_num = copy(self.current_preset_num)
         self.program_select(track, sfid, bank_num, preset_num)
-        start = mp.N(start)
-        stop = mp.N(stop)
-        current_sf2 = self.file[sfid - 1]
+        if type(start) != mp.note:
+            start = mp.N(start)
+        if type(stop) != mp.note:
+            stop = mp.N(stop)
+        current_sf2 = self.file[self.sfid_list.index(self.current_sfid)]
+        if not show_full_path:
+            current_sf2 = os.path.basename(current_sf2)
         for i in range(start.degree, stop.degree + 1):
             current_note = str(mp.degree_to_note(i))
+            if name is None:
+                current_name = None
+            else:
+                if type(name) == list:
+                    current_name = name[i] + f'.{format}'
+                else:
+                    current_name = name(str(current_note)) + f'.{format}'
             print(
-                f'exporting {current_note} of {current_sf2}, bank {bank_num}, presset {preset_num} ...'
+                f'exporting {current_note} of {current_sf2}, bank {self.current_bank_num}, preset {self.current_preset_num}'
             )
             self.export_note(current_note,
                              duration=duration,
                              decay=decay,
                              volume=volume,
-                             track=track,
+                             track=self.current_track,
                              sample_width=sample_width,
                              channels=channels,
                              frame_rate=frame_rate,
                              format=format,
                              other_effects=other_effects,
-                             bpm=bpm)
+                             bpm=bpm,
+                             name=current_name)
         print('exporting finished')
         self.program_select(current_track, current_sfid, current_bank_num,
                             current_preset_num)
