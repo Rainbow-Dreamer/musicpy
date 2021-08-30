@@ -204,7 +204,7 @@ loaded soundfonts: {self.file}
 soundfonts id: {self.sfid_list}
 current track: {self.current_track}
 current soundfont id: {self.current_sfid}
-current soundfont name: {os.path.basename(self.file[self.sfid_list.index(self.current_sfid)])}
+current soundfont name: {os.path.basename(self.file[self.sfid_list.index(self.current_sfid)]) if self.file else ""}
 current bank number: {self.current_bank_num}
 current preset number: {self.current_preset_num}
 current preset name: {self.get_current_instrument()}'''
