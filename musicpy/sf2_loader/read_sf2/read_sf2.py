@@ -665,7 +665,7 @@ current preset name: {self.get_current_instrument()}'''
 
     def play_chord(self,
                    current_chord,
-                   decay=1,
+                   decay=0.5,
                    track=0,
                    start_time=0,
                    sample_width=2,
