@@ -37,13 +37,13 @@ def real_time_to_bar(time, bpm):
 def velocity_to_db(vol):
     if vol == 0:
         return -100
-    return math.log(vol / 127, 10) * 20
+    return mp.math.log(vol / 127, 10) * 20
 
 
 def percentage_to_db(vol):
     if vol == 0:
         return -100
-    return math.log(abs(vol / 100), 10) * 20
+    return mp.math.log(abs(vol / 100), 10) * 20
 
 
 def process_effect(current_audio, other_effects, bpm):
@@ -76,6 +76,9 @@ def process_effect(current_audio, other_effects, bpm):
                     current_audio[attack:] + change_db)
             if release > 0:
                 current_audio = current_audio.fade_out(release)
+        elif current_type == 'custom':
+            current_func = current_values
+            current_audio = current_func(current_audio)
     return current_audio
 
 
@@ -151,6 +154,8 @@ def convert_effect(current_chord, add=False):
                    (current_chord.fade_in_time, current_chord.fade_out_time)))
     if hasattr(current_chord, 'adsr'):
         result.append(effect('adsr', current_chord.adsr))
+    if hasattr(current_chord, 'custom_effect'):
+        result.append(effect('custom', current_chord.custom_effect))
     if add:
         current_chord.other_effects = result
     return result
