@@ -112,6 +112,12 @@ class note:
         return musicpy.getchord_by_interval(start, interval1, duration,
                                             interval, cummulative)
 
+    def dotted(self, num=1):
+        temp = copy(self)
+        temp.duration = temp.duration * sum([(1 / 2)**i
+                                             for i in range(num + 1)])
+        return temp
+
 
 def toNote(notename, duration=0.25, volume=100, pitch=4):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
@@ -2089,16 +2095,36 @@ class chord:
                 i for i in self.other_messages if type(i) != types
             ]
 
-    def dotted(self, ind=-1, num=1, interval=False):
+    def dotted(self, ind=-1, num=1, duration=True, interval=False):
         temp = copy(self)
-        if ind > 0:
+        if type(ind) == int and ind > 0:
             ind -= 1
-        if not interval:
-            temp.notes[ind].duration = temp.notes[ind].duration * sum(
-                [(1 / 2)**i for i in range(num + 1)])
-        else:
-            temp.interval[ind] = temp.interval[ind] * sum(
-                [(1 / 2)**i for i in range(num + 1)])
+        if duration:
+            if type(ind) == list:
+                for each in ind:
+                    temp.notes[
+                        each].duration = temp.notes[each].duration * sum(
+                            [(1 / 2)**i for i in range(num + 1)])
+            elif ind == 'all':
+                for each in range(len(temp.notes)):
+                    temp.notes[
+                        each].duration = temp.notes[each].duration * sum(
+                            [(1 / 2)**i for i in range(num + 1)])
+            else:
+                temp.notes[ind].duration = temp.notes[ind].duration * sum(
+                    [(1 / 2)**i for i in range(num + 1)])
+        if interval:
+            if type(ind) == list:
+                for each in ind:
+                    temp.interval[each] = temp.interval[each] * sum(
+                        [(1 / 2)**i for i in range(num + 1)])
+            elif ind == 'all':
+                for each in range(len(temp.notes)):
+                    temp.interval[each] = temp.interval[each] * sum(
+                        [(1 / 2)**i for i in range(num + 1)])
+            else:
+                temp.interval[ind] = temp.interval[ind] * sum(
+                    [(1 / 2)**i for i in range(num + 1)])
         return temp
 
 
