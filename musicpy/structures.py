@@ -312,6 +312,20 @@ def read_notes(note_ls, rootpitch=4):
     return notes_result, intervals
 
 
+def process_dotted_note(value):
+    if value[0] != '.':
+        dotted_notes = value.count('.')
+        value = value.replace('.', '')
+        value = eval(value) * sum([(1 / 2)**i
+                                   for i in range(dotted_notes + 1)])
+    elif len(value) > 1:
+        dotted_notes = value[1:].count('.')
+        value = value.replace('.', '')
+        value = (1 / eval(value)) * sum([(1 / 2)**i
+                                         for i in range(dotted_notes + 1)])
+    return value
+
+
 def process_settings(settings):
     length = len(settings)
     if length == 1:
@@ -323,16 +337,13 @@ def process_settings(settings):
     duration = settings[0]
     interval = settings[1]
     if duration[-1] == '.':
-        if duration[0] != '.':
-            dotted_notes = duration.count('.')
-            duration = duration.replace('.', '')
-            duration = eval(duration) * sum([(1 / 2)**i
-                                             for i in range(dotted_notes + 1)])
-        elif len(duration) > 1:
-            dotted_notes = duration[1:].count('.')
-            duration = duration.replace('.', '')
-            duration = (1 / eval(duration)) * sum(
-                [(1 / 2)**i for i in range(dotted_notes + 1)])
+        settings[0] = process_dotted_note(duration)
+    elif ',' in duration:
+        duration = duration.split(',')
+        duration = [
+            process_dotted_note(i) if i[-1] == '.' else
+            (1 / eval(i[1:]) if i[0] == '.' else i) for i in duration
+        ]
         settings[0] = duration
     elif duration[0] == '.':
         settings[0] = (1 / eval(duration[1:]))
@@ -341,16 +352,13 @@ def process_settings(settings):
     else:
         settings[0] = eval(duration)
     if interval[-1] == '.':
-        if interval[0] != '.':
-            dotted_notes = interval.count('.')
-            interval = interval.replace('.', '')
-            interval = eval(interval) * sum([(1 / 2)**i
-                                             for i in range(dotted_notes + 1)])
-        elif len(interval) > 1:
-            dotted_notes = interval[1:].count('.')
-            interval = interval.replace('.', '')
-            interval = (1 / eval(interval)) * sum(
-                [(1 / 2)**i for i in range(dotted_notes + 1)])
+        settings[1] = process_dotted_note(interval)
+    elif ',' in interval:
+        interval = interval.split(',')
+        interval = [
+            process_dotted_note(i) if i[-1] == '.' else
+            (1 / eval(i[1:]) if i[0] == '.' else i) for i in interval
+        ]
         settings[1] = interval
     elif interval[0] == '.':
         settings[1] = (1 / eval(interval[1:]))
@@ -3790,10 +3798,9 @@ class drum:
                     if each.startswith('!'):
                         current_settings = each[1:].split(';')
                         current_settings = [
-                            k.replace('.', ',') for k in current_settings
+                            k.replace('`', ',') for k in current_settings
                         ]
-                        current_part_notes = process_settings(
-                            current_part_notes)
+                        current_settings = process_settings(current_settings)
                         current_part_notes = current_part_notes.special_set(
                             *current_settings)
                     elif each.isdigit():

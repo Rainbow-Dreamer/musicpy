@@ -3153,9 +3153,9 @@ def translate(pattern):
                 if each.startswith('!'):
                     current_settings = each[1:].split(';')
                     current_settings = [
-                        k.replace('.', ',') for k in current_settings
+                        k.replace('`', ',') for k in current_settings
                     ]
-                    current_part_notes = process_settings(current_part_notes)
+                    current_settings = process_settings(current_settings)
                     current_part_notes = current_part_notes.special_set(
                         *current_settings)
                 elif each.isdigit():
