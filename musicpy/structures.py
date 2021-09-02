@@ -402,7 +402,7 @@ class chord:
             standardize_msg = True
         notes_msg = read_notes(notes, rootpitch)
         notes, current_intervals = notes_msg
-        if current_intervals:
+        if current_intervals and not interval:
             interval = current_intervals
         if standardize_msg and notes:
             root = notes[0]
