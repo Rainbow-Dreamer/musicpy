@@ -1,3 +1,4 @@
 pydub
 librosa
 soundfile
+numpy
