@@ -348,7 +348,7 @@ def process_settings(settings):
         duration = duration.split(',')
         duration = [
             process_dotted_note(i) if i[-1] == '.' else
-            (1 / eval(i[1:]) if i[0] == '.' else i) for i in duration
+            (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in duration
         ]
         settings[0] = duration
     elif duration[0] == '.':
@@ -363,7 +363,7 @@ def process_settings(settings):
         interval = interval.split(',')
         interval = [
             process_dotted_note(i) if i[-1] == '.' else
-            (1 / eval(i[1:]) if i[0] == '.' else i) for i in interval
+            (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in interval
         ]
         settings[1] = interval
     elif interval[0] == '.':
@@ -376,7 +376,6 @@ def process_settings(settings):
         settings[2] = None
     else:
         settings[2] = eval(settings[2])
-    settings = [list(i) if type(i) == tuple else i for i in settings]
     return settings
 
 
