@@ -2097,8 +2097,6 @@ class chord:
 
     def dotted(self, ind=-1, num=1, duration=True, interval=False):
         temp = copy(self)
-        if type(ind) == int and ind > 0:
-            ind -= 1
         if duration:
             if type(ind) == list:
                 for each in ind:
