@@ -19,6 +19,7 @@ from pydub.generators import Sine, Triangle, Sawtooth, Square, WhiteNoise, Pulse
 import librosa
 import soundfile
 import sf2_loader as rs
+import pickle
 
 os.chdir(file_path)
 
@@ -119,6 +120,20 @@ pygame.mixer.init(44100, -16, 2, 4096)
 pygame.mixer.set_num_channels(1000)
 
 
+class esi:
+    def __init__(self,
+                 samples,
+                 settings=None,
+                 info=None,
+                 others=None,
+                 name_dict=None):
+        self.samples = samples
+        self.settings = settings
+        self.info = info
+        self.others = others
+        self.name_dict = name_dict
+
+
 class sampler:
     def __init__(self, num=1, name=None, bpm=120):
         self.channel_num = num
@@ -199,6 +214,20 @@ class sampler:
             i -= 1
         self.channel_names[i] = name
 
+    def unload(self, i, keep_notedict=False):
+        if i > 0:
+            i -= 1
+        elif i < 0:
+            i += self.channel_num
+        current_ind = i
+        if current_ind < self.channel_num:
+            self.channel_sound_modules_name[current_ind] = 'not loaded'
+            self.channel_sound_modules[current_ind] = None
+            self.channel_sound_audiosegments[current_ind] = None
+            self.channel_note_sounds_path[current_ind] = None
+            if not keep_notedict:
+                self.channel_dict[current_ind] = copy(default_notedict)
+
     def __call__(self, obj, channel_num=1, bpm=None):
         return audio(obj, self, channel_num, bpm)
 
@@ -223,11 +252,11 @@ class sampler:
     def __delitem__(self, i):
         self.delete_channel(i)
 
-    def load(self, current_ind, path=None, esi=None, ess=None):
+    def load(self, current_ind, path=None, esi=None):
         if current_ind > 0:
             current_ind -= 1
-        if esi is not None and ess is not None:
-            self.load_esi_file(current_ind, esi, ess)
+        if esi is not None:
+            self.load_esi_file(current_ind, esi)
             return
         sound_path = path
         if os.path.isdir(sound_path):
@@ -680,24 +709,14 @@ class sampler:
         if text is None:
             self.reload_channel_sounds(channel_num)
 
-    def load_esi_file(self, channel_num, file_path, split_file_path):
+    def load_esi_file(self, channel_num, file_path):
         abs_path = os.getcwd()
-        with open(split_file_path, 'r', encoding='utf-8-sig') as f:
-            unzip = f.read()
-        unzip_ind, filenames = literal_eval(unzip)
-        sound_files = []
-        channel_settings = None
         with open(file_path, 'rb') as file:
-            for each in range(len(filenames)):
-                current_filename = filenames[each]
-                current_length = unzip_ind[each]
-                current = file.read(current_length)
-                if current_filename[-4:] != '.txt':
-                    sound_files.append(current)
-                else:
-                    channel_settings = current.decode('utf-8-sig').replace(
-                        '\r', '')
-        filenames = [i for i in filenames if i[-4:] != '.txt']
+            current_esi = pickle.load(file)
+        channel_settings = current_esi.settings
+        current_samples = current_esi.samples
+        filenames = list(current_samples.keys())
+        sound_files = [current_samples[i] for i in filenames]
         sound_files_pygame = []
         for each in sound_files:
             with open('temp', 'wb') as f:
@@ -705,16 +724,15 @@ class sampler:
             sound_files_pygame.append(pygame.mixer.Sound('temp'))
         os.remove('temp')
         sound_files_audio = [
-            AudioSegment.from_file(
-                BytesIO(sound_files[i]),
-                format=filenames[i][filenames[i].rfind('.') + 1:])
-            for i in range(len(sound_files))
+            AudioSegment.from_file(BytesIO(current_samples[i]),
+                                   format=os.path.splitext(i)[1][1:])
+            for i in filenames
         ]
         self.channel_dict[channel_num] = copy(default_notedict)
         if channel_settings is not None:
             self.load_channel_settings(channel_num, channel_settings)
         current_dict = self.channel_dict[channel_num]
-        filenames = [i[:i.rfind('.')] for i in filenames]
+        filenames = [os.path.splitext(i)[0] for i in filenames]
         result_pygame = {
             filenames[i]: sound_files_pygame[i]
             for i in range(len(sound_files))
@@ -735,6 +753,7 @@ class sampler:
                 if current_dict[i] in result_audio else None)
             for i in current_dict
         }
+        self.channel_sound_modules_name[channel_num] = file_path
 
     def reload_channel_sounds(self, current_ind):
         try:
@@ -1349,44 +1368,64 @@ def audio_chord(audio_list, interval=0, duration=1 / 4, volume=127):
     return result
 
 
-def make_esi(file_path, name='untitled'):
+def make_esi(file_path,
+             name='untitled',
+             settings=None,
+             info=None,
+             others=None,
+             asfile=True):
     abs_path = os.getcwd()
     filenames = os.listdir(file_path)
+    current_samples = {}
+    current_settings = None
+    if settings is not None:
+        if asfile:
+            with open(settings, encoding='utf-8-sig') as f:
+                current_settings = f.read()
+        else:
+            current_settings = settings
+
     if not filenames:
         print('There are no sound files to make ESI files')
         return
-    length_list = []
-    with open(f'{name}.esi', 'wb') as file:
-        os.chdir(file_path)
-        for t in filenames:
-            with open(t, 'rb') as f:
-                each = f.read()
-                length_list.append(len(each))
-                file.write(each)
+    os.chdir(file_path)
+    for t in filenames:
+        with open(t, 'rb') as f:
+            current_samples[t] = f.read()
+    current_esi = esi(current_samples, current_settings, info, others)
     os.chdir(abs_path)
-    with open(f'{name}.ess', 'w', encoding='utf-8-sig') as f:
-        f.write(
-            str(length_list) + ',' +
-            str([os.path.basename(i) for i in filenames]))
-    print(
-        f'Successfully made ESI file and ESS file: {name}.esi and {name}.ess')
+    with open(f'{name}.esi', 'wb') as f:
+        pickle.dump(current_esi, f)
+    print(f'Successfully made ESI file: {name}.esi')
 
 
-def unzip_esi(file_path, split_file_path, folder_name=None):
-    with open(split_file_path, 'r', encoding='utf-8-sig') as f:
-        unzip = f.read()
-    unzip_ind, filenames = literal_eval(unzip)
+def unzip_esi(file_path, folder_name=None):
     if folder_name is None:
         folder_name = os.path.basename(file_path)
         folder_name = folder_name[:folder_name.rfind('.')]
     if folder_name not in os.listdir():
         os.mkdir(folder_name)
-    with open(file_path, 'rb') as file:
-        os.chdir(folder_name)
-        for each in range(len(filenames)):
-            current_filename = filenames[each]
-            print(f'Currently unzip file {current_filename}')
-            current_length = unzip_ind[each]
-            with open(current_filename, 'wb') as f:
-                f.write(file.read(current_length))
+    current_esi = load_esi(file_path, convert=False)
+    os.chdir(folder_name)
+    for each in current_esi.samples:
+        print(f'Currently unzip file {each}')
+        with open(each, 'wb') as f:
+            f.write(current_esi.samples[each])
     print(f'Unzip {os.path.basename(file_path)} successfully')
+
+
+def load_esi(file_path, convert=True):
+    with open(file_path, 'rb') as file:
+        current_esi = pickle.load(file)
+    current_samples = current_esi.samples
+    name_dict = {os.path.splitext(i)[0]: i for i in current_samples}
+    current_esi.name_dict = name_dict
+    if convert:
+        sound_files = {
+            os.path.splitext(i)[0]:
+            AudioSegment.from_file(BytesIO(current_samples[i]),
+                                   format=os.path.splitext(i)[1][1:])
+            for i in current_samples
+        }
+        current_esi.samples = sound_files
+    return current_esi
