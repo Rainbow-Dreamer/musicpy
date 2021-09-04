@@ -2444,6 +2444,38 @@ class scale:
     def get(self, degree):
         return self[degree]
 
+    def get_chord(self, degree, chord_type=None, natural=False):
+        import musicpy
+        if not chord_type:
+            current_keys = list(roman_numerals_dict.keys())
+            current_keys.sort(key=lambda s: len(s[0]), reverse=True)
+            found = False
+            for each in current_keys:
+                for i in each:
+                    if degree.startswith(i):
+                        found = True
+                        chord_type = degree[len(i):]
+                        degree = i
+                        break
+                if found:
+                    break
+            if not found:
+                return f'{degree} is not a valid roman numerals chord representation'
+        current_degree = roman_numerals_dict[degree]
+        if current_degree == 'not found':
+            return f'{degree} is not a valid roman numerals chord representation'
+        current_note = self[current_degree].name
+        if natural:
+            temp = musicpy.C(current_note + chord_type)
+            if type(temp) != chord:
+                return f'{chord_type} is not a valid chord type'
+            length = len(temp)
+            return self.pickchord_by_degree(current_degree, num=length)
+        if degree.islower():
+            current_note += 'm'
+        current_chord_type = current_note + chord_type
+        return musicpy.C(current_chord_type)
+
     def up(self, unit=1, ind=None, ind2=None):
         if ind2 is not None:
             notes = copy(self.notes)
@@ -2518,6 +2550,48 @@ class scale:
             return self.down(obj)
         elif type(obj) == tuple:
             return self.down(*obj)
+
+    def chord_progression(self,
+                          chords,
+                          durations=1 / 4,
+                          intervals=0,
+                          volumes=None,
+                          chords_interval=None,
+                          merge=True):
+        current_keys = list(roman_numerals_dict.keys())
+        current_keys.sort(key=lambda s: len(s[0]), reverse=True)
+        for k in range(len(chords)):
+            current_chord = chords[k]
+            types = type(current_chord)
+            if types == tuple or types == list:
+                current_degree_name = current_chord[0]
+                current_degree = roman_numerals_dict[current_degree_name]
+                if current_degree == 'not found':
+                    return f'{current_chord} is not a valid roman numerals chord representation'
+                current_note = self[current_degree].name
+                if current_degree_name.islower():
+                    current_note += 'm'
+                chords[k] = current_note + current_chord[1]
+            else:
+                found = False
+                current_degree = None
+                for each in current_keys:
+                    for i in each:
+                        if current_chord.startswith(i):
+                            found = True
+                            current_degree = roman_numerals_dict[i]
+                            current_note = self[current_degree].name
+                            if i.islower():
+                                current_note += 'm'
+                            chords[k] = current_note + current_chord[len(i):]
+                            break
+                    if found:
+                        break
+                if not found:
+                    return f'{current_chord} is not a valid roman numerals chord representation'
+        import musicpy
+        return musicpy.chord_progression(chords, durations, intervals, volumes,
+                                         chords_interval, merge)
 
 
 class circle_of_fifths:

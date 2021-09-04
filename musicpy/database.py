@@ -462,6 +462,16 @@ chord_functions_roman_numerals = {
     7: 'VII',
 }
 
+roman_numerals_dict = match({
+    ('I', 'i', '1'): 1,
+    ('II', 'ii', '2'): 2,
+    ('III', 'iii', '3'): 3,
+    ('IV', 'iv', '4'): 4,
+    ('V', 'v', '5'): 5,
+    ('VI', 'vi', '6'): 6,
+    ('VII', 'vii', '7'): 7
+})
+
 chord_function_dict = {
     'major': [0, ''],
     'minor': [1, ''],

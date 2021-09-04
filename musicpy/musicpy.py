@@ -3257,7 +3257,11 @@ def chord_progression(chords,
                       intervals=0,
                       volumes=None,
                       chords_interval=None,
-                      merge=True):
+                      merge=True,
+                      scale=None):
+    if scale:
+        return scale.chord_progression(chords, durations, intervals, volumes,
+                                       chords_interval, merge)
     chords = [(i, ) if type(i) == str else i for i in chords]
     chords_len = len(chords)
     if type(durations) != list:
