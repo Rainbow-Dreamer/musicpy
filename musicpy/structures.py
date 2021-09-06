@@ -3405,6 +3405,22 @@ class piece:
         if start_time < 0:
             start_time = 0
         temp.reconstruct(result, start_time, offset, correct)
+        if ind2 is None:
+            ind2 = temp.bars()
+        for each in temp.pan:
+            for i in each:
+                i.start_time -= (ind1 - 1)
+                if i.start_time < 1:
+                    i.start_time = 1
+        for each in temp.volume:
+            for i in each:
+                i.start_time -= (ind1 - 1)
+                if i.start_time < 1:
+                    i.start_time = 1
+        temp.pan = [[i for i in each if i.start_time < ind2]
+                    for each in temp.pan]
+        temp.volume = [[i for i in each if i.start_time < ind2]
+                       for each in temp.volume]
         return temp
 
     def cut_time(self,
@@ -3492,16 +3508,14 @@ class piece:
         temp.apply_start_time_to_changes(temp.start_times)
         for each in temp.pan:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         for each in temp.volume:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         return temp
 
     def reverse_chord(self, **args):
@@ -3524,16 +3538,14 @@ class piece:
         temp.apply_start_time_to_changes(temp.start_times)
         for each in temp.pan:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         for each in temp.volume:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         return temp
 
     def __invert__(self):
@@ -3781,16 +3793,14 @@ class track:
         temp.content = temp.content.reverse(*args, **kwargs)
         for each in temp.pan:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         for each in temp.volume:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         return temp
 
     def reverse_chord(self, *args, **kwargs):
@@ -3798,16 +3808,14 @@ class track:
         temp.content = temp.content.reverse_chord(*args, **kwargs)
         for each in temp.pan:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         for each in temp.volume:
             for i in each:
-                if i.start_time > 1:
-                    i.start_time = length - i.start_time + 2
-                    if i.start_time < 1:
-                        i.start_time = 1
+                i.start_time = length - i.start_time + 2
+                if i.start_time < 1:
+                    i.start_time = 1
         return temp
 
     def __invert__(self):
