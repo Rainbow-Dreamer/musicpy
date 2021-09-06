@@ -416,6 +416,7 @@ current preset name: {self.get_current_instrument()}'''
                      decay=0.5,
                      track=0,
                      start_time=0,
+                     piece_start_time=0,
                      sample_width=2,
                      channels=2,
                      frame_rate=44100,
@@ -444,6 +445,9 @@ current preset name: {self.get_current_instrument()}'''
         whole_length_with_decay = bar_to_real_time(whole_length_with_decay,
                                                    bpm, 1) / 1000
 
+        if piece_start_time != 0:
+            current_chord = copy(current_chord)
+            current_chord.apply_start_time_to_changes(-piece_start_time)
         self.audio_array = []
         current_timestamps = get_timestamps(current_chord,
                                             bpm,
@@ -589,6 +593,7 @@ current preset name: {self.get_current_instrument()}'''
                                 preset_num=current_instrument[0])
 
             current_audio = self.export_chord(each, decay, track, 0,
+                                              current_chord.start_times[i],
                                               sample_width, channels,
                                               frame_rate, None, format, bpm,
                                               True, fixed_decay,
@@ -673,6 +678,7 @@ current preset name: {self.get_current_instrument()}'''
                    decay=0.5,
                    track=0,
                    start_time=0,
+                   piece_start_time=0,
                    sample_width=2,
                    channels=2,
                    frame_rate=44100,
@@ -684,10 +690,10 @@ current preset name: {self.get_current_instrument()}'''
                    pan=None,
                    volume=None):
         current_audio = self.export_chord(current_chord, decay, track,
-                                          start_time, sample_width, channels,
-                                          frame_rate, name, format, bpm, True,
-                                          fixed_decay, other_effects, pan,
-                                          volume)
+                                          start_time, piece_start_time,
+                                          sample_width, channels, frame_rate,
+                                          name, format, bpm, True, fixed_decay,
+                                          other_effects, pan, volume)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
