@@ -458,17 +458,17 @@ class chord:
             self.notes.append(toNote(newnote))
             self.interval.append(self.interval[-1])
 
-    def split(self, return_type, get_time=False, sort=False):
+    def split(self, return_type, get_time=False, sort=False, **args):
         temp = copy(self)
         inds = [
             i for i in range(len(temp)) if type(temp.notes[i]) == return_type
         ]
         notes = [temp.notes[i] for i in inds]
         intervals = [temp.interval[i] for i in inds]
-        if get_time and return_type in [tempo, pitch_bend]:
+        if get_time and return_type != note:
             no_time = [k for k in inds if temp.notes[k].start_time is None]
             for each in no_time:
-                current_time = temp[:each + 1].bars() + 1
+                current_time = temp[:each + 1].bars(**args) + 1
                 current = temp.notes[each]
                 current.start_time = current_time
             if sort:
@@ -477,16 +477,34 @@ class chord:
 
     def cut(self, ind1=1, ind2=None, start_time=0, return_inds=False):
         # get parts of notes between two bars
+        temp = copy(self)
+        start_offset = start_time + 1 - ind1
+        if start_offset < 0:
+            start_offset = 0
         ind1 -= start_time
         if ind1 < 1:
-            return chord([]) if not return_inds else (0, 0)
+            ind1 = 1
         if ind2 is not None:
             ind2 -= start_time
             if ind2 <= 1:
-                return chord([]) if not return_inds else (0, 0)
+                ind2 = 1
+        else:
+            ind2 = temp.bars(mode=0)
+
+        changes = []
+        for i in range(len(temp.notes)):
+            each = temp.notes[i]
+            if type(each) != note:
+                if each.start_time is None:
+                    each.start_time = temp[:i + 1].bars(mode=0) + 1
+                each.start_time -= (ind1 - 1 + start_time - start_offset)
+                if 1 <= each.start_time < ind2 - ind1 + 1:
+                    changes.append(each)
+        temp = temp.only_notes()
+
         current_bar = 1
-        notes = self.notes
-        intervals = self.interval
+        notes = temp.notes
+        intervals = temp.interval
         length = len(notes)
         start_ind = 0
         to_ind = length
@@ -509,7 +527,10 @@ class chord:
             start_ind = to_ind
         if return_inds:
             return start_ind, to_ind
-        return self[start_ind + 1:to_ind + 1]
+        result = temp[start_ind + 1:to_ind + 1]
+        result += chord(changes)
+
+        return result
 
     def cut_time(self,
                  bpm,
@@ -589,8 +610,8 @@ class chord:
     def get_bar(self, n, start_time=0):
         return self.cut(n, n + 1, start_time)
 
-    def split_bars(self, start_time=0):
-        bars_length = int(self.bars(start_time))
+    def split_bars(self, start_time=0, **args):
+        bars_length = int(self.bars(start_time, **args))
         result = []
         for i in range(1, bars_length + 1):
             result.append(self.cut(i, i + 1, start_time))
@@ -682,10 +703,10 @@ class chord:
         elif mode == 'number':
             return result
 
-    def count_bars(self, ind1, ind2, bars_range=True):
-        bars_length = self[ind1:ind2].bars()
+    def count_bars(self, ind1, ind2, bars_range=True, **args):
+        bars_length = self[ind1:ind2].bars(**args)
         if bars_range:
-            start = self[:ind1].bars() + 1
+            start = self[:ind1].bars(**args) + 1
             return [start, start + bars_length]
         else:
             return bars_length
@@ -1075,44 +1096,56 @@ class chord:
             temp += unit
         return temp
 
-    def reverse(self, start=None, end=None, cut=False):
+    def reverse(self, start=None, end=None, cut=False, start_time=0, **args):
         temp = copy(self)
         if start is None:
-            intervals = temp.interval
-            durations = temp.get_duration()
-            length = len(temp)
-            bar_length = temp.bars()
+            temp2 = temp.only_notes()
+            intervals = temp2.interval
+            durations = temp2.get_duration()
+            length = len(temp2)
+            bar_length = temp2.bars(**args)
+            changes = []
+            for i in range(len(temp.notes)):
+                each = temp.notes[i]
+                if type(each) != note:
+                    if each.start_time is None:
+                        each.start_time = temp[:i + 1].bars(**args) + 1
+                    else:
+                        each.start_time -= start_time
+                    each.start_time = bar_length - each.start_time + 2
+                    changes.append(each)
+
             last_interval = intervals[-1]
-            temp.interval = [
+            temp2.interval = [
                 durations[length - 1 - i] -
                 (durations[length - 2 - i] - intervals[length - 2 - i])
                 for i in range(length - 1)
             ]
-            temp.interval.append(last_interval)
-            temp.notes = temp.notes[::-1]
-            for i in temp.notes:
-                if type(i) in [tempo, pitch_bend]:
-                    if i.start_time is not None and i.start_time > 1:
-                        i.start_time = bar_length - i.start_time + 2
-            return temp
+            temp2.interval.append(last_interval)
+            temp2.notes = temp2.notes[::-1]
+            temp2 += chord(changes)
+
+            return temp2
         else:
             if end is None:
-                result = temp[:start] + temp[start:].reverse()
+                result = temp[:start] + temp[start:].reverse(
+                    start_time=start_time, **args)
                 return result[start:] if cut else result
             else:
-                result = temp[:start] + temp[start:end].reverse() + temp[end:]
+                result = temp[:start] + temp[start:end].reverse(
+                    start_time=start_time, **args) + temp[end:]
                 return result[start:end] if cut else result
 
-    def reverse_chord(self):
+    def reverse_chord(self, start_time=0, **args):
         temp = copy(self)
-        bar_length = temp.bars()
+        bar_length = temp.bars(**args)
         temp.notes = temp.notes[::-1]
         temp.interval = temp.interval[::-1]
         temp.interval.append(temp.interval.pop(0))
         for i in temp.notes:
-            if type(i) in [tempo, pitch_bend]:
-                if i.start_time is not None and i.start_time > 1:
-                    i.start_time = bar_length - i.start_time + 2
+            if type(i) != note:
+                if i.start_time is not None:
+                    i.start_time = bar_length - (i.start_time - start_time) + 2
         return temp
 
     def intervalof(self, cummulative=True, translate=False):
@@ -3009,10 +3042,15 @@ class piece:
             self.start_times[num - 1], self.pan[num - 1], self.volume[num - 1]
         ]
 
-    def merge_track(self, n, mode='after', start_time=0, keep_tempo=True):
+    def merge_track(self,
+                    n,
+                    mode='after',
+                    start_time=0,
+                    keep_tempo=True,
+                    **args):
         temp = copy(self)
         temp2 = copy(n)
-        temp_length = temp.bars()
+        temp_length = temp.bars(**args)
         if temp.channels is not None:
             free_channel_numbers = [
                 i for i in range(16) if i not in temp.channels
@@ -3027,7 +3065,7 @@ class piece:
                     current_instrument_number)
                 current_track = temp2.tracks[i]
                 for each in current_track:
-                    if type(each) in [tempo, pitch_bend]:
+                    if type(each) != note:
                         if each.start_time is not None:
                             each.start_time += start_time
                 current_start_time = temp2.start_times[
@@ -3043,7 +3081,7 @@ class piece:
                 current_start_time += start_time
                 current_track = temp2.tracks[i]
                 for each in current_track:
-                    if type(each) in [tempo, pitch_bend]:
+                    if type(each) != note:
                         if each.start_time is not None:
                             each.start_time += start_time
                 temp.tracks.append(current_track)
@@ -3172,7 +3210,7 @@ class piece:
         self.tracks = new_tracks
         self.start_times = new_start_times
 
-    def get_tempo_changes(self):
+    def get_tempo_changes(self, **args):
         temp = copy(self)
         tempo_changes = []
         for each in temp.tracks:
@@ -3182,14 +3220,14 @@ class piece:
             notes = [each.notes[i] for i in inds]
             no_time = [k for k in inds if each.notes[k].start_time is None]
             for k in no_time:
-                current_time = each[:k + 1].bars() + 1
+                current_time = each[:k + 1].bars(**args) + 1
                 current = each.notes[k]
                 current.start_time = current_time
             tempo_changes += notes
         tempo_changes.sort(key=lambda s: s.start_time)
         return chord(tempo_changes)
 
-    def get_pitch_bend(self, track_number=1):
+    def get_pitch_bend(self, track_number=1, **args):
         temp = copy(self)
         each = temp.tracks[track_number - 1]
         inds = [
@@ -3198,7 +3236,7 @@ class piece:
         pitch_bend_changes = [each.notes[i] for i in inds]
         no_time = [k for k in inds if each.notes[k].start_time is None]
         for k in no_time:
-            current_time = each[:k + 1].bars() + 1
+            current_time = each[:k + 1].bars(**args) + 1
             current = each.notes[k]
             current.start_time = current_time
         pitch_bend_changes.sort(key=lambda s: s.start_time)
@@ -3232,7 +3270,7 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def merge(self, add_labels=True, clear_pitch_bend=True):
+    def merge(self, add_labels=True, clear_pitch_bend=False):
         temp = copy(self)
         if add_labels:
             temp.add_track_labels()
@@ -3261,7 +3299,7 @@ class piece:
             for each in all_tracks[k]:
                 each.track_num = k
 
-    def reconstruct(self, track, start_time=0):
+    def reconstruct(self, track, start_time=0, offset=0, correct=False):
         first_track, first_track_start_time = track, start_time
         length = len(self.tracks)
         tempo_messages = first_track.split(tempo)
@@ -3278,6 +3316,16 @@ class piece:
             first_track_start_time + first_track[:k + 1].bars(mode=0)
             for k in start_times_inds
         ]
+        if correct:
+            new_start_times_offset = [
+                self.start_times[i] - offset for i in available_tracks_inds
+            ]
+            start_time_offset = min([
+                new_start_times_offset[k] - new_start_times[k]
+                for k in range(len(new_start_times))
+            ],
+                                    key=lambda s: abs(s))
+            new_start_times = [i + start_time_offset for i in new_start_times]
         new_start_times = [i if i >= 0 else 0 for i in new_start_times]
         new_track_notes = [[] for k in range(length)]
         new_track_inds = [[] for k in range(length)]
@@ -3322,8 +3370,10 @@ class piece:
                   ind2=None,
                   mode='seconds',
                   normalize_tempo=False,
-                  audio_mode=0):
-        temp_bpm, merged_result, start_time = self.merge()
+                  audio_mode=0,
+                  clear_pitch_bend=False):
+        temp_bpm, merged_result, start_time = self.merge(
+            clear_pitch_bend=clear_pitch_bend)
         if bpm is not None:
             temp_bpm = bpm
         if normalize_tempo:
@@ -3335,28 +3385,27 @@ class piece:
                                        start_time=start_time,
                                        audio_mode=audio_mode)
 
-    def cut(self, ind1=1, ind2=None):
-        temp_bpm, merged_result, start_time = self.merge()
+    def cut(self, ind1=1, ind2=None, clear_pitch_bend=False, correct=False):
+        temp_bpm, merged_result, start_time = self.merge(
+            clear_pitch_bend=clear_pitch_bend)
+        if ind1 < 1:
+            ind1 = 1
         result = merged_result.cut(ind1, ind2, start_time)
-
+        offset = ind1 - 1
         temp = copy(self)
-        tempo_changes = temp.get_tempo_changes()
-        for each in tempo_changes:
-            each.start_time -= (ind1 - 1)
-        if ind2 is None:
-            ind2 = temp.bars()
-        tempo_changes = chord([
-            i for i in tempo_changes if 1 <= i.start_time <= ind2 - (ind1 - 1)
-        ])
         start_time -= (ind1 - 1)
         if start_time < 0:
             start_time = 0
-        temp.reconstruct(result, start_time)
-        temp.clear_tempo()
-        temp.tracks[0] += tempo_changes
+        temp.reconstruct(result, start_time, offset, correct)
         return temp
 
-    def cut_time(self, time1=0, time2=None, bpm=None, start_time=0):
+    def cut_time(self,
+                 time1=0,
+                 time2=None,
+                 bpm=None,
+                 start_time=0,
+                 clear_pitch_bend=False,
+                 **args):
         temp = copy(self)
         temp.normalize_tempo()
         if bpm is not None:
@@ -3365,17 +3414,23 @@ class piece:
             temp_bpm = temp.tempo
         bar_left = time1 / ((60 / temp_bpm) * 4)
         bar_right = time2 / (
-            (60 / temp_bpm) * 4) if time2 is not None else temp.bars()
-        result = temp.cut(1 + bar_left, 1 + bar_right)
+            (60 / temp_bpm) * 4) if time2 is not None else temp.bars(**args)
+        result = temp.cut(1 + bar_left,
+                          1 + bar_right,
+                          clear_pitch_bend=clear_pitch_bend)
         return result
 
-    def get_bar(self, n):
+    def get_bar(self, n, clear_pitch_bend=False):
         start_time = min(self.start_times)
-        return self.cut(n + start_time, n + 1 + start_time)
+        return self.cut(n + start_time,
+                        n + 1 + start_time,
+                        clear_pitch_bend=clear_pitch_bend)
 
-    def firstnbars(self, n):
+    def firstnbars(self, n, clear_pitch_bend=False):
         start_time = min(self.start_times)
-        return self.cut(1 + start_time, n + 1 + start_time)
+        return self.cut(1 + start_time,
+                        n + 1 + start_time,
+                        clear_pitch_bend=clear_pitch_bend)
 
     def bars(self, mode=1, audio_mode=0):
         return max([
@@ -3399,17 +3454,34 @@ class piece:
     def count_appear(self, choices=None, as_standard=True, sort=False):
         return self.merge()[1].count_appear(choices, as_standard, sort)
 
-    def reverse(self):
+    def apply_start_time_to_changes(self, start_time):
+        tracks = self.tracks
+        for i in range(len(tracks)):
+            current_start_time = start_time[i]
+            current_track = tracks[i]
+            for each in current_track:
+                if type(each) != note:
+                    if each.start_time is not None:
+                        each.start_time += current_start_time
+
+    def reverse(self, **args):
         temp = copy(self)
-        temp.tracks = [i.reverse() for i in temp.tracks]
-        length = temp.bars()
+        temp.tracks = [
+            temp.tracks[i].reverse(start_time=temp.start_times[i], **args)
+            for i in range(len(temp.tracks))
+        ]
+        length = temp.bars(**args)
         start_times = temp.start_times
         tracks = temp.tracks
         track_num = len(temp.tracks)
+        first_start_time = min(self.start_times)
         temp.start_times = [
-            length - (start_times[i] + tracks[i].bars())
+            length -
+            (start_times[i] + tracks[i].bars(**args) - first_start_time)
             for i in range(track_num)
         ]
+
+        temp.apply_start_time_to_changes(temp.start_times)
         for each in temp.pan:
             for i in each:
                 if i.start_time > 1:
@@ -3424,17 +3496,24 @@ class piece:
                         i.start_time = 1
         return temp
 
-    def reverse_chord(self):
+    def reverse_chord(self, **args):
         temp = copy(self)
-        temp.tracks = [i.reverse_chord() for i in temp.tracks]
-        length = temp.bars()
+        temp.tracks = [
+            temp.tracks[i].reverse_chord(start_time=temp.start_times[i],
+                                         **args)
+            for i in range(len(temp.tracks))
+        ]
+        length = temp.bars(**args)
         start_times = temp.start_times
         tracks = temp.tracks
         track_num = len(temp.tracks)
+        first_start_time = min(self.start_times)
         temp.start_times = [
-            length - (start_times[i] + tracks[i].bars())
+            length -
+            (start_times[i] + tracks[i].bars(**args) - first_start_time)
             for i in range(track_num)
         ]
+        temp.apply_start_time_to_changes(temp.start_times)
         for each in temp.pan:
             for i in each:
                 if i.start_time > 1:
@@ -3500,6 +3579,32 @@ class piece:
             elif type(instruments_list) == list and all(
                     type(j) == int for j in instruments_list):
                 self.instruments_numbers[ind] = copy(instruments_list)
+
+    def move(self, time=0, ind='all'):
+        temp = copy(self)
+        if ind == 'all':
+            temp.start_times = [i + time for i in temp.start_times]
+            temp.apply_start_time_to_changes(
+                [time for i in range(len(temp.start_times))])
+            for each in temp.pan:
+                for i in each:
+                    i.start_time += time
+            for each in temp.volume:
+                for i in each:
+                    i.start_time += time
+        else:
+            if ind > 0:
+                ind -= 1
+            temp.start_times[ind] += time
+            for i in temp.tracks[ind]:
+                if type(i) != note:
+                    if i.start_time is not None:
+                        i.start_time += time
+            for each in temp.pan[ind]:
+                each.start_time += time
+            for each in temp.volume[ind]:
+                each.start_time += time
+        return temp
 
 
 P = piece
@@ -3663,9 +3768,9 @@ class track:
     def get_volume(self):
         return self.content.get_volume()
 
-    def reverse(self, start=None, end=None, cut=False):
+    def reverse(self, *args, **kwargs):
         temp = copy(self)
-        temp.content = temp.content.reverse(start, end, cut)
+        temp.content = temp.content.reverse(*args, **kwargs)
         for each in temp.pan:
             for i in each:
                 if i.start_time > 1:
@@ -3680,9 +3785,9 @@ class track:
                         i.start_time = 1
         return temp
 
-    def reverse_chord(self):
+    def reverse_chord(self, *args, **kwargs):
         temp = copy(self)
-        temp.content = temp.content.reverse_chord()
+        temp.content = temp.content.reverse_chord(*args, **kwargs)
         for each in temp.pan:
             for i in each:
                 if i.start_time > 1:
