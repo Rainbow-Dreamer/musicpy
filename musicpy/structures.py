@@ -1581,7 +1581,9 @@ class chord:
 
     def __getslice__(self, i, j):
         temp = copy(self)
-        return chord(temp.notes[i:j], interval=temp.interval[i:j])
+        return chord(temp.notes[i:j],
+                     interval=temp.interval[i:j],
+                     other_messages=temp.other_messages)
 
     def __len__(self):
         return len(self.notes)
@@ -2156,6 +2158,12 @@ class chord:
                 temp.interval[ind] = temp.interval[ind] * sum(
                     [(1 / 2)**i for i in range(num + 1)])
         return temp
+
+    def apply_start_time_to_changes(self, start_time):
+        for each in self.notes:
+            if type(each) != note:
+                if each.start_time is not None:
+                    each.start_time += start_time
 
 
 class scale:

@@ -383,6 +383,37 @@ class sampler:
                         if check_reverse(k) or check_fade(k) or check_offset(
                                 k) or check_adsr(k) or check_custom(k):
                             rs.convert_effect(k, add=True)
+
+                    current_track = copy(current_track)
+                    current_track.apply_start_time_to_changes(
+                        -current_start_times[i])
+
+                    current_instrument = current_chord.instruments_numbers[i]
+                    # instrument of a track of the piece type could be preset_num or [preset_num, bank_num, (track), (sfid)]
+                    if type(current_instrument) == int:
+                        current_instrument = [
+                            current_instrument - 1,
+                            current_sound_modules.current_bank_num
+                        ]
+                    else:
+                        current_instrument = [current_instrument[0] - 1
+                                              ] + current_instrument[1:]
+
+                    current_track2 = copy(current_sound_modules.current_track)
+                    current_sfid = copy(current_sound_modules.current_sfid)
+                    current_bank_num = copy(
+                        current_sound_modules.current_bank_num)
+                    current_preset_num = copy(
+                        current_sound_modules.current_preset_num)
+
+                    current_sound_modules.program_select(
+                        track=(current_instrument[2]
+                               if len(current_instrument) > 2 else None),
+                        sfid=(current_instrument[3]
+                              if len(current_instrument) > 3 else None),
+                        bank_num=current_instrument[1],
+                        preset_num=current_instrument[0])
+
                     silent_audio = silent_audio.overlay(
                         current_sound_modules.export_chord(
                             current_track,
@@ -393,6 +424,10 @@ class sampler:
                             volume=current_volume[i]),
                         position=bar_to_real_time(current_start_times[i],
                                                   current_bpm, 1))
+
+                    current_sound_modules.program_select(
+                        current_track2, current_sfid, current_bank_num,
+                        current_preset_num)
                 else:
                     silent_audio = self.channel_to_audio(
                         current_tracks[i],
