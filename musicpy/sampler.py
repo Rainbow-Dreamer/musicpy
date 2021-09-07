@@ -278,7 +278,9 @@ class sampler:
                action='export',
                filename='Untitled.wav',
                channel_num=1,
-               bpm=None):
+               bpm=None,
+               length=None,
+               extra_length=None):
         if channel_num > 0:
             channel_num -= 1
         if not self.channel_sound_modules:
@@ -330,7 +332,9 @@ class sampler:
                     current_chord,
                     bpm=current_bpm,
                     get_audio=True,
-                    other_effects=rs.convert_effect(current_chord))
+                    other_effects=rs.convert_effect(current_chord),
+                    length=length,
+                    extra_length=extra_length)
             else:
                 apply_fadeout_obj = self.apply_fadeout(current_chord,
                                                        current_bpm)
@@ -371,8 +375,13 @@ class sampler:
                         each.volume = 127
                 current_chord.tracks[i] = each_channel
             apply_fadeout_obj = self.apply_fadeout(current_chord, current_bpm)
-            whole_duration = apply_fadeout_obj.eval_time(
-                current_bpm, mode='number', audio_mode=1) * 1000
+            if length:
+                whole_duration = length * 1000
+            else:
+                whole_duration = apply_fadeout_obj.eval_time(
+                    current_bpm, mode='number', audio_mode=1) * 1000
+                if extra_length:
+                    whole_duration += extra_length * 1000
             silent_audio = AudioSegment.silent(duration=whole_duration)
             for i in range(len(current_chord)):
                 current_sound_modules = self.channel_sound_modules[
@@ -823,7 +832,12 @@ class sampler:
                 current_id.start()
                 self.current_playing.append(current_id)
 
-    def play(self, current_chord, channel_num=1, bpm=None):
+    def play(self,
+             current_chord,
+             channel_num=1,
+             bpm=None,
+             length=None,
+             extra_length=None):
         if not self.channel_sound_modules:
             return
         self.stop_playing()
@@ -832,12 +846,14 @@ class sampler:
         current_channel_num = channel_num
         current_bpm = self.bpm if bpm is None else bpm
         self.play_musicpy_sounds(current_chord, current_channel_num,
-                                 current_bpm)
+                                 current_bpm, length, extra_length)
 
     def play_musicpy_sounds(self,
                             current_chord,
                             current_channel_num=None,
-                            bpm=None):
+                            bpm=None,
+                            length=None,
+                            extra_length=None):
         if type(current_chord) == note:
             has_reverse = check_reverse(current_chord)
             has_offset = check_offset(current_chord)
@@ -853,7 +869,10 @@ class sampler:
             if check_special(current_chord):
                 self.export(current_chord,
                             action='play',
-                            channel_num=current_channel_num)
+                            channel_num=current_channel_num,
+                            bpm=bpm,
+                            length=length,
+                            extra_length=extra_length)
             else:
                 self.play_channel(current_chord, current_channel_num, bpm)
         elif type(current_chord) == track:
@@ -871,7 +890,11 @@ class sampler:
             if check_special(current_chord) or any(
                     type(self.channel_sound_modules[i]) == rs.sf2_loader
                     for i in current_chord.channels):
-                self.export(current_chord, action='play')
+                self.export(current_chord,
+                            action='play',
+                            bpm=bpm,
+                            length=length,
+                            extra_length=extra_length)
                 return
             current_tracks = current_chord.tracks
             current_channel_nums = current_chord.channels if current_chord.channels else [
