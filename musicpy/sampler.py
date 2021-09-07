@@ -280,7 +280,9 @@ class sampler:
                channel_num=1,
                bpm=None,
                length=None,
-               extra_length=None):
+               extra_length=None,
+               track_lengths=None,
+               track_extra_lengths=None):
         if channel_num > 0:
             channel_num -= 1
         if not self.channel_sound_modules:
@@ -430,7 +432,11 @@ class sampler:
                             get_audio=True,
                             other_effects=rs.convert_effect(current_track),
                             pan=current_pan[i],
-                            volume=current_volume[i]),
+                            volume=current_volume[i],
+                            length=None
+                            if not track_lengths else track_lengths[i],
+                            extra_length=None if not track_extra_lengths else
+                            track_extra_lengths[i]),
                         position=bar_to_real_time(current_start_times[i],
                                                   current_bpm, 1))
 
@@ -837,7 +843,9 @@ class sampler:
              channel_num=1,
              bpm=None,
              length=None,
-             extra_length=None):
+             extra_length=None,
+             track_lengths=None,
+             track_extra_lengths=None):
         if not self.channel_sound_modules:
             return
         self.stop_playing()
@@ -846,14 +854,17 @@ class sampler:
         current_channel_num = channel_num
         current_bpm = self.bpm if bpm is None else bpm
         self.play_musicpy_sounds(current_chord, current_channel_num,
-                                 current_bpm, length, extra_length)
+                                 current_bpm, length, extra_length,
+                                 track_lengths, track_extra_lengths)
 
     def play_musicpy_sounds(self,
                             current_chord,
                             current_channel_num=None,
                             bpm=None,
                             length=None,
-                            extra_length=None):
+                            extra_length=None,
+                            track_lengths=None,
+                            track_extra_lengths=None):
         if type(current_chord) == note:
             has_reverse = check_reverse(current_chord)
             has_offset = check_offset(current_chord)
@@ -872,7 +883,9 @@ class sampler:
                             channel_num=current_channel_num,
                             bpm=bpm,
                             length=length,
-                            extra_length=extra_length)
+                            extra_length=extra_length,
+                            track_lengths=track_lengths,
+                            track_extra_lengths=track_extra_lengths)
             else:
                 self.play_channel(current_chord, current_channel_num, bpm)
         elif type(current_chord) == track:
@@ -894,7 +907,9 @@ class sampler:
                             action='play',
                             bpm=bpm,
                             length=length,
-                            extra_length=extra_length)
+                            extra_length=extra_length,
+                            track_lengths=track_lengths,
+                            track_extra_lengths=track_extra_lengths)
                 return
             current_tracks = current_chord.tracks
             current_channel_nums = current_chord.channels if current_chord.channels else [

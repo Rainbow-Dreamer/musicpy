@@ -431,11 +431,10 @@ current preset name: {self.get_current_instrument()}'''
                      length=None,
                      extra_length=None):
         if type(decay) != list:
-            current_decay = [
-                decay * i for i in current_chord.get_duration()
-            ] if not fixed_decay else [
-                decay for i in range(len(current_chord.get_duration()))
-            ]
+            current_decay = [decay * i for i in current_chord.get_duration()
+                             ] if not fixed_decay else [
+                                 decay for i in range(len(current_chord.notes))
+                             ]
         else:
             current_decay = decay
         whole_length = bar_to_real_time(current_chord.bars(), bpm, 1) / 1000
@@ -557,7 +556,6 @@ current preset name: {self.get_current_instrument()}'''
                      current_chord,
                      decay=0.5,
                      track=0,
-                     start_time=0,
                      sample_width=2,
                      channels=2,
                      frame_rate=44100,
@@ -568,7 +566,13 @@ current preset name: {self.get_current_instrument()}'''
                      other_effects=None,
                      clear_program_change=True,
                      length=None,
-                     extra_length=None):
+                     extra_length=None,
+                     track_lengths=None,
+                     track_extra_lengths=None):
+        decay_is_list = False
+        decay_type = type(decay)
+        if decay_type == list or decay_type == tuple:
+            decay_is_list == True
         bpm = current_chord.tempo
         current_chord.normalize_tempo()
         if clear_program_change:
@@ -608,13 +612,13 @@ current preset name: {self.get_current_instrument()}'''
                                 bank_num=current_instrument[1],
                                 preset_num=current_instrument[0])
 
-            current_audio = self.export_chord(each, decay, track, 0,
-                                              current_chord.start_times[i],
-                                              sample_width, channels,
-                                              frame_rate, None, format, bpm,
-                                              True, fixed_decay,
-                                              convert_effect(each),
-                                              current_pan, current_volume)
+            current_audio = self.export_chord(
+                each, decay if not decay_is_list else decay[i], track, 0,
+                current_chord.start_times[i], sample_width, channels,
+                frame_rate, None, format, bpm, True, fixed_decay,
+                convert_effect(each), current_pan, current_volume,
+                None if not track_lengths else track_lengths[i],
+                None if not track_extra_lengths else track_extra_lengths[i])
             silent_audio = silent_audio.overlay(current_audio,
                                                 position=current_start_time)
 
@@ -638,7 +642,6 @@ current preset name: {self.get_current_instrument()}'''
                          current_chord,
                          decay=0.5,
                          track=0,
-                         start_time=0,
                          sample_width=2,
                          channels=2,
                          frame_rate=44100,
@@ -651,6 +654,8 @@ current preset name: {self.get_current_instrument()}'''
                          instruments=None,
                          length=None,
                          extra_length=None,
+                         track_lengths=None,
+                         track_extra_lengths=None,
                          **read_args):
         current_chord = mp.read(current_chord,
                                 mode='all',
@@ -658,10 +663,11 @@ current preset name: {self.get_current_instrument()}'''
                                 **read_args)
         if instruments:
             current_chord.change_instruments(instruments)
-        result = self.export_piece(current_chord, decay, track, start_time,
-                                   sample_width, channels, frame_rate, name,
-                                   format, True, fixed_decay, other_effects,
-                                   clear_program_change, length, extra_length)
+        result = self.export_piece(current_chord, decay, track, sample_width,
+                                   channels, frame_rate, name, format, True,
+                                   fixed_decay, other_effects,
+                                   clear_program_change, length, extra_length,
+                                   track_lengths, track_extra_lengths)
 
         if name is None:
             name = f'Untitled.{format}'
@@ -722,7 +728,6 @@ current preset name: {self.get_current_instrument()}'''
                    current_chord,
                    decay=0.5,
                    track=0,
-                   start_time=0,
                    sample_width=2,
                    channels=2,
                    frame_rate=44100,
@@ -732,13 +737,15 @@ current preset name: {self.get_current_instrument()}'''
                    other_effects=None,
                    clear_program_change=True,
                    length=None,
-                   extra_length=None):
+                   extra_length=None,
+                   track_lengths=None,
+                   track_extra_lengths=None):
         current_audio = self.export_piece(current_chord, decay, track,
-                                          start_time, sample_width, channels,
-                                          frame_rate, name, format, True,
-                                          fixed_decay, other_effects,
-                                          clear_program_change, length,
-                                          extra_length)
+                                          sample_width, channels, frame_rate,
+                                          name, format, True, fixed_decay,
+                                          other_effects, clear_program_change,
+                                          length, extra_length, track_lengths,
+                                          track_extra_lengths)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -746,7 +753,6 @@ current preset name: {self.get_current_instrument()}'''
                        current_chord,
                        decay=0.5,
                        track=0,
-                       start_time=0,
                        sample_width=2,
                        channels=2,
                        frame_rate=44100,
@@ -758,12 +764,14 @@ current preset name: {self.get_current_instrument()}'''
                        instruments=None,
                        length=None,
                        extra_length=None,
+                       track_lengths=None,
+                       track_extra_lengths=None,
                        **read_args):
         current_audio = self.export_midi_file(
-            current_chord, decay, track, start_time, sample_width, channels,
-            frame_rate, name, format, True, fixed_decay, other_effects,
+            current_chord, decay, track, sample_width, channels, frame_rate,
+            name, format, True, fixed_decay, other_effects,
             clear_program_change, instruments, length, extra_length,
-            **read_args)
+            track_lengths, track_extra_lengths, **read_args)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
