@@ -3319,6 +3319,9 @@ class piece:
         available_tracks_inds = [
             k for k in range(length) if start_times_inds[k]
         ]
+        available_tracks_messages = [
+            self.tracks[i].other_messages for i in available_tracks_inds
+        ]
         start_times_inds = [i[0] for i in start_times_inds if i]
         new_start_times = [
             first_track_start_time + first_track[:k + 1].bars(mode=0)
@@ -3352,8 +3355,10 @@ class piece:
             new_track_intervals[i].append(
                 sum(whole_interval[new_track_inds[i][-1]:]))
         new_tracks = [
-            chord(new_track_notes[k], interval=new_track_intervals[k])
-            for k in available_tracks_inds
+            chord(new_track_notes[available_tracks_inds[i]],
+                  interval=new_track_intervals[available_tracks_inds[i]],
+                  other_messages=available_tracks_messages[i])
+            for i in range(len(available_tracks_inds))
         ]
         new_tracks[0] += tempo_messages
         self.tracks = new_tracks
