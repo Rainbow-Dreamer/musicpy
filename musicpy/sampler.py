@@ -693,33 +693,36 @@ class sampler:
         self.stop_playing()
         write(filename, current_chord, self.bpm)
 
+    def inherit_effects(self, current_chord, current_chord_temp):
+        if check_reverse(current_chord_temp):
+            current_chord.reverse_audio = current_chord_temp.reverse_audio
+        if check_offset(current_chord_temp):
+            current_chord.offset = current_chord_temp.offset
+        if check_fade(current_chord_temp):
+            current_chord.fade_in_time = current_chord_temp.fade_in_time
+            current_chord.fade_out_time = current_chord_temp.fade_out_time
+        if check_adsr(current_chord_temp):
+            current_chord.adsr = current_chord_temp.adsr
+        if check_custom(current_chord_temp):
+            current_chord.custom_effect = current_chord_temp.custom_effect
+
     def get_current_musicpy_chords(self, current_chord, current_channel_num=0):
         current_bpm = self.bpm
         if type(current_chord) == note:
-            has_reverse = check_reverse(current_chord)
-            has_offset = check_offset(current_chord)
             current_chord = chord([current_chord])
-            if has_reverse:
-                current_chord.reverse_audio = True
-            if has_offset:
-                current_chord.offset = has_offset
         elif type(current_chord) == list and all(
                 type(i) == chord for i in current_chord):
             current_chord = concat(current_chord, mode='|')
         if type(current_chord) == chord:
             return 'chord', current_chord, current_channel_num
         if type(current_chord) == track:
-            has_reverse = check_reverse(current_chord)
-            has_offset = check_offset(current_chord)
+            current_chord_temp = copy(current_chord)
             current_chord = build(
                 current_chord,
                 bpm=current_chord.tempo
                 if current_chord.tempo is not None else current_bpm,
                 name=current_chord.name)
-            if has_reverse:
-                current_chord.reverse_audio = True
-            if has_offset:
-                current_chord.offset = has_offset
+            self.inherit_effects(current_chord, current_chord_temp)
         if type(current_chord) == piece:
             current_bpm = current_chord.tempo
             current_start_times = current_chord.start_times
@@ -866,13 +869,7 @@ class sampler:
                             track_lengths=None,
                             track_extra_lengths=None):
         if type(current_chord) == note:
-            has_reverse = check_reverse(current_chord)
-            has_offset = check_offset(current_chord)
             current_chord = chord([current_chord])
-            if has_reverse:
-                current_chord.reverse_audio = True
-            if has_offset:
-                current_chord.offset = has_offset
         elif type(current_chord) == list and all(
                 type(i) == chord for i in current_chord):
             current_chord = concat(current_chord, mode='|')
@@ -889,16 +886,12 @@ class sampler:
             else:
                 self.play_channel(current_chord, current_channel_num, bpm)
         elif type(current_chord) == track:
-            has_reverse = check_reverse(current_chord)
-            has_offset = check_offset(current_chord)
+            current_chord_temp = copy(current_chord)
             current_chord = build(current_chord,
                                   bpm=current_chord.tempo
                                   if current_chord.tempo is not None else bpm,
                                   name=current_chord.name)
-            if has_reverse:
-                current_chord.reverse_audio = True
-            if has_offset:
-                current_chord.offset = has_offset
+            self.inherit_effects(current_chord, current_chord_temp)
         if type(current_chord) == piece:
             if check_special(current_chord) or any(
                     type(self.channel_sound_modules[i]) == rs.sf2_loader
@@ -1212,8 +1205,8 @@ def real_time_to_bar(time, bpm):
     return (time / (60000 / bpm)) / 4
 
 
-def reverse(sound):
-    sound.reverse_audio = True
+def reverse(sound, value=True):
+    sound.reverse_audio = value
     return sound
 
 
@@ -1270,7 +1263,7 @@ def check_custom_all(sound):
 
 
 def check_reverse(sound):
-    return hasattr(sound, 'reverse_audio')
+    return hasattr(sound, 'reverse_audio') and sound.reverse_audio
 
 
 def check_offset(sound):
