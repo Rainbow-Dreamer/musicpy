@@ -3384,6 +3384,9 @@ def arpeggio(chord_type,
     return result
 
 
+arp = arpeggio
+
+
 def distribute(current_chord,
                length=1 / 4,
                start=1,
