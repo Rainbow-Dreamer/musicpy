@@ -46,42 +46,6 @@ def percentage_to_db(vol):
     return mp.math.log(abs(vol / 100), 10) * 20
 
 
-def process_effect(current_audio, other_effects, bpm):
-    for each in other_effects:
-        current_type = each.effect
-        current_values = each.value
-        if current_type == 'reverse':
-            current_audio = current_audio.reverse()
-        elif current_type == 'offset':
-            current_audio = current_audio[
-                bar_to_real_time(current_values, bpm, 1):]
-        elif current_type == 'fade':
-            fade_in_time, fade_out_time = current_values
-            if fade_in_time > 0:
-                current_audio = current_audio.fade_in(fade_in_time)
-            if fade_out_time > 0:
-                current_audio = current_audio.fade_out(fade_out_time)
-        elif current_type == 'adsr':
-            attack, decay, sustain, release = current_values
-            change_db = percentage_to_db(sustain)
-            result_db = current_audio.dBFS + change_db
-            if attack > 0:
-                current_audio = current_audio.fade_in(attack)
-            if decay > 0:
-                current_audio = current_audio.fade(to_gain=result_db,
-                                                   start=attack,
-                                                   duration=decay)
-            else:
-                current_audio = current_audio[:attack].append(
-                    current_audio[attack:] + change_db)
-            if release > 0:
-                current_audio = current_audio.fade_out(release)
-        elif current_type == 'custom':
-            current_func = current_values
-            current_audio = current_func(current_audio)
-    return current_audio
-
-
 def get_timestamps(current_chord,
                    bpm,
                    ignore_other_messages=False,
@@ -142,32 +106,62 @@ def get_timestamps(current_chord,
     return result
 
 
-def convert_effect(current_chord, add=False):
-    result = []
-    if hasattr(current_chord, 'reverse_audio'):
-        result.append(effect('reverse'))
-    if hasattr(current_chord, 'offset'):
-        result.append(effect('offset', current_chord.offset))
-    if hasattr(current_chord, 'fade_in_time'):
-        result.append(
-            effect('fade',
-                   (current_chord.fade_in_time, current_chord.fade_out_time)))
-    if hasattr(current_chord, 'adsr'):
-        result.append(effect('adsr', current_chord.adsr))
-    if hasattr(current_chord, 'custom_effect'):
-        result.append(effect('custom', current_chord.custom_effect))
-    if add:
-        current_chord.other_effects = result
-    return result
-
-
 class effect:
-    def __init__(self, effect, value=None):
-        self.effect = effect
-        self.value = value
+    def __init__(self, func, name=None, *args, unknown_args=None, **kwargs):
+        self.func = func
+        if name is None:
+            name = 'effect'
+        self.name = name
+        self.parameters = [args, kwargs]
+        if unknown_args is None:
+            unknown_args = {}
+        self.unknown_args = unknown_args
+
+    def process(self, sound, *args, unknown_args=None, **kwargs):
+        if args or kwargs or unknown_args:
+            return self.func(*args, **kwargs, **unknown_args)
+        else:
+            return self.func(sound, *self.parameters[0], **self.parameters[1],
+                             **self.unknown_args)
+
+    def process_unknown_args(self, **kwargs):
+        for each in kwargs:
+            if each in self.unknown_args:
+                self.unknown_args[each] = kwargs[each]
+
+    def __call__(self, *args, unknown_args=None, **kwargs):
+        temp = copy(self)
+        temp.parameters[0] = args + temp.parameters[0][len(args):]
+        temp.parameters[1].update(kwargs)
+        if unknown_args is None:
+            unknown_args = {}
+        temp.unknown_args.update(unknown_args)
+        return temp
+
+    def new(self, *args, unknown_args=None, **kwargs):
+        temp = copy(self)
+        temp.parameters = [args, kwargs]
+        temp.parameters[1].update(kwargs)
+        if unknown_args is None:
+            unknown_args = {}
+        temp.unknown_args = unknown_args
+        return temp
 
     def __repr__(self):
-        return f'[effect] type: {self.effect}  value: {self.value}'
+        return f'[effect]\nname: {self.name}\nparameters: {self.parameters} unknown arguments: {self.unknown_args}'
+
+
+class effect_chain:
+    def __init__(self, *effects):
+        self.effects = list(effects)
+
+    def __call__(self, sound):
+        sound.effects = self.effects
+        return sound
+
+    def __repr__(self):
+        return f'[effect chain]\neffects:\n' + '\n\n'.join(
+            [str(i) for i in self.effects])
 
 
 class general_event:
@@ -403,7 +397,13 @@ current preset name: {self.get_current_instrument()}'''
         self.program_select()
         self.synth.get_samples(int(frame_rate * 1))
         if other_effects:
-            current_audio = process_effect(current_audio, other_effects, bpm)
+            current_audio = process_effect(current_audio,
+                                           other_effects,
+                                           bpm=bpm)
+        elif check_effect(current_note):
+            current_audio = process_effect(current_audio,
+                                           current_note.effects,
+                                           bpm=bpm)
         if name is None:
             name = f'{current_note}.{format}'
         if not get_audio:
@@ -469,8 +469,7 @@ current preset name: {self.get_current_instrument()}'''
         for i in range(current_timestamps_length):
             current = current_timestamps[i]
             each = current.value
-            if current.event_type == 'noteon' and hasattr(
-                    each, 'other_effects'):
+            if current.event_type == 'noteon' and hasattr(each, 'effects'):
                 if hasattr(each, 'decay_length'):
                     current_note_decay = each.decay_length
                 else:
@@ -490,7 +489,7 @@ current preset name: {self.get_current_instrument()}'''
                     frame_rate=frame_rate,
                     format=format,
                     get_audio=True,
-                    other_effects=each.other_effects,
+                    other_effects=each.effects,
                     bpm=bpm)
                 current_silent_audio = current_silent_audio.overlay(
                     current_note_audio,
@@ -505,10 +504,10 @@ current preset name: {self.get_current_instrument()}'''
             current = current_timestamps[k]
             each = current.value
             if current.event_type == 'noteon':
-                if not hasattr(each, 'other_effects'):
+                if not hasattr(each, 'effects'):
                     self.synth.noteon(track, each.degree, each.volume)
             elif current.event_type == 'noteoff':
-                if not hasattr(each, 'other_effects'):
+                if not hasattr(each, 'effects'):
                     self.synth.noteoff(track, each.degree)
             elif current.event_type == 'pitch_bend':
                 self.synth.pitch_bend(track, each.value)
@@ -543,7 +542,12 @@ current preset name: {self.get_current_instrument()}'''
         self.synth.get_samples(int(frame_rate * 1))
         if other_effects:
             current_silent_audio = process_effect(current_silent_audio,
-                                                  other_effects, bpm)
+                                                  other_effects,
+                                                  bpm=bpm)
+        elif check_effect(current_chord):
+            current_silent_audio = process_effect(current_silent_audio,
+                                                  current_chord.effects,
+                                                  bpm=bpm)
 
         if name is None:
             name = f'Untitled.{format}'
@@ -615,8 +619,8 @@ current preset name: {self.get_current_instrument()}'''
             current_audio = self.export_chord(
                 each, decay if not decay_is_list else decay[i], track, 0,
                 current_chord.start_times[i], sample_width, channels,
-                frame_rate, None, format, bpm, True, fixed_decay,
-                convert_effect(each), current_pan, current_volume,
+                frame_rate, None, format, bpm, True, fixed_decay, each.effects,
+                current_pan, current_volume,
                 None if not track_lengths else track_lengths[i],
                 None if not track_extra_lengths else track_extra_lengths[i])
             silent_audio = silent_audio.overlay(current_audio,
@@ -629,7 +633,11 @@ current preset name: {self.get_current_instrument()}'''
         self.program_select()
         self.synth.get_samples(int(frame_rate * 1))
         if other_effects:
-            silent_audio = process_effect(silent_audio, other_effects, bpm)
+            silent_audio = process_effect(silent_audio, other_effects, bpm=bpm)
+        elif check_effect(current_chord):
+            silent_audio = process_effect(silent_audio,
+                                          current_chord.effects,
+                                          bpm=bpm)
 
         if name is None:
             name = f'Untitled.{format}'
@@ -865,3 +873,59 @@ current preset name: {self.get_current_instrument()}'''
         current_sfid = self.sfid_list[ind]
         self.synth.sfunload(current_sfid)
         del self.sfid_list[ind]
+
+
+def process_effect(sound, effects, **kwargs):
+    current_args = kwargs
+    for each in effects:
+        each.process_unknown_args(**current_args)
+        sound = each.process(sound)
+    return sound
+
+
+def set_effect(sound, *effects):
+    if len(effects) == 1:
+        current_effect = effects[0]
+        types = type(current_effect)
+        if types != effect:
+            if types == effect_chain:
+                effects = current_effect.effects
+            else:
+                effects = list(current_effect)
+        else:
+            effects = list(effects)
+    else:
+        effects = list(effects)
+    sound.effects = effects
+    return sound
+
+
+def check_effect(sound):
+    return hasattr(sound, 'effects') and type(
+        sound.effects) == list and sound.effects
+
+
+def adsr_func(sound, attack, decay, sustain, release):
+    change_db = percentage_to_db(sustain)
+    result_db = sound.dBFS + change_db
+    if attack > 0:
+        sound = sound.fade_in(attack)
+    if decay > 0:
+        sound = sound.fade(to_gain=result_db, start=attack, duration=decay)
+    else:
+        sound = sound[:attack].append(sound[attack:] + change_db)
+    if release > 0:
+        sound = sound.fade_out(release)
+    return sound
+
+
+reverse = effect(lambda s: s.reverse(), 'reverse')
+offset = effect(lambda s, bar, bpm: s[bar_to_real_time(bar, bpm, 1):],
+                'offset',
+                unknown_args={'bpm': None})
+fade_in = effect(lambda s, duration: s.fade_in(duration), 'fade in')
+fade_out = effect(lambda s, duration: s.fade_out(duration), 'fade out')
+fade = effect(
+    lambda s, duration1, duration2=0: s.fade_in(duration1).fade_out(duration2),
+    'fade')
+adsr = effect(adsr_func, 'adsr')

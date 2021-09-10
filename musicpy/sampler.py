@@ -386,14 +386,11 @@ class sampler:
             current_sound_modules = self.channel_sound_modules[
                 current_channel_num]
             if type(current_sound_modules) == rs.sf2_loader:
-                for k in current_chord.notes:
-                    if check_effect(k):
-                        rs.convert_effect(k, add=True)
                 silent_audio = current_sound_modules.export_chord(
                     current_chord,
                     bpm=current_bpm,
                     get_audio=True,
-                    other_effects=rs.convert_effect(current_chord),
+                    other_effects=current_chord.effects,
                     length=length,
                     extra_length=extra_length)
             else:
@@ -450,10 +447,6 @@ class sampler:
                     current_channels[i]]
                 current_track = current_tracks[i]
                 if type(current_sound_modules) == rs.sf2_loader:
-                    for k in current_track.notes:
-                        if check_effect(k):
-                            rs.convert_effect(k, add=True)
-
                     current_track = copy(current_track)
                     current_track.apply_start_time_to_changes(
                         -current_start_times[i])
@@ -489,7 +482,7 @@ class sampler:
                             current_track,
                             bpm=current_bpm,
                             get_audio=True,
-                            other_effects=rs.convert_effect(current_track),
+                            other_effects=current_track.effects,
                             pan=current_pan[i],
                             volume=current_volume[i],
                             length=None
