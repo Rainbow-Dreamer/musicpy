@@ -390,7 +390,7 @@ class sampler:
                     current_chord,
                     bpm=current_bpm,
                     get_audio=True,
-                    other_effects=current_chord.effects,
+                    effects=current_chord.effects,
                     length=length,
                     extra_length=extra_length)
             else:
@@ -482,7 +482,7 @@ class sampler:
                             current_track,
                             bpm=current_bpm,
                             get_audio=True,
-                            other_effects=current_track.effects,
+                            effects=current_track.effects,
                             pan=current_pan[i],
                             volume=current_volume[i],
                             length=None
