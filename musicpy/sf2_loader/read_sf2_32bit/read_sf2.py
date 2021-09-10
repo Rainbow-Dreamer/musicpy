@@ -397,9 +397,7 @@ current preset name: {self.get_current_instrument()}'''
         self.program_select()
         self.synth.get_samples(int(frame_rate * 1))
         if effects:
-            current_audio = process_effect(current_audio,
-                                           effects,
-                                           bpm=bpm)
+            current_audio = process_effect(current_audio, effects, bpm=bpm)
         elif check_effect(current_note):
             current_audio = process_effect(current_audio,
                                            current_note.effects,
@@ -673,9 +671,9 @@ current preset name: {self.get_current_instrument()}'''
             current_chord.change_instruments(instruments)
         result = self.export_piece(current_chord, decay, track, sample_width,
                                    channels, frame_rate, name, format, True,
-                                   fixed_decay, effects,
-                                   clear_program_change, length, extra_length,
-                                   track_lengths, track_extra_lengths)
+                                   fixed_decay, effects, clear_program_change,
+                                   length, extra_length, track_lengths,
+                                   track_extra_lengths)
 
         if name is None:
             name = f'Untitled.{format}'
@@ -777,9 +775,9 @@ current preset name: {self.get_current_instrument()}'''
                        **read_args):
         current_audio = self.export_midi_file(
             current_chord, decay, track, sample_width, channels, frame_rate,
-            name, format, True, fixed_decay, effects,
-            clear_program_change, instruments, length, extra_length,
-            track_lengths, track_extra_lengths, **read_args)
+            name, format, True, fixed_decay, effects, clear_program_change,
+            instruments, length, extra_length, track_lengths,
+            track_extra_lengths, **read_args)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
