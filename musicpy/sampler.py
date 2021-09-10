@@ -396,8 +396,13 @@ class sampler:
             else:
                 apply_fadeout_obj = self.apply_fadeout(current_chord,
                                                        current_bpm)
-                whole_duration = apply_fadeout_obj.eval_time(
-                    current_bpm, mode='number', audio_mode=1) * 1000
+                if length:
+                    whole_duration = length * 1000
+                else:
+                    whole_duration = apply_fadeout_obj.eval_time(
+                        current_bpm, mode='number', audio_mode=1) * 1000
+                    if extra_length:
+                        whole_duration += extra_length * 1000
                 current_start_times = 0
                 silent_audio = AudioSegment.silent(duration=whole_duration)
                 silent_audio = self.channel_to_audio(current_chord,
