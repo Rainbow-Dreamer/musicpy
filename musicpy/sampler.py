@@ -134,6 +134,64 @@ class esi:
         self.name_dict = name_dict
 
 
+class effect:
+    def __init__(self, func, name=None, *args, unknown_args=None, **kwargs):
+        self.func = func
+        if name is None:
+            name = 'effect'
+        self.name = name
+        self.parameters = [args, kwargs]
+        if unknown_args is None:
+            unknown_args = {}
+        self.unknown_args = unknown_args
+
+    def process(self, sound, *args, unknown_args=None, **kwargs):
+        if args or kwargs or unknown_args:
+            return self.func(*args, **kwargs, **unknown_args)
+        else:
+            return self.func(sound, *self.parameters[0], **self.parameters[1],
+                             **self.unknown_args)
+
+    def process_unknown_args(self, **kwargs):
+        for each in kwargs:
+            if each in self.unknown_args:
+                self.unknown_args[each] = kwargs[each]
+
+    def __call__(self, *args, unknown_args=None, **kwargs):
+        temp = copy(self)
+        temp.parameters[0] = args + temp.parameters[0][len(args):]
+        temp.parameters[1].update(kwargs)
+        if unknown_args is None:
+            unknown_args = {}
+        temp.unknown_args.update(unknown_args)
+        return temp
+
+    def new(self, *args, unknown_args=None, **kwargs):
+        temp = copy(self)
+        temp.parameters = [args, kwargs]
+        temp.parameters[1].update(kwargs)
+        if unknown_args is None:
+            unknown_args = {}
+        temp.unknown_args = unknown_args
+        return temp
+
+    def __repr__(self):
+        return f'[effect]\nname: {self.name}\nparameters: {self.parameters} unknown arguments: {self.unknown_args}'
+
+
+class effect_chain:
+    def __init__(self, *effects):
+        self.effects = list(effects)
+
+    def __call__(self, sound):
+        sound.effects = self.effects
+        return sound
+
+    def __repr__(self):
+        return f'[effect chain]\neffects:\n' + '\n\n'.join(
+            [str(i) for i in self.effects])
+
+
 class sampler:
     def __init__(self, num=1, name=None, bpm=120):
         self.channel_num = num
@@ -271,6 +329,8 @@ class sampler:
         elif os.path.isfile(sound_path):
             self.channel_sound_modules[current_ind] = rs.sf2_loader(sound_path)
             self.channel_sound_modules_name[current_ind] = sound_path
+        else:
+            raise ValueError(f'cannot find the path {sound_path}')
 
     def export(self,
                obj,
@@ -327,8 +387,7 @@ class sampler:
                 current_channel_num]
             if type(current_sound_modules) == rs.sf2_loader:
                 for k in current_chord.notes:
-                    if check_reverse(k) or check_fade(k) or check_offset(
-                            k) or check_adsr(k) or check_custom(k):
+                    if check_effect(k):
                         rs.convert_effect(k, add=True)
                 silent_audio = current_sound_modules.export_chord(
                     current_chord,
@@ -348,7 +407,8 @@ class sampler:
                                                      current_channel_num,
                                                      silent_audio,
                                                      current_bpm,
-                                                     mode=action)
+                                                     length=length,
+                                                     extra_length=extra_length)
             try:
                 if action == 'export':
                     silent_audio.export(filename, format=mode)
@@ -391,8 +451,7 @@ class sampler:
                 current_track = current_tracks[i]
                 if type(current_sound_modules) == rs.sf2_loader:
                     for k in current_track.notes:
-                        if check_reverse(k) or check_fade(k) or check_offset(
-                                k) or check_adsr(k) or check_custom(k):
+                        if check_effect(k):
                             rs.convert_effect(k, add=True)
 
                     current_track = copy(current_track)
@@ -452,37 +511,13 @@ class sampler:
                         current_pan[i],
                         current_volume[i],
                         current_start_times[i],
-                        mode=action)
-            if check_adsr(current_chord):
-                current_adsr = current_chord.adsr
-                attack, decay, sustain, release = current_adsr
-                change_db = percentage_to_db(sustain)
-                result_db = silent_audio.dBFS + change_db
-                if attack > 0:
-                    silent_audio = silent_audio.fade_in(attack)
-                if decay > 0:
-                    silent_audio = silent_audio.fade(to_gain=result_db,
-                                                     start=attack,
-                                                     duration=decay)
-                else:
-                    silent_audio = silent_audio[:attack].append(
-                        silent_audio[attack:] + change_db)
-                if release > 0:
-                    silent_audio = silent_audio.fade_out(release)
-            if check_fade(current_chord):
-                if current_chord.fade_in_time > 0:
-                    silent_audio = silent_audio.fade_in(
-                        current_chord.fade_in_time)
-                if current_chord.fade_out_time > 0:
-                    silent_audio = silent_audio.fade_out(
-                        current_chord.fade_out_time)
-            if check_offset(current_chord):
-                silent_audio = silent_audio[
-                    bar_to_real_time(current_chord.offset, current_bpm, 1):]
-            if check_reverse(current_chord):
-                silent_audio = silent_audio.reverse()
-            if check_custom(current_chord):
-                silent_audio = silent_audio.custom_effect(silent_audio)
+                        length=None if not track_lengths else track_lengths[i],
+                        extra_length=None
+                        if not track_extra_lengths else track_extra_lengths[i])
+            if check_effect(current_chord):
+                silent_audio = process_effect(silent_audio,
+                                              current_chord.effects,
+                                              bpm=current_bpm)
             try:
                 if action == 'export':
                     silent_audio.export(filename, format=mode)
@@ -519,15 +554,21 @@ class sampler:
                          current_pan=None,
                          current_volume=None,
                          current_start_time=0,
-                         mode='export'):
+                         length=None,
+                         extra_length=None):
         if len(self.channel_sound_modules) <= current_channel_num:
             return
         if not self.channel_sound_modules[current_channel_num]:
             return
 
         apply_fadeout_obj = self.apply_fadeout(current_chord, current_bpm)
-        whole_duration = apply_fadeout_obj.eval_time(
-            current_bpm, mode='number', audio_mode=1) * 1000
+        if length:
+            whole_duration = length * 1000
+        else:
+            whole_duration = apply_fadeout_obj.eval_time(
+                current_bpm, mode='number', audio_mode=1) * 1000
+            if extra_length:
+                whole_duration += extra_length * 1000
         current_silent_audio = AudioSegment.silent(duration=whole_duration)
         current_intervals = current_chord.interval
         current_durations = current_chord.get_duration()
@@ -550,16 +591,12 @@ class sampler:
                     current_durations[i], current_bpm,
                     1) if type(each) != AudioSegment else len(each)
                 volume = velocity_to_db(current_volumes[i])
-                current_offset = 0
-                if check_offset(each):
-                    current_offset = bar_to_real_time(each.offset, current_bpm,
-                                                      1)
                 current_fadeout_time = int(
                     duration * self.export_audio_fadeout_time_ratio
                 ) if self.export_fadeout_use_ratio else int(
                     self.export_audio_fadeout_time)
                 if type(each) == AudioSegment:
-                    current_sound = each[current_offset:duration]
+                    current_sound = each[:duration]
                 else:
                     each_name = str(each)
                     if each_name not in current_sounds:
@@ -575,35 +612,11 @@ class sampler:
                                            duration + current_fadeout_time)
                     current_max_fadeout_time = min(len(current_sound),
                                                    current_fadeout_time)
-                    current_sound = current_sound[
-                        current_offset:current_max_time]
-                if check_adsr(each):
-                    current_adsr = each.adsr
-                    attack, decay, sustain, release = current_adsr
-                    change_db = percentage_to_db(sustain)
-                    result_db = current_sound.dBFS + change_db
-                    if attack > 0:
-                        current_sound = current_sound.fade_in(attack)
-                    if decay > 0:
-                        current_sound = current_sound.fade(to_gain=result_db,
-                                                           start=attack,
-                                                           duration=decay)
-                    else:
-                        current_sound = current_sound[:attack].append(
-                            current_sound[attack:] + change_db)
-                    if release > 0:
-                        current_sound = current_sound.fade_out(release)
-                if check_fade(each):
-                    if each.fade_in_time > 0:
-                        current_sound = current_sound.fade_in(
-                            each.fade_in_time)
-                    if each.fade_out_time > 0:
-                        current_sound = current_sound.fade_out(
-                            each.fade_out_time)
-                if check_reverse(each):
-                    current_sound = current_sound.reverse()
-                if check_custom(each):
-                    current_sound = current_sound.custom_effect(current_sound)
+                    current_sound = current_sound[:current_max_time]
+                if check_effect(each):
+                    current_sound = process_effect(current_sound,
+                                                   each.effects,
+                                                   bpm=current_bpm)
 
                 if current_fadeout_time != 0 and type(each) != AudioSegment:
                     current_sound = current_sound.fade_out(
@@ -651,36 +664,10 @@ class sampler:
             for each in audio_list[1:]:
                 first_audio = first_audio.append(each, crossfade=0)
             current_silent_audio = first_audio
-        if check_adsr(current_chord):
-            current_adsr = current_chord.adsr
-            attack, decay, sustain, release = current_adsr
-            change_db = percentage_to_db(sustain)
-            result_db = current_silent_audio.dBFS + change_db
-            if attack > 0:
-                current_silent_audio = current_silent_audio.fade_in(attack)
-            if decay > 0:
-                current_silent_audio = current_silent_audio.fade(
-                    to_gain=result_db, start=attack, duration=decay)
-            else:
-                current_silent_audio = current_silent_audio[:attack].append(
-                    current_silent_audio[attack:] + change_db)
-            if release > 0:
-                current_silent_audio = current_silent_audio.fade_out(release)
-        if check_fade(current_chord):
-            if current_chord.fade_in_time > 0:
-                current_silent_audio = current_silent_audio.fade_in(
-                    current_chord.fade_in_time)
-            if current_chord.fade_out_time > 0:
-                current_silent_audio = current_silent_audio.fade_out(
-                    current_chord.fade_out_time)
-        if check_offset(current_chord):
-            current_silent_audio = current_silent_audio[
-                bar_to_real_time(current_chord.offset, current_bpm, 1):]
-        if check_reverse(current_chord):
-            current_silent_audio = current_silent_audio.reverse()
-        if check_custom(current_chord):
-            current_silent_audio = current_silent_audio.custom_effect(
-                current_silent_audio)
+        if check_effect(current_chord):
+            current_silent_audio = process_effect(current_silent_audio,
+                                                  current_chord.effects,
+                                                  bpm=current_bpm)
         silent_audio = silent_audio.overlay(current_silent_audio,
                                             position=current_start_time)
         return silent_audio
@@ -693,19 +680,6 @@ class sampler:
         self.stop_playing()
         write(filename, current_chord, self.bpm)
 
-    def inherit_effects(self, current_chord, current_chord_temp):
-        if check_reverse(current_chord_temp):
-            current_chord.reverse_audio = current_chord_temp.reverse_audio
-        if check_offset(current_chord_temp):
-            current_chord.offset = current_chord_temp.offset
-        if check_fade(current_chord_temp):
-            current_chord.fade_in_time = current_chord_temp.fade_in_time
-            current_chord.fade_out_time = current_chord_temp.fade_out_time
-        if check_adsr(current_chord_temp):
-            current_chord.adsr = current_chord_temp.adsr
-        if check_custom(current_chord_temp):
-            current_chord.custom_effect = current_chord_temp.custom_effect
-
     def get_current_musicpy_chords(self, current_chord, current_channel_num=0):
         current_bpm = self.bpm
         if type(current_chord) == note:
@@ -716,13 +690,17 @@ class sampler:
         if type(current_chord) == chord:
             return 'chord', current_chord, current_channel_num
         if type(current_chord) == track:
-            current_chord_temp = copy(current_chord)
+            has_effect = False
+            if check_effect(current_chord):
+                has_effect = True
+                current_effects = copy(current_chord.effects)
             current_chord = build(
                 current_chord,
                 bpm=current_chord.tempo
                 if current_chord.tempo is not None else current_bpm,
                 name=current_chord.name)
-            self.inherit_effects(current_chord, current_chord_temp)
+            if has_effect:
+                current_chord.effects = current_effects
         if type(current_chord) == piece:
             current_bpm = current_chord.tempo
             current_start_times = current_chord.start_times
@@ -886,12 +864,16 @@ class sampler:
             else:
                 self.play_channel(current_chord, current_channel_num, bpm)
         elif type(current_chord) == track:
-            current_chord_temp = copy(current_chord)
+            has_effect = False
+            if check_effect(current_chord):
+                has_effect = True
+                current_effects = copy(current_chord.effects)
             current_chord = build(current_chord,
                                   bpm=current_chord.tempo
                                   if current_chord.tempo is not None else bpm,
                                   name=current_chord.name)
-            self.inherit_effects(current_chord, current_chord_temp)
+            if has_effect:
+                current_chord.effects = current_effects
         if type(current_chord) == piece:
             if check_special(current_chord) or any(
                     type(self.channel_sound_modules[i]) == rs.sf2_loader
@@ -1205,118 +1187,9 @@ def real_time_to_bar(time, bpm):
     return (time / (60000 / bpm)) / 4
 
 
-def reverse(sound, value=True):
-    sound.reverse_audio = value
-    return sound
-
-
-def offset(sound, bar):
-    sound.offset = bar
-    return sound
-
-
-def fade_in(sound, duration):
-    sound.fade_in_time = duration
-    if not hasattr(sound, 'fade_out_time'):
-        sound.fade_out_time = 0
-    return sound
-
-
-def fade_out(sound, duration):
-    sound.fade_out_time = duration
-    if not hasattr(sound, 'fade_in_time'):
-        sound.fade_in_time = 0
-    return sound
-
-
-def fade(sound, fade_in, fade_out=0):
-    sound.fade_in_time = fade_in
-    sound.fade_out_time = fade_out
-    return sound
-
-
-def adsr(sound, attack, decay, sustain, release):
-    sound.adsr = [attack, decay, sustain, release]
-    return sound
-
-
-ADSR = adsr
-
-
-def custom(sound, func, *args, **kwargs):
-    current_func = lambda s: func(s, *args, **kwargs)
-    sound.custom_effect = current_func
-    return sound
-
-
-def check_custom(sound):
-    return hasattr(sound, 'custom_effect')
-
-
-def check_custom_all(sound):
-    types = type(sound)
-    if types == chord:
-        return check_custom(sound) or any(check_custom(i) for i in sound)
-    elif types == piece:
-        return check_custom(sound) or any(
-            check_custom_all(i) for i in sound.tracks)
-
-
-def check_reverse(sound):
-    return hasattr(sound, 'reverse_audio') and sound.reverse_audio
-
-
-def check_offset(sound):
-    return hasattr(sound, 'offset')
-
-
-def check_reverse_all(sound):
-    types = type(sound)
-    if types == chord:
-        return check_reverse(sound) or any(check_reverse(i) for i in sound)
-    elif types == piece:
-        return check_reverse(sound) or any(
-            check_reverse_all(i) for i in sound.tracks)
-
-
-def check_offset_all(sound):
-    types = type(sound)
-    if types == chord:
-        return check_offset(sound) or any(check_offset(i) for i in sound)
-    elif types == piece:
-        return check_offset(sound) or any(
-            check_offset_all(i) for i in sound.tracks)
-
-
 def check_pan_or_volume(sound):
     return type(sound) == piece and (any(i for i in sound.pan)
                                      or any(i for i in sound.volume))
-
-
-def check_fade(sound):
-    return hasattr(sound, 'fade_in_time') or hasattr(sound, 'fade_out_time')
-
-
-def check_fade_all(sound):
-    types = type(sound)
-    if types == chord:
-        return check_fade(sound) or any(check_fade(i) for i in sound)
-    elif types == piece:
-        return check_fade(sound) or any(
-            check_fade_all(i) for i in sound.tracks)
-
-
-def check_adsr(sound):
-    return hasattr(sound, 'adsr')
-
-
-def check_adsr_all(sound):
-    types = type(sound)
-    if types == chord:
-        return check_adsr(sound) or any(check_adsr(i) for i in sound)
-    elif types == piece:
-        return check_adsr(sound) or any(
-            check_adsr_all(i) for i in sound.tracks)
 
 
 def has_audio(sound):
@@ -1328,10 +1201,75 @@ def has_audio(sound):
 
 
 def check_special(sound):
-    return check_pan_or_volume(sound) or check_reverse_all(
-        sound) or check_offset_all(sound) or check_fade_all(
-            sound) or check_adsr_all(sound) or has_audio(
-                sound) or check_custom_all(sound)
+    return check_effect_all(sound) or check_pan_or_volume(sound) or has_audio(
+        sound)
+
+
+def check_effect(sound):
+    return hasattr(sound, 'effects') and type(
+        sound.effects) == list and sound.effects
+
+
+def check_effect_all(sound):
+    types = type(sound)
+    if types == chord:
+        return check_effect(sound) or any(check_effect(i) for i in sound)
+    elif types == piece:
+        return check_effect(sound) or any(
+            check_effect_all(i) for i in sound.tracks)
+    else:
+        return check_effect(sound)
+
+
+def process_effect(sound, effects, **kwargs):
+    current_args = kwargs
+    for each in effects:
+        each.process_unknown_args(**current_args)
+        sound = each.process(sound)
+    return sound
+
+
+def set_effect(sound, *effects):
+    if len(effects) == 1:
+        current_effect = effects[0]
+        types = type(current_effect)
+        if types != effect:
+            if types == effect_chain:
+                effects = current_effect.effects
+            else:
+                effects = list(current_effect)
+        else:
+            effects = list(effects)
+    else:
+        effects = list(effects)
+    sound.effects = effects
+    return sound
+
+
+def adsr_func(sound, attack, decay, sustain, release):
+    change_db = percentage_to_db(sustain)
+    result_db = sound.dBFS + change_db
+    if attack > 0:
+        sound = sound.fade_in(attack)
+    if decay > 0:
+        sound = sound.fade(to_gain=result_db, start=attack, duration=decay)
+    else:
+        sound = sound[:attack].append(sound[attack:] + change_db)
+    if release > 0:
+        sound = sound.fade_out(release)
+    return sound
+
+
+reverse = effect(lambda s: s.reverse(), 'reverse')
+offset = effect(lambda s, bar, bpm: s[bar_to_real_time(bar, bpm, 1):],
+                'offset',
+                unknown_args={'bpm': None})
+fade_in = effect(lambda s, duration: s.fade_in(duration), 'fade in')
+fade_out = effect(lambda s, duration: s.fade_out(duration), 'fade out')
+fade = effect(
+    lambda s, duration1, duration2=0: s.fade_in(duration1).fade_out(duration2),
+    'fade')
+adsr = effect(adsr_func, 'adsr')
 
 
 def sine(freq=440, duration=1000, volume=0):
