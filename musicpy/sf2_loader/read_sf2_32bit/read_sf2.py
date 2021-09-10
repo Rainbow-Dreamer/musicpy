@@ -369,7 +369,7 @@ current preset name: {self.get_current_instrument()}'''
                     name=None,
                     format='wav',
                     get_audio=False,
-                    other_effects=None,
+                    effects=None,
                     bpm=80):
         self.audio_array = []
         if type(note_name) != mp.note:
@@ -396,9 +396,9 @@ current preset name: {self.get_current_instrument()}'''
         self.synth.system_reset()
         self.program_select()
         self.synth.get_samples(int(frame_rate * 1))
-        if other_effects:
+        if effects:
             current_audio = process_effect(current_audio,
-                                           other_effects,
+                                           effects,
                                            bpm=bpm)
         elif check_effect(current_note):
             current_audio = process_effect(current_audio,
@@ -425,7 +425,7 @@ current preset name: {self.get_current_instrument()}'''
                      bpm=80,
                      get_audio=False,
                      fixed_decay=False,
-                     other_effects=None,
+                     effects=None,
                      pan=None,
                      volume=None,
                      length=None,
@@ -489,7 +489,7 @@ current preset name: {self.get_current_instrument()}'''
                     frame_rate=frame_rate,
                     format=format,
                     get_audio=True,
-                    other_effects=each.effects,
+                    effects=each.effects,
                     bpm=bpm)
                 current_silent_audio = current_silent_audio.overlay(
                     current_note_audio,
@@ -540,9 +540,9 @@ current preset name: {self.get_current_instrument()}'''
         self.synth.system_reset()
         self.program_select()
         self.synth.get_samples(int(frame_rate * 1))
-        if other_effects:
+        if effects:
             current_silent_audio = process_effect(current_silent_audio,
-                                                  other_effects,
+                                                  effects,
                                                   bpm=bpm)
         elif check_effect(current_chord):
             current_silent_audio = process_effect(current_silent_audio,
@@ -567,7 +567,7 @@ current preset name: {self.get_current_instrument()}'''
                      format='wav',
                      get_audio=False,
                      fixed_decay=False,
-                     other_effects=None,
+                     effects=None,
                      clear_program_change=True,
                      length=None,
                      extra_length=None,
@@ -632,8 +632,8 @@ current preset name: {self.get_current_instrument()}'''
         self.synth.system_reset()
         self.program_select()
         self.synth.get_samples(int(frame_rate * 1))
-        if other_effects:
-            silent_audio = process_effect(silent_audio, other_effects, bpm=bpm)
+        if effects:
+            silent_audio = process_effect(silent_audio, effects, bpm=bpm)
         elif check_effect(current_chord):
             silent_audio = process_effect(silent_audio,
                                           current_chord.effects,
@@ -657,7 +657,7 @@ current preset name: {self.get_current_instrument()}'''
                          format='wav',
                          get_audio=False,
                          fixed_decay=False,
-                         other_effects=None,
+                         effects=None,
                          clear_program_change=True,
                          instruments=None,
                          length=None,
@@ -673,7 +673,7 @@ current preset name: {self.get_current_instrument()}'''
             current_chord.change_instruments(instruments)
         result = self.export_piece(current_chord, decay, track, sample_width,
                                    channels, frame_rate, name, format, True,
-                                   fixed_decay, other_effects,
+                                   fixed_decay, effects,
                                    clear_program_change, length, extra_length,
                                    track_lengths, track_extra_lengths)
 
@@ -696,12 +696,12 @@ current preset name: {self.get_current_instrument()}'''
                   frame_rate=44100,
                   name=None,
                   format='wav',
-                  other_effects=None,
+                  effects=None,
                   bpm=80):
         current_audio = self.export_note(note_name, duration, decay, volume,
                                          track, start_time, sample_width,
                                          channels, frame_rate, name, format,
-                                         True, other_effects, bpm)
+                                         True, effects, bpm)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -718,7 +718,7 @@ current preset name: {self.get_current_instrument()}'''
                    format='wav',
                    bpm=80,
                    fixed_decay=False,
-                   other_effects=None,
+                   effects=None,
                    pan=None,
                    volume=None,
                    length=None,
@@ -727,7 +727,7 @@ current preset name: {self.get_current_instrument()}'''
                                           start_time, piece_start_time,
                                           sample_width, channels, frame_rate,
                                           name, format, bpm, True, fixed_decay,
-                                          other_effects, pan, volume, length,
+                                          effects, pan, volume, length,
                                           extra_length)
         simpleaudio.stop_all()
         play_sound(current_audio)
@@ -742,7 +742,7 @@ current preset name: {self.get_current_instrument()}'''
                    name=None,
                    format='wav',
                    fixed_decay=False,
-                   other_effects=None,
+                   effects=None,
                    clear_program_change=True,
                    length=None,
                    extra_length=None,
@@ -751,7 +751,7 @@ current preset name: {self.get_current_instrument()}'''
         current_audio = self.export_piece(current_chord, decay, track,
                                           sample_width, channels, frame_rate,
                                           name, format, True, fixed_decay,
-                                          other_effects, clear_program_change,
+                                          effects, clear_program_change,
                                           length, extra_length, track_lengths,
                                           track_extra_lengths)
         simpleaudio.stop_all()
@@ -767,7 +767,7 @@ current preset name: {self.get_current_instrument()}'''
                        name=None,
                        format='wav',
                        fixed_decay=False,
-                       other_effects=None,
+                       effects=None,
                        clear_program_change=True,
                        instruments=None,
                        length=None,
@@ -777,7 +777,7 @@ current preset name: {self.get_current_instrument()}'''
                        **read_args):
         current_audio = self.export_midi_file(
             current_chord, decay, track, sample_width, channels, frame_rate,
-            name, format, True, fixed_decay, other_effects,
+            name, format, True, fixed_decay, effects,
             clear_program_change, instruments, length, extra_length,
             track_lengths, track_extra_lengths, **read_args)
         simpleaudio.stop_all()
@@ -798,7 +798,7 @@ current preset name: {self.get_current_instrument()}'''
                              frame_rate=44100,
                              format='wav',
                              folder_name='Untitled',
-                             other_effects=None,
+                             effects=None,
                              bpm=80,
                              name=None,
                              show_full_path=False):
@@ -840,7 +840,7 @@ current preset name: {self.get_current_instrument()}'''
                              channels=channels,
                              frame_rate=frame_rate,
                              format=format,
-                             other_effects=other_effects,
+                             effects=effects,
                              bpm=bpm,
                              name=current_name)
         print('exporting finished')
