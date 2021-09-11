@@ -1165,10 +1165,10 @@ class chord:
         if len(self) == 0:
             return note1
         temp = copy(self)
-        if len(note1) == 0:
-            return temp
         if type(note1) == int:
             temp += temp[1].up(note1)
+            return temp
+        if len(note1) == 0:
             return temp
         if mode == 'tail':
             return temp + note1
