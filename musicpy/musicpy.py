@@ -198,8 +198,12 @@ def concat(chordlist, mode='+', extra=None):
         for t in chordlist[1:]:
             temp += t
     elif mode == '|':
-        for t in chordlist[1:]:
-            temp |= t
+        if not extra:
+            for t in chordlist[1:]:
+                temp |= t
+        else:
+            for t in chordlist[1:]:
+                temp |= (t, extra)
     elif mode == '&':
         if not extra:
             for t in chordlist[1:]:
