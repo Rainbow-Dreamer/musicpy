@@ -216,7 +216,7 @@ def concat(chordlist, mode='+', extra=None):
     return temp
 
 
-def multi_voice(*current_chord, method='translate', start_times=None):
+def multi_voice(*current_chord, method=chord, start_times=None):
     current_chord = [method(i) if type(i) == str else i for i in current_chord]
     if start_times is None:
         return concat(current_chord, mode='&')
