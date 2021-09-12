@@ -2111,6 +2111,11 @@ class chord:
         diff = num - self[1].num
         return self + diff * octave
 
+    def reset_pitch(self, pitch):
+        if type(pitch) != note:
+            pitch = toNote(pitch)
+        return self + (pitch.degree - self[1].degree)
+
     def with_other_messages(self, other_messages):
         temp = copy(self)
         temp.other_messages = other_messages
