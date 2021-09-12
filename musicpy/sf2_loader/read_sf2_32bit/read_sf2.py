@@ -467,7 +467,7 @@ current preset name: {self.get_current_instrument()}'''
         for i in range(current_timestamps_length):
             current = current_timestamps[i]
             each = current.value
-            if current.event_type == 'noteon' and hasattr(each, 'effects'):
+            if current.event_type == 'noteon' and check_effect(each):
                 if hasattr(each, 'decay_length'):
                     current_note_decay = each.decay_length
                 else:
@@ -502,10 +502,10 @@ current preset name: {self.get_current_instrument()}'''
             current = current_timestamps[k]
             each = current.value
             if current.event_type == 'noteon':
-                if not hasattr(each, 'effects'):
+                if not check_effect(each):
                     self.synth.noteon(track, each.degree, each.volume)
             elif current.event_type == 'noteoff':
-                if not hasattr(each, 'effects'):
+                if not check_effect(each):
                     self.synth.noteoff(track, each.degree)
             elif current.event_type == 'pitch_bend':
                 self.synth.pitch_bend(track, each.value)
@@ -617,8 +617,9 @@ current preset name: {self.get_current_instrument()}'''
             current_audio = self.export_chord(
                 each, decay if not decay_is_list else decay[i], track, 0,
                 current_chord.start_times[i], sample_width, channels,
-                frame_rate, None, format, bpm, True, fixed_decay, each.effects,
-                current_pan, current_volume,
+                frame_rate, None, format, bpm, True, fixed_decay,
+                each.effects if check_effect(each) else None, current_pan,
+                current_volume,
                 None if not track_lengths else track_lengths[i],
                 None if not track_extra_lengths else track_extra_lengths[i])
             silent_audio = silent_audio.overlay(current_audio,

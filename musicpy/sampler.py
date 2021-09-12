@@ -390,7 +390,8 @@ class sampler:
                     current_chord,
                     bpm=current_bpm,
                     get_audio=True,
-                    effects=current_chord.effects,
+                    effects=current_chord.effects
+                    if check_effect(current_chord) else None,
                     length=length,
                     extra_length=extra_length)
             else:
@@ -487,7 +488,8 @@ class sampler:
                             current_track,
                             bpm=current_bpm,
                             get_audio=True,
-                            effects=current_track.effects,
+                            effects=current_track.effects
+                            if check_effect(current_track) else None,
                             pan=current_pan[i],
                             volume=current_volume[i],
                             length=None
@@ -873,9 +875,12 @@ class sampler:
             if has_effect:
                 current_chord.effects = current_effects
         if type(current_chord) == piece:
+            current_channel_nums = current_chord.channels if current_chord.channels else [
+                i for i in range(len(current_chord))
+            ]
             if check_special(current_chord) or any(
                     type(self.channel_sound_modules[i]) == rs.sf2_loader
-                    for i in current_chord.channels):
+                    for i in current_channel_nums):
                 self.export(current_chord,
                             action='play',
                             bpm=bpm,
@@ -885,9 +890,6 @@ class sampler:
                             track_extra_lengths=track_extra_lengths)
                 return
             current_tracks = current_chord.tracks
-            current_channel_nums = current_chord.channels if current_chord.channels else [
-                i for i in range(len(current_chord))
-            ]
             bpm = current_chord.tempo
             current_start_times = current_chord.start_times
             for each in range(len(current_chord)):
