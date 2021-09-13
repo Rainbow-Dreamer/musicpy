@@ -67,6 +67,8 @@ play((guitar * 2)-octave, 100, instrument=25)
 # /(guitar * 2)-octave, 100, instrument=25
 # in the IDE I write for musicpy
 ```
+which produces this guitar chord progression:
+![](https://user-images.githubusercontent.com/59408627/133014135-8f924cdf-e623-463b-a066-b5f3229586d6.mp4)
 
 Introduction and Tutorial video series part 1: [BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
 
