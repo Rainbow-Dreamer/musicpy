@@ -704,7 +704,10 @@ class Root(Tk):
     def reload(self):
         self.destroy()
         self.save_config(True, False)
-        os.startfile(__file__)
+        try:
+            os.startfile(__file__)
+        except:
+            os.startfile(sys.executable)
 
     def change_sort(self):
         global all_config_options
