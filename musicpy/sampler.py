@@ -852,7 +852,9 @@ class sampler:
                 type(i) == chord for i in current_chord):
             current_chord = concat(current_chord, mode='|')
         if type(current_chord) == chord:
-            if check_special(current_chord):
+            if check_special(current_chord) or type(
+                    self.channel_sound_modules[current_channel_num]
+            ) == rs.sf2_loader:
                 self.export(current_chord,
                             action='play',
                             channel_num=current_channel_num,
@@ -907,32 +909,27 @@ class sampler:
         current_durations = current_chord.get_duration()
         current_volumes = current_chord.get_volume()
         current_time = 0
-        current_sound_modules = self.channel_sound_modules[current_channel_num]
-        if type(current_sound_modules) == rs.sf2_loader:
-            current_sound_modules.play_chord(
-                current_chord, bpm=self.current_bpm if bpm is None else bpm)
-        else:
-            for i in range(len(current_chord)):
-                each = current_chord.notes[i]
-                if type(each) == note:
-                    if i == 0:
+        for i in range(len(current_chord)):
+            each = current_chord.notes[i]
+            if type(each) == note:
+                if i == 0:
+                    self.play_note_func(
+                        f'{standardize_note(each.name)}{each.num}',
+                        current_durations[i], current_volumes[i],
+                        current_channel_num)
+                else:
+                    duration = current_durations[i]
+                    volume = current_volumes[i]
+                    current_time += bar_to_real_time(current_intervals[i - 1],
+                                                     bpm, 1)
+                    current_id = threading.Timer(
+                        current_time / 1000,
+                        lambda each=each, duration=duration, volume=volume:
                         self.play_note_func(
                             f'{standardize_note(each.name)}{each.num}',
-                            current_durations[i], current_volumes[i],
-                            current_channel_num)
-                    else:
-                        duration = current_durations[i]
-                        volume = current_volumes[i]
-                        current_time += bar_to_real_time(
-                            current_intervals[i - 1], bpm, 1)
-                        current_id = threading.Timer(
-                            current_time / 1000,
-                            lambda each=each, duration=duration, volume=volume:
-                            self.play_note_func(
-                                f'{standardize_note(each.name)}{each.num}',
-                                duration, volume, current_channel_num))
-                        self.current_playing.append(current_id)
-                        current_id.start()
+                            duration, volume, current_channel_num))
+                    self.current_playing.append(current_id)
+                    current_id.start()
 
     def modules(self, ind):
         if ind > 0:
