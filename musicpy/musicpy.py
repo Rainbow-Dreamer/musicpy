@@ -2673,7 +2673,11 @@ def detect(a,
     elif mode == 'scale':
         if type(a[0]) == int:
             try:
-                scales = detectScale[tuple(a)][0]
+                scales = detectScale[tuple(a)]
+                if scales != 'not found':
+                    return scales[0]
+                else:
+                    return scales
             except:
                 return 'cannot detect this scale'
         else:

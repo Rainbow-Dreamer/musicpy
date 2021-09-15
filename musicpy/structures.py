@@ -118,6 +118,18 @@ class note:
                                              for i in range(num + 1)])
         return temp
 
+    def reset_octave(self, num):
+        temp = copy(self)
+        temp.num = num
+        temp.degree = standard[temp.name] + 12 * (temp.num + 1)
+        return temp
+
+    def reset_pitch(self, name):
+        temp = copy(self)
+        temp.name = name
+        temp.degree = standard[temp.name] + 12 * (temp.num + 1)
+        return temp
+
 
 def toNote(notename, duration=0.25, volume=100, pitch=4):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
@@ -2187,11 +2199,8 @@ class scale:
             self.mode = mode
             self.pitch = pitch
         else:
-            if not isinstance(start, note):
-                try:
-                    start = toNote(start)
-                except:
-                    start = note(start, pitch)
+            if type(start) != note:
+                start = trans_note(start)
             self.start = start
             self.pitch = self.start.num
             if mode is not None:
@@ -2202,6 +2211,11 @@ class scale:
 
         if interval is None:
             self.interval = self.getInterval()
+        if mode is None:
+            import musicpy
+            current_mode = musicpy.detect(self.interval, mode='scale')
+            if current_mode != 'not found':
+                self.mode = current_mode
 
     def set_mode_name(self, name):
         self.mode = name
@@ -2639,6 +2653,32 @@ class scale:
         return musicpy.chord_progression(chords, durations, intervals, volumes,
                                          chords_interval, merge)
 
+    def reset_octave(self, num):
+        return scale(self.start.reset_octave(num), self.mode, self.interval)
+
+    def reset_pitch(self, name):
+        return scale(self.start.reset_pitch(name), self.mode, self.interval)
+
+    def reset_mode(self, mode):
+        return scale(self.start, mode=mode)
+
+    def reset_interval(self, interval):
+        return scale(self.start, interval=interval)
+
+    def set(self, start=None, num=None, mode=None, interval=None):
+        temp = copy(self)
+        if start is None:
+            start = temp.start
+        else:
+            if type(start) != note:
+                start = trans_note(start)
+        if num is not None:
+            start.num = num
+        if mode is None and interval is None:
+            mode = temp.mode
+            interval = temp.interval
+        return scale(start, mode, interval)
+
 
 class circle_of_fifths:
     outer = ['C', 'G', 'D', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F']
@@ -2902,7 +2942,8 @@ class piece:
         return len(self.tracks)
 
     def mute(self, i=None):
-        self.muted_msg = [each.get_volume() for each in self.tracks]
+        if not hasattr(self, 'muted_msg'):
+            self.muted_msg = [each.get_volume() for each in self.tracks]
         if i is None:
             for k in range(len(self.tracks)):
                 self.tracks[k].setvolume(0)
