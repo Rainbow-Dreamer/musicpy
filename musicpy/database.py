@@ -233,21 +233,6 @@ chordTypes = match({
 standard_reverse = {j: i for i, j in standard2.items()}
 detectScale = scaleTypes.reverse()
 detectTypes = chordTypes.reverse()
-notedict = {
-    'C': 'C',
-    'c': 'C#',
-    'D': 'D',
-    'd': 'D#',
-    'E': 'E',
-    'F': 'F',
-    'f': 'F#',
-    'G': 'G',
-    'g': 'G#',
-    'A': 'A',
-    'a': 'A#',
-    'B': 'B',
-    ' ': 'interval'
-}
 
 degree_match = {
     '1': [perfect_unison],
