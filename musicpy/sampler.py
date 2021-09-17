@@ -342,7 +342,8 @@ class sampler:
                length=None,
                extra_length=None,
                track_lengths=None,
-               track_extra_lengths=None):
+               track_extra_lengths=None,
+               export_args={}):
         if channel_num > 0:
             channel_num -= 1
         if not self.channel_sound_modules:
@@ -414,7 +415,7 @@ class sampler:
                                                      extra_length=extra_length)
             try:
                 if action == 'export':
-                    silent_audio.export(filename, format=mode)
+                    silent_audio.export(filename, format=mode, **export_args)
                 elif action == 'play':
                     play_audio(silent_audio)
                 elif action == 'get':
@@ -520,7 +521,7 @@ class sampler:
                                               bpm=current_bpm)
             try:
                 if action == 'export':
-                    silent_audio.export(filename, format=mode)
+                    silent_audio.export(filename, format=mode, **export_args)
                 elif action == 'play':
                     play_audio(silent_audio)
                 elif action == 'get':
