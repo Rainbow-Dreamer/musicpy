@@ -370,7 +370,8 @@ current preset name: {self.get_current_instrument()}'''
                     format='wav',
                     get_audio=False,
                     effects=None,
-                    bpm=80):
+                    bpm=80,
+                    export_args={}):
         self.audio_array = []
         if type(note_name) != mp.note:
             current_note = mp.N(note_name)
@@ -405,7 +406,7 @@ current preset name: {self.get_current_instrument()}'''
         if name is None:
             name = f'{current_note}.{format}'
         if not get_audio:
-            current_audio.export(name, format=format)
+            current_audio.export(name, format=format, **export_args)
         else:
             return current_audio
 
@@ -427,7 +428,8 @@ current preset name: {self.get_current_instrument()}'''
                      pan=None,
                      volume=None,
                      length=None,
-                     extra_length=None):
+                     extra_length=None,
+                     export_args={}):
         if type(decay) != list:
             current_decay = [decay * i for i in current_chord.get_duration()
                              ] if not fixed_decay else [
@@ -550,7 +552,7 @@ current preset name: {self.get_current_instrument()}'''
         if name is None:
             name = f'Untitled.{format}'
         if not get_audio:
-            current_silent_audio.export(name, format=format)
+            current_silent_audio.export(name, format=format, **export_args)
         else:
             return current_silent_audio
 
@@ -570,7 +572,8 @@ current preset name: {self.get_current_instrument()}'''
                      length=None,
                      extra_length=None,
                      track_lengths=None,
-                     track_extra_lengths=None):
+                     track_extra_lengths=None,
+                     export_args={}):
         decay_is_list = False
         decay_type = type(decay)
         if decay_type == list or decay_type == tuple:
@@ -641,7 +644,7 @@ current preset name: {self.get_current_instrument()}'''
         if name is None:
             name = f'Untitled.{format}'
         if not get_audio:
-            silent_audio.export(name, format=format)
+            silent_audio.export(name, format=format, **export_args)
         else:
             return silent_audio
 
@@ -663,6 +666,7 @@ current preset name: {self.get_current_instrument()}'''
                          extra_length=None,
                          track_lengths=None,
                          track_extra_lengths=None,
+                         export_args={},
                          **read_args):
         current_chord = mp.read(current_chord,
                                 mode='all',
@@ -679,7 +683,7 @@ current preset name: {self.get_current_instrument()}'''
         if name is None:
             name = f'Untitled.{format}'
         if not get_audio:
-            result.export(name, format=format)
+            result.export(name, format=format, **export_args)
         else:
             return result
 
@@ -696,11 +700,12 @@ current preset name: {self.get_current_instrument()}'''
                   name=None,
                   format='wav',
                   effects=None,
-                  bpm=80):
+                  bpm=80,
+                  export_args={}):
         current_audio = self.export_note(note_name, duration, decay, volume,
                                          track, start_time, sample_width,
                                          channels, frame_rate, name, format,
-                                         True, effects, bpm)
+                                         True, effects, bpm, export_args)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -721,13 +726,14 @@ current preset name: {self.get_current_instrument()}'''
                    pan=None,
                    volume=None,
                    length=None,
-                   extra_length=None):
+                   extra_length=None,
+                   export_args={}):
         current_audio = self.export_chord(current_chord, decay, track,
                                           start_time, piece_start_time,
                                           sample_width, channels, frame_rate,
                                           name, format, bpm, True, fixed_decay,
                                           effects, pan, volume, length,
-                                          extra_length)
+                                          extra_length, export_args)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -746,13 +752,14 @@ current preset name: {self.get_current_instrument()}'''
                    length=None,
                    extra_length=None,
                    track_lengths=None,
-                   track_extra_lengths=None):
+                   track_extra_lengths=None,
+                   export_args={}):
         current_audio = self.export_piece(current_chord, decay, track,
                                           sample_width, channels, frame_rate,
                                           name, format, True, fixed_decay,
                                           effects, clear_program_change,
                                           length, extra_length, track_lengths,
-                                          track_extra_lengths)
+                                          track_extra_lengths, export_args)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -773,12 +780,13 @@ current preset name: {self.get_current_instrument()}'''
                        extra_length=None,
                        track_lengths=None,
                        track_extra_lengths=None,
+                       export_args={},
                        **read_args):
         current_audio = self.export_midi_file(
             current_chord, decay, track, sample_width, channels, frame_rate,
             name, format, True, fixed_decay, effects, clear_program_change,
             instruments, length, extra_length, track_lengths,
-            track_extra_lengths, **read_args)
+            track_extra_lengths, export_args, **read_args)
         simpleaudio.stop_all()
         play_sound(current_audio)
 
@@ -800,7 +808,8 @@ current preset name: {self.get_current_instrument()}'''
                              effects=None,
                              bpm=80,
                              name=None,
-                             show_full_path=False):
+                             show_full_path=False,
+                             export_args={}):
         try:
             os.mkdir(folder_name)
             os.chdir(folder_name)
@@ -841,7 +850,8 @@ current preset name: {self.get_current_instrument()}'''
                              format=format,
                              effects=effects,
                              bpm=bpm,
-                             name=current_name)
+                             name=current_name,
+                             export_args=export_args)
         print('exporting finished')
         self.program_select(current_track, current_sfid, current_bank_num,
                             current_preset_num)
