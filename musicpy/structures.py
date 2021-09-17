@@ -2916,13 +2916,16 @@ class piece:
             i -= 1
         del self.tracks[i]
         del self.instruments_list[i]
+        del self.instruments_numbers[i]
         del self.start_times[i]
         if self.track_names:
             del self.track_names[i]
         if self.channels:
             del self.channels[i]
-        del self.pan[i]
-        del self.volume[i]
+        if self.pan:
+            del self.pan[i]
+        if self.volume:
+            del self.volume[i]
         self.track_number -= 1
 
     def __setitem__(self, i, new_track):
@@ -2930,13 +2933,16 @@ class piece:
             i -= 1
         self.tracks[i] = new_track.content
         self.instruments_list[i] = new_track.instrument
+        self.instruments_numbers[i] = new_track.instruments_number
         self.start_times[i] = new_track.start_time
         if self.track_names and new_track.track_name:
             self.track_names[i] = new_track.track_name
         if self.channels and new_track.channel is not None:
             self.channels[i] = new_track.channel
-        self.pan[i] = new_track.pan
-        self.volume[i] = new_track.volume
+        if self.pan:
+            self.pan[i] = new_track.pan
+        if self.volume:
+            self.volume[i] = new_track.volume
 
     def __len__(self):
         return len(self.tracks)
@@ -2994,16 +3000,26 @@ class piece:
                 self.volume.append([])
         self.track_number += 1
 
-    def up(self, n=1):
+    def up(self, n=1, mode=0):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] += n
+            if mode == 0 or (
+                    mode == 1 and not (temp.channels and temp.channels[i] == 9)
+            ) or (mode == 2
+                  and not ((temp.channels and temp.channels[i] == 9) or
+                           ('drum' in temp.instruments_list[i].lower()))):
+                temp.tracks[i] += n
         return temp
 
-    def down(self, n=1):
+    def down(self, n=1, mode=0):
         temp = copy(self)
         for i in range(temp.track_number):
-            temp.tracks[i] -= n
+            if mode == 0 or (
+                    mode == 1 and not (temp.channels and temp.channels[i] == 9)
+            ) or (mode == 2
+                  and not ((temp.channels and temp.channels[i] == 9) or
+                           ('drum' in temp.instruments_list[i].lower()))):
+                temp.tracks[i] -= n
         return temp
 
     def __mul__(self, n):
@@ -3057,43 +3073,38 @@ class piece:
         return self.merge_track(n, mode='head', start_time=start_time)
 
     def __add__(self, n):
-        temp = copy(self)
         if isinstance(n, int):
-            for i in range(temp.track_number):
-                temp.tracks[i] += n
+            return self.up(n)
         elif isinstance(n, piece):
             return self.merge_track(n, mode='after')
-        else:
-            temp.append(*n)
-        return temp
+        elif isinstance(n, tuple):
+            return self.up(*n)
 
     def __sub__(self, n):
-        temp = copy(self)
         if isinstance(n, int):
-            for i in range(temp.track_number):
-                temp.tracks[i] -= n
-        return temp
+            return self.down(n)
+        elif isinstance(n, tuple):
+            return self.down(*n)
 
     def __neg__(self):
-        temp = copy(self)
-        for i in range(temp.track_number):
-            temp.tracks[i] -= 1
-        return temp
+        return self.down()
 
     def __pos__(self):
-        temp = copy(self)
-        for i in range(temp.track_number):
-            temp.tracks[i] += 1
-        return temp
+        return self.up()
 
     def play(self, *args, **kwargs):
         import musicpy
         musicpy.play(self, *args, **kwargs)
 
     def __call__(self, num):
+        if num > 0:
+            num -= 1
         return [
-            self.tracks[num - 1], self.instruments_list[num - 1], self.tempo,
-            self.start_times[num - 1], self.pan[num - 1], self.volume[num - 1]
+            self.tracks[num], self.instruments_list[num], self.tempo,
+            self.start_times[num],
+            self.channels[num] if self.channels else None,
+            self.track_names[num] if self.track_names else None, self.pan[num],
+            self.volume[num]
         ]
 
     def merge_track(self,
