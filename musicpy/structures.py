@@ -3335,7 +3335,8 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def merge(self, add_labels=True, clear_pitch_bend=False):
+    def merge(self, add_labels=True):
+        import musicpy
         temp = copy(self)
         if add_labels:
             temp.add_track_labels()
@@ -3343,10 +3344,10 @@ class piece:
         temp.clear_tempo()
         all_tracks = temp.tracks
         length = len(all_tracks)
-        if clear_pitch_bend:
-            for each in all_tracks:
-                each.clear_pitch_bend(value=0)
         start_time_ls = temp.start_times
+        pitch_bends = musicpy.concat(
+            [i.split(pitch_bend, get_time=True) for i in temp.tracks])
+        temp.clear_pitch_bend(value='all')
         sort_tracks_inds = [[i, start_time_ls[i]] for i in range(length)]
         sort_tracks_inds.sort(key=lambda s: s[1])
         first_track_start_time = sort_tracks_inds[0][1]
@@ -3355,6 +3356,7 @@ class piece:
         for i in sort_tracks_inds[1:]:
             first_track &= (all_tracks[i[0]], i[1] - first_track_start_time)
         first_track += tempo_changes
+        first_track += pitch_bends
         return temp.tempo, first_track, first_track_start_time
 
     def add_track_labels(self):
@@ -3440,10 +3442,8 @@ class piece:
                   ind2=None,
                   mode='seconds',
                   normalize_tempo=False,
-                  audio_mode=0,
-                  clear_pitch_bend=False):
-        temp_bpm, merged_result, start_time = self.merge(
-            clear_pitch_bend=clear_pitch_bend)
+                  audio_mode=0):
+        temp_bpm, merged_result, start_time = self.merge()
         if bpm is not None:
             temp_bpm = bpm
         if normalize_tempo:
@@ -3455,9 +3455,8 @@ class piece:
                                        start_time=start_time,
                                        audio_mode=audio_mode)
 
-    def cut(self, ind1=1, ind2=None, clear_pitch_bend=False, correct=False):
-        temp_bpm, merged_result, start_time = self.merge(
-            clear_pitch_bend=clear_pitch_bend)
+    def cut(self, ind1=1, ind2=None, correct=False):
+        temp_bpm, merged_result, start_time = self.merge()
         if ind1 < 1:
             ind1 = 1
         result = merged_result.cut(ind1, ind2, start_time)
@@ -3485,13 +3484,7 @@ class piece:
                        for each in temp.volume]
         return temp
 
-    def cut_time(self,
-                 time1=0,
-                 time2=None,
-                 bpm=None,
-                 start_time=0,
-                 clear_pitch_bend=False,
-                 **args):
+    def cut_time(self, time1=0, time2=None, bpm=None, start_time=0, **args):
         temp = copy(self)
         temp.normalize_tempo()
         if bpm is not None:
@@ -3501,22 +3494,16 @@ class piece:
         bar_left = time1 / ((60 / temp_bpm) * 4)
         bar_right = time2 / (
             (60 / temp_bpm) * 4) if time2 is not None else temp.bars(**args)
-        result = temp.cut(1 + bar_left,
-                          1 + bar_right,
-                          clear_pitch_bend=clear_pitch_bend)
+        result = temp.cut(1 + bar_left, 1 + bar_right)
         return result
 
-    def get_bar(self, n, clear_pitch_bend=False):
+    def get_bar(self, n):
         start_time = min(self.start_times)
-        return self.cut(n + start_time,
-                        n + 1 + start_time,
-                        clear_pitch_bend=clear_pitch_bend)
+        return self.cut(n + start_time, n + 1 + start_time)
 
-    def firstnbars(self, n, clear_pitch_bend=False):
+    def firstnbars(self, n):
         start_time = min(self.start_times)
-        return self.cut(1 + start_time,
-                        n + 1 + start_time,
-                        clear_pitch_bend=clear_pitch_bend)
+        return self.cut(1 + start_time, n + 1 + start_time)
 
     def bars(self, mode=1, audio_mode=0):
         return max([
@@ -3687,6 +3674,9 @@ class piece:
             for each in temp.volume[ind]:
                 each.start_time += time
         return temp
+
+    def copy(self):
+        return copy(self)
 
 
 P = piece
