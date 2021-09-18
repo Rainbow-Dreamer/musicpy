@@ -577,7 +577,7 @@ current preset name: {self.get_current_instrument()}'''
         decay_is_list = False
         decay_type = type(decay)
         if decay_type == list or decay_type == tuple:
-            decay_is_list == True
+            decay_is_list = True
         bpm = current_chord.tempo
         current_chord.normalize_tempo()
         if clear_program_change:
