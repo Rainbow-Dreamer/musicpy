@@ -15,9 +15,10 @@ def setup():
     all_tracks = [(all_tracks.tempo, all_tracks.tracks[i],
                    all_tracks.start_times[i])
                   for i in range(len(all_tracks.tracks))]
-    if clear_pitch_bend:
-        for each in all_tracks:
-            each[1].clear_pitch_bend(value=0)
+    pitch_bends = concat(
+        [i[1].split(pitch_bend, get_time=True) for i in all_tracks])
+    for each in all_tracks:
+        each[1].clear_pitch_bend('all')
     start_time_ls = [j[2] for j in all_tracks]
     first_track_ind = start_time_ls.index(min(start_time_ls))
     all_tracks.insert(0, all_tracks.pop(first_track_ind))
@@ -58,7 +59,6 @@ def setup():
             all_track_notes &= (current_track,
                                 current[2] - first_track_start_time)
     all_track_notes += tempo_changes
+    all_track_notes += pitch_bends
     all_track_notes.normalize_tempo(tempo, start_time=first_track_start_time)
-    if clear_all_pitch_bend:
-        all_track_notes = all_track_notes.only_notes()
     read_result = tempo, all_track_notes, first_track_start_time
