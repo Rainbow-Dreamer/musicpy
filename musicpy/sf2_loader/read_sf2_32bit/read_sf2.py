@@ -450,6 +450,9 @@ current preset name: {self.get_current_instrument()}'''
             current_chord = copy(current_chord)
             current_chord.apply_start_time_to_changes(-piece_start_time)
         self.audio_array = []
+        if any(type(i) == mp.tempo for i in current_chord.notes):
+            current_chord = copy(current_chord)
+            current_chord.normalize_tempo(bpm=bpm)
         current_timestamps = get_timestamps(current_chord,
                                             bpm,
                                             pan=pan,
@@ -578,6 +581,7 @@ current preset name: {self.get_current_instrument()}'''
         decay_type = type(decay)
         if decay_type == list or decay_type == tuple:
             decay_is_list = True
+        current_chord = copy(current_chord)
         bpm = current_chord.tempo
         current_chord.normalize_tempo()
         if clear_program_change:

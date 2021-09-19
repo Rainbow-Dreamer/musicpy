@@ -1748,6 +1748,7 @@ class chord:
             current_tempo = self.notes[each]
             current_tempo.start_time = current_time
         tempo_changes = [self.notes[j] for j in tempo_changes]
+        tempo_changes.insert(0, tempo(bpm, 1))
         self.clear_tempo()
         tempo_changes.sort(key=lambda s: s.start_time)
         for each in tempo_changes:
