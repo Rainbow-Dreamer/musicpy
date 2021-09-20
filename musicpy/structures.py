@@ -506,7 +506,8 @@ class chord:
         changes = []
         for i in range(len(temp.notes)):
             each = temp.notes[i]
-            if type(each) != note:
+            types = type(each)
+            if types == tempo or types == pitch_bend:
                 if each.start_time is None:
                     each.start_time = temp[:i + 1].bars(mode=0) + 1
                 each.start_time -= (ind1 - 1 + start_time - start_offset)
@@ -937,7 +938,7 @@ class chord:
             return self.sort(obj)
         else:
             if types != chord:
-                if types != note:
+                if types == str:
                     obj = trans_note(obj)
                 notenames = self.names()
                 if obj.name not in standard2:
@@ -1119,7 +1120,8 @@ class chord:
             changes = []
             for i in range(len(temp.notes)):
                 each = temp.notes[i]
-                if type(each) != note:
+                types = type(each)
+                if types == tempo or types == pitch_bend:
                     if each.start_time is None:
                         each.start_time = temp[:i + 1].bars(**args) + 1
                     else:
@@ -1155,7 +1157,8 @@ class chord:
         temp.interval = temp.interval[::-1]
         temp.interval.append(temp.interval.pop(0))
         for i in temp.notes:
-            if type(i) != note:
+            types = type(i)
+            if types == tempo or types == pitch_bend:
                 if i.start_time is not None:
                     i.start_time = bar_length - (i.start_time - start_time) + 2
         return temp
@@ -1294,7 +1297,7 @@ class chord:
         if each == 0:
             if type(root) == chord:
                 return root + self
-            if type(root) != note:
+            if type(root) == str:
                 root = toNote(root)
                 root.duration = duration
             temp.notes.insert(0, root)
@@ -2125,7 +2128,7 @@ class chord:
         return self + diff * octave
 
     def reset_pitch(self, pitch):
-        if type(pitch) != note:
+        if type(pitch) == str:
             pitch = toNote(pitch)
         return self + (pitch.degree - self[1].degree)
 
@@ -2179,7 +2182,8 @@ class chord:
 
     def apply_start_time_to_changes(self, start_time):
         for each in self.notes:
-            if type(each) != note:
+            types = type(each)
+            if types == tempo or types == pitch_bend:
                 if each.start_time is not None:
                     each.start_time += start_time
 
@@ -2194,13 +2198,13 @@ class scale:
                  pitch=4):
         self.interval = interval
         if notels is not None:
-            notels = [toNote(i) if type(i) != note else i for i in notels]
+            notels = [toNote(i) if type(i) == str else i for i in notels]
             self.notes = notels
             self.start = notels[0]
             self.mode = mode
             self.pitch = pitch
         else:
-            if type(start) != note:
+            if type(start) == str:
                 start = trans_note(start)
             self.start = start
             self.pitch = self.start.num
@@ -2671,7 +2675,7 @@ class scale:
         if start is None:
             start = temp.start
         else:
-            if type(start) != note:
+            if type(start) == str:
                 start = trans_note(start)
         if num is not None:
             start.num = num
@@ -3131,7 +3135,8 @@ class piece:
                     current_instrument_number)
                 current_track = temp2.tracks[i]
                 for each in current_track:
-                    if type(each) != note:
+                    types = type(each)
+                    if types == tempo or types == pitch_bend:
                         if each.start_time is not None:
                             each.start_time += start_time
                 current_start_time = temp2.start_times[
@@ -3147,7 +3152,8 @@ class piece:
                 current_start_time += start_time
                 current_track = temp2.tracks[i]
                 for each in current_track:
-                    if type(each) != note:
+                    types = type(each)
+                    if types == tempo or types == pitch_bend:
                         if each.start_time is not None:
                             each.start_time += start_time
                 temp.tracks.append(current_track)
@@ -3534,7 +3540,8 @@ class piece:
             current_start_time = start_time[i]
             current_track = tracks[i]
             for each in current_track:
-                if type(each) != note:
+                types = type(each)
+                if types == tempo or types == pitch_bend:
                     if each.start_time is not None:
                         each.start_time += current_start_time
 
@@ -3667,7 +3674,8 @@ class piece:
                 ind -= 1
             temp.start_times[ind] += time
             for i in temp.tracks[ind]:
-                if type(i) != note:
+                types = type(i)
+                if types == tempo or types == pitch_bend:
                     if i.start_time is not None:
                         i.start_time += time
             for each in temp.pan[ind]:
@@ -3678,6 +3686,42 @@ class piece:
 
     def copy(self):
         return copy(self)
+
+    def modulation(self, old_scale, new_scale, mode=1, inds='all'):
+        temp = copy(self)
+        if inds == 'all':
+            inds = list(range(len(temp)))
+        for i in inds:
+            if not (mode == 1 and temp.channels and temp.channels[i] == 9):
+                temp.tracks[i] = temp.tracks[i].modulation(
+                    old_scale, new_scale)
+        return temp
+
+    def apply(self, func, inds='all', mode=0, new=True):
+        if new:
+            temp = copy(self)
+            if type(inds) == int:
+                inds = [inds]
+            elif inds == 'all':
+                inds = list(range(len(temp)))
+            if mode == 0:
+                for i in inds:
+                    temp.tracks[i] = func(temp.tracks[i])
+            elif mode == 1:
+                for i in inds:
+                    func(temp.tracks[i])
+            return temp
+        else:
+            if type(inds) == int:
+                inds = [inds]
+            elif inds == 'all':
+                inds = list(range(len(self)))
+            if mode == 0:
+                for i in inds:
+                    self.tracks[i] = func(self.tracks[i])
+            elif mode == 1:
+                for i in inds:
+                    func(self.tracks[i])
 
 
 P = piece

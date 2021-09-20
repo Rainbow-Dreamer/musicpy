@@ -66,7 +66,7 @@ def totuple(x):
 
 
 def get_freq(y, standard=440):
-    if type(y) != note:
+    if type(y) == str:
         y = toNote(y)
     semitones = y.degree - 69
     return standard * 2**(semitones / 12)
