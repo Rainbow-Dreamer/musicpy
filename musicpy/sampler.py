@@ -1066,10 +1066,17 @@ class pitch:
 class sound:
     def __init__(self, path, format=None):
         if type(path) != AudioSegment:
-            self.sounds = AudioSegment.from_file(
-                path,
-                format=path[path.rfind('.') +
-                            1:] if format is None else format)
+            current_format = path[path.rfind('.') + 1:]
+            try:
+                self.sounds = AudioSegment.from_file(path,
+                                                     format=current_format)
+
+            except:
+                with open(path, 'rb') as f:
+                    current_data = f.read()
+                current_file = BytesIO(current_data)
+                self.sounds = AudioSegment.from_file(current_file,
+                                                     format=current_format)
             self.file_path = path
         else:
             self.sounds = path
