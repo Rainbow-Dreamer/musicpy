@@ -542,7 +542,9 @@ class chord:
             return start_ind, to_ind
         result = temp[start_ind + 1:to_ind + 1]
         result += chord(changes)
-
+        result.other_messages = [
+            i for i in result.other_messages if ind1 <= i.time / 4 + 1 < ind2
+        ]
         return result
 
     def cut_time(self,
@@ -1113,8 +1115,6 @@ class chord:
         temp = copy(self)
         if start is None:
             temp2 = temp.only_notes()
-            intervals = temp2.interval
-            durations = temp2.get_duration()
             length = len(temp2)
             bar_length = temp2.bars(**args)
             changes = []
@@ -1128,17 +1128,26 @@ class chord:
                         each.start_time -= start_time
                     each.start_time = bar_length - each.start_time + 2
                     changes.append(each)
-
-            last_interval = intervals[-1]
-            temp2.interval = [
-                durations[length - 1 - i] -
-                (durations[length - 2 - i] - intervals[length - 2 - i])
-                for i in range(length - 1)
-            ]
-            temp2.interval.append(last_interval)
-            temp2.notes = temp2.notes[::-1]
+            if temp2.notes:
+                last_interval = temp2.interval[-1]
+                end_events = []
+                current_start_time = 0
+                for i in range(len(temp2.notes)):
+                    current_note = temp2.notes[i]
+                    current_end_time = current_start_time + current_note.duration
+                    current_end_event = (current_note, current_end_time)
+                    end_events.append(current_end_event)
+                    current_start_time += temp2.interval[i]
+                end_events.sort(key=lambda s: s[1], reverse=True)
+                new_notes = [i[0] for i in end_events]
+                new_interval = [
+                    end_events[j][1] - end_events[j + 1][1]
+                    for j in range(len(end_events) - 1)
+                ]
+                new_interval.append(last_interval)
+                temp2.notes = new_notes
+                temp2.interval = new_interval
             temp2 += chord(changes)
-
             return temp2
         else:
             if end is None:
@@ -1155,12 +1164,16 @@ class chord:
         bar_length = temp.bars(**args)
         temp.notes = temp.notes[::-1]
         temp.interval = temp.interval[::-1]
-        temp.interval.append(temp.interval.pop(0))
+        if temp.interval:
+            temp.interval.append(temp.interval.pop(0))
         for i in temp.notes:
             types = type(i)
             if types == tempo or types == pitch_bend:
-                if i.start_time is not None:
-                    i.start_time = bar_length - (i.start_time - start_time) + 2
+                if i.start_time is None:
+                    i.start_time = temp[:i + 1].bars(**args) + 1
+                else:
+                    i.start_time -= start_time
+                i.start_time = bar_length - i.start_time + 2
         return temp
 
     def intervalof(self, cummulative=True, translate=False):
@@ -3364,6 +3377,7 @@ class piece:
             first_track &= (all_tracks[i[0]], i[1] - first_track_start_time)
         first_track += tempo_changes
         first_track += pitch_bends
+        first_track.other_messages = temp.other_messages
         return temp.tempo, first_track, first_track_start_time
 
     def add_track_labels(self):
@@ -3376,8 +3390,6 @@ class piece:
     def reconstruct(self, track, start_time=0, offset=0, correct=False):
         first_track, first_track_start_time = track, start_time
         length = len(self.tracks)
-        tempo_messages = first_track.split(tempo)
-        first_track.clear_tempo()
         start_times_inds = [[
             i for i in range(len(first_track))
             if first_track.notes[i].track_num == k
@@ -3426,7 +3438,8 @@ class piece:
                   other_messages=available_tracks_messages[i])
             for i in range(len(available_tracks_inds))
         ]
-        new_tracks[0] += tempo_messages
+        for j in range(len(available_tracks_inds)):
+            new_tracks[j].track_ind = available_tracks_inds[j]
         self.tracks = new_tracks
         self.start_times = new_start_times
         self.instruments_list = [
@@ -3489,6 +3502,25 @@ class piece:
                     for each in temp.pan]
         temp.volume = [[i for i in each if i.start_time < ind2]
                        for each in temp.volume]
+        tempo_changes = temp.get_tempo_changes()
+        temp.clear_tempo()
+        k = 0
+        while k < len(temp.tracks):
+            current = temp.tracks[k]
+            if all(type(i) != note for i in current.notes):
+                del temp[k + 1]
+                continue
+            k += 1
+        track_inds = [each.track_ind for each in temp.tracks]
+        temp.other_messages = [
+            i for i in temp.other_messages if ind1 <= i.time / 4 + 1 < ind2
+        ]
+        temp.other_messages = [
+            i for i in temp.other_messages if i.track in track_inds
+        ]
+        for each in temp.other_messages:
+            each.track = track_inds.index(each.track)
+        temp.tracks[0] += tempo_changes
         return temp
 
     def cut_time(self, time1=0, time2=None, bpm=None, start_time=0, **args):

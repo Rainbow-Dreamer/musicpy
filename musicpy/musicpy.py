@@ -367,6 +367,8 @@ def read(name,
             tempos, all_track_notes, first_track_start_time = first_track
             for i in all_tracks[1:]:
                 all_track_notes &= (i[1], i[2] - first_track_start_time)
+            all_track_notes.other_messages = concat(
+                [each[1].other_messages for each in all_tracks])
             if changes:
                 all_track_notes += changes
                 if changes.other_messages:
