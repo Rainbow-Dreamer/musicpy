@@ -3006,15 +3006,20 @@ def build(*tracks_list, bpm=80, name=None):
             volume_msg = [i.volume for i in tracks_list]
     else:
         if len(set([len(i) for i in tracks_list])) != 1:
-            return 'every track should has the same number of variables'
-        tracks = [i[1] for i in tracks_list]
-        instruments_list = [i[0] for i in tracks_list]
-        start_times = [i[2] for i in tracks_list]
+            raise ValueError(
+                'every track should has the same number of variables')
+        tracks_len = len(tracks_list[0])
+        tracks = [i[0] for i in tracks_list]
+        instruments_list = None
+        start_times = None
         channels = None
         track_names = None
         pan_msg = None
         volume_msg = None
-        tracks_len = len(tracks_list[0])
+        if tracks_len >= 2:
+            instruments_list = [i[1] for i in tracks_list]
+        if tracks_len >= 3:
+            start_times = [i[2] for i in tracks_list]
         if tracks_len >= 4:
             channels = [i[3] for i in tracks_list]
         if tracks_len >= 5:
