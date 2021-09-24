@@ -2865,7 +2865,7 @@ class piece:
     def __init__(self,
                  tracks,
                  instruments_list=None,
-                 tempo=120,
+                 bpm=120,
                  start_times=None,
                  track_names=None,
                  channels=None,
@@ -2889,7 +2889,7 @@ class piece:
             self.instruments_numbers = [
                 instruments[j] for j in self.instruments_list
             ]
-        self.tempo = tempo
+        self.bpm = bpm
         self.start_times = start_times
         self.track_number = len(tracks)
         if self.start_times is None:
@@ -2912,7 +2912,7 @@ class piece:
     def __repr__(self):
         return (
             f'[piece] {self.name if self.name else ""}\n'
-        ) + f'BPM: {round(self.tempo, 3)}\n' + '\n'.join([
+        ) + f'BPM: {round(self.bpm, 3)}\n' + '\n'.join([
             f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] + " " if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(self.track_number)
         ])
@@ -2924,7 +2924,7 @@ class piece:
         if i > 0:
             i -= 1
         return track(self.tracks[i], self.instruments_list[i],
-                     self.start_times[i], self.tempo,
+                     self.start_times[i], self.bpm,
                      self.track_names[i] if self.track_names else None,
                      self.channels[i] if self.channels else None, self.name,
                      self.pan[i], self.volume[i])
@@ -3118,7 +3118,7 @@ class piece:
         if num > 0:
             num -= 1
         return [
-            self.tracks[num], self.instruments_list[num], self.tempo,
+            self.tracks[num], self.instruments_list[num], self.bpm,
             self.start_times[num],
             self.channels[num] if self.channels else None,
             self.track_names[num] if self.track_names else None, self.pan[num],
@@ -3190,7 +3190,7 @@ class piece:
                 if temp.track_names is not None:
                     temp.track_names.append(temp2.track_names[i])
         if mode == 'after' and keep_tempo:
-            temp.add_tempo_change(temp2.tempo, 1 + temp_length)
+            temp.add_tempo_change(temp2.bpm, 1 + temp_length)
         temp.track_number = len(temp.tracks)
         return temp
 
@@ -3243,7 +3243,7 @@ class piece:
 
     def normalize_tempo(self, bpm=None):
         if bpm is None:
-            bpm = self.tempo
+            bpm = self.bpm
         temp = copy(self)
         all_tracks = temp.tracks
         length = len(all_tracks)
@@ -3378,7 +3378,7 @@ class piece:
         first_track += tempo_changes
         first_track += pitch_bends
         first_track.other_messages = temp.other_messages
-        return temp.tempo, first_track, first_track_start_time
+        return temp.bpm, first_track, first_track_start_time
 
     def add_track_labels(self):
         all_tracks = self.tracks
@@ -3529,7 +3529,7 @@ class piece:
         if bpm is not None:
             temp_bpm = bpm
         else:
-            temp_bpm = temp.tempo
+            temp_bpm = temp.bpm
         bar_left = time1 / ((60 / temp_bpm) * 4)
         bar_right = time2 / (
             (60 / temp_bpm) * 4) if time2 is not None else temp.bars(**args)
@@ -3858,7 +3858,7 @@ class track:
                  content,
                  instrument=1,
                  start_time=0,
-                 tempo=None,
+                 bpm=None,
                  track_name=None,
                  channel=None,
                  name=None,
@@ -3868,7 +3868,7 @@ class track:
         self.instrument = reverse_instruments[instrument] if isinstance(
             instrument, int) else instrument
         self.instruments_number = instruments[self.instrument]
-        self.tempo = tempo
+        self.bpm = bpm
         self.start_time = start_time
         self.track_name = track_name
         self.channel = channel
@@ -3895,7 +3895,7 @@ class track:
         if msg:
             msg += ' | '
         return (f'[track] {self.name if self.name is not None else ""}\n') + (
-            f'BPM: {round(self.tempo, 3)}\n' if self.tempo is not None else ""
+            f'BPM: {round(self.bpm, 3)}\n' if self.bpm is not None else ""
         ) + f'{msg}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
 
     def add_pan(self, value, start_time=1, mode='percentage'):
@@ -4247,12 +4247,12 @@ class drum:
         result = chord(notes) % (durations, intervals, volumes)
         return result
 
-    def play(self, tempo=80, instrument=None, start_time=0):
+    def play(self, bpm=80, instrument=None, start_time=0):
         import musicpy
         musicpy.play(
             P([self.notes],
               [instrument if instrument is not None else self.instrument],
-              tempo, [start_time],
+              bpm, [start_time],
               channels=[9]))
 
     def __mul__(self, n):

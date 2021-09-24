@@ -693,8 +693,8 @@ def write(name_of_midi,
         else:
             msg = current_chord.content.other_messages
         current_chord = build(current_chord,
-                              bpm=current_chord.tempo
-                              if current_chord.tempo is not None else bpm,
+                              bpm=current_chord.bpm
+                              if current_chord.bpm is not None else bpm,
                               name=current_chord.name)
     elif isinstance(current_chord, drum):
         if hasattr(current_chord, 'other_messages'):
@@ -704,7 +704,7 @@ def write(name_of_midi,
                           channels=[9])
     if isinstance(current_chord, piece):
         track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
-        current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.tempo, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
+        current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
         instruments_numbers = [
             i if type(i) == int else instruments[i]
             for i in instruments_numbers
@@ -2987,7 +2987,7 @@ def guitar_chord(frets,
     return detect(result.sortchord(), **detect_args)
 
 
-def build(*tracks_list, bpm=80, name=None):
+def build(*tracks_list, **kwargs):
     if all(type(i) == track for i in tracks_list):
         tracks = [i.content for i in tracks_list]
         instruments_list = [i.instrument for i in tracks_list]
@@ -3028,8 +3028,14 @@ def build(*tracks_list, bpm=80, name=None):
             pan_msg = [i[5] for i in tracks_list]
         if tracks_len >= 7:
             volume_msg = [i[6] for i in tracks_list]
-    return P(tracks, instruments_list, bpm, start_times, track_names, channels,
-             name, pan_msg, volume_msg)
+    return P(tracks=tracks,
+             instruments_list=instruments_list,
+             start_times=start_times,
+             track_names=track_names,
+             channels=channels,
+             pan_msg=pan_msg,
+             volume_msg=volume_msg,
+             **kwargs)
 
 
 def translate(pattern):

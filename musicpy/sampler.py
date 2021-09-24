@@ -424,7 +424,7 @@ class sampler:
                 return
         elif types == 'piece':
             current_name = current_chord.name
-            current_bpm = current_chord.tempo
+            current_bpm = current_chord.bpm
             current_start_times = current_chord.start_times
             current_pan = current_chord.pan
             current_volume = current_chord.volume
@@ -695,15 +695,14 @@ class sampler:
             if check_effect(current_chord):
                 has_effect = True
                 current_effects = copy(current_chord.effects)
-            current_chord = build(
-                current_chord,
-                bpm=current_chord.tempo
-                if current_chord.tempo is not None else current_bpm,
-                name=current_chord.name)
+            current_chord = build(current_chord,
+                                  bpm=current_chord.bpm if current_chord.bpm
+                                  is not None else current_bpm,
+                                  name=current_chord.name)
             if has_effect:
                 current_chord.effects = current_effects
         if type(current_chord) == piece:
-            current_bpm = current_chord.tempo
+            current_bpm = current_chord.bpm
             current_start_times = current_chord.start_times
             return 'piece', current_chord
 
@@ -872,8 +871,8 @@ class sampler:
                 has_effect = True
                 current_effects = copy(current_chord.effects)
             current_chord = build(current_chord,
-                                  bpm=current_chord.tempo
-                                  if current_chord.tempo is not None else bpm,
+                                  bpm=current_chord.bpm
+                                  if current_chord.bpm is not None else bpm,
                                   name=current_chord.name)
             if has_effect:
                 current_chord.effects = current_effects
@@ -893,7 +892,7 @@ class sampler:
                             track_extra_lengths=track_extra_lengths)
                 return
             current_tracks = current_chord.tracks
-            bpm = current_chord.tempo
+            bpm = current_chord.bpm
             current_start_times = current_chord.start_times
             for each in range(len(current_chord)):
                 current_id = threading.Timer(
@@ -1351,7 +1350,7 @@ def audio(obj, sampler, channel_num=1, bpm=None):
     if type(obj) == note:
         obj = chord([obj])
     elif type(obj) == track:
-        obj = build(obj, bpm=obj.tempo, name=obj.name)
+        obj = build(obj, bpm=obj.bpm, name=obj.name)
     result = sampler.export(obj,
                             action='get',
                             channel_num=channel_num,
