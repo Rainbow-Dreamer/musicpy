@@ -29,6 +29,8 @@ minor_sixteenth = augmented_fifteenth = m16 = A15 = 25
 major_sixteenth = diminished_seventeenth = M16 = d17 = 26
 minor_seventeenth = augmented_sixteenth = m17 = A16 = 27
 major_seventeenth = M17 = 28
+semitone = halfstep = 1
+wholetone = wholestep = tone = 2
 
 INTERVAL = {
     0: 'perfect unison',
