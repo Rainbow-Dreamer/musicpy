@@ -936,6 +936,9 @@ class chord:
                 for k in range(first - 1):
                     temp |= (self, start)
                 return temp
+            elif type(first) == rest:
+                return self.rest(first.duration,
+                                 ind=obj[1] if len(obj) == 2 else None)
             else:
                 return self.add(first, start=start, mode='after')
         elif types == list:
@@ -1599,7 +1602,14 @@ class chord:
         else:
             if ind > 0:
                 ind -= 1
-            temp.interval[ind] += length
+            if ind == len(temp) - 1:
+                last_interval = temp.interval[-1]
+                if last_interval != 0:
+                    temp.interval[-1] += length
+                else:
+                    temp.interval[-1] += (temp.notes[-1].duration + length)
+            else:
+                temp.interval[ind] += length
         return temp
 
     def modulation(self, old_scale, new_scale):
