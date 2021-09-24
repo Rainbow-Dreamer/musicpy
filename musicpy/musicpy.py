@@ -99,7 +99,8 @@ def getchord_by_interval(start,
                          interval1,
                          duration=0.25,
                          interval=0,
-                         cummulative=True):
+                         cummulative=True,
+                         start_time=0):
 
     if type(start) == str:
         start = toNote(start)
@@ -117,7 +118,7 @@ def getchord_by_interval(start,
         for i in range(len(interval1)):
             startind += interval1[i]
             result.append(degree_to_note(startind))
-    return chord(result, duration, interval)
+    return chord(result, duration, interval, start_time=start_time)
 
 
 def inversion(current_chord, num=1):
@@ -134,12 +135,17 @@ def getchord(start,
              pitch=4,
              b=None,
              sharp=None,
-             ind=0):
+             ind=0,
+             start_time=0):
     if not isinstance(start, note):
         start = toNote(start, pitch=pitch)
     if interval is not None:
-        return getchord_by_interval(start, interval, duration, intervals,
-                                    cummulative)
+        return getchord_by_interval(start,
+                                    interval,
+                                    duration,
+                                    intervals,
+                                    cummulative,
+                                    start_time=start_time)
     premode = mode
     mode = mode.lower().replace(' ', '')
     initial = start.degree
@@ -186,7 +192,7 @@ def getchord(start,
     if sharp != None:
         for every in sharp:
             chordlist[every - 1] = chordlist[every - 1].up()
-    return chord(chordlist, duration, intervals)
+    return chord(chordlist, duration, intervals, start_time=start_time)
 
 
 chd = getchord
@@ -219,19 +225,18 @@ def concat(chordlist, mode='+', extra=None):
 def multi_voice(*current_chord, method=chord, start_times=None):
     current_chord = [method(i) if type(i) == str else i for i in current_chord]
     if start_times is None:
-        return concat(current_chord, mode='&')
-    else:
-        result = current_chord[0]
-        for i in range(1, len(current_chord)):
-            result &= (current_chord[i], start_times[i - 1])
-        return result
+        start_times = [i.start_time for i in current_chord[1:]]
+    result = current_chord[0]
+    for i in range(1, len(current_chord)):
+        result &= (current_chord[i], start_times[i - 1])
+    return result
 
 
 def play(current_chord,
          bpm=80,
          track_ind=0,
          channel=0,
-         start_time=0,
+         start_time=None,
          track_num=1,
          name='temp.mid',
          instrument=None,
@@ -669,7 +674,7 @@ def write(name_of_midi,
           bpm=80,
           track_ind=0,
           channel=0,
-          start_time=0,
+          start_time=None,
           track_num=1,
           instrument=None,
           i=None,
@@ -692,16 +697,16 @@ def write(name_of_midi,
             msg = current_chord.other_messages
         else:
             msg = current_chord.content.other_messages
-        current_chord = build(
-            current_chord,
-            bpm=current_chord.bpm if current_chord.bpm is not None else bpm,
-            name=current_chord.name)
+        current_chord = build(current_chord, bpm=current_chord.bpm)
     elif isinstance(current_chord, drum):
         if hasattr(current_chord, 'other_messages'):
             msg = current_chord.other_messages
-        current_chord = P([current_chord.notes], [current_chord.instrument],
-                          bpm, [start_time],
-                          channels=[9])
+        current_chord = P(
+            [current_chord.notes], [current_chord.instrument],
+            bpm,
+            [current_chord.start_time if start_time is None else start_time],
+            channels=[9],
+            name=current_chord.name)
     if isinstance(current_chord, piece):
         track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
         current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
@@ -821,7 +826,8 @@ def write(name_of_midi,
         MyMIDI.addProgramChange(track_ind, current_channel, 0, instrument)
         content_notes = content.notes
         content_intervals = content.interval
-        current_start_time = start_time * 4
+        current_start_time = (current_chord.start_time
+                              if start_time is None else start_time) * 4
         N = len(content)
         for j in range(N):
             current_note = content_notes[j]
@@ -1908,20 +1914,24 @@ def exp(form, obj_name='x', mode='tail'):
     return func
 
 
-def trans(obj, pitch=4, duration=0.25, interval=None):
+def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
     obj = obj.replace(' ', '')
     if obj in standard:
         return chd(obj,
                    'M',
                    pitch=pitch,
                    duration=duration,
-                   intervals=interval)
+                   intervals=interval,
+                   start_time=start_time)
     if '/' not in obj:
         check_structure = obj.split(',')
         check_structure_len = len(check_structure)
         if check_structure_len > 1:
-            return trans(check_structure[0], pitch, duration,
-                         interval)(','.join(check_structure[1:]))
+            return trans(check_structure[0],
+                         pitch,
+                         duration,
+                         interval,
+                         start_time=start_time)(','.join(check_structure[1:]))
         N = len(obj)
         if N == 2:
             first = obj[0]
@@ -1931,7 +1941,8 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                            types,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval)
+                           intervals=interval,
+                           start_time=start_time)
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
@@ -1940,7 +1951,8 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                            type1,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval)
+                           intervals=interval,
+                           start_time=start_time)
             first_one = obj[0]
             type2 = obj[1:]
             if first_one in standard and type2 in chordTypes:
@@ -1948,7 +1960,8 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                            type2,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval)
+                           intervals=interval,
+                           start_time=start_time)
     else:
         parts = obj.split('/')
         part1, part2 = parts[0], '/'.join(parts[1:])
@@ -1969,14 +1982,16 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                 return chord([part2] + first_chord_notenames,
                              rootpitch=pitch,
                              duration=duration,
-                             interval=interval)
+                             interval=interval,
+                             start_time=start_time)
             else:
                 second_chord = trans(part2, pitch, duration, interval)
                 if type(second_chord) == chord:
                     return chord(second_chord.names() + first_chord.names(),
                                  rootpitch=pitch,
                                  duration=duration,
-                                 interval=interval)
+                                 interval=interval,
+                                 start_time=start_time)
     return 'not a valid chord representation or chord types not in database'
 
 
