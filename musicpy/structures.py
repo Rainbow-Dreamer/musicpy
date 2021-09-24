@@ -4143,12 +4143,15 @@ class drum:
                  mapping=drum_mapping,
                  name=None,
                  notes=None,
-                 i=1):
+                 i=1,
+                 start_time=None):
         self.pattern = pattern
         self.mapping = mapping
         self.name = name
         self.notes = self.translate(self.pattern,
                                     self.mapping) if not notes else notes
+        if start_time is not None:
+            self.notes.start_time = start_time
         self.instrument = i if type(i) == int else (
             drum_set_dict_reverse[i] if i in drum_set_dict_reverse else 1)
 
@@ -4158,6 +4161,7 @@ class drum:
     __repr__ = __str__
 
     def translate(self, pattern, mapping):
+        start_time = 0
         import musicpy
         notes = []
         pattern_intervals = []
@@ -4233,6 +4237,8 @@ class drum:
                 current_interval = process_settings([current_content])[0]
                 if pattern_intervals:
                     pattern_intervals[-1] += current_interval
+                else:
+                    start_time += current_interval
             elif '(' in i and i[-1] == ')':
                 repeat_times = int(i[i.index('(') + 1:-1])
                 repeat_part = i[:i.index('(')]
@@ -4307,15 +4313,12 @@ class drum:
         durations = pattern_durations
         volumes = pattern_volumes
         result = chord(notes) % (durations, intervals, volumes)
+        result.start_time = start_time
         return result
 
-    def play(self, bpm=80, instrument=None, start_time=0):
+    def play(self, *args, **kwargs):
         import musicpy
-        musicpy.play(
-            P([self.notes],
-              [instrument if instrument is not None else self.instrument],
-              bpm, [start_time],
-              channels=[9]))
+        musicpy.play(self, *args, **kwargs)
 
     def __mul__(self, n):
         temp = copy(self)
@@ -4353,6 +4356,11 @@ class drum:
 
     def info(self):
         return f"[drum] {self.name if self.name else ''}\ninstrument: {drum_set_dict[self.instrument] if self.instrument in drum_set_dict else 'unknown'}\n{', '.join([drum_types[k.degree] for k in self.notes])} with interval {self.notes.interval}"
+
+    def with_start(self, start_time):
+        temp = copy(self)
+        temp.notes.start_time = start_time
+        return temp
 
 
 def event(mode='controller', *args, **kwargs):

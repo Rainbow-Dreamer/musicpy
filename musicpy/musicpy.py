@@ -224,11 +224,14 @@ def concat(chordlist, mode='+', extra=None):
 
 def multi_voice(*current_chord, method=chord, start_times=None):
     current_chord = [method(i) if type(i) == str else i for i in current_chord]
-    if start_times is None:
-        start_times = [i.start_time for i in current_chord[1:]]
-    result = current_chord[0]
-    for i in range(1, len(current_chord)):
-        result &= (current_chord[i], start_times[i - 1])
+    if start_times is not None:
+        current_chord = [current_chord[0]
+                         ] + [i.with_start(0) for i in current_chord[1:]]
+        result = copy(current_chord[0])
+        for i in range(1, len(current_chord)):
+            result &= (current_chord[i], start_times[i - 1])
+    else:
+        result = concat(current_chord, mode='&')
     return result
 
 
@@ -701,12 +704,13 @@ def write(name_of_midi,
     elif isinstance(current_chord, drum):
         if hasattr(current_chord, 'other_messages'):
             msg = current_chord.other_messages
-        current_chord = P(
-            [current_chord.notes], [current_chord.instrument],
-            bpm,
-            [current_chord.start_time if start_time is None else start_time],
-            channels=[9],
-            name=current_chord.name)
+        current_chord = P([current_chord.notes], [current_chord.instrument],
+                          bpm, [
+                              current_chord.notes.start_time
+                              if start_time is None else start_time
+                          ],
+                          channels=[9],
+                          name=current_chord.name)
     if isinstance(current_chord, piece):
         track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
         current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
