@@ -692,10 +692,10 @@ def write(name_of_midi,
             msg = current_chord.other_messages
         else:
             msg = current_chord.content.other_messages
-        current_chord = build(current_chord,
-                              bpm=current_chord.bpm
-                              if current_chord.bpm is not None else bpm,
-                              name=current_chord.name)
+        current_chord = build(
+            current_chord,
+            bpm=current_chord.bpm if current_chord.bpm is not None else bpm,
+            name=current_chord.name)
     elif isinstance(current_chord, drum):
         if hasattr(current_chord, 'other_messages'):
             msg = current_chord.other_messages
@@ -3033,8 +3033,8 @@ def build(*tracks_list, **kwargs):
              start_times=start_times,
              track_names=track_names,
              channels=channels,
-             pan_msg=pan_msg,
-             volume_msg=volume_msg,
+             pan=pan_msg,
+             volume=volume_msg,
              **kwargs)
 
 
