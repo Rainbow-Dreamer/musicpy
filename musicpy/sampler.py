@@ -935,8 +935,7 @@ class sampler:
                                    duration, volume, current_channel_num))
                 self.current_playing.append(current_id)
                 current_id.start()
-                current_time += bar_to_real_time(current_intervals[i - 1], bpm,
-                                                 1)
+                current_time += bar_to_real_time(current_intervals[i], bpm, 1)
 
     def modules(self, ind):
         if ind > 0:
