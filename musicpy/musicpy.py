@@ -709,8 +709,7 @@ def write(name_of_midi,
                               current_chord.notes.start_time
                               if start_time is None else start_time
                           ],
-                          channels=[9],
-                          name=current_chord.name)
+                          channels=[9])
     if isinstance(current_chord, piece):
         track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
         current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
