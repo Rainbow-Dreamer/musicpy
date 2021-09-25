@@ -3058,6 +3058,7 @@ def build(*tracks_list, **kwargs):
 
 
 def translate(pattern):
+    start_time = 0
     notes = []
     pattern_intervals = []
     pattern_durations = []
@@ -3129,6 +3130,8 @@ def translate(pattern):
             current_interval = process_settings([current_content])[0]
             if pattern_intervals:
                 pattern_intervals[-1] += current_interval
+            else:
+                start_time += current_interval
         elif '(' in i and i[-1] == ')':
             repeat_times = int(i[i.index('(') + 1:-1])
             repeat_part = i[:i.index('(')]
@@ -3200,6 +3203,7 @@ def translate(pattern):
     durations = pattern_durations
     volumes = pattern_volumes
     result = chord(notes) % (durations, intervals, volumes)
+    result.start_time = start_time
     return result
 
 

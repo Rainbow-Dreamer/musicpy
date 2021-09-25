@@ -342,12 +342,18 @@ def read_notes(note_ls, rootpitch=4):
 
 
 def process_dotted_note(value):
+    length = len(value)
     if value[0] != '.':
-        dotted_notes = value.count('.')
-        value = value.replace('.', '')
+        num_ind = length - 1
+        for k in range(num_ind, -1, -1):
+            if value[k] != '.':
+                num_ind = k
+                break
+        dotted_notes = value[num_ind + 1:].count('.')
+        value = value[:num_ind + 1]
         value = eval(value) * sum([(1 / 2)**i
                                    for i in range(dotted_notes + 1)])
-    elif len(value) > 1:
+    elif length > 1:
         dotted_notes = value[1:].count('.')
         value = value.replace('.', '')
         value = (1 / eval(value)) * sum([(1 / 2)**i
