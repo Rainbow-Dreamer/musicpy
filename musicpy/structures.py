@@ -3926,7 +3926,7 @@ class track:
                  content,
                  instrument=1,
                  start_time=0,
-                 bpm=None,
+                 bpm=120,
                  track_name=None,
                  channel=None,
                  name=None,
