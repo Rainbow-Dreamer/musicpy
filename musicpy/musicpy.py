@@ -253,13 +253,13 @@ def play(current_chord,
          eventtime_is_ticks=False,
          msg=None,
          nomsg=False):
-    file = write(name_of_midi=name,
-                 current_chord=current_chord,
+    file = write(current_chord=current_chord,
                  bpm=bpm,
                  track_ind=track_ind,
                  channel=channel,
                  start_time=start_time,
                  track_num=track_num,
+                 name=name,
                  instrument=instrument,
                  i=i,
                  save_as_file=save_as_file,
@@ -672,13 +672,13 @@ def read_other_messages(message, other_messages, time, track_ind):
     other_messages.append(current_message)
 
 
-def write(name_of_midi,
-          current_chord,
+def write(current_chord,
           bpm=80,
           track_ind=0,
           channel=0,
           start_time=None,
           track_num=1,
+          name='temp.mid',
           instrument=None,
           i=None,
           save_as_file=True,
@@ -799,7 +799,7 @@ def write(name_of_midi,
                 add_other_messages(MyMIDI, msg,
                                    'piece' if not is_track_type else 'track')
         if save_as_file:
-            with open(name_of_midi, "wb") as output_file:
+            with open(name, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
             return
         else:
@@ -871,7 +871,7 @@ def write(name_of_midi,
             elif msg:
                 add_other_messages(MyMIDI, msg, 'chord')
         if save_as_file:
-            with open(name_of_midi, "wb") as output_file:
+            with open(name, "wb") as output_file:
                 MyMIDI.writeFile(output_file)
             return
         else:

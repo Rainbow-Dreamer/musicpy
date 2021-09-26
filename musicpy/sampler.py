@@ -678,13 +678,13 @@ class sampler:
                                             position=current_start_time)
         return silent_audio
 
-    def export_midi_file(self, obj, filename, channel_num=0):
+    def export_midi_file(self, obj, filename, channel_num=0, **write_args):
         result = self.get_current_musicpy_chords(obj, channel_num)
         if result is None:
             return
         current_chord = result[1]
         self.stop_playing()
-        write(filename, current_chord, self.bpm)
+        write(current_chord, self.bpm, name=filename, **write_args)
 
     def get_current_musicpy_chords(self, current_chord, current_channel_num=0):
         current_bpm = self.bpm
