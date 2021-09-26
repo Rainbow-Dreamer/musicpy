@@ -67,6 +67,7 @@ play((guitar * 2)-octave, 100, instrument=25)
 # /(guitar * 2)-octave, 100, instrument=25
 # in the IDE I write for musicpy
 ```
+[Click here to hear what this sounds like (Microsoft GS Wavetable Synth)](https://drive.google.com/file/d/104QnivVmBH395dLaUKnvEXSC5ZBDBt2E/view?usp=sharing)
 
 Introduction and Tutorial video series part 1: [BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
 
@@ -178,6 +179,7 @@ play((guitar * 2)-octave, 100, instrument=25)
 # 或者在我为musicpy专门写的IDE里你也可以写
 # /(guitar * 2)-octave, 100, instrument=25
 ```
+[点击这里试听 (Microsoft GS Wavetable Synth)](https://drive.google.com/file/d/104QnivVmBH395dLaUKnvEXSC5ZBDBt2E/view?usp=sharing)
 
 我自己做的介绍与使用教程视频第一期：[BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
 
