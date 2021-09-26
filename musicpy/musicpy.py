@@ -3006,46 +3006,44 @@ def guitar_chord(frets,
 
 
 def build(*tracks_list, **kwargs):
-    if all(type(i) == track for i in tracks_list):
-        tracks = [i.content for i in tracks_list]
-        instruments_list = [i.instrument for i in tracks_list]
-        start_times = [i.start_time for i in tracks_list]
+    if len(tracks_list) == 1 and type(tracks_list[0]) == list:
+        current_tracks_list = tracks_list[0]
+        if current_tracks_list and type(
+                current_tracks_list[0]) in [list, track]:
+            return build(*tracks_list[0], **kwargs)
+    tracks = []
+    instruments_list = []
+    start_times = []
+    channels = []
+    track_names = []
+    pan_msg = []
+    volume_msg = []
+    remain_list = [1, 0, None, None, [], []]
+    for each in tracks_list:
+        types = type(each)
+        if types == track:
+            tracks.append(each.content)
+            instruments_list.append(each.instrument)
+            start_times.append(each.start_time)
+            channels.append(each.channel)
+            track_names.append(each.track_name)
+            pan_msg.append(each.pan if each.pan else [])
+            volume_msg.append(each.volume if each.volume else [])
+        else:
+            new_each = each + remain_list[len(each) - 1:]
+            tracks.append(new_each[0])
+            instruments_list.append(new_each[1])
+            start_times.append(new_each[2])
+            channels.append(new_each[3])
+            track_names.append(new_each[4])
+            pan_msg.append(new_each[5])
+            volume_msg.append(new_each[6])
+    if any(i is None for i in channels):
         channels = None
+    if all(i is None for i in track_names):
         track_names = None
-        pan_msg = None
-        volume_msg = None
-        if all(i.channel is not None for i in tracks_list):
-            channels = [i.channel for i in tracks_list]
-        if all(i.track_name for i in tracks_list):
-            track_names = [i.track_name for i in tracks_list]
-        if all(i.pan for i in tracks_list):
-            pan_msg = [i.pan for i in tracks_list]
-        if all(i.volume for i in tracks_list):
-            volume_msg = [i.volume for i in tracks_list]
     else:
-        if len(set([len(i) for i in tracks_list])) != 1:
-            raise ValueError(
-                'every track should has the same number of variables')
-        tracks_len = len(tracks_list[0])
-        tracks = [i[0] for i in tracks_list]
-        instruments_list = None
-        start_times = None
-        channels = None
-        track_names = None
-        pan_msg = None
-        volume_msg = None
-        if tracks_len >= 2:
-            instruments_list = [i[1] for i in tracks_list]
-        if tracks_len >= 3:
-            start_times = [i[2] for i in tracks_list]
-        if tracks_len >= 4:
-            channels = [i[3] for i in tracks_list]
-        if tracks_len >= 5:
-            track_names = [i[4] for i in tracks_list]
-        if tracks_len >= 6:
-            pan_msg = [i[5] for i in tracks_list]
-        if tracks_len >= 7:
-            volume_msg = [i[6] for i in tracks_list]
+        track_names = [i if i else '' for i in track_names]
     return P(tracks=tracks,
              instruments_list=instruments_list,
              start_times=start_times,

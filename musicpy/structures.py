@@ -2981,7 +2981,7 @@ class piece:
         return (
             f'[piece] {self.name if self.name else ""}\n'
         ) + f'BPM: {round(self.bpm, 3)}\n' + '\n'.join([
-            f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] + " " if self.track_names else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
+            f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] + " " if self.track_names and self.track_names[i] else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(self.track_number)
         ])
 
@@ -3926,12 +3926,12 @@ class track:
                  content,
                  instrument=1,
                  start_time=0,
-                 bpm=120,
-                 track_name=None,
                  channel=None,
-                 name=None,
+                 track_name=None,
                  pan=None,
-                 volume=None):
+                 volume=None,
+                 bpm=120,
+                 name=None):
         self.content = content
         self.instrument = reverse_instruments[instrument] if isinstance(
             instrument, int) else instrument
