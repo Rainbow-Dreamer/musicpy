@@ -19,6 +19,12 @@ See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) for complete
 This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly.  
 The syntax and abilities of this wiki is synchronized with the latest released version of musicpy.
 
+Demo of writing music with musicpy: [BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
+
+musicpy's data sturctures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
+
+you can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
+
 Installation
 -------------
 Make sure you have installed python (version >= 3.7) in your pc first.
@@ -53,35 +59,41 @@ Place this line at the start of the files you want to have it used in.
 ```python
 from musicpy import *
 ```
+or
+```python
+import musicpy as mp
+```
+to avoid possible conflicts with the function names and variable names of other modules.
 
+Composition Examples
+-------------
 Because musicpy has too many features to introduce, I will just give a simple example code of music programming in musicpy:
 
 ```python
 # a nylon string guitar plays broken chords on a chord progression
 
-guitar = (C('CM7',4, 1/4, 1/8)^2 |
-          C('G7sus', 3, 1/4, 1/8)^2 |
-          C('A7sus', 3, 1/4, 1/8)^2 |
-          C('Em7', 3, 1/4, 1/8)^2 | 
-          C('FM7', 3, 1/4, 1/8)^2 |
-          C('CM7', 4, 1/4, 1/8)@1 |
-          C('AbM7', 3, 1/4, 1/8)^2 |
-          C('G7sus', 3, 1/4, 1/8)^2)
+guitar = (C('CM7', 3, 1/4, 1/8)^2 |
+          C('G7sus', 2, 1/4, 1/8)^2 |
+          C('A7sus', 2, 1/4, 1/8)^2 |
+          C('Em7', 2, 1/4, 1/8)^2 | 
+          C('FM7', 2, 1/4, 1/8)^2 |
+          C('CM7', 3, 1/4, 1/8)@1 |
+          C('AbM7', 2, 1/4, 1/8)^2 |
+          C('G7sus', 2, 1/4, 1/8)^2) * 2
 
-play((guitar * 2)-octave, 100, instrument=25)
+play(guitar, bpm=100, instrument=25)
 ```
 [Click here to hear what this sounds like (Microsoft GS Wavetable Synth)](https://drive.google.com/file/d/104QnivVmBH395dLaUKnvEXSC5ZBDBt2E/view?usp=sharing)
 
 If you think this is too simple, musicpy could also produce music like [this](https://drive.google.com/file/d/1j66Ux0KYMiOW6yHGBidIhwF9zcbDG5W0/view?usp=sharing) within 30 lines of code (could be even shorter if you don't care about readability). Anyway, this is just an example of a very short piece of electronic dance music, and not for complexity.
 
+For more musicpy composition examples, please refer to the musicpy composition examples chapters in wiki.
+
 Introduction and Tutorial video series part 1: [BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
 
-Demo of writing music with musicpy: [BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
-musicpy's data sturctures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
-
-you can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
-
+Brief Introduction of Data Structures
+-------------
 `note`, `chord`, `scale` are the basic classes in musicpy that builds up the base of music programming, and there are way more musical classes in musicpy.
 
 Because of musicpy's data structure design, the `note` class is congruent to integers, which means that it can be used as int directly.
@@ -91,6 +103,8 @@ The `chord` class is the set of notes, which means that it itself can be seen as
 Because of that, `note`, `chord` and `scale` classes can all be arithmetically used in calculation, with examples of Linear Algebra and Discrete Mathmetics. It is also possible to write an algorithm following music theory logics using musicpy's data structure, or to perform experiments on music with the help of pure mathematics logics.
 
 Many experimental music styles nowadays, like serialism, aleatoric music, postmodern music (like minimalist music), are theoretically possible to make upon the arithmetically performable data structures provided in musicpy. Of course musicpy can be used to write any kind of classical music, jazz, or pop music.
+
+For more detailed descriptions of data structures of musicpy, please refer to wiki.
 
 [Reasons Why I Develop This Language and Keep Working on This Project (feel free to skip this part if you are not interested)](#summary)
 -------------
@@ -137,6 +151,14 @@ musicpy
 这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。  
 wiki里的语法与功能与最新版本的musicpy是同步的。
 
+我自己做的介绍与使用教程视频第一期：[BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
+
+musicpy作曲示例实际演示以及 musicpy实验作曲日常：[BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
+
+详细的 musicpy数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
+
+我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD)下载，正在不断地更新中
+
 安装musicpy
 -------------
 先确定电脑里有安装python，python版本最好是 >= 3.7，
@@ -171,35 +193,38 @@ import这个库
 ```python
 from musicpy import *
 ```
+或者
+```python
+import musicpy as mp
+```
+以避免和其他模块的可能的函数名和变量名的冲突。
 
+作曲示例
+-------------
 由于musicpy有太多的特性可以介绍，在这里就先写一段用musicpy语言作曲的代码示例:
 
 ```python
 # 尼龙弦吉他分解和弦演奏一个和弦进行
 
-guitar = (C('CM7',4, 1/4, 1/8)^2 |
-          C('G7sus', 3, 1/4, 1/8)^2 |
-          C('A7sus', 3, 1/4, 1/8)^2 |
-          C('Em7', 3, 1/4, 1/8)^2 | 
-          C('FM7', 3, 1/4, 1/8)^2 |
-          C('CM7', 4, 1/4, 1/8)@1 |
-          C('AbM7', 3, 1/4, 1/8)^2 |
-          C('G7sus', 3, 1/4, 1/8)^2)
+guitar = (C('CM7', 3, 1/4, 1/8)^2 |
+          C('G7sus', 2, 1/4, 1/8)^2 |
+          C('A7sus', 2, 1/4, 1/8)^2 |
+          C('Em7', 2, 1/4, 1/8)^2 | 
+          C('FM7', 2, 1/4, 1/8)^2 |
+          C('CM7', 3, 1/4, 1/8)@1 |
+          C('AbM7', 2, 1/4, 1/8)^2 |
+          C('G7sus', 2, 1/4, 1/8)^2) * 2
 
-play((guitar * 2)-octave, 100, instrument=25)
+play(guitar, bpm=100, instrument=25)
 ```
 [点击这里试听 (Microsoft GS Wavetable Synth)](https://drive.google.com/file/d/104QnivVmBH395dLaUKnvEXSC5ZBDBt2E/view?usp=sharing)
 
 如果你认为这太过于简单，musicpy也可以在不到30行的代码内制作出[这样](https://drive.google.com/file/d/1j66Ux0KYMiOW6yHGBidIhwF9zcbDG5W0/view?usp=sharing)的音乐(如果你不关心可读性，代码还可以更短) 不过，这也只是一个非常短的电子舞曲的例子，并没有写的很复杂。
 
-我自己做的介绍与使用教程视频第一期：[BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
+更多的musicpy的作曲示例可以看wiki的作曲示例章节。
 
-musicpy作曲示例实际演示以及 musicpy实验作曲日常：[BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
-
-详细的 musicpy数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
-
-我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD)下载，正在不断地更新中
-
+数据结构简述
+-------------
 在 musicpy里面，几个基本的类是 `note`（音符），`chord`（和弦）和 `scale`（音阶）。这几个类是构成音乐代码的基础。除此之外，musicpy还有很多其他的乐理类型。
 
 在 musicpy这门语言的数据结构设计中，音符类本身是等值为纯数字的，也就是完全可以作为纯数字使用。
@@ -209,6 +234,8 @@ musicpy作曲示例实际演示以及 musicpy实验作曲日常：[BV18z4y1r7Pk]
 也因此在这门语言的数据结构设计中，音符类，和弦类，音阶类都是可以进行数学运算的，比如线性代数领域的运算，离散数学领域的运算等等。也可以在这门语言的数据结构的基础上建立一整套乐理逻辑的算法，结合纯数学逻辑来进行多方面的音乐分析研究。
 
 现代音乐领域的很多实验性质的音乐，比如序列主义，偶然音乐，后现代主义音乐（比如极简主义音乐），理论上全部都可以在这门语言的纯数字化的数据结构的基础上进行严格的创作。即使不提实验性质的音乐，这门语言也可以写任何的古典音乐，爵士音乐，流行音乐。
+
+关于更加详细的musicpy的数据结构的描述，请看wiki。
 
 [我开发musicpy的初衷(如果你不感兴趣的话可以跳过这部分内容)](#总结)
 -------------
