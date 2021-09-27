@@ -1930,11 +1930,8 @@ def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
         check_structure = obj.split(',')
         check_structure_len = len(check_structure)
         if check_structure_len > 1:
-            return trans(check_structure[0],
-                         pitch,
-                         duration,
-                         interval,
-                         start_time=start_time)(','.join(check_structure[1:]))
+            return trans(check_structure[0], pitch, start_time=start_time)(
+                ','.join(check_structure[1:])) % (duration, interval)
         N = len(obj)
         if N == 2:
             first = obj[0]
@@ -1968,7 +1965,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
     else:
         parts = obj.split('/')
         part1, part2 = parts[0], '/'.join(parts[1:])
-        first_chord = trans(part1, pitch, duration, interval)
+        first_chord = trans(part1, pitch)
         if type(first_chord) == chord:
             if part2.isdigit() or (part2[0] == '-' and part2[1:].isdigit()):
                 return first_chord / int(part2)
@@ -1988,7 +1985,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
                              interval=interval,
                              start_time=start_time)
             else:
-                second_chord = trans(part2, pitch, duration, interval)
+                second_chord = trans(part2, pitch)
                 if type(second_chord) == chord:
                     return chord(second_chord.names() + first_chord.names(),
                                  rootpitch=pitch,
