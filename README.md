@@ -19,9 +19,11 @@ See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) for complete
 This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly.  
 The syntax and abilities of this wiki is synchronized with the latest released version of musicpy.
 
-Demo of writing music with musicpy: [BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
+[Musicpy introduction and tutorial video part 1](https://www.bilibili.com/video/BV1754y197a9/)
 
-musicpy's data sturctures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
+[Musicpy composition examples demonstration and musicpy experimental compositions video](https://www.bilibili.com/video/BV18z4y1r7Pk/)
+
+Musicpy's data sturctures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
 
 you can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
 
@@ -89,9 +91,6 @@ If you think this is too simple, musicpy could also produce music like [this](ht
 
 For more musicpy composition examples, please refer to the musicpy composition examples chapters in wiki.
 
-Introduction and Tutorial video series part 1: [BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
-
-
 Brief Introduction of Data Structures
 -------------
 `note`, `chord`, `scale` are the basic classes in musicpy that builds up the base of music programming, and there are way more musical classes in musicpy.
@@ -151,9 +150,9 @@ musicpy
 这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。  
 wiki里的语法与功能与最新版本的musicpy是同步的。
 
-我自己做的介绍与使用教程视频第一期：[BV1754y197a9](https://www.bilibili.com/video/BV1754y197a9/)
+[musicpy介绍与使用教程视频第一期](https://www.bilibili.com/video/BV1754y197a9/)
 
-musicpy作曲示例实际演示以及 musicpy实验作曲日常：[BV18z4y1r7Pk](https://www.bilibili.com/video/BV18z4y1r7Pk/)
+[musicpy作曲示例实际演示以及musicpy实验作曲视频](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
 详细的 musicpy数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
 
