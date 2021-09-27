@@ -1246,7 +1246,7 @@ class Root(Tk):
     def visualize_play_select_text(self):
         try:
             selected_text = self.inputs.selection_get()
-            exec(f"write('temp.mid', {selected_text})")
+            exec(f"write({selected_text}, name='temp.mid')")
         except:
             self.outputs.delete('1.0', END)
             self.outputs.insert(END, '选中的语句无法播放')

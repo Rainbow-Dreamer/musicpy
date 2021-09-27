@@ -4566,3 +4566,31 @@ class rest:
 
     def __repr__(self):
         return f'rest {self.duration}'
+
+
+def note_to_degree(obj):
+    if type(obj) != note:
+        obj = toNote(obj)
+    return standard[obj.name] + 12 * (obj.num + 1)
+
+
+def reset(self, **kwargs):
+    temp = copy(self)
+    for i, j in kwargs.items():
+        setattr(temp, i, j)
+    return temp
+
+
+def reset_note(self, **kwargs):
+    temp = copy(self)
+    for i, j in kwargs.items():
+        setattr(temp, i, j)
+    temp.degree = note_to_degree(str(temp))
+    return temp
+
+
+note.reset = reset_note
+for each in [
+        chord, piece, track, scale, drum, rest, tempo, pitch_bend, pan, volume
+]:
+    each.reset = reset
