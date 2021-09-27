@@ -156,7 +156,7 @@ wiki里的语法与功能与最新版本的musicpy是同步的。
 
 详细的 musicpy数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
 
-我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD)下载，正在不断地更新中
+我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD)下载，正在不断地更新中。
 
 安装musicpy
 -------------
@@ -218,7 +218,7 @@ play(guitar, bpm=100, instrument=25)
 ```
 [点击这里试听 (Microsoft GS Wavetable Synth)](https://drive.google.com/file/d/104QnivVmBH395dLaUKnvEXSC5ZBDBt2E/view?usp=sharing)
 
-如果你认为这太过于简单，musicpy也可以在不到30行的代码内制作出[这样](https://drive.google.com/file/d/1j66Ux0KYMiOW6yHGBidIhwF9zcbDG5W0/view?usp=sharing)的音乐(如果你不关心可读性，代码还可以更短) 不过，这也只是一个非常短的电子舞曲的例子，并没有写的很复杂。
+如果你认为这太过于简单，musicpy也可以在不到30行的代码内制作出[这样](https://drive.google.com/file/d/1j66Ux0KYMiOW6yHGBidIhwF9zcbDG5W0/view?usp=sharing)的音乐(如果你不关心可读性，代码还可以更短)。不过，这也只是一个非常短的电子舞曲的例子，并没有写的很复杂。
 
 更多的musicpy的作曲示例可以看wiki的作曲示例章节。
 
