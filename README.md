@@ -58,14 +58,17 @@ Because musicpy has too many features to introduce, I will just give a simple ex
 
 ```python
 # a nylon string guitar plays broken chords on a chord progression
-guitar = (C('CM7',4, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2 
-| C('A7sus', 3, 1/4, 1/8)^2 | C('Em7', 3, 1/4, 1/8)^2 | 
-C('FM7', 3, 1/4, 1/8)^2 | C('CM7', 4, 1/4, 1/8)@1 |
-C('AbM7', 3, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2)
+
+guitar = (C('CM7',4, 1/4, 1/8)^2 |
+          C('G7sus', 3, 1/4, 1/8)^2 |
+          C('A7sus', 3, 1/4, 1/8)^2 |
+          C('Em7', 3, 1/4, 1/8)^2 | 
+          C('FM7', 3, 1/4, 1/8)^2 |
+          C('CM7', 4, 1/4, 1/8)@1 |
+          C('AbM7', 3, 1/4, 1/8)^2 |
+          C('G7sus', 3, 1/4, 1/8)^2)
+
 play((guitar * 2)-octave, 100, instrument=25)
-# or you can also write
-# /(guitar * 2)-octave, 100, instrument=25
-# in the IDE I write for musicpy
 ```
 [Click here to hear what this sounds like (Microsoft GS Wavetable Synth)](https://drive.google.com/file/d/104QnivVmBH395dLaUKnvEXSC5ZBDBt2E/view?usp=sharing)
 
@@ -173,13 +176,17 @@ from musicpy import *
 
 ```python
 # 尼龙弦吉他分解和弦演奏一个和弦进行
-guitar = (C('CM7',4, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2 
-| C('A7sus', 3, 1/4, 1/8)^2 | C('Em7', 3, 1/4, 1/8)^2 | 
-C('FM7', 3, 1/4, 1/8)^2 | C('CM7', 4, 1/4, 1/8)@1 |
-C('AbM7', 3, 1/4, 1/8)^2 | C('G7sus', 3, 1/4, 1/8)^2)
+
+guitar = (C('CM7',4, 1/4, 1/8)^2 |
+          C('G7sus', 3, 1/4, 1/8)^2 |
+          C('A7sus', 3, 1/4, 1/8)^2 |
+          C('Em7', 3, 1/4, 1/8)^2 | 
+          C('FM7', 3, 1/4, 1/8)^2 |
+          C('CM7', 4, 1/4, 1/8)@1 |
+          C('AbM7', 3, 1/4, 1/8)^2 |
+          C('G7sus', 3, 1/4, 1/8)^2)
+
 play((guitar * 2)-octave, 100, instrument=25)
-# 或者在我为musicpy专门写的IDE里你也可以写
-# /(guitar * 2)-octave, 100, instrument=25
 ```
 [点击这里试听 (Microsoft GS Wavetable Synth)](https://drive.google.com/file/d/104QnivVmBH395dLaUKnvEXSC5ZBDBt2E/view?usp=sharing)
 
