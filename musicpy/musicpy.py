@@ -1917,21 +1917,20 @@ def exp(form, obj_name='x', mode='tail'):
     return func
 
 
-def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
+def trans(obj, pitch=4, duration=0.25, interval=None):
     obj = obj.replace(' ', '')
     if obj in standard:
         return chd(obj,
                    'M',
                    pitch=pitch,
                    duration=duration,
-                   intervals=interval,
-                   start_time=start_time)
+                   intervals=interval)
     if '/' not in obj:
         check_structure = obj.split(',')
         check_structure_len = len(check_structure)
         if check_structure_len > 1:
-            return trans(check_structure[0], pitch, start_time=start_time)(
-                ','.join(check_structure[1:])) % (duration, interval)
+            return trans(check_structure[0], pitch)(','.join(
+                check_structure[1:])) % (duration, interval)
         N = len(obj)
         if N == 2:
             first = obj[0]
@@ -1941,8 +1940,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
                            types,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval,
-                           start_time=start_time)
+                           intervals=interval)
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
@@ -1951,8 +1949,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
                            type1,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval,
-                           start_time=start_time)
+                           intervals=interval)
             first_one = obj[0]
             type2 = obj[1:]
             if first_one in standard and type2 in chordTypes:
@@ -1960,38 +1957,36 @@ def trans(obj, pitch=4, duration=0.25, interval=None, start_time=0):
                            type2,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval,
-                           start_time=start_time)
+                           intervals=interval)
     else:
         parts = obj.split('/')
         part1, part2 = parts[0], '/'.join(parts[1:])
         first_chord = trans(part1, pitch)
         if type(first_chord) == chord:
             if part2.isdigit() or (part2[0] == '-' and part2[1:].isdigit()):
-                return first_chord / int(part2)
+                return (first_chord / int(part2)) % (duration, interval)
             elif part2[-1] == '!' and part2[:-1].isdigit():
-                return first_chord @ int(part2[:-1])
+                return (first_chord @ int(part2[:-1])) % (duration, interval)
             elif part2 in standard:
                 if part2 not in standard2:
                     part2 = standard_dict[part2]
                 first_chord_notenames = first_chord.names()
                 if part2 in first_chord_notenames and part2 != first_chord_notenames[
                         0]:
-                    return first_chord.inversion(
-                        first_chord_notenames.index(part2))
+                    return (first_chord.inversion(
+                        first_chord_notenames.index(part2))) % (duration,
+                                                                interval)
                 return chord([part2] + first_chord_notenames,
                              rootpitch=pitch,
                              duration=duration,
-                             interval=interval,
-                             start_time=start_time)
+                             interval=interval)
             else:
                 second_chord = trans(part2, pitch)
                 if type(second_chord) == chord:
                     return chord(second_chord.names() + first_chord.names(),
                                  rootpitch=pitch,
                                  duration=duration,
-                                 interval=interval,
-                                 start_time=start_time)
+                                 interval=interval)
     return 'not a valid chord representation or chord types not in database'
 
 
