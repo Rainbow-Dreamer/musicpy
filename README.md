@@ -7,11 +7,7 @@ musicpy
 #### Musicpy is a music programming language in Python designed to write music in very handy syntax through music theory and algorithms. It is easy to learn and write, easy to read, and incorporates a fully computerized music theory system.
 #### Musicpy can do way more than just writing music. This package can also be used to analyze music through music theory logic, and you can design algorithms to explore the endless possibilities of music, all with musicpy.
 
-I've been developing many python modules and packages on my own in spare time. These python modules and packages are mainly for mathematics, statistics, games and music.
-
-Today I wanna introduce to you a python domain-specific language developed by me that lets you write music with codes in very concise, human-readable syntax: **musicpy**.
-
-This python package allows you to express notes, rhythms, dynamics and other information of a piece of music with a very concise syntax. It can generate music through music theory logic and perform advanced music theory operations. You can easily output musicpy codes into midi file format, and you can also easily input any midi files and convert to musicpy's data structures to do a lot of advanced music theory operations. The syntax of musicpy is very concise and flexible, and it makes the codes written in musicpy very human-readable, and musicpy is fully compatible with python, which means you can write python codes to interact with musicpy. Because musicpy is involved with everything in music theory, I recommend using this package after learning at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are already familiar with music theory.
+With musicpy, you can express notes, chords, melodies, rhythms, volumes and other information of a piece of music with a very concise syntax. It can generate music through music theory logic and perform advanced music theory operations. You can easily output musicpy codes into MIDI file format, and you can also easily load any MIDI files and convert to musicpy's data structures to do a lot of advanced music theory operations. The syntax of musicpy is very concise and flexible, and it makes the codes written in musicpy very human-readable, and musicpy is fully compatible with python, which means you can write python codes to interact with musicpy. Because musicpy is involved with everything in music theory, I recommend using this package after learning at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are already familiar with music theory.
 
 Documentation
 -------------
@@ -137,12 +133,7 @@ musicpy
 #### 你们有想过用代码来写音乐吗？musicpy是一个可以让你用编程写音乐的python领域特定语言，可以让你用非常简洁并且可读性高的语法通过乐理知识和算法写出优美的音乐。
 #### musicpy容易学，容易写，可读性也比较强，并且是一个完全计算机化的乐理系统。musicpy除了用来创作音乐之外，还可以从乐理层面上来创作音乐和分析音乐，并且你可以在musicpy的基础上设计乐理算法来探索音乐的可能性。
 
-最近几个月大学的学业繁忙，但是业余时间自己开发了很多python库，内容包括数学统计，各种游戏，还有音乐等等。其实还有试着写AI方面的，但是目前还是初期进度。
-
-今天我想先介绍一下我正在开发中的一个python库：**musicpy**。
-
-这个库可以让你用非常简洁的语法，来表达一段音乐的音符，节奏，力度等等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作，可以简单地输出成 midi 文件的格式，也可以很简单地输入midi文件并且转换为musicpy的数据结构进行高级乐理的操作。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki
-) 正在写的教程之后你应该很快就上手了。
+musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和弦，旋律，节奏，力度等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作。你可以很容易地把musicpy代码输出为MIDI文件的格式，也可以很简单地加载MIDI文件并且转换为musicpy的数据结构进行高级乐理的操作。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在[wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)正在写的教程之后你应该很快就可以上手了。
 
 使用说明文档
 -------------
