@@ -301,29 +301,48 @@ current preset name: {self.get_current_instrument()}'''
                                  num=0,
                                  max_num=128,
                                  get_ind=False,
-                                 mode=0):
+                                 mode=0,
+                                 return_mode=0):
         current_track = copy(self.current_track)
         current_sfid = copy(self.current_sfid)
         current_bank_num = copy(self.current_bank_num)
         current_preset_num = copy(self.current_preset_num)
-        preset_num = 0
-        select_status = self.program_select(track, sfid, bank_num, preset_num)
+        self.program_select(track, sfid, bank_num)
         result = []
-        ind = []
-        if select_status != -1:
-            result.append(self.synth.channel_info(num)[3])
-            ind.append(preset_num)
-
-        for i in range(max_num - 1):
-            preset_num += 1
-            select_status = self.program_select(track, sfid, bank_num,
-                                                preset_num)
-            if select_status != -1:
-                result.append(self.synth.channel_info(num)[3])
-                ind.append(preset_num)
+        if get_ind:
+            ind = []
+        for i in range(max_num):
+            current_name = self.get_instrument_name(preset_num=i, num=num)
+            if current_name:
+                result.append(current_name)
+                if get_ind:
+                    ind.append(i)
+        if get_ind and return_mode == 0:
+            result = {ind[i]: result[i] for i in range(len(result))}
         self.program_select(current_track, current_sfid, current_bank_num,
                             ind[0] if mode == 1 else current_preset_num)
-        return result if not get_ind else (result, ind)
+        if get_ind and return_mode == 1:
+            return result, ind
+        else:
+            return result
+
+    def all_instruments(self, max_bank_num=129, max_preset_num=128, sfid=None):
+        current_sfid = copy(self.current_sfid)
+        if sfid is not None:
+            self.change_sfid(sfid)
+        instruments = {}
+        for i in range(max_bank_num):
+            current_bank = {}
+            for j in range(max_preset_num):
+                current_name = self.get_instrument_name(bank_num=i,
+                                                        preset_num=j)
+                if current_name:
+                    current_bank[j] = current_name
+            if current_bank:
+                instruments[i] = current_bank
+        if sfid is not None:
+            self.change_sfid(current_sfid)
+        return instruments
 
     def change_preset(self, preset):
         if type(preset) == str:
