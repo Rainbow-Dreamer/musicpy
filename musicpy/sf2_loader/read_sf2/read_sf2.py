@@ -312,11 +312,14 @@ current preset name: {self.get_current_instrument()}'''
         if get_ind:
             ind = []
         for i in range(max_num):
-            current_name = self.get_instrument_name(preset_num=i, num=num)
-            if current_name:
-                result.append(current_name)
-                if get_ind:
-                    ind.append(i)
+            try:
+                current_name = self.get_instrument_name(preset_num=i, num=num)
+                if current_name:
+                    result.append(current_name)
+                    if get_ind:
+                        ind.append(i)
+            except:
+                pass
         if get_ind and return_mode == 0:
             result = {ind[i]: result[i] for i in range(len(result))}
         self.program_select(current_track, current_sfid, current_bank_num,
@@ -334,10 +337,13 @@ current preset name: {self.get_current_instrument()}'''
         for i in range(max_bank_num):
             current_bank = {}
             for j in range(max_preset_num):
-                current_name = self.get_instrument_name(bank_num=i,
-                                                        preset_num=j)
-                if current_name:
-                    current_bank[j] = current_name
+                try:
+                    current_name = self.get_instrument_name(bank_num=i,
+                                                            preset_num=j)
+                    if current_name:
+                        current_bank[j] = current_name
+                except:
+                    pass
             if current_bank:
                 instruments[i] = current_bank
         if sfid is not None:
