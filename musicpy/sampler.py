@@ -998,6 +998,7 @@ class pitch:
             result = self.sounds._spawn(
                 self.sounds.raw_data,
                 overrides={'frame_rate': new_sample_rate})
+            result = result.set_frame_rate(44100)
         return result
 
     def np_array_to_audio(self, np, sample_rate):
