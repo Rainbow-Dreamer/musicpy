@@ -2992,11 +2992,16 @@ class piece:
     def __getitem__(self, i):
         if i > 0:
             i -= 1
-        return track(self.tracks[i], self.instruments_list[i],
-                     self.start_times[i], self.bpm,
-                     self.track_names[i] if self.track_names else None,
-                     self.channels[i] if self.channels else None, self.name,
-                     self.pan[i], self.volume[i])
+        return track(
+            content=self.tracks[i],
+            instrument=self.instruments_list[i],
+            start_time=self.start_times[i],
+            channel=self.channels[i] if self.channels else None,
+            track_name=self.track_names[i] if self.track_names else None,
+            pan=self.pan[i],
+            volume=self.volume[i],
+            bpm=self.bpm,
+            name=self.name)
 
     def __delitem__(self, i):
         if i > 0:
