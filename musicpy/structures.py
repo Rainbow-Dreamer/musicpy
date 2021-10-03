@@ -1083,7 +1083,7 @@ class chord:
                             for i in temp.names()
                         ]
                         if degree in self_names:
-                            temp = temp.omit(degree, 2)
+                            temp = temp.omit(degree)
             elif each.startswith('sus'):
                 num = each[3:]
                 if num.isdigit():
@@ -1419,11 +1419,12 @@ class chord:
             if type(ind[0]) == int:
                 temp = copy(self)
                 ind = [k - 1 for k in ind]
+                length = len(temp)
                 temp.notes = [
-                    temp.notes[k] for k in range(len(temp)) if k not in ind
+                    temp.notes[k] for k in range(length) if k not in ind
                 ]
                 temp.interval = [
-                    temp.interval[k] for k in range(len(temp)) if k not in ind
+                    temp.interval[k] for k in range(length) if k not in ind
                 ]
                 return temp
             elif type(ind[0]) == note or (type(ind[0]) == str and any(
