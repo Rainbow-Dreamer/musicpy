@@ -829,7 +829,7 @@ def write(current_chord,
         MyMIDI.addProgramChange(track_ind, current_channel, 0, instrument)
         content_notes = content.notes
         content_intervals = content.interval
-        current_start_time = (current_chord.start_time
+        current_start_time = (content.start_time
                               if start_time is None else start_time) * 4
         N = len(content)
         for j in range(N):
