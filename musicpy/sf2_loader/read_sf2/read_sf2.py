@@ -1,6 +1,8 @@
 import os
 import sys
+import py
 
+current_path = os.getcwd()
 abs_path = os.path.abspath(os.path.dirname(__file__))
 os.chdir(abs_path)
 os.environ['PATH'] += os.pathsep + abs_path
@@ -22,6 +24,8 @@ import fluidsynth
 from pydub import AudioSegment
 from io import BytesIO
 from copy import deepcopy as copy
+
+os.chdir(current_path)
 
 
 def bar_to_real_time(bar, bpm, mode=0):
@@ -213,7 +217,10 @@ current preset name: {self.get_current_instrument()}'''
                        sfid=None,
                        bank_num=None,
                        preset_num=None,
-                       correct=True):
+                       correct=True,
+                       hide_warnings=True):
+        if hide_warnings:
+            capture = py.io.StdCaptureFD(out=True, in_=False)
         current_track = copy(self.current_track)
         current_sfid = copy(self.current_sfid)
         current_bank_num = copy(self.current_bank_num)
@@ -238,6 +245,8 @@ current preset name: {self.get_current_instrument()}'''
         else:
             self.synth.program_select(current_track, current_sfid,
                                       current_bank_num, current_preset_num)
+        if hide_warnings:
+            capture.reset()
         return select_status
 
     def __lt__(self, preset_num):
@@ -282,15 +291,23 @@ current preset name: {self.get_current_instrument()}'''
                             sfid=None,
                             bank_num=None,
                             preset_num=None,
-                            num=0):
+                            num=0,
+                            hide_warnings=True):
         current_track = copy(self.current_track)
         current_sfid = copy(self.current_sfid)
         current_bank_num = copy(self.current_bank_num)
         current_preset_num = copy(self.current_preset_num)
-        select_status = self.program_select(track, sfid, bank_num, preset_num)
+        select_status = self.program_select(track,
+                                            sfid,
+                                            bank_num,
+                                            preset_num,
+                                            hide_warnings=hide_warnings)
         result = self.synth.channel_info(num)[3]
-        self.program_select(current_track, current_sfid, current_bank_num,
-                            current_preset_num)
+        self.program_select(current_track,
+                            current_sfid,
+                            current_bank_num,
+                            current_preset_num,
+                            hide_warnings=hide_warnings)
         if select_status != -1:
             return result
 
@@ -302,18 +319,23 @@ current preset name: {self.get_current_instrument()}'''
                                  max_num=128,
                                  get_ind=False,
                                  mode=0,
-                                 return_mode=0):
+                                 return_mode=0,
+                                 hide_warnings=True):
+        if hide_warnings:
+            capture = py.io.StdCaptureFD(out=True, in_=False)
         current_track = copy(self.current_track)
         current_sfid = copy(self.current_sfid)
         current_bank_num = copy(self.current_bank_num)
         current_preset_num = copy(self.current_preset_num)
-        self.program_select(track, sfid, bank_num)
+        self.program_select(track, sfid, bank_num, hide_warnings=False)
         result = []
         if get_ind:
             ind = []
         for i in range(max_num):
             try:
-                current_name = self.get_instrument_name(preset_num=i, num=num)
+                current_name = self.get_instrument_name(preset_num=i,
+                                                        num=num,
+                                                        hide_warnings=False)
                 if current_name:
                     result.append(current_name)
                     if get_ind:
@@ -322,14 +344,25 @@ current preset name: {self.get_current_instrument()}'''
                 pass
         if get_ind and return_mode == 0:
             result = {ind[i]: result[i] for i in range(len(result))}
-        self.program_select(current_track, current_sfid, current_bank_num,
-                            ind[0] if mode == 1 else current_preset_num)
+        self.program_select(current_track,
+                            current_sfid,
+                            current_bank_num,
+                            ind[0] if mode == 1 else current_preset_num,
+                            hide_warnings=False)
+        if hide_warnings:
+            capture.reset()
         if get_ind and return_mode == 1:
             return result, ind
         else:
             return result
 
-    def all_instruments(self, max_bank_num=129, max_preset_num=128, sfid=None):
+    def all_instruments(self,
+                        max_bank_num=129,
+                        max_preset_num=128,
+                        sfid=None,
+                        hide_warnings=True):
+        if hide_warnings:
+            capture = py.io.StdCaptureFD(out=True, in_=False)
         current_sfid = copy(self.current_sfid)
         if sfid is not None:
             self.change_sfid(sfid)
@@ -338,8 +371,8 @@ current preset name: {self.get_current_instrument()}'''
             current_bank = {}
             for j in range(max_preset_num):
                 try:
-                    current_name = self.get_instrument_name(bank_num=i,
-                                                            preset_num=j)
+                    current_name = self.get_instrument_name(
+                        bank_num=i, preset_num=j, hide_warnings=False)
                     if current_name:
                         current_bank[j] = current_name
                 except:
@@ -348,6 +381,8 @@ current preset name: {self.get_current_instrument()}'''
                 instruments[i] = current_bank
         if sfid is not None:
             self.change_sfid(current_sfid)
+        if hide_warnings:
+            capture.reset()
         return instruments
 
     def change_preset(self, preset):
