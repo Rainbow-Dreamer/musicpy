@@ -45,14 +45,13 @@ For more details including abilities and usages of this musicpy editor, see the 
 
 Musicpy is all compatible with Windows, macOS and Linux, but there are some important notes if you encounter some errors on Linux or macOS.
 
-Note1: If you encounter ```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` errors on Linux, here is the solutions to fix it,
-open the terminal and run `sudo apt-get install freepats` and it will fix the errors.
+Note1: If you encounter ```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` errors on Linux, here is the solutions to fix it, open the terminal and run `sudo apt-get install freepats` and it will fix the errors.
 
 Note2: If you are using macOS, and you encounter problems when you run musicpy codes using your current python version, please to use python 3.7.1/3.7.9 to run musicpy, because it seems that on macOS, some of the requirements python modules of musicpy may not be compatible with some of the newer python versions. It is tested by my friend that on macOS with python 3.7.1 (and python 3.7.9 tested by me), musicpy could run and play the musicpy codes without any errors, but other versions may not. If you don't have problems when you run musicpy codes using your current python version, then you don't need to refer to this note.
 
 Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
 
-Note 4: Some python IDEs may prevent the function to play music of musicpy, which makes the music cannot be played normally when playing the codes, such as VS Code, PyCharm, here it is recommended to use interactive python IDE, such as Jupyter Notebook, Wing IDE, or directly use the interactive shell of python in cmd/terminal (run `python` to enter).
+Note 4: Some python IDEs may prevent the function to play music of musicpy, which makes the music cannot be played normally when playing the codes, such as VS Code, PyCharm, here it is recommended to use more interactive python IDE, such as Jupyter Notebook, Wing IDE, or directly use the interactive shell of python in cmd/terminal (run `python` to enter).
 
 Importing
 -------------
@@ -175,15 +174,13 @@ pip install musicpy
 
 Musicpy对于Windows, macOS和Linux都是兼容的, 但是这里有一些在Linux或者macOS上可能会遇到的问题的解决方案。
 
-情况1: 如果你在Linux上遇到```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` 的错误, 这里是一个解决办法,
-打开终端并且运行`sudo apt-get install freepats`即可解决这个问题。
+情况1: 如果你在Linux上遇到```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` 的错误,这里是一个解决办法,打开终端并且运行`sudo apt-get install freepats`即可解决这个问题。
 
-情况2: 如果你使用的是macOS,并且当前你使用的python版本运行musicpy代码遇到问题，请使用python 3.7.1/3.7.9来运行musicpy,因为在macOS上有一些musicpy的依赖库貌似和一些更新的python版本不太兼容。  
-经过我的朋友测试，在macOS上python 3.7.1运行musicpy不会报错 (还有python 3.7.9，经过我的测试)，但是其他的版本也许不一定。如果你当前使用的python版本运行musicpy没出现问题就不用参考这一条。
+情况2: 如果你使用的是macOS,并且当前你使用的python版本运行musicpy代码遇到问题，请使用python 3.7.1/3.7.9来运行musicpy,因为在macOS上有一些musicpy的依赖库貌似和一些更新的python版本不太兼容。经过我的朋友测试，在macOS上python 3.7.1运行musicpy不会报错 (还有python 3.7.9，经过我的测试)，但是其他的版本也许不一定。如果你当前使用的python版本运行musicpy没出现问题就不用参考这一条。
 
 情况3: 在Windows, macOS和Linux上，你都可以在终端(cmd/terminal)里使用pip安装musicpy。
 
-情况4: 有一些python IDE可能会阻止musicpy的播放音乐的函数，播放代码时可能无法正常播放音乐，比如VS Code, PyCharm, 这里推荐使用交互式的python IDE，比如Jupyter Notebook, Wing IDE，或者直接在cmd/terminal里面使用python自带的交互式shell (运行`python`即可进入)。
+情况4: 有一些python IDE可能会阻止musicpy的播放音乐的函数，播放代码时可能无法正常播放音乐，比如VS Code, PyCharm, 这里推荐使用更加交互式的python IDE，比如Jupyter Notebook, Wing IDE，或者直接在cmd/terminal里面使用python自带的交互式shell (运行`python`即可进入)。
 
 import这个库
 -------------
