@@ -48,9 +48,11 @@ Musicpy is all compatible with Windows, macOS and Linux, but there are some impo
 Note1: If you encounter ```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` errors on Linux, here is the solutions to fix it,
 open the terminal and run `sudo apt-get install freepats` and it will fix the errors.
 
-Note2: If you are using macOS, please be sure to use python 3.7.1/3.7.9 to run musicpy, because it seems that on macOS, some of the requirements python modules of musicpy may not be compatible with some of the newer python versions (for example python 3.9). It is tested by my friend that on macOS with python 3.7.1 (and python 3.7.9 tested by me), musicpy could run and play the musicpy codes without any errors, but other versions may not, so please be sure to use python 3.7.1/3.7.9 to run musicpy if you are using macOS.
+Note2: If you are using macOS, and you encounter problems when you run musicpy codes using your current python version, please to use python 3.7.1/3.7.9 to run musicpy, because it seems that on macOS, some of the requirements python modules of musicpy may not be compatible with some of the newer python versions. It is tested by my friend that on macOS with python 3.7.1 (and python 3.7.9 tested by me), musicpy could run and play the musicpy codes without any errors, but other versions may not. If you don't have problems when you run musicpy codes using your current python version, then you don't need to refer to this note.
 
 Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
+
+Note 4: Some python IDEs may prevent the function to play music of musicpy, which makes the music cannot be played normally when playing the codes, such as VS Code, PyCharm, here it is recommended to use interactive python IDE, such as Jupyter Notebook, Wing IDE, or directly use the interactive shell of python in cmd/terminal (run `python` to enter).
 
 Importing
 -------------
@@ -138,7 +140,7 @@ Musicpy是一个可以让你用编程写音乐的python领域特定语言，可�
 
 Musicpy除了用来创作音乐之外，还可以从乐理层面上来创作音乐和分析音乐，并且你可以在musicpy的基础上设计乐理算法来探索音乐的可能性。
 
-musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和弦，旋律，节奏，力度等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作。你可以很容易地把musicpy代码输出为MIDI文件的格式，也可以很简单地加载MIDI文件并且转换为musicpy的数据结构进行高级乐理的操作。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在[wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)正在写的教程之后你应该很快就可以上手了。
+Musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和弦，旋律，节奏，力度等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作。你可以很容易地把musicpy代码输出为MIDI文件的格式，也可以很简单地加载MIDI文件并且转换为musicpy的数据结构进行高级乐理的操作。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在[wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)正在写的教程之后你应该很快就可以上手了。
 
 使用说明文档
 -------------
@@ -150,7 +152,7 @@ wiki里的语法与功能与最新版本的musicpy是同步的。
 
 [musicpy作曲示例实际演示以及musicpy实验作曲视频](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
-详细的 musicpy数据结构，基础语法以及使用教程，请看我正在写的 [Wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
+详细的musicpy数据结构，基础语法以及使用教程，请看我正在写的[wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
 
 我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD)下载，正在不断地更新中。
 
@@ -176,10 +178,12 @@ Musicpy对于Windows, macOS和Linux都是兼容的, 但是这里有一些在Linu
 情况1: 如果你在Linux上遇到```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` 的错误, 这里是一个解决办法,
 打开终端并且运行`sudo apt-get install freepats`即可解决这个问题。
 
-情况2: 如果你使用的是macOS,请确定使用python 3.7.1/3.7.9来运行musicpy,因为在macOS上有一些musicpy的依赖库貌似和一些更新的python版本不太兼容(比如python 3.9)。  
-经过我的朋友测试，在macOS上python 3.7.1运行musicpy不会报错 (还有python 3.7.9，经过我的测试)，但是其他的版本也许不一定，所以如果你使用的是macOS,请确定使用python 3.7.1/3.7.9来运行musicpy。
+情况2: 如果你使用的是macOS,并且当前你使用的python版本运行musicpy代码遇到问题，请使用python 3.7.1/3.7.9来运行musicpy,因为在macOS上有一些musicpy的依赖库貌似和一些更新的python版本不太兼容。  
+经过我的朋友测试，在macOS上python 3.7.1运行musicpy不会报错 (还有python 3.7.9，经过我的测试)，但是其他的版本也许不一定。如果你当前使用的python版本运行musicpy没出现问题就不用参考这一条。
 
 情况3: 在Windows, macOS和Linux上，你都可以在终端(cmd/terminal)里使用pip安装musicpy。
+
+情况4: 有一些python IDE可能会阻止musicpy的播放音乐的函数，播放代码时可能无法正常播放音乐，比如VS Code, PyCharm, 这里推荐使用交互式的python IDE，比如Jupyter Notebook, Wing IDE，或者直接在cmd/terminal里面使用python自带的交互式shell (运行`python`即可进入)。
 
 import这个库
 -------------
