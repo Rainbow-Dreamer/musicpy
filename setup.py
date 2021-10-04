@@ -18,7 +18,7 @@ setup(
         'music language', 'use codes to write music', 'music language for AI'
     ],
     install_requires=[
-        'mido', 'midiutil', 'pygame', 'pillow', 'pyglet==1.5.11'
+        'mido', 'midiutil', 'pygame', 'pillow', 'pyglet==1.5.11', 'keyboard'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
