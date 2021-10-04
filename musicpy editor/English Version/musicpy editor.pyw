@@ -3,22 +3,22 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import font
 from tkinter.scrolledtext import ScrolledText
-import PIL.Image, PIL.ImageTk
 from tkinter import filedialog
-import os, sys
+import PIL.Image, PIL.ImageTk
+import sys
+import os
 import re
 from yapf.yapflib.yapf_api import FormatCode
+from io import BytesIO
 
+abs_path = os.path.dirname(os.path.abspath(__file__))
+os.chdir(abs_path)
 os.chdir('../..')
 sys.path.append('.')
+sys.path.append('musicpy')
 musicpy_vars = dir(__import__('musicpy'))
-from musicpy import *
-
-os.chdir('musicpy editor/English Version')
-from io import BytesIO
-import pygame
-
-pygame.mixer.init(44100, -16, 1, 1024)
+exec("from musicpy import *")
+os.chdir(abs_path)
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read())
 
