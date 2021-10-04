@@ -3,4 +3,4 @@ pydub
 librosa
 soundfile
 numpy==1.20.3
-py
+sf2_loader

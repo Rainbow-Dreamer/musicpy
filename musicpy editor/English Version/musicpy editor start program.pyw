@@ -18,6 +18,7 @@ from pyglet import shapes
 import pygame.midi
 import re
 from yapf.yapflib.yapf_api import FormatCode
+import py
 
 abs_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(abs_path)
