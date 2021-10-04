@@ -1,1 +1,2 @@
 include musicpy/*.txt
+include LICENSE
