@@ -220,7 +220,10 @@ current preset name: {self.get_current_instrument()}'''
                        correct=True,
                        hide_warnings=True):
         if hide_warnings:
-            capture = py.io.StdCaptureFD(out=True, in_=False)
+            try:
+                capture = py.io.StdCaptureFD(out=True, in_=False)
+            except:
+                pass
         current_track = copy(self.current_track)
         current_sfid = copy(self.current_sfid)
         current_bank_num = copy(self.current_bank_num)
@@ -246,7 +249,10 @@ current preset name: {self.get_current_instrument()}'''
             self.synth.program_select(current_track, current_sfid,
                                       current_bank_num, current_preset_num)
         if hide_warnings:
-            capture.reset()
+            try:
+                capture.reset()
+            except:
+                pass
         return select_status
 
     def __lt__(self, preset_num):
@@ -322,7 +328,10 @@ current preset name: {self.get_current_instrument()}'''
                                  return_mode=0,
                                  hide_warnings=True):
         if hide_warnings:
-            capture = py.io.StdCaptureFD(out=True, in_=False)
+            try:
+                capture = py.io.StdCaptureFD(out=True, in_=False)
+            except:
+                pass
         current_track = copy(self.current_track)
         current_sfid = copy(self.current_sfid)
         current_bank_num = copy(self.current_bank_num)
@@ -350,7 +359,10 @@ current preset name: {self.get_current_instrument()}'''
                             ind[0] if mode == 1 else current_preset_num,
                             hide_warnings=False)
         if hide_warnings:
-            capture.reset()
+            try:
+                capture.reset()
+            except:
+                pass
         if get_ind and return_mode == 1:
             return result, ind
         else:
@@ -362,7 +374,10 @@ current preset name: {self.get_current_instrument()}'''
                         sfid=None,
                         hide_warnings=True):
         if hide_warnings:
-            capture = py.io.StdCaptureFD(out=True, in_=False)
+            try:
+                capture = py.io.StdCaptureFD(out=True, in_=False)
+            except:
+                pass
         current_sfid = copy(self.current_sfid)
         if sfid is not None:
             self.change_sfid(sfid)
@@ -382,7 +397,10 @@ current preset name: {self.get_current_instrument()}'''
         if sfid is not None:
             self.change_sfid(current_sfid)
         if hide_warnings:
-            capture.reset()
+            try:
+                capture.reset()
+            except:
+                pass
         return instruments
 
     def change_preset(self, preset):
