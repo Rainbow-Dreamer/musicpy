@@ -1256,6 +1256,14 @@ class chord:
                     note1 = chord(note1)
             # calculate the absolute distances of all of the notes of the chord to add and self,
             # and then sort them, make differences between each two distances
+            not_notes = temp.split(pitch_bend, get_time=True) + temp.split(
+                tempo, get_time=True) + note1.split(
+                    pitch_bend, get_time=True) + note1.split(tempo,
+                                                             get_time=True)
+            temp.clear_pitch_bend(value='all')
+            temp.clear_tempo()
+            note1.clear_pitch_bend(value='all')
+            note1.clear_tempo()
             distance = []
             intervals1 = temp.interval
             intervals2 = note1.interval
@@ -1284,7 +1292,7 @@ class chord:
                          interval=newinterval,
                          start_time=current_start_time,
                          other_messages=temp.other_messages +
-                         note1.other_messages)
+                         note1.other_messages) + not_notes
         elif mode == 'after':
             if self.interval[-1] == 0:
                 return (self.rest(0) | (start + note1.start_time)) + note1
