@@ -10,7 +10,10 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
 
-abs_path = os.path.dirname(os.path.abspath(__file__))
+if 'start program' not in __file__:
+    abs_path = os.path.dirname(os.path.abspath(__file__))
+else:
+    abs_path = os.path.dirname(sys.executable)
 
 if 'visualization folder' not in abs_path:
     abs_path += '/visualization folder'

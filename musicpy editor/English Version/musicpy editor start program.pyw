@@ -32,7 +32,7 @@ import py
 import pygame
 import pygame.midi
 
-abs_path = os.path.dirname(os.path.abspath(__file__))
+abs_path = os.path.dirname(sys.executable)
 os.chdir(abs_path)
 sys.path.append('.')
 os.chdir('../..')
