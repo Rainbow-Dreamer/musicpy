@@ -2271,6 +2271,8 @@ class chord:
             if types == tempo or types == pitch_bend:
                 if each.start_time is not None:
                     each.start_time += start_time
+                    if each.start_time < 1:
+                        each.start_time = 1
 
     def with_start(self, start_time):
         temp = copy(self)
@@ -3658,6 +3660,8 @@ class piece:
                 if types == tempo or types == pitch_bend:
                     if each.start_time is not None:
                         each.start_time += current_start_time
+                        if each.start_time < 1:
+                            each.start_time = 1
 
     def reverse(self, **args):
         temp = copy(self)
