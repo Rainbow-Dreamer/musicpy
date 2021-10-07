@@ -3,6 +3,8 @@ import sys
 import math
 import random
 import struct
+import chunk
+from io import BytesIO
 from difflib import SequenceMatcher
 from midiutil.MidiFile import *
 import mido
@@ -300,10 +302,22 @@ def read(name,
     # the first available midi track (has notes inside it)
     if is_file:
         name.seek(0)
-        current_midi = midi(file=name)
-        name.close()
+        try:
+            current_midi = midi(file=name)
+            name.close()
+        except Exception as OSError:
+            name.seek(0)
+            current_midi = midi(file=riff_to_midi(name))
+            name.close()
+            split_channels = True
+        name = name.name
+
     else:
-        current_midi = midi(name)
+        try:
+            current_midi = midi(name)
+        except Exception as OSError:
+            current_midi = midi(file=riff_to_midi(name))
+            split_channels = True
     whole_tracks = current_midi.tracks
     current_track = None
     changes_track = [
@@ -987,7 +1001,6 @@ def write(current_chord,
                 MyMIDI.writeFile(output_file)
             return
         else:
-            from io import BytesIO
             current_io = BytesIO()
             MyMIDI.writeFile(current_io)
             return current_io
@@ -1061,7 +1074,6 @@ def write(current_chord,
                 MyMIDI.writeFile(output_file)
             return
         else:
-            from io import BytesIO
             current_io = BytesIO()
             MyMIDI.writeFile(current_io)
             return current_io
@@ -3546,3 +3558,41 @@ def distribute(current_chord,
 
 def stopall():
     pygame.mixer.music.stop()
+
+
+def riff_to_midi(riff_name, name='temp.mid', output_file=False):
+    if type(riff_name) == str:
+        current_file = open(riff_name, 'rb')
+        root = chunk.Chunk(current_file, bigendian=False)
+    else:
+        root = chunk.Chunk(riff_name, bigendian=False)
+
+    chunk_id = root.getname()
+    if chunk_id == b'MThd':
+        raise IOError(f"Already a Standard MIDI format file: {riff_name}")
+    elif chunk_id != b'RIFF':
+        raise IOError(f"Not an RIFF file: {riff_name}")
+
+    chunk_size = root.getsize()
+    chunk_raw = root.read(chunk_size)
+    (hdr_id, hdr_data, midi_size) = struct.unpack("<4s4sL", chunk_raw[0:12])
+
+    if hdr_id != b'RMID' or hdr_data != b'data':
+        raise IOError(f"Invalid or unsupported input file: {riff_name}")
+    try:
+        midi_raw = chunk_raw[12:12 + midi_size]
+    except IndexError:
+        raise IOError(f"Broken input file: {riff_name}")
+
+    root.close()
+    if type(riff_name) == str:
+        current_file.close()
+
+    if output_file:
+        with open(name, 'wb') as f:
+            f.write(midi_raw)
+    else:
+        result = BytesIO()
+        result.write(midi_raw)
+        result.seek(0)
+        return result
