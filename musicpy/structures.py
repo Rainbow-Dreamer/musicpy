@@ -3476,7 +3476,8 @@ class piece:
         length = len(self.tracks)
         start_times_inds = [[
             i for i in range(len(first_track))
-            if first_track.notes[i].track_num == k
+            if type(first_track.notes[i]) == note
+            and first_track.notes[i].track_num == k
         ] for k in range(length)]
         available_tracks_inds = [
             k for k in range(length) if start_times_inds[k]

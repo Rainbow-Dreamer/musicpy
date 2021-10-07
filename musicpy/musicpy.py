@@ -364,6 +364,19 @@ def read(name,
                           track_ind=j) for j in range(len(available_tracks))
         ]
         if merge:
+            if split_channels:
+                new_all_tracks = read(name,
+                                      mode='all',
+                                      is_file=is_file,
+                                      merge=False,
+                                      get_off_drums=get_off_drums,
+                                      to_piece=True,
+                                      split_channels=True,
+                                      clear_empty_notes=clear_empty_notes)
+                all_tracks = [[
+                    new_all_tracks.bpm, new_all_tracks.tracks[i],
+                    new_all_tracks.start_times[i]
+                ] for i in range(len(new_all_tracks))]
             pitch_bends = concat(
                 [i[1].split(pitch_bend, get_time=True) for i in all_tracks])
             for each in all_tracks:
@@ -375,9 +388,12 @@ def read(name,
             tempos, all_track_notes, first_track_start_time = first_track
             for i in all_tracks[1:]:
                 all_track_notes &= (i[1], i[2] - first_track_start_time)
-            all_track_notes.other_messages = concat(
-                [each[1].other_messages for each in all_tracks])
-            if changes:
+            if not split_channels:
+                all_track_notes.other_messages = concat(
+                    [each[1].other_messages for each in all_tracks])
+            else:
+                all_track_notes.other_messages = new_all_tracks.other_messages
+            if changes and not split_channels:
                 all_track_notes += changes
                 if changes.other_messages:
                     all_track_notes.other_messages += changes.other_messages
@@ -385,7 +401,24 @@ def read(name,
             return tempos, all_track_notes, first_track_start_time
         else:
             if not to_piece:
-                if changes:
+                if split_channels:
+                    new_all_tracks = read(name,
+                                          mode='all',
+                                          is_file=is_file,
+                                          merge=False,
+                                          get_off_drums=get_off_drums,
+                                          to_piece=True,
+                                          split_channels=True,
+                                          clear_empty_notes=clear_empty_notes)
+                    all_tracks = [[
+                        new_all_tracks.bpm, new_all_tracks.tracks[i],
+                        new_all_tracks.start_times[i]
+                    ] for i in range(len(new_all_tracks))]
+                    for k in range(len(all_tracks)):
+                        all_tracks[k][
+                            1].other_messages = new_all_tracks.tracks[
+                                k].other_messages
+                if changes and not split_channels:
                     all_tracks[0][1] += changes
                     if changes.other_messages:
                         all_tracks[0][
@@ -424,9 +457,23 @@ def read(name,
                     tracks_names_list, channels_list,
                     os.path.splitext(os.path.basename(name))[0], pan_list,
                     volume_list)
-                if split_channels and len(available_tracks) == 1:
-                    available_tracks = available_tracks[0]
-                    all_tracks = all_tracks[0]
+                if split_channels and len(available_tracks) <= 1:
+                    remain_available_tracks = [
+                        each for each in whole_tracks
+                        if any(j.type == 'note_on' and j.channel == 9
+                               for j in each)
+                    ]
+                    remain_all_tracks = [
+                        midi_to_chord(x,
+                                      remain_available_tracks[j],
+                                      whole_bpm,
+                                      add_track_num=split_channels,
+                                      clear_empty_notes=clear_empty_notes,
+                                      track_ind=j)
+                        for j in range(len(remain_available_tracks))
+                    ]
+                    available_tracks = remain_available_tracks[0]
+                    all_tracks = remain_all_tracks[0]
                     channels_numbers = [
                         i.channel for i in available_tracks
                         if hasattr(i, 'channel')
@@ -447,7 +494,7 @@ def read(name,
                             tracks_names_list = None
                         result_merge_track = all_tracks[1]
                         result_piece.tracks = [
-                            [] for i in range(len(channels_list))
+                            chord([]) for i in range(len(channels_list))
                         ]
                         result_piece.instruments_list = [
                             reverse_instruments[i] for i in instruments_list
@@ -455,6 +502,11 @@ def read(name,
                         result_piece.instruments_numbers = instruments_list
                         result_piece.track_names = tracks_names_list
                         result_piece.channels = channels_list
+                        result_piece.pan = [[]
+                                            for i in range(len(channels_list))]
+                        result_piece.volume = [
+                            [] for i in range(len(channels_list))
+                        ]
                         for each in result_merge_track:
                             if type(each) == tempo:
                                 each.track_num = channels_list[0]
@@ -463,10 +515,31 @@ def read(name,
                                     each.track_num)
                         result_piece.reconstruct(result_merge_track,
                                                  all_tracks[2])
-                result_piece.other_messages = concat([
-                    each_track.other_messages
-                    for each_track in result_piece.tracks
-                ])
+                        result_piece.other_messages = result_merge_track.other_messages
+                        other_messages_no_channels = [
+                            i for i in result_piece.other_messages
+                            if not hasattr(i, 'channel')
+                        ]
+                        for k in range(len(result_piece)):
+                            current_channel = result_piece.channels[k]
+                            current_other_messages = [
+                                i for i in result_piece.other_messages
+                                if hasattr(i, 'channel')
+                                and i.channel == current_channel
+                            ]
+                            result_piece.tracks[
+                                k].other_messages = current_other_messages
+                        result_piece.tracks[
+                            0].other_messages = other_messages_no_channels + result_piece.tracks[
+                                0].other_messages
+                        if get_off_drums:
+                            drum_ind = result_piece.channels.index(9)
+                            del result_piece[drum_ind + 1]
+                else:
+                    result_piece.other_messages = concat([
+                        each_track.other_messages
+                        for each_track in result_piece.tracks
+                    ])
                 return result_piece
 
     else:
