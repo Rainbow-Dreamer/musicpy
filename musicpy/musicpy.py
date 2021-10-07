@@ -56,13 +56,13 @@ def degree_to_note(degree, duration=0.25, volume=100):
     return note(name, num, duration, volume)
 
 
-def totuple(x):
-    if isinstance(x, str):
-        return (x, )
+def totuple(obj):
+    if isinstance(obj, str):
+        return (obj, )
     try:
-        return tuple(x)
+        return tuple(obj)
     except:
-        return (x, )
+        return (obj, )
 
 
 def get_freq(y, standard=440):
@@ -280,8 +280,8 @@ def play(current_chord,
 
 
 def get_tracks(name):
-    x = midi(name)
-    return x.tracks
+    current_midi = midi(name)
+    return current_midi.tracks
 
 
 def read(name,
@@ -293,25 +293,25 @@ def read(name,
          to_piece=False,
          split_channels=False,
          clear_empty_notes=False):
-    # read from a midi file and return a notes list
+    # read from a MIDI file and return the BPM, chord types, start times of its tracks, or convert the MIDI file to a piece type
 
-    # if mode is set to 'find', then will automatically search for
+    # if mode is set to 'find', then this function will automatically search for
     # the first available midi track (has notes inside it)
     if is_file:
         name.seek(0)
-        x = midi(file=name)
+        current_midi = midi(file=name)
         name.close()
     else:
-        x = midi(name)
-    whole_tracks = x.tracks
-    t = None
+        current_midi = midi(name)
+    whole_tracks = current_midi.tracks
+    current_track = None
     changes_track = [
         each for each in whole_tracks if all(i.type != 'note_on' for i in each)
     ]
     whole_bpm = 120
     if changes_track:
         changes = [
-            midi_to_chord(x,
+            midi_to_chord(current_midi,
                           each,
                           add_track_num=split_channels,
                           clear_empty_notes=clear_empty_notes,
@@ -329,11 +329,17 @@ def read(name,
                 whole_bpm = unit.tempo2bpm(curren_tempo[0].tempo)
                 break
     if mode == 'find':
+        found = False
         for each in whole_tracks:
             if any(each_msg.type == 'note_on' for each_msg in each):
-                t = each
+                found = True
+                current_track = each
                 break
-        result = midi_to_chord(x, t, whole_bpm)
+        if not found:
+            raise ValueError(
+                'No tracks found in the MIDI file, please check if the input MIDI file is empty'
+            )
+        result = midi_to_chord(current_midi, current_track, whole_bpm)
         if changes:
             result[1] += changes
             if changes.other_messages:
@@ -366,7 +372,7 @@ def read(name,
                            for j in each)
             ]
         all_tracks = [
-            midi_to_chord(x,
+            midi_to_chord(current_midi,
                           available_tracks[j],
                           whole_bpm,
                           add_track_num=split_channels,
@@ -387,6 +393,10 @@ def read(name,
                     new_all_tracks.bpm, new_all_tracks.tracks[i],
                     new_all_tracks.start_times[i]
                 ] for i in range(len(new_all_tracks))]
+            if not all_tracks:
+                raise ValueError(
+                    'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
+                )
             pitch_bends = concat(
                 [i[1].split(pitch_bend, get_time=True) for i in all_tracks])
             for each in all_tracks:
@@ -412,7 +422,7 @@ def read(name,
                 i for i in all_track_notes.other_messages
                 if (not hasattr(i, 'channel')) and type(i) != track_name
             ]
-            return tempos, all_track_notes, first_track_start_time
+            return [tempos, all_track_notes, first_track_start_time]
         else:
             if not to_piece:
                 if split_channels:
@@ -432,6 +442,10 @@ def read(name,
                         all_tracks[k][
                             1].other_messages = new_all_tracks.tracks[
                                 k].other_messages
+                if not all_tracks:
+                    raise ValueError(
+                        'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
+                    )
                 if changes and not split_channels:
                     all_tracks[0][1] += changes
                     if changes.other_messages:
@@ -489,7 +503,7 @@ def read(name,
                                for j in each)
                     ]
                     remain_all_tracks = [
-                        midi_to_chord(x,
+                        midi_to_chord(current_midi,
                                       remain_available_tracks[j],
                                       whole_bpm,
                                       add_track_num=split_channels,
@@ -580,7 +594,7 @@ def read(name,
                         ])
                     else:
                         raise ValueError(
-                            'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True'
+                            'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
                         )
                 result_track_names = []
                 for each in result_piece.tracks:
@@ -617,8 +631,8 @@ def read(name,
 
     else:
         try:
-            t = whole_tracks[trackind]
-            result = midi_to_chord(x, t, whole_bpm)
+            current_track = whole_tracks[trackind]
+            result = midi_to_chord(current_midi, current_track, whole_bpm)
             if changes:
                 result[1] += changes
                 if changes.other_messages:
@@ -635,19 +649,19 @@ def read(name,
                 ]
             return result
         except:
-            return 'error'
+            raise ValueError(f'There is no track {trackind} of this MIDI file')
 
 
-def midi_to_chord(x,
-                  t,
+def midi_to_chord(current_midi,
+                  current_track,
                   bpm=None,
                   add_track_num=False,
                   clear_empty_notes=False,
                   track_ind=0):
-    interval_unit = x.ticks_per_beat * 4
+    interval_unit = current_midi.ticks_per_beat * 4
     intervals = []
     notelist = []
-    notes_len = len(t)
+    notes_len = len(current_track)
     find_first_note = False
     start_time = 0
     current_time = 0
@@ -657,7 +671,7 @@ def midi_to_chord(x,
 
     counter = 0
     for i in range(notes_len):
-        current_msg = t[i]
+        current_msg = current_track[i]
         current_time += current_msg.time
         if current_msg.type == 'note_on' and current_msg.velocity != 0:
             counter += 1
@@ -665,7 +679,7 @@ def midi_to_chord(x,
             current_msg_note = current_msg.note
             if not find_first_note:
                 find_first_note = True
-                start_time = sum(t[j].time
+                start_time = sum(current_track[j].time
                                  for j in range(i + 1)) / interval_unit
                 if start_time.is_integer():
                     start_time = int(start_time)
@@ -676,7 +690,7 @@ def midi_to_chord(x,
             find_interval = False
             find_duration = False
             for k in range(i + 1, notes_len):
-                new_msg = t[k]
+                new_msg = current_track[k]
                 new_msg_type = new_msg.type
                 current_interval += new_msg.time
                 current_duration += new_msg.time
@@ -1100,7 +1114,7 @@ def add_other_messages(MyMIDI, other_messages, write_type='piece'):
             pass
 
 
-def detect_in_scale(x,
+def detect_in_scale(current_chord,
                     most_like_num=3,
                     get_scales=False,
                     search_all=True,
@@ -1108,9 +1122,9 @@ def detect_in_scale(x,
                     major_minor_preference=True,
                     find_altered=True,
                     altered_max_number=1):
-    if type(x) != chord:
-        x = chord([trans_note(i) for i in x])
-    whole_notes = x.names()
+    if type(current_chord) != chord:
+        current_chord = chord([trans_note(i) for i in current_chord])
+    whole_notes = current_chord.names()
     note_names = list(set(whole_notes))
     note_names = [
         standard_dict[i] if i not in standard2 else i for i in note_names
@@ -1163,8 +1177,8 @@ def detect_in_scale(x,
                                             f"{current_scale.start.name} {current_scale.mode} {', '.join(altered_msg)}"
                                         )
     if search_all:
-        x_len = len(x)
-        results.sort(key=lambda s: x_len / len(s), reverse=True)
+        current_chord_len = len(current_chord)
+        results.sort(key=lambda s: current_chord_len / len(s), reverse=True)
     if results:
         first_note_scale = results[0]
         inversion_scales = [
@@ -1205,37 +1219,45 @@ def detect_in_scale(x,
     return detect_result
 
 
-def most_appear_notes_detect_scale(x, most_appeared_note, get_scales=False):
+def most_appear_notes_detect_scale(current_chord,
+                                   most_appeared_note,
+                                   get_scales=False):
     third_degree_major = most_appeared_note.up(major_third).name
     third_degree_minor = most_appeared_note.up(minor_third).name
-    if x.count(third_degree_major) > x.count(third_degree_minor):
+    if current_chord.count(third_degree_major) > current_chord.count(
+            third_degree_minor):
         current_mode = 'major'
-        if x.count(most_appeared_note.up(augmented_fourth).name) > x.count(
-                most_appeared_note.up(perfect_fourth).name):
+        if current_chord.count(most_appeared_note.up(
+                augmented_fourth).name) > current_chord.count(
+                    most_appeared_note.up(perfect_fourth).name):
             current_mode = 'lydian'
         else:
-            if x.count(most_appeared_note.up(minor_seventh).name) > x.count(
-                    most_appeared_note.up(major_seventh).name):
+            if current_chord.count(most_appeared_note.up(
+                    minor_seventh).name) > current_chord.count(
+                        most_appeared_note.up(major_seventh).name):
                 current_mode = 'mixolydian'
     else:
         current_mode = 'minor'
-        if x.count(most_appeared_note.up(major_sixth).name) > x.count(
-                most_appeared_note.up(minor_sixth).name):
+        if current_chord.count(
+                most_appeared_note.up(major_sixth).name) > current_chord.count(
+                    most_appeared_note.up(minor_sixth).name):
             current_mode = 'dorian'
         else:
-            if x.count(most_appeared_note.up(minor_second).name) > x.count(
-                    most_appeared_note.up(major_second).name):
+            if current_chord.count(most_appeared_note.up(
+                    minor_second).name) > current_chord.count(
+                        most_appeared_note.up(major_second).name):
                 current_mode = 'phrygian'
-                if x.count(most_appeared_note.up(
-                        diminished_fifth).name) > x.count(
-                            most_appeared_note.up(perfect_fifth).name):
+                if current_chord.count(
+                        most_appeared_note.up(
+                            diminished_fifth).name) > current_chord.count(
+                                most_appeared_note.up(perfect_fifth).name):
                     current_mode = 'locrian'
     if get_scales:
         return scale(most_appeared_note.name, current_mode)
     return f'{most_appeared_note.name} {current_mode}'
 
 
-def detect_scale(x,
+def detect_scale(current_chord,
                  melody_tol=minor_seventh,
                  chord_tol=major_sixth,
                  get_off_overlap_notes=True,
@@ -1251,19 +1273,19 @@ def detect_scale(x,
     # return a list of most likely and exact modes the music has.
 
     # newly added on 2020/4/25, currently in development
-    x = x.only_notes()
-    counts = x.count_appear(sort=True)
+    current_chord = current_chord.only_notes()
+    counts = current_chord.count_appear(sort=True)
     most_appeared_note = [N(each[0]) for each in counts[:most_appear_num]]
     result_scales = [
-        most_appear_notes_detect_scale(x, each, get_scales)
+        most_appear_notes_detect_scale(current_chord, each, get_scales)
         for each in most_appeared_note
     ]
     '''
         if result_scale_types == 'major':
             melody_notes = split_melody(
-                x, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
+                current_chord, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
                 average_degree_length,
-                melody_degree_tol) if not not_split else x
+                melody_degree_tol) if not not_split else current_chord
             melody_notes = [i.name for i in melody_notes]
             scale_notes = result_scale.names()
             scale_notes_counts = [melody_notes.count(k) for k in scale_notes]
@@ -1289,8 +1311,8 @@ def detect_scale(x,
             return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in most_probably_scale_ls])}'
     else:
         melody_notes = split_melody(
-            x, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
-            average_degree_length, melody_degree_tol) if not not_split else x
+            current_chord, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
+            average_degree_length, melody_degree_tol) if not not_split else current_chord
         melody_notes = [i.name for i in melody_notes]
         appear_note_names = set(whole_notes)
         notes_count = {y: whole_notes.count(y) for y in appear_note_names}
@@ -1505,7 +1527,7 @@ def get_chord_notations(chords,
             ' ' * functions_interval).join(notations)
 
 
-def chord_functions_analysis(x,
+def chord_functions_analysis(current_chord,
                              scale_type='major',
                              as_list=False,
                              functions_interval=1,
@@ -1517,16 +1539,16 @@ def chord_functions_analysis(x,
                              space_lines=2,
                              full_chord_msg=False,
                              **detect_args):
-    x = x.only_notes()
+    current_chord = current_chord.only_notes()
     if fixed_scale_type:
         scales = fixed_scale_type
     else:
-        scales = x.detect_scale(get_scales=True)
+        scales = current_chord.detect_scale(get_scales=True)
         if scale_type:
             scales = [i for i in scales if i.mode == scale_type][0]
         else:
             scales = scales[0]
-    result = chord_analysis(x, mode='chords')
+    result = chord_analysis(current_chord, mode='chords')
     result = [i.standardize() for i in result]
     actual_chords = [detect(i, **detect_args) for i in result if len(i) > 1]
     actual_chords = [i[0] if type(i) == list else i for i in actual_chords]
@@ -1597,7 +1619,7 @@ def chord_functions_analysis(x,
         return analysis_result
 
 
-def split_melody(x,
+def split_melody(current_chord,
                  mode='index',
                  melody_tol=minor_seventh,
                  chord_tol=major_sixth,
@@ -1610,18 +1632,18 @@ def split_melody(x,
     if not isinstance(melody_degree_tol, note):
         melody_degree_tol = toNote(melody_degree_tol)
     if mode == 'notes':
-        result = split_melody(x, 'index', melody_tol, chord_tol,
+        result = split_melody(current_chord, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
-        x_notes = x.notes
-        melody = [x_notes[t] for t in result]
+        current_chord_notes = current_chord.notes
+        melody = [current_chord_notes[t] for t in result]
         return melody
     elif mode == 'hold':
-        result = split_melody(x, 'index', melody_tol, chord_tol,
+        result = split_melody(current_chord, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
-        whole_interval = x.interval
-        whole_notes = x.notes
+        whole_interval = current_chord.interval
+        whole_notes = current_chord.notes
         new_interval = []
         N = len(result) - 1
         for i in range(N):
@@ -1630,15 +1652,16 @@ def split_melody(x,
         return chord([whole_notes[j] for j in result], interval=new_interval)
 
     elif mode == 'index':
-        x_notes = x.notes
-        x_interval = x.interval
-        whole_length = len(x)
+        current_chord_notes = current_chord.notes
+        current_chord_interval = current_chord.interval
+        whole_length = len(current_chord)
         for k in range(whole_length):
-            x_notes[k].number = k
+            current_chord_notes[k].number = k
         other_messages_inds = [
-            i for i in range(whole_length) if type(x_notes[i]) != note
+            i for i in range(whole_length)
+            if type(current_chord_notes[i]) != note
         ]
-        temp = x.only_notes()
+        temp = current_chord.only_notes()
         N = len(temp)
         whole_notes = temp.notes
         whole_interval = temp.interval
@@ -1659,7 +1682,9 @@ def split_melody(x,
             unit_duration = min([i.duration for i in whole_notes])
             for each in whole_notes:
                 each.duration = unit_duration
-            whole_interval = [x_interval[j.number] for j in whole_notes]
+            whole_interval = [
+                current_chord_interval[j.number] for j in whole_notes
+            ]
             k = 0
             while k < len(whole_notes) - 1:
                 current_note = whole_notes[k]
@@ -1734,18 +1759,18 @@ def split_melody(x,
         return whole_inds
 
 
-def split_chord(x,
+def split_chord(current_chord,
                 mode='index',
                 melody_tol=minor_seventh,
                 chord_tol=major_sixth,
                 get_off_overlap_notes=True,
                 average_degree_length=8,
                 melody_degree_tol=toNote('B4')):
-    melody_ind = split_melody(x, 'index', melody_tol, chord_tol,
+    melody_ind = split_melody(current_chord, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
-    N = len(x)
-    whole_notes = x.notes
+    N = len(current_chord)
+    whole_notes = current_chord.notes
     other_messages_inds = [i for i in range(N) if type(whole_notes[i]) != note]
     chord_ind = [
         i for i in range(N)
@@ -1756,9 +1781,9 @@ def split_chord(x,
     elif mode == 'notes':
         return [whole_notes[k] for k in chord_ind]
     elif mode == 'hold':
-        whole_notes = x.notes
+        whole_notes = current_chord.notes
         new_interval = []
-        whole_interval = x.interval
+        whole_interval = current_chord.interval
         M = len(chord_ind) - 1
         for i in range(M):
             new_interval.append(
@@ -1768,7 +1793,7 @@ def split_chord(x,
                      interval=new_interval)
 
 
-def split_all(x,
+def split_all(current_chord,
               mode='index',
               melody_tol=minor_seventh,
               chord_tol=major_sixth,
@@ -1777,11 +1802,11 @@ def split_all(x,
               melody_degree_tol=toNote('B4')):
     # split the main melody and chords part of a piece of music,
     # return both of main melody and chord part
-    melody_ind = split_melody(x, 'index', melody_tol, chord_tol,
+    melody_ind = split_melody(current_chord, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
-    N = len(x)
-    whole_notes = x.notes
+    N = len(current_chord)
+    whole_notes = current_chord.notes
     chord_ind = [
         i for i in range(N)
         if (i not in melody_ind) or (type(whole_notes[i]) != note)
@@ -1793,9 +1818,9 @@ def split_all(x,
                 [whole_notes[k] for k in chord_ind]]
     elif mode == 'hold':
         new_interval_1 = []
-        x_interval = x.interval
+        current_chord_interval = current_chord.interval
         whole_interval = [
-            x_interval[k] if type(whole_notes[k]) == note else 0
+            current_chord_interval[k] if type(whole_notes[k]) == note else 0
             for k in range(N)
         ]
         chord_len = len(chord_ind) - 1
@@ -1830,7 +1855,7 @@ def split_all(x,
         return [result_melody, result_chord, shift]
 
 
-def chord_analysis(x,
+def chord_analysis(chords,
                    melody_tol=minor_seventh,
                    chord_tol=major_sixth,
                    get_off_overlap_notes=True,
@@ -1849,13 +1874,13 @@ def chord_analysis(x,
                    split_symbol='|',
                    space_lines=2,
                    **detect_args):
-    x = x.only_notes()
+    chords = chords.only_notes()
     if not is_chord:
-        chord_notes = split_chord(x, 'hold', melody_tol, chord_tol,
+        chord_notes = split_chord(chords, 'hold', melody_tol, chord_tol,
                                   get_off_overlap_notes, average_degree_length,
                                   melody_degree_tol)
     else:
-        chord_notes = x
+        chord_notes = chords
     if formated or (mode in ['inds', 'bars', 'bars start']):
         get_original_order = True
     whole_notes = chord_notes.notes
@@ -1965,36 +1990,36 @@ def chord_analysis(x,
         return [chord_notes.count_bars(k[0], k[1])[0] for k in inds]
 
 
-def find_continuous(x, value, start=None, stop=None):
+def find_continuous(current_chord, value, start=None, stop=None):
     if start is None:
         start = 0
     if stop is None:
-        stop = len(x)
+        stop = len(current_chord)
     inds = []
     appear = False
     for i in range(start, stop):
         if not appear:
-            if x[i] == value:
+            if current_chord[i] == value:
                 appear = True
                 inds.append(i)
         else:
-            if x[i] == value:
+            if current_chord[i] == value:
                 inds.append(i)
             else:
                 break
     return inds
 
 
-def find_all_continuous(x, value, start=None, stop=None):
+def find_all_continuous(current_chord, value, start=None, stop=None):
     if start is None:
         start = 0
     if stop is None:
-        stop = len(x)
+        stop = len(current_chord)
     result = []
     inds = []
     appear = False
     for i in range(start, stop):
-        if x[i] == value:
+        if current_chord[i] == value:
             if appear:
                 inds.append(i)
             else:
@@ -2008,22 +2033,22 @@ def find_all_continuous(x, value, start=None, stop=None):
     if inds:
         result.append(inds)
     try:
-        if result[-1][-1] >= len(x):
+        if result[-1][-1] >= len(current_chord):
             del result[-1][-1]
     except:
         pass
     return result
 
 
-def add_to_index(x, value, start=None, stop=None, step=1):
+def add_to_index(current_chord, value, start=None, stop=None, step=1):
     if start is None:
         start = 0
     if stop is None:
-        stop = len(x)
+        stop = len(current_chord)
     inds = []
     counter = 0
     for i in range(start, stop, step):
-        counter += x[i]
+        counter += current_chord[i]
         inds.append(i)
         if counter == value:
             inds.append(i + 1)
@@ -2035,15 +2060,15 @@ def add_to_index(x, value, start=None, stop=None, step=1):
     return inds
 
 
-def add_to_last_index(x, value, start=None, stop=None, step=1):
+def add_to_last_index(current_chord, value, start=None, stop=None, step=1):
     if start is None:
         start = 0
     if stop is None:
-        stop = len(x)
+        stop = len(current_chord)
     ind = 0
     counter = 0
     for i in range(start, stop, step):
-        counter += x[i]
+        counter += current_chord[i]
         ind = i
         if counter == value:
             ind += 1
