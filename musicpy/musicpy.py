@@ -25,7 +25,7 @@ these two modules with this file
 '''
 
 
-def toNote(notename, duration=0.25, volume=100, pitch=4):
+def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
         split_symbol = '(' if '(' in notename else (
             '[' if '[' in notename else '{')
@@ -47,13 +47,13 @@ def toNote(notename, duration=0.25, volume=100, pitch=4):
         else:
             num = int(num_text)
         name = ''.join([x for x in notename if not x.isdigit()])
-        return note(name, num, duration, volume)
+        return note(name, num, duration, volume, channel)
 
 
-def degree_to_note(degree, duration=0.25, volume=100):
+def degree_to_note(degree, duration=0.25, volume=100, channel=None):
     name = standard_reverse[degree % 12]
     num = (degree // 12) - 1
-    return note(name, num, duration, volume)
+    return note(name, num, duration, volume, channel)
 
 
 def totuple(obj):
@@ -289,10 +289,11 @@ def read(name,
          mode='find',
          is_file=False,
          merge=False,
-         get_off_drums=True,
+         get_off_drums=False,
          to_piece=False,
          split_channels=False,
-         clear_empty_notes=False):
+         clear_empty_notes=False,
+         clear_other_channel_msg=True):
     # read from a MIDI file and return the BPM, chord types, start times of its tracks, or convert the MIDI file to a piece type
 
     # if mode is set to 'find', then this function will automatically search for
@@ -344,16 +345,17 @@ def read(name,
             result[1] += changes
             if changes.other_messages:
                 result[1].other_messages += changes.other_messages
-        result_channel = [
-            i.channel for i in result[1].other_messages
-            if hasattr(i, 'channel')
-        ]
-        if result_channel:
-            result_channel = result_channel[0]
-            result[1].other_messages = [
-                i for i in result[1].other_messages
-                if not (hasattr(i, 'channel') and i.channel != result_channel)
+        if clear_other_channel_msg:
+            result_channel = [
+                i.channel for i in result[1].other_messages
+                if hasattr(i, 'channel')
             ]
+            if result_channel:
+                result_channel = result_channel[0]
+                result[1].other_messages = [
+                    i for i in result[1].other_messages if not (
+                        hasattr(i, 'channel') and i.channel != result_channel)
+                ]
         return result
     elif mode == 'all':
         available_tracks = [
@@ -418,10 +420,11 @@ def read(name,
                 if changes.other_messages:
                     all_track_notes.other_messages += changes.other_messages
             all_track_notes += pitch_bends
-            all_track_notes.other_messages = [
-                i for i in all_track_notes.other_messages
-                if (not hasattr(i, 'channel')) and type(i) != track_name
-            ]
+            if clear_other_channel_msg:
+                all_track_notes.other_messages = [
+                    i for i in all_track_notes.other_messages
+                    if (not hasattr(i, 'channel')) and type(i) != track_name
+                ]
             return [tempos, all_track_notes, first_track_start_time]
         else:
             if not to_piece:
@@ -451,17 +454,18 @@ def read(name,
                     if changes.other_messages:
                         all_tracks[0][
                             1].other_messages += changes.other_messages
-                result_channel = [
-                    i.channel for i in all_tracks[0][1].other_messages
-                    if hasattr(i, 'channel')
-                ]
-                if result_channel:
-                    result_channel = result_channel[0]
-                    all_tracks[0][1].other_messages = [
-                        i for i in all_tracks[0][1].other_messages
-                        if not (hasattr(i, 'channel')
-                                and i.channel != result_channel)
+                if clear_other_channel_msg:
+                    result_channel = [
+                        i.channel for i in all_tracks[0][1].other_messages
+                        if hasattr(i, 'channel')
                     ]
+                    if result_channel:
+                        result_channel = result_channel[0]
+                        all_tracks[0][1].other_messages = [
+                            i for i in all_tracks[0][1].other_messages
+                            if not (hasattr(i, 'channel')
+                                    and i.channel != result_channel)
+                        ]
                 return all_tracks
             else:
                 start_times_list = [j[2] for j in all_tracks]
@@ -612,16 +616,17 @@ def read(name,
                     i for i in result_piece.other_messages
                     if type(i) != track_name
                 ] + result_track_names
-                result_piece.other_messages = [
-                    i for i in result_piece.other_messages
-                    if not (hasattr(i, 'channel')
-                            and i.channel not in result_piece.channels)
-                ]
-                result_piece.tracks[0].other_messages = [
-                    i for i in result_piece.tracks[0].other_messages
-                    if not (hasattr(i, 'channel')
-                            and i.channel not in result_piece.channels)
-                ]
+                if clear_other_channel_msg:
+                    result_piece.other_messages = [
+                        i for i in result_piece.other_messages
+                        if not (hasattr(i, 'channel')
+                                and i.channel not in result_piece.channels)
+                    ]
+                    result_piece.tracks[0].other_messages = [
+                        i for i in result_piece.tracks[0].other_messages
+                        if not (hasattr(i, 'channel')
+                                and i.channel not in result_piece.channels)
+                    ]
                 if split_channels:
                     for each in result_piece.other_messages:
                         if hasattr(each, 'channel'):
@@ -637,16 +642,18 @@ def read(name,
                 result[1] += changes
                 if changes.other_messages:
                     result[1].other_messages += changes.other_messages
-            result_channel = [
-                i.channel for i in result[1].other_messages
-                if hasattr(i, 'channel')
-            ]
-            if result_channel:
-                result_channel = result_channel[0]
-                result[1].other_messages = [
-                    i for i in result[1].other_messages if not (
-                        hasattr(i, 'channel') and i.channel != result_channel)
+            if clear_other_channel_msg:
+                result_channel = [
+                    i.channel for i in result[1].other_messages
+                    if hasattr(i, 'channel')
                 ]
+                if result_channel:
+                    result_channel = result_channel[0]
+                    result[1].other_messages = [
+                        i for i in result[1].other_messages
+                        if not (hasattr(i, 'channel')
+                                and i.channel != result_channel)
+                    ]
             return result
         except:
             raise ValueError(f'There is no track {trackind} of this MIDI file')
@@ -677,6 +684,7 @@ def midi_to_chord(current_midi,
             counter += 1
             current_msg_velocity = current_msg.velocity
             current_msg_note = current_msg.note
+            current_msg_channel = current_msg.channel
             if not find_first_note:
                 find_first_note = True
                 start_time = sum(current_track[j].time
@@ -705,7 +713,7 @@ def midi_to_chord(current_midi,
                     if (
                             new_msg_type == 'note_off' or
                         (new_msg_type == 'note_on' and new_msg.velocity == 0)
-                    ) and new_msg.note == current_msg_note and new_msg.channel == current_msg.channel:
+                    ) and new_msg.note == current_msg_note and new_msg.channel == current_msg_channel:
                         find_duration = True
                         current_duration /= interval_unit
                         if current_duration.is_integer():
@@ -719,9 +727,10 @@ def midi_to_chord(current_midi,
                 current_msg_note,
                 duration=current_note_duration,
                 volume=current_msg_velocity)
+            current_append_note.channel = current_msg_channel
             intervals.append(current_note_interval)
             if add_track_num and hasattr(current_msg, 'channel'):
-                current_append_note.track_num = current_msg.channel
+                current_append_note.track_num = current_msg_channel
             notelist.append(current_append_note)
         elif current_msg.type == 'set_tempo':
             current_tempo = tempo(unit.tempo2bpm(current_msg.tempo),
@@ -931,10 +940,11 @@ def write(current_chord,
                 current_note = content_notes[j]
                 current_type = type(current_note)
                 if current_type == note:
-                    MyMIDI.addNote(i, current_channel, current_note.degree,
-                                   current_start_time,
-                                   current_note.duration * 4,
-                                   current_note.volume)
+                    MyMIDI.addNote(
+                        i, current_channel if current_note.channel is None else
+                        current_note.channel, current_note.degree,
+                        current_start_time, current_note.duration * 4,
+                        current_note.volume)
                     current_start_time += content_intervals[j] * 4
                 elif current_type == tempo:
                     if current_note.start_time is not None:
@@ -1010,9 +1020,11 @@ def write(current_chord,
             current_note = content_notes[j]
             current_type = type(current_note)
             if current_type == note:
-                MyMIDI.addNote(track_ind, current_channel, current_note.degree,
-                               current_start_time, current_note.duration * 4,
-                               current_note.volume)
+                MyMIDI.addNote(
+                    track_ind, current_channel
+                    if current_note.channel is None else current_note.channel,
+                    current_note.degree, current_start_time,
+                    current_note.duration * 4, current_note.volume)
                 current_start_time += content_intervals[j] * 4
             elif current_type == tempo:
                 if current_note.start_time is not None:

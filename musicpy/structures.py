@@ -3,7 +3,7 @@ from .database import *
 
 
 class note:
-    def __init__(self, name, num=4, duration=0.25, volume=100):
+    def __init__(self, name, num=4, duration=0.25, volume=100, channel=None):
         self.name = name
         self.num = num
         self.degree = standard[name] + 12 * (num + 1)
@@ -12,6 +12,7 @@ class note:
         if volume > 127:
             volume = 127
         self.volume = volume
+        self.channel = channel
 
     def __str__(self):
         return f'{self.name}{self.num}'
@@ -31,8 +32,14 @@ class note:
             vol = 127
         self.volume = vol
 
-    def set(self, duration=0.25, volume=100):
-        return note(self.name, self.num, duration, volume)
+    def set(self, duration=None, volume=None, channel=None):
+        if duration is None:
+            duration = copy(self.duration)
+        if volume is None:
+            volume = copy(self.volume)
+        if channel is None:
+            channel = copy(self.channel)
+        return note(self.name, self.num, duration, volume, channel)
 
     def __mod__(self, obj):
         return self.set(*obj)
@@ -48,19 +55,12 @@ class note:
             temp.interval.insert(ind - 1, interval)
             return temp
 
-    def up(self, unit=1, duration=None, volume=None):
-        if duration is None:
-            duration = self.duration
-        if volume is None:
-            volume = self.volume
-        return degree_to_note(self.degree + unit, duration, volume)
+    def up(self, unit=1):
+        return degree_to_note(self.degree + unit, self.duration, self.volume,
+                              self.channel)
 
-    def down(self, unit=1, duration=None, volume=None):
-        if duration is None:
-            duration = self.duration
-        if volume is None:
-            volume = self.volume
-        return degree_to_note(self.degree - unit, duration, volume)
+    def down(self, unit=1):
+        return self.up(-unit)
 
     def __pos__(self):
         return self.up()
@@ -72,13 +72,14 @@ class note:
         name = self.name
         if name in standard_dict:
             if '#' in name:
-                return note(reverse_standard_dict[name], self.num)
+                return self.reset(name=reverse_standard_dict[name],
+                                  num=self.num)
             else:
-                return note(standard_dict[name], self.num)
+                return self.reset(name=standard_dict[name], num=self.num)
         elif name in reverse_standard_dict:
-            return note(reverse_standard_dict[name], self.num)
+            return self.reset(name=reverse_standard_dict[name], num=self.num)
         else:
-            return note(name, self.num)
+            return self.reset(name=name, num=self.num)
 
     def play(self, *args, **kwargs):
         import musicpy
@@ -130,8 +131,16 @@ class note:
         temp.degree = standard[temp.name] + 12 * (temp.num + 1)
         return temp
 
+    def set_channel(self, channel):
+        self.channel = channel
 
-def toNote(notename, duration=0.25, volume=100, pitch=4):
+    def with_channel(self, channel):
+        temp = copy(self)
+        temp.channel = channel
+        return temp
+
+
+def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
         split_symbol = '(' if '(' in notename else (
             '[' if '[' in notename else '{')
@@ -153,30 +162,27 @@ def toNote(notename, duration=0.25, volume=100, pitch=4):
         else:
             num = int(num_text)
         name = ''.join([x for x in notename if not x.isdigit()])
-        return note(name, num, duration, volume)
+        return note(name, num, duration, volume, channel)
 
 
-def trans_note(notename, duration=0.25, volume=100, pitch=4):
+def trans_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
     num = ''.join([x for x in notename if x.isdigit()])
     if not num:
         num = pitch
     else:
         num = eval(num)
     name = ''.join([x for x in notename if not x.isdigit()])
-    return note(name, num, duration, volume)
+    return note(name, num, duration, volume, channel)
 
 
-def degrees_to_chord(ls, duration=0.25, interval=0, start_time=0):
-    return chord([degree_to_note(i) for i in ls],
-                 duration=duration,
-                 interval=interval,
-                 start_time=start_time)
+def degrees_to_chord(ls, *args, **kwargs):
+    return chord([degree_to_note(i) for i in ls], *args, **kwargs)
 
 
-def degree_to_note(degree, duration=0.25, volume=100):
+def degree_to_note(degree, duration=0.25, volume=100, channel=None):
     name = standard_reverse[degree % 12]
     num = (degree // 12) - 1
-    return note(name, num, duration, volume)
+    return note(name, num, duration, volume, channel)
 
 
 def read_notes(note_ls, rootpitch=4):
@@ -1397,19 +1403,16 @@ class chord:
         if ind2 is None:
             if ind is None:
                 temp.notes = [
-                    degree_to_note(each.degree + unit, each.duration,
-                                   each.volume) if type(each) == note else each
+                    each.up(unit) if type(each) == note else each
                     for each in temp.notes
                 ]
             else:
                 change_note = temp[ind]
                 if type(change_note) == note:
-                    temp[ind] = degree_to_note(change_note.degree + unit,
-                                               change_note.duration,
-                                               change_note.volume)
+                    temp[ind] = change_note.up(unit)
         else:
             temp.notes = temp.notes[:ind1] + [
-                degree_to_note(each.degree + unit, each.duration, each.volume)
+                each.up(unit)
                 for each in temp.notes[ind1:ind2] if type(each) == note
             ] + temp.notes[ind2:]
         return temp
@@ -2216,6 +2219,15 @@ class chord:
         if type(pitch) == str:
             pitch = toNote(pitch)
         return self + (pitch.degree - self[1].degree)
+
+    def reset_same_channel(self, channel=None):
+        for each in self.notes:
+            each.channel = channel
+
+    def with_same_channel(self, channel=None):
+        temp = copy(self)
+        temp.reset_same_channel(channel)
+        return temp
 
     def with_other_messages(self, other_messages):
         temp = copy(self)
@@ -3864,12 +3876,13 @@ class tempo:
     # this is a class to change tempo for the notes after it when it is read,
     # it can be inserted into a chord, and if the chord is in a piece,
     # then it also works for the piece.
-    def __init__(self, bpm, start_time=None):
+    def __init__(self, bpm, start_time=None, channel=None):
         self.bpm = bpm
         self.start_time = start_time
         self.degree = 0
         self.duration = 0
         self.volume = 100
+        self.channel = channel
 
     def __str__(self):
         result = f'tempo change to {self.bpm}'
@@ -3884,6 +3897,14 @@ class tempo:
         self.volume = vol
 
     __repr__ = __str__
+
+    def set_channel(self, channel):
+        self.channel = channel
+
+    def with_channel(self, channel):
+        temp = copy(self)
+        temp.channel = channel
+        return temp
 
 
 class pitch_bend:
@@ -3928,6 +3949,14 @@ class pitch_bend:
 
     __repr__ = __str__
 
+    def set_channel(self, channel):
+        self.channel = channel
+
+    def with_channel(self, channel):
+        temp = copy(self)
+        temp.channel = channel
+        return temp
+
 
 class tuning:
     def __init__(self,
@@ -3935,7 +3964,8 @@ class tuning:
                  track=0,
                  sysExChannel=127,
                  realTime=True,
-                 tuningProgam=0):
+                 tuningProgam=0,
+                 channel=None):
         self.tuning_dict = tuning_dict
         keys = list(self.tuning_dict.keys())
         values = list(self.tuning_dict.values())
@@ -3947,11 +3977,20 @@ class tuning:
         self.sysExChannel = sysExChannel
         self.realTime = realTime
         self.tuningProgam = tuningProgam
+        self.channel = channel
 
     def __str__(self):
         return f'tuning: {self.tuning_dict}'
 
     __repr__ = __str__
+
+    def set_channel(self, channel):
+        self.channel = channel
+
+    def with_channel(self, channel):
+        temp = copy(self)
+        temp.channel = channel
+        return temp
 
 
 class track:
