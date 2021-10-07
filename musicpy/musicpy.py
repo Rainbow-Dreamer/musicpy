@@ -457,7 +457,7 @@ def read(name,
                     tracks_names_list, channels_list,
                     os.path.splitext(os.path.basename(name))[0], pan_list,
                     volume_list)
-                if split_channels and len(available_tracks) <= 1:
+                if split_channels:
                     remain_available_tracks = [
                         each for each in whole_tracks
                         if any(j.type == 'note_on' and j.channel == 9
