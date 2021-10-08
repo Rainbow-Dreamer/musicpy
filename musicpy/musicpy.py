@@ -517,8 +517,7 @@ def read(name,
                 if split_channels:
                     remain_available_tracks = [
                         each for each in whole_tracks
-                        if any(j.type == 'note_on' and j.channel == 9
-                               for j in each)
+                        if any(j.type == 'note_on' for j in each)
                     ]
                     remain_all_tracks = [
                         midi_to_chord(current_midi,
@@ -529,8 +528,39 @@ def read(name,
                                       track_ind=j)
                         for j in range(len(remain_available_tracks))
                     ]
-                    available_tracks = remain_available_tracks[0]
-                    all_tracks = remain_all_tracks[0]
+                    if len(remain_available_tracks) > 1:
+                        available_tracks = concat(remain_available_tracks)
+                        pitch_bends = concat([
+                            i[1].split(pitch_bend, get_time=True)
+                            for i in remain_all_tracks
+                        ])
+                        for each in remain_all_tracks:
+                            each[1].clear_pitch_bend('all')
+                        start_time_ls = [j[2] for j in remain_all_tracks]
+                        first_track_ind = start_time_ls.index(
+                            min(start_time_ls))
+                        remain_all_tracks.insert(
+                            0, remain_all_tracks.pop(first_track_ind))
+                        first_track = remain_all_tracks[0]
+                        tempos, all_track_notes, first_track_start_time = first_track
+                        for i in remain_all_tracks[1:]:
+                            all_track_notes &= (i[1],
+                                                i[2] - first_track_start_time)
+                        all_track_notes.other_messages = concat([
+                            each[1].other_messages
+                            for each in remain_all_tracks
+                        ])
+                        all_track_notes += pitch_bends
+                        all_track_notes.pan_list = concat(
+                            [k[1].pan_list for k in remain_all_tracks])
+                        all_track_notes.volume_list = concat(
+                            [k[1].volume_list for k in remain_all_tracks])
+                        all_tracks = [
+                            tempos, all_track_notes, first_track_start_time
+                        ]
+                    else:
+                        available_tracks = remain_available_tracks[0]
+                        all_tracks = remain_all_tracks[0]
                     pan_list = all_tracks[1].pan_list
                     volume_list = all_tracks[1].volume_list
                     channels_numbers = [

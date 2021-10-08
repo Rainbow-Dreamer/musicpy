@@ -3548,7 +3548,10 @@ class piece:
         for j in range(len(available_tracks_inds)):
             new_tracks[j].track_ind = available_tracks_inds[j]
         self.tracks = new_tracks
-        self.start_times = new_start_times
+        self.start_times = [
+            int(i) if type(i) == float and i.is_integer() else i
+            for i in new_start_times
+        ]
         self.instruments_list = [
             self.instruments_list[k] for k in available_tracks_inds
         ]
