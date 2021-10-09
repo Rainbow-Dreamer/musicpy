@@ -27,7 +27,6 @@ from pydub.playback import _play_with_simpleaudio as play_sound
 from pydub.generators import Sine, Triangle, Sawtooth, Square, WhiteNoise, Pulse
 import librosa
 import soundfile
-import sf2_loader
 import py
 import pygame
 import pygame.midi
@@ -37,8 +36,11 @@ os.chdir(abs_path)
 sys.path.append('.')
 os.chdir('../..')
 sys.path.append('musicpy')
-musicpy_vars = dir(__import__('musicpy'))
+musicpy = __import__('musicpy')
+musicpy_vars = dir(musicpy)
 exec("from musicpy import *")
+import sf2_loader
+
 os.chdir(abs_path)
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read())

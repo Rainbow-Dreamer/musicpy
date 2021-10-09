@@ -14,10 +14,12 @@ from io import BytesIO
 abs_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(abs_path)
 os.chdir('../..')
-sys.path.append('.')
-sys.path.append('musicpy')
-musicpy_vars = dir(__import__('musicpy'))
-exec("from musicpy import *")
+sys.path.insert(0, os.getcwd())
+import musicpy
+
+musicpy_vars = dir(musicpy)
+from musicpy import *
+
 os.chdir(abs_path)
 with open('config.py', encoding='utf-8-sig') as f:
     exec(f.read())
