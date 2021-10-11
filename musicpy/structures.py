@@ -1548,6 +1548,12 @@ class chord:
         # choose a bpm and apply to all of the notes, if there are tempo
         # changes, use relative ratios of the chosen bpms and changes bpms
         # to re-calculate the notes durations and intervals
+        tempo_changes = [
+            i for i in range(len(self.notes)) if type(self.notes[i]) == tempo
+        ]
+        if (not tempo_changes) or all(self.notes[i].bpm == bpm
+                                      for i in tempo_changes):
+            return
         if start_time:
             place_shift_result1 = self.place_shift(time=-start_time,
                                                    pan_msg=pan_msg,
@@ -1575,14 +1581,6 @@ class chord:
             self.other_messages = temp2.other_messages
             return result
         else:
-
-            tempo_changes = [
-                i for i in range(len(self.notes))
-                if type(self.notes[i]) == tempo
-            ]
-            if (not tempo_changes) or all(self.notes[i].bpm == bpm
-                                          for i in tempo_changes):
-                return
             tempo_changes_no_time = [
                 k for k in tempo_changes if self.notes[k].start_time is None
             ]
@@ -3065,6 +3063,9 @@ class piece:
             self.tracks[ind - 1].clear_tempo(cond)
 
     def normalize_tempo(self, bpm=None):
+        tempo_changes = self.get_tempo_changes()
+        if not tempo_changes or all(i.bpm == self.bpm for i in tempo_changes):
+            return
         if bpm is None:
             bpm = self.bpm
         temp = copy(self)

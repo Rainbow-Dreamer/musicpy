@@ -10,8 +10,7 @@ def setup():
                       mode='all',
                       get_off_drums=get_off_drums,
                       to_piece=True)
-    tempo_changes = all_tracks.get_tempo_changes()
-    all_tracks.clear_tempo()
+    all_tracks.normalize_tempo()
     all_tracks = [(all_tracks.bpm, all_tracks.tracks[i],
                    all_tracks.start_times[i])
                   for i in range(len(all_tracks.tracks))]
@@ -58,7 +57,5 @@ def setup():
         if i > 0:
             all_track_notes &= (current_track,
                                 current[2] - first_track_start_time)
-    all_track_notes += tempo_changes
     all_track_notes += pitch_bends
-    all_track_notes.normalize_tempo(tempo, start_time=first_track_start_time)
     read_result = tempo, all_track_notes, first_track_start_time
