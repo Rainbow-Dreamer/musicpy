@@ -3147,7 +3147,7 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def merge(self, add_labels=True):
+    def merge(self, add_labels=True, add_pan_volume=False):
         import musicpy
         temp = copy(self)
         if add_labels:
@@ -3170,6 +3170,24 @@ class piece:
         first_track += tempo_changes
         first_track += pitch_bends
         first_track.other_messages = temp.other_messages
+        if add_pan_volume:
+            import musicpy
+            whole_pan = musicpy.concat(temp.pan)
+            whole_volume = musicpy.concat(temp.volume)
+            pan_msg = [
+                controller_event(channel=i.channel,
+                                 time=i.start_time,
+                                 controller_number=10,
+                                 parameter=i.value) for i in whole_pan
+            ]
+            volume_msg = [
+                controller_event(channel=i.channel,
+                                 time=i.start_time,
+                                 controller_number=7,
+                                 parameter=i.value) for i in whole_volume
+            ]
+            first_track.other_messages += pan_msg
+            first_track.other_messages += volume_msg
         return temp.bpm, first_track, first_track_start_time
 
     def add_track_labels(self):

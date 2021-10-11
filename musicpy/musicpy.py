@@ -498,10 +498,6 @@ def read(name,
                 chords_list = [each[1] for each in all_tracks]
                 pan_list = [k.pan_list for k in chords_list]
                 volume_list = [k.volume_list for k in chords_list]
-                if changes:
-                    chords_list[0] += changes
-                    if changes.other_messages:
-                        chords_list[0].other_messages += changes.other_messages
                 tracks_names_list = [[
                     k.name for k in each if hasattr(k, 'name')
                 ] for each in available_tracks]
@@ -677,6 +673,12 @@ def read(name,
                         if hasattr(each, 'channel'):
                             each.track = result_piece.channels.index(
                                 each.channel)
+                if changes:
+                    result_piece.tracks[0] += changes
+                    if changes.other_messages:
+                        result_piece.tracks[
+                            0].other_messages += changes.other_messages
+                        result_piece.other_messages += changes.other_messages
                 return result_piece
 
     else:
