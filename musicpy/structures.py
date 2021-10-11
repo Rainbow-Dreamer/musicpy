@@ -1578,6 +1578,7 @@ class chord:
                 temp2 = place_shift_result2
                 result = [temp2.other_messages]
             self.notes = temp2.notes
+            self.interval = temp2.interval
             self.other_messages = temp2.other_messages
             return result
         else:
