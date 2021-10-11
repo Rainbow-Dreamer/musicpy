@@ -606,10 +606,6 @@ def read(name,
                                 each.track_num)
                     result_piece.reconstruct(result_merge_track, all_tracks[2])
                     result_piece.other_messages = result_merge_track.other_messages
-                    other_messages_no_channels = [
-                        i for i in result_piece.other_messages
-                        if not hasattr(i, 'channel')
-                    ]
                     for k in range(len(result_piece)):
                         current_channel = result_piece.channels[k]
                         current_other_messages = [
@@ -628,9 +624,6 @@ def read(name,
                             if i.channel == current_channel
                         ]
                         result_piece.volume[k] = current_volume
-                    result_piece.tracks[
-                        0].other_messages = other_messages_no_channels + result_piece.tracks[
-                            0].other_messages
                     if get_off_drums:
                         drum_ind = result_piece.channels.index(9)
                         del result_piece[drum_ind + 1]
@@ -660,17 +653,25 @@ def read(name,
                     i for i in result_piece.other_messages
                     if type(i) != track_name
                 ] + result_track_names
+                other_messages_no_channels = [
+                    i for i in result_piece.other_messages
+                    if not hasattr(i, 'channel') and type(i) != track_name
+                ]
                 if clear_other_channel_msg:
                     result_piece.other_messages = [
                         i for i in result_piece.other_messages
                         if not (hasattr(i, 'channel')
                                 and i.channel not in result_piece.channels)
                     ]
-                    result_piece.tracks[0].other_messages = [
-                        i for i in result_piece.tracks[0].other_messages
-                        if not (hasattr(i, 'channel')
-                                and i.channel not in result_piece.channels)
-                    ]
+                    result_piece.tracks[0].other_messages = list(
+                        set([
+                            i for i in result_piece.other_messages
+                            if i.track == 0
+                        ] + other_messages_no_channels))
+                else:
+                    result_piece.tracks[0].other_messages = list(
+                        set(result_piece.tracks[0].other_messages +
+                            other_messages_no_channels))
                 if split_channels:
                     for each in result_piece.other_messages:
                         if hasattr(each, 'channel'):
@@ -784,28 +785,28 @@ def midi_to_chord(current_midi,
             notelist.append(current_tempo)
             intervals.append(0)
         elif current_msg.type == 'pitchwheel':
+            current_msg_channel = current_msg.channel
             current_pitch_bend = pitch_bend(current_msg.pitch,
                                             (current_time / interval_unit) + 1,
-                                            channel=current_msg.channel,
+                                            channel=current_msg_channel,
                                             mode='values')
             if add_track_num and hasattr(current_msg, 'channel'):
-                current_pitch_bend.track_num = current_msg.channel
+                current_pitch_bend.track_num = current_msg_channel
             notelist.append(current_pitch_bend)
             intervals.append(0)
         elif current_msg.type == 'control_change':
+            current_msg_channel = current_msg.channel
             if current_msg.control == 10:
                 current_pan_msg = pan(current_msg.value,
                                       (current_time / interval_unit) + 1,
-                                      'value')
-                if add_track_num:
-                    current_pan_msg.channel = current_msg.channel
+                                      'value',
+                                      channel=current_msg_channel)
                 pan_list.append(current_pan_msg)
             elif current_msg.control == 7:
                 current_volume_msg = volume(current_msg.value,
                                             (current_time / interval_unit) + 1,
-                                            'value')
-                if add_track_num:
-                    current_volume_msg.channel = current_msg.channel
+                                            'value',
+                                            channel=current_msg_channel)
                 volume_list.append(current_volume_msg)
             else:
                 read_other_messages(current_msg, other_messages,
@@ -2235,11 +2236,6 @@ def toScale(obj, pitch=4):
     return scale(note(tonic, pitch), scale_name)
 
 
-C = trans
-N = toNote
-S = toScale
-
-
 def inversion_from(a, b, num=False, mode=0):
     N = len(b)
     for i in range(1, N):
@@ -3626,3 +3622,9 @@ def riff_to_midi(riff_name, name='temp.mid', output_file=False):
         result.write(midi_raw)
         result.seek(0)
         return result
+
+
+C = trans
+N = toNote
+S = toScale
+P = piece
