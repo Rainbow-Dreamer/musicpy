@@ -295,7 +295,8 @@ def read(name,
          to_piece=False,
          split_channels=False,
          clear_empty_notes=False,
-         clear_other_channel_msg=True):
+         clear_other_channel_msg=True,
+         add_pan_volume=True):
     # read from a MIDI file and return the BPM, chord types, start times of its tracks, or convert the MIDI file to a piece type
 
     # if mode is set to 'find', then this function will automatically search for
@@ -413,9 +414,33 @@ def read(name,
                 raise ValueError(
                     'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
                 )
+            if add_pan_volume:
+                whole_pan = concat(
+                    new_all_tracks.pan) if split_channels else concat(
+                        [i[1].pan_list for i in all_tracks])
+                whole_volume = concat(
+                    new_all_tracks.volume) if split_channels else concat(
+                        [i[1].volume_list for i in all_tracks])
+                pan_msg = [
+                    controller_event(channel=i.channel,
+                                     track=i.track,
+                                     time=i.start_time,
+                                     controller_number=10,
+                                     parameter=i.value) for i in whole_pan
+                ]
+                volume_msg = [
+                    controller_event(channel=i.channel,
+                                     track=i.track,
+                                     time=i.start_time,
+                                     controller_number=7,
+                                     parameter=i.value) for i in whole_volume
+                ]
+            tempo_changes = concat(
+                [i[1].split(tempo, get_time=True) for i in all_tracks])
             pitch_bends = concat(
                 [i[1].split(pitch_bend, get_time=True) for i in all_tracks])
             for each in all_tracks:
+                each[1].clear_tempo()
                 each[1].clear_pitch_bend('all')
             start_time_ls = [j[2] for j in all_tracks]
             first_track_ind = start_time_ls.index(min(start_time_ls))
@@ -433,12 +458,16 @@ def read(name,
                 all_track_notes += changes
                 if changes.other_messages:
                     all_track_notes.other_messages += changes.other_messages
+            all_track_notes += tempo_changes
             all_track_notes += pitch_bends
             if clear_other_channel_msg:
                 all_track_notes.other_messages = [
                     i for i in all_track_notes.other_messages
                     if (not hasattr(i, 'channel')) and type(i) != track_name
                 ]
+            if add_pan_volume:
+                all_track_notes.other_messages += pan_msg
+                all_track_notes.other_messages += volume_msg
             return [tempos, all_track_notes, first_track_start_time]
         else:
             if not to_piece:
@@ -1096,12 +1125,12 @@ def write(current_chord,
                         pitch_bend_time = (current_note.start_time - 1) * 4
                 else:
                     pitch_bend_time = current_start_time
-                pitch_bend_track = track_ind if current_note.track is None else current_note.track
+                pitch_bend_track = track_ind
                 pitch_bend_channel = current_channel if current_note.channel is None else current_note.channel
                 MyMIDI.addPitchWheelEvent(pitch_bend_track, pitch_bend_channel,
                                           pitch_bend_time, current_note.value)
             elif current_type == tuning:
-                note_tuning_track = track_ind if current_note.track is None else current_note.track
+                note_tuning_track = track_ind
                 MyMIDI.changeNoteTuning(note_tuning_track,
                                         current_note.tunings,
                                         current_note.sysExChannel,

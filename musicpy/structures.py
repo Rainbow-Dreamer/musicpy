@@ -1,5 +1,7 @@
 from copy import deepcopy as copy
+from fractions import Fraction
 from .database import *
+import musicpy as mp
 
 
 class note:
@@ -82,8 +84,7 @@ class note:
             return self.reset(name=name, num=self.num)
 
     def play(self, *args, **kwargs):
-        import musicpy
-        musicpy.play(self, *args, **kwargs)
+        mp.play(self, *args, **kwargs)
 
     def __add__(self, obj):
         if isinstance(obj, int):
@@ -97,8 +98,7 @@ class note:
             return self.down(obj)
 
     def __call__(self, obj=''):
-        import musicpy
-        return musicpy.C(self.name + obj, self.num)
+        return mp.C(self.name + obj, self.num)
 
     def with_interval(self, interval):
         result = chord([copy(self), self + interval])
@@ -109,9 +109,8 @@ class note:
                              duration=0.25,
                              interval=0,
                              cummulative=True):
-        import musicpy
-        return musicpy.getchord_by_interval(start, interval1, duration,
-                                            interval, cummulative)
+        return mp.getchord_by_interval(start, interval1, duration, interval,
+                                       cummulative)
 
     def dotted(self, num=1):
         temp = copy(self)
@@ -606,7 +605,6 @@ class chord:
         return f'{self.notes} with interval {self.interval}'
 
     def details(self):
-        from fractions import Fraction
         notes_only = self.only_notes()
         notes_part = 'notes: ' + ', '.join([
             f"{notes_only.notes[i]}[{Fraction(notes_only.notes[i].duration)};{Fraction(notes_only.interval[i])};{notes_only.notes[i].volume}]"
@@ -660,8 +658,7 @@ class chord:
         if types == int or types == float:
             return self.rest(obj)
         elif types == str:
-            import musicpy
-            obj = musicpy.trans(obj)
+            obj = mp.trans(obj)
         elif types == tuple:
             first = obj[0]
             start = obj[1] if len(obj) == 2 else 0
@@ -744,15 +741,13 @@ class chord:
         elif types == str:
             return self.inv(self.names().index(obj))
         else:
-            import musicpy
             if types == tuple:
-                return musicpy.negative_harmony(obj[0], self, *obj[1:])
+                return mp.negative_harmony(obj[0], self, *obj[1:])
             else:
-                return musicpy.negative_harmony(obj, self)
+                return mp.negative_harmony(obj, self)
 
     def negative_harmony(self, *args, **kwargs):
-        import musicpy
-        return musicpy.negative_harmony(a=self, *args, **kwargs)
+        return mp.negative_harmony(a=self, *args, **kwargs)
 
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
@@ -827,8 +822,7 @@ class chord:
         return temp
 
     def detect(self, *args, **kwargs):
-        import musicpy
-        return musicpy.detect(self, *args, **kwargs)
+        return mp.detect(self, *args, **kwargs)
 
     def get(self, ls):
         temp = copy(self)
@@ -1449,32 +1443,25 @@ class chord:
             return temp
 
     def play(self, *args, **kwargs):
-        import musicpy
-        musicpy.play(self, *args, **kwargs)
+        mp.play(self, *args, **kwargs)
 
     def split_melody(self, *args, **kwargs):
-        import musicpy
-        return musicpy.split_melody(self, *args, **kwargs)
+        return mp.split_melody(self, *args, **kwargs)
 
     def split_chord(self, *args, **kwargs):
-        import musicpy
-        return musicpy.split_chord(self, *args, **kwargs)
+        return mp.split_chord(self, *args, **kwargs)
 
     def split_all(self, *args, **kwargs):
-        import musicpy
-        return musicpy.split_all(self, *args, **kwargs)
+        return mp.split_all(self, *args, **kwargs)
 
     def detect_scale(self, *args, **kwargs):
-        import musicpy
-        return musicpy.detect_scale(self, *args, **kwargs)
+        return mp.detect_scale(self, *args, **kwargs)
 
     def detect_in_scale(self, *args, **kwargs):
-        import musicpy
-        return musicpy.detect_in_scale(self, *args, **kwargs)
+        return mp.detect_in_scale(self, *args, **kwargs)
 
     def chord_analysis(self, *args, **kwargs):
-        import musicpy
-        return musicpy.chord_analysis(self, *args, **kwargs)
+        return mp.chord_analysis(self, *args, **kwargs)
 
     def clear_at(self, duration=0, interval=None, volume=None):
         temp = copy(self)
@@ -1513,11 +1500,10 @@ class chord:
             temp.normalize_tempo(tempo_changes[1].bpm)
         volumes = temp.get_volume()
         pitch_intervals = temp.intervalof(cummulative=False)
-        import musicpy
-        result = musicpy.getchord_by_interval(temp[1],
-                                              [-i for i in pitch_intervals],
-                                              temp.get_duration(),
-                                              temp.interval, False)
+        result = mp.getchord_by_interval(temp[1],
+                                         [-i for i in pitch_intervals],
+                                         temp.get_duration(), temp.interval,
+                                         False)
         result.setvolume(volumes)
         result += pitch_bend_changes
         return result
@@ -1712,7 +1698,6 @@ class chord:
         return chord_speciality
 
     def info(self, alter_notes_show_degree=True, **detect_args):
-        import musicpy
         chord_type = self.detect(
             alter_notes_show_degree=alter_notes_show_degree, **detect_args)
         original_chord_type = copy(chord_type)
@@ -1767,10 +1752,9 @@ class chord:
                 break
         if has_split:
             try:
-                inversion_msg = musicpy.inversion_from(
-                    musicpy.C(chord_type),
-                    musicpy.C(chord_types_root),
-                    num=True)
+                inversion_msg = mp.inversion_from(mp.C(chord_type),
+                                                  mp.C(chord_types_root),
+                                                  num=True)
             except:
                 if 'omit' in first_part and first_part[0] != '[':
                     temp_ind = first_part.index(' ')
@@ -1780,8 +1764,8 @@ class chord:
                 else:
                     current_chord_types_root = chord_types_root
                 try:
-                    inversion_msg = musicpy.inversion_from(
-                        self, musicpy.C(current_chord_types_root), num=True)
+                    inversion_msg = mp.inversion_from(
+                        self, mp.C(current_chord_types_root), num=True)
                     if 'could not get chord' in inversion_msg:
                         if inversion_split[1][0] == '[':
                             chord_type = original_chord_type
@@ -2146,8 +2130,7 @@ class scale:
         if interval is None:
             self.interval = self.getInterval()
         if mode is None:
-            import musicpy
-            current_mode = musicpy.detect(self.interval, mode='scale')
+            current_mode = mp.detect(self.interval, mode='scale')
             if current_mode != 'not found':
                 self.mode = current_mode
 
@@ -2405,8 +2388,7 @@ class scale:
         return self.pickchord_by_index(indlist)
 
     def detect(self, *args, **kwargs):
-        import musicpy
-        return musicpy.detect(self, *args, **kwargs, mode='scale')
+        return mp.detect(self, *args, **kwargs, mode='scale')
 
     def get_allchord(self, duration=None, interval=0, num=3, step=2):
         return [
@@ -2439,7 +2421,6 @@ class scale:
         return self[degree]
 
     def get_chord(self, degree, chord_type=None, natural=False):
-        import musicpy
         if not chord_type:
             current_keys = list(roman_numerals_dict.keys())
             current_keys.sort(key=lambda s: len(s[0]), reverse=True)
@@ -2460,7 +2441,7 @@ class scale:
             return f'{degree} is not a valid roman numerals chord representation'
         current_note = self[current_degree].name
         if natural:
-            temp = musicpy.C(current_note + chord_type)
+            temp = mp.C(current_note + chord_type)
             if type(temp) != chord:
                 return f'{chord_type} is not a valid chord type'
             length = len(temp)
@@ -2468,7 +2449,7 @@ class scale:
         if degree.islower():
             current_note += 'm'
         current_chord_type = current_note + chord_type
-        return musicpy.C(current_chord_type)
+        return mp.C(current_chord_type)
 
     def up(self, unit=1, ind=None, ind2=None):
         if ind2 is not None:
@@ -2530,8 +2511,7 @@ class scale:
         return result
 
     def play(self, intervals=0.25, durations=None, *args, **kwargs):
-        import musicpy
-        musicpy.play(self.getScale(intervals, durations), *args, **kwargs)
+        mp.play(self.getScale(intervals, durations), *args, **kwargs)
 
     def __add__(self, obj):
         if type(obj) == int:
@@ -2583,9 +2563,8 @@ class scale:
                         break
                 if not found:
                     return f'{current_chord} is not a valid roman numerals chord representation'
-        import musicpy
-        return musicpy.chord_progression(chords, durations, intervals, volumes,
-                                         chords_interval, merge)
+        return mp.chord_progression(chords, durations, intervals, volumes,
+                                    chords_interval, merge)
 
     def reset_octave(self, num):
         return scale(self.start.reset_octave(num), self.mode, self.interval)
@@ -2957,8 +2936,7 @@ class piece:
         return self.up()
 
     def play(self, *args, **kwargs):
-        import musicpy
-        musicpy.play(self, *args, **kwargs)
+        mp.play(self, *args, **kwargs)
 
     def __call__(self, num):
         if num > 0:
@@ -3124,8 +3102,7 @@ class piece:
 
     def get_pitch_bend(self, ind=1, **args):
         if ind == 'all':
-            import musicpy
-            return musicpy.concat(
+            return mp.concat(
                 [self.get_pitch_bend(i) for i in range(1,
                                                        len(self) + 1)])
         temp = copy(self)
@@ -3172,8 +3149,7 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def merge(self, add_labels=True, add_pan_volume=False):
-        import musicpy
+    def merge(self, add_labels=True, add_pan_volume=True):
         temp = copy(self)
         if add_labels:
             temp.add_track_labels()
@@ -3182,7 +3158,7 @@ class piece:
         all_tracks = temp.tracks
         length = len(all_tracks)
         start_time_ls = temp.start_times
-        pitch_bends = musicpy.concat(
+        pitch_bends = mp.concat(
             [i.split(pitch_bend, get_time=True) for i in temp.tracks])
         temp.clear_pitch_bend(value='all')
         sort_tracks_inds = [[i, start_time_ls[i]] for i in range(length)]
@@ -3196,17 +3172,18 @@ class piece:
         first_track += pitch_bends
         first_track.other_messages = temp.other_messages
         if add_pan_volume:
-            import musicpy
-            whole_pan = musicpy.concat(temp.pan)
-            whole_volume = musicpy.concat(temp.volume)
+            whole_pan = mp.concat(temp.pan)
+            whole_volume = mp.concat(temp.volume)
             pan_msg = [
                 controller_event(channel=i.channel,
+                                 track=i.track,
                                  time=i.start_time,
                                  controller_number=10,
                                  parameter=i.value) for i in whole_pan
             ]
             volume_msg = [
                 controller_event(channel=i.channel,
+                                 track=i.track,
                                  time=i.start_time,
                                  controller_number=7,
                                  parameter=i.value) for i in whole_volume
@@ -3883,8 +3860,7 @@ class track:
         self.volume.append(volume(value, start_time, mode))
 
     def play(self, *args, **kwargs):
-        import musicpy
-        musicpy.play(self, *args, **kwargs)
+        mp.play(self, *args, **kwargs)
 
     def get_interval(self):
         return self.content.interval
@@ -4092,7 +4068,6 @@ class drum:
 
     def translate(self, pattern, mapping):
         start_time = 0
-        import musicpy
         notes = []
         pattern_intervals = []
         pattern_durations = []
@@ -4218,7 +4193,7 @@ class drum:
                 current_notes = [
                     self.translate(k, mapping) for k in same_time_notes
                 ]
-                current_notes = musicpy.concat(
+                current_notes = mp.concat(
                     [k.set(interval=0)
                      for k in current_notes[:-1]] + [current_notes[-1]])
                 for j in current_notes.notes[:-1]:
@@ -4247,8 +4222,7 @@ class drum:
         return result
 
     def play(self, *args, **kwargs):
-        import musicpy
-        musicpy.play(self, *args, **kwargs)
+        mp.play(self, *args, **kwargs)
 
     def __mul__(self, n):
         temp = copy(self)
@@ -4871,7 +4845,6 @@ def piece_process_normalize_tempo(self, bpm):
     for i in range(1, length):
         first_track &= (all_tracks[i],
                         start_time_ls[i] - first_track_start_time)
-    import musicpy
     if self.pan:
         for k in range(len(self.pan)):
             current_pan = self.pan[k]
@@ -4882,8 +4855,8 @@ def piece_process_normalize_tempo(self, bpm):
             current_volume = self.volume[k]
             for each in current_volume:
                 each.track = k
-    whole_pan = musicpy.concat(self.pan) if self.pan else None
-    whole_volume = musicpy.concat(self.volume) if self.volume else None
+    whole_pan = mp.concat(self.pan) if self.pan else None
+    whole_volume = mp.concat(self.volume) if self.volume else None
     normalize_result = first_track.normalize_tempo(
         bpm,
         start_time=first_track_start_time,
