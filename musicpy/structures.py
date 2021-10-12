@@ -2692,7 +2692,8 @@ class piece:
                  name=None,
                  pan=None,
                  volume=None,
-                 other_messages=[]):
+                 other_messages=[],
+                 sampler_channels=None):
         self.tracks = tracks
         if instruments_list is None:
             self.instruments_list = [
@@ -2728,6 +2729,7 @@ class piece:
         else:
             self.volume = [[] for i in range(self.track_number)]
         self.other_messages = other_messages
+        self.sampler_channels = sampler_channels
 
     def __repr__(self):
         return (

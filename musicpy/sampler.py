@@ -343,7 +343,8 @@ class sampler:
                extra_length=None,
                track_lengths=None,
                track_extra_lengths=None,
-               export_args={}):
+               export_args={},
+               show_msg=False):
         if channel_num > 0:
             channel_num -= 1
         if not self.channel_sound_modules:
@@ -388,6 +389,8 @@ class sampler:
 
             current_sound_modules = self.channel_sound_modules[
                 current_channel_num]
+            if show_msg:
+                print(f'rendering track 1/1 channel {current_channel_num+1}')
             if type(current_sound_modules) == rs.sf2_loader:
                 silent_audio = current_sound_modules.export_chord(
                     current_chord,
@@ -420,9 +423,13 @@ class sampler:
                     length=length,
                     extra_length=extra_length,
                     current_start_time=current_chord.start_time)
+            if show_msg:
+                print('rendering finished')
             try:
                 if action == 'export':
                     silent_audio.export(filename, format=mode, **export_args)
+                    if show_msg:
+                        print('export finished')
                 elif action == 'play':
                     play_audio(silent_audio)
                 elif action == 'get':
@@ -436,13 +443,14 @@ class sampler:
                 [-i for i in current_chord.start_times],
                 msg=True,
                 pan_volume=True)
+            current_chord.reset_channel(0)
             current_name = current_chord.name
             current_bpm = current_chord.bpm
             current_start_times = current_chord.start_times
             current_pan = current_chord.pan
             current_volume = current_chord.volume
             current_tracks = current_chord.tracks
-            current_channels = current_chord.channels if current_chord.channels else [
+            current_channels = current_chord.sampler_channels if current_chord.sampler_channels else [
                 i for i in range(len(current_chord))
             ]
             for i in range(len(current_chord.tracks)):
@@ -462,9 +470,21 @@ class sampler:
                 if extra_length:
                     whole_duration += extra_length * 1000
             silent_audio = AudioSegment.silent(duration=whole_duration)
-            for i in range(len(current_chord)):
+            sound_modules_num = len(self.channel_sound_modules)
+            track_number = len(current_chord)
+            for i in range(track_number):
+                current_channel_number = current_channels[i]
+                if current_channel_number >= sound_modules_num:
+                    print(
+                        f'track {i+1} : cannot find channel {current_channel_number+1}'
+                    )
+                    continue
+                if show_msg:
+                    print(
+                        f'rendering track {i+1}/{track_number} channel {current_channel_number+1}'
+                    )
                 current_sound_modules = self.channel_sound_modules[
-                    current_channels[i]]
+                    current_channel_number]
                 current_track = current_tracks[i]
                 if type(current_sound_modules) == rs.sf2_loader:
                     current_instrument = current_chord.instruments_numbers[i]
@@ -528,9 +548,13 @@ class sampler:
                 silent_audio = process_effect(silent_audio,
                                               current_chord.effects,
                                               bpm=current_bpm)
+            if show_msg:
+                print('rendering finished')
             try:
                 if action == 'export':
                     silent_audio.export(filename, format=mode, **export_args)
+                    if show_msg:
+                        print('export finished')
                 elif action == 'play':
                     play_audio(silent_audio)
                 elif action == 'get':
@@ -891,7 +915,7 @@ class sampler:
             if has_effect:
                 current_chord.effects = current_effects
         if type(current_chord) == piece:
-            current_channel_nums = current_chord.channels if current_chord.channels else [
+            current_channel_nums = current_chord.sampler_channels if current_chord.sampler_channels else [
                 i for i in range(len(current_chord))
             ]
             if check_special(current_chord) or any(
