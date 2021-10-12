@@ -594,12 +594,6 @@ def read(name,
                     result_piece.pan = [[] for i in range(len(channels_list))]
                     result_piece.volume = [[]
                                            for i in range(len(channels_list))]
-                    for each in result_merge_track:
-                        if type(each) == tempo:
-                            each.track_num = channels_list[0]
-                        else:
-                            each.track_num = channels_list.index(
-                                each.track_num)
                     result_piece.reconstruct(result_merge_track, all_tracks[2])
                     result_piece.other_messages = result_merge_track.other_messages
                     for k in range(len(result_piece)):
@@ -776,14 +770,15 @@ def midi_to_chord(current_midi,
                 volume=current_msg_velocity)
             current_append_note.channel = current_msg_channel
             intervals.append(current_note_interval)
-            if add_track_num and hasattr(current_msg, 'channel'):
-                current_append_note.track_num = current_msg_channel
+            if add_track_num:
+                current_append_note.track_num = track_ind
             notelist.append(current_append_note)
         elif current_msg.type == 'set_tempo':
             current_tempo = tempo(unit.tempo2bpm(current_msg.tempo),
-                                  (current_time / interval_unit) + 1)
+                                  (current_time / interval_unit) + 1,
+                                  track=track_ind)
             if add_track_num:
-                current_tempo.track_num = 0
+                current_tempo.track_num = track_ind
             notelist.append(current_tempo)
             intervals.append(0)
         elif current_msg.type == 'pitchwheel':
@@ -791,9 +786,10 @@ def midi_to_chord(current_midi,
             current_pitch_bend = pitch_bend(current_msg.pitch,
                                             (current_time / interval_unit) + 1,
                                             channel=current_msg_channel,
+                                            track=track_ind,
                                             mode='values')
-            if add_track_num and hasattr(current_msg, 'channel'):
-                current_pitch_bend.track_num = current_msg_channel
+            if add_track_num:
+                current_pitch_bend.track_num = track_ind
             notelist.append(current_pitch_bend)
             intervals.append(0)
         elif current_msg.type == 'control_change':
@@ -802,13 +798,15 @@ def midi_to_chord(current_midi,
                 current_pan_msg = pan(current_msg.value,
                                       (current_time / interval_unit) + 1,
                                       'value',
-                                      channel=current_msg_channel)
+                                      channel=current_msg_channel,
+                                      track=track_ind)
                 pan_list.append(current_pan_msg)
             elif current_msg.control == 7:
                 current_volume_msg = volume(current_msg.value,
                                             (current_time / interval_unit) + 1,
                                             'value',
-                                            channel=current_msg_channel)
+                                            channel=current_msg_channel,
+                                            track=track_ind)
                 volume_list.append(current_volume_msg)
             else:
                 read_other_messages(current_msg, other_messages,
@@ -968,14 +966,19 @@ def write(current_chord,
             current_pan_msg = pan_msg[i]
             if current_pan_msg:
                 for each in current_pan_msg:
-                    MyMIDI.addControllerEvent(i, current_channel,
+                    current_pan_track = i if each.track is None else each.track
+                    current_pan_channel = current_channel if each.channel is None else each.channel
+                    MyMIDI.addControllerEvent(current_pan_track,
+                                              current_pan_channel,
                                               (each.start_time - 1) * 4, 10,
                                               each.value)
             current_volume_msg = volume_msg[i]
             if current_volume_msg:
-
                 for each in current_volume_msg:
-                    MyMIDI.addControllerEvent(i, current_channel,
+                    current_volume_channel = current_channel if each.channel is None else each.channel
+                    current_volume_track = i if each.track is None else each.track
+                    MyMIDI.addControllerEvent(current_volume_track,
+                                              current_volume_channel,
                                               (each.start_time - 1) * 4, 7,
                                               each.value)
 
@@ -1012,12 +1015,16 @@ def write(current_chord,
                             pitch_bend_time = (current_note.start_time - 1) * 4
                     else:
                         pitch_bend_time = current_start_time
-                    pitch_bend_channel = i if current_note.channel is None else current_note.channel
-                    MyMIDI.addPitchWheelEvent(i, pitch_bend_channel,
+                    pitch_bend_track = i if current_note.track is None else current_note.track
+                    pitch_bend_channel = current_channel if current_note.channel is None else current_note.channel
+                    MyMIDI.addPitchWheelEvent(pitch_bend_track,
+                                              pitch_bend_channel,
                                               pitch_bend_time,
                                               current_note.value)
                 elif current_type == tuning:
-                    MyMIDI.changeNoteTuning(i, current_note.tunings,
+                    note_tuning_track = i if current_note.track is None else current_note.track
+                    MyMIDI.changeNoteTuning(note_tuning_track,
+                                            current_note.tunings,
                                             current_note.sysExChannel,
                                             current_note.realTime,
                                             current_note.tuningProgam)
@@ -1089,10 +1096,14 @@ def write(current_chord,
                         pitch_bend_time = (current_note.start_time - 1) * 4
                 else:
                     pitch_bend_time = current_start_time
-                MyMIDI.addPitchWheelEvent(track_ind, current_channel,
+                pitch_bend_track = track_ind if current_note.track is None else current_note.track
+                pitch_bend_channel = current_channel if current_note.channel is None else current_note.channel
+                MyMIDI.addPitchWheelEvent(pitch_bend_track, pitch_bend_channel,
                                           pitch_bend_time, current_note.value)
             elif current_type == tuning:
-                MyMIDI.changeNoteTuning(track_ind, current_note.tunings,
+                note_tuning_track = track_ind if current_note.track is None else current_note.track
+                MyMIDI.changeNoteTuning(note_tuning_track,
+                                        current_note.tunings,
                                         current_note.sysExChannel,
                                         current_note.realTime,
                                         current_note.tuningProgam)

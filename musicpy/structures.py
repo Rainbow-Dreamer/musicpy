@@ -2078,7 +2078,7 @@ class chord:
                     [(1 / 2)**i for i in range(num + 1)])
         return temp
 
-    def apply_start_time_to_changes(self, start_time):
+    def apply_start_time_to_changes(self, start_time, msg=False):
         for each in self.notes:
             types = type(each)
             if types == tempo or types == pitch_bend:
@@ -2086,11 +2086,35 @@ class chord:
                     each.start_time += start_time
                     if each.start_time < 1:
                         each.start_time = 1
+        if msg:
+            for each in self.other_messages:
+                each.time += start_time * 4
+                if each.time < 0:
+                    each.time = 0
 
     def with_start(self, start_time):
         temp = copy(self)
         temp.start_time = start_time
         return temp
+
+    def reset_channel(self, channel, reset_msg=True, reset_pitch_bend=False):
+        if reset_msg:
+            for i in self.other_messages:
+                if hasattr(i, 'channel'):
+                    i.channel = channel
+        if reset_pitch_bend:
+            for i in self.notes:
+                if type(i) == pitch_bend:
+                    each.channel = channel
+
+    def reset_track(self, track, reset_msg=True, reset_pitch_bend=False):
+        if reset_msg:
+            for i in self.other_messages:
+                i.track = track
+        if reset_pitch_bend:
+            for i in self.notes:
+                if type(i) == pitch_bend:
+                    each.track = track
 
 
 class scale:
@@ -3395,7 +3419,13 @@ class piece:
     def count_appear(self, choices=None, as_standard=True, sort=False):
         return self.merge()[1].count_appear(choices, as_standard, sort)
 
-    def apply_start_time_to_changes(self, start_time):
+    def apply_start_time_to_changes(self,
+                                    start_time,
+                                    msg=False,
+                                    pan_volume=False):
+        types = type(start_time)
+        if types == int or types == float:
+            start_time = [start_time for i in range(len(self.tracks))]
         tracks = self.tracks
         for i in range(len(tracks)):
             current_start_time = start_time[i]
@@ -3407,6 +3437,22 @@ class piece:
                         each.start_time += current_start_time
                         if each.start_time < 1:
                             each.start_time = 1
+            if msg:
+                for each in current_track.other_messages:
+                    each.time += current_start_time * 4
+                    if each.time < 0:
+                        each.time = 0
+            if pan_volume:
+                current_pan = self.pan[i]
+                current_volume = self.volume[i]
+                for each in current_pan:
+                    each.start_time += current_start_time
+                    if each.start_time < 1:
+                        each.start_time = 1
+                for each in current_volume:
+                    each.start_time += current_start_time
+                    if each.start_time < 1:
+                        each.start_time = 1
 
     def reverse(self, **args):
         temp = copy(self)
@@ -3606,12 +3652,68 @@ class piece:
                 for i in inds:
                     func(self.tracks[i])
 
+    def reset_channel(self,
+                      channels,
+                      reset_msg=True,
+                      reset_pitch_bend=False,
+                      reset_pan_volume=False):
+        types = type(channels)
+        if types == int or types == float:
+            channels = [channels for i in range(len(self.tracks))]
+        self.channels = channels
+        for i in range(len(self.tracks)):
+            current_channel = channels[i]
+            current_track = self.tracks[i]
+            if reset_msg:
+                current_other_messages = current_track.other_messages
+                for each in current_other_messages:
+                    if hasattr(each, 'channel'):
+                        each.channel = current_channel
+            if reset_pitch_bend:
+                for each in current_track.notes:
+                    if type(each) == pitch_bend:
+                        each.channel = current_channel
+            if reset_pan_volume:
+                current_pan = self.pan[i]
+                current_volume = self.volume[i]
+                for each in current_pan:
+                    each.channel = current_channel
+                for each in current_volume:
+                    each.channel = current_channel
+
+    def reset_track(self,
+                    tracks,
+                    reset_msg=True,
+                    reset_pitch_bend=False,
+                    reset_pan_volume=False):
+        types = type(tracks)
+        if types == int or types == float:
+            tracks = [tracks for i in range(len(self.tracks))]
+        for i in range(len(self.tracks)):
+            current_track_num = tracks[i]
+            current_track = self.tracks[i]
+            if reset_msg:
+                current_other_messages = current_track.other_messages
+                for each in current_other_messages:
+                    each.track = current_track_num
+            if reset_pitch_bend:
+                for each in current_track.notes:
+                    if type(each) == pitch_bend:
+                        each.track = current_track_num
+            if reset_pan_volume:
+                current_pan = self.pan[i]
+                current_volume = self.volume[i]
+                for each in current_pan:
+                    each.track = current_track_num
+                for each in current_volume:
+                    each.track = current_track_num
+
 
 class tempo:
     # this is a class to change tempo for the notes after it when it is read,
     # it can be inserted into a chord, and if the chord is in a piece,
     # then it also works for the piece.
-    def __init__(self, bpm, start_time=None, channel=None, track=0):
+    def __init__(self, bpm, start_time=None, channel=None, track=None):
         self.bpm = bpm
         self.start_time = start_time
         self.degree = 0
@@ -3648,7 +3750,7 @@ class pitch_bend:
                  value,
                  start_time=None,
                  channel=None,
-                 track=0,
+                 track=None,
                  mode='cents'):
         # general midi pitch bend values could be taken from -8192 to 8192,
         # and the default pitch bend range is -2 semitones to 2 semitones,
@@ -3697,7 +3799,7 @@ class pitch_bend:
 class tuning:
     def __init__(self,
                  tuning_dict,
-                 track=0,
+                 track=None,
                  sysExChannel=127,
                  realTime=True,
                  tuningProgam=0,
@@ -3901,7 +4003,7 @@ class pan:
                  start_time=1,
                  mode='percentage',
                  channel=None,
-                 track=0):
+                 track=None):
         # when mode == 'percentage', percentage ranges from 0% to 100%,
         # value takes an integer or float number from 0 to 100 (inclusive),
         # 0% means pan left most, 100% means pan right most, 50% means pan middle
@@ -3941,7 +4043,7 @@ class volume:
                  start_time=1,
                  mode='percentage',
                  channel=None,
-                 track=0):
+                 track=None):
         # when mode == 'percentage', percentage ranges from 0% to 100%,
         # value takes an integer or float number from 0 to 100 (inclusive),
         # when mode == 'value', value takes an integer from 0 to 127 (inclusive)

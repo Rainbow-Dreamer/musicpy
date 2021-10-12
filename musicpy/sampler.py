@@ -428,6 +428,11 @@ class sampler:
             except:
                 return
         elif types == 'piece':
+            current_chord = copy(current_chord)
+            current_chord.apply_start_time_to_changes(
+                [-i for i in current_chord.start_times],
+                msg=True,
+                pan_volume=True)
             current_name = current_chord.name
             current_bpm = current_chord.bpm
             current_start_times = current_chord.start_times
@@ -459,10 +464,6 @@ class sampler:
                     current_channels[i]]
                 current_track = current_tracks[i]
                 if type(current_sound_modules) == rs.sf2_loader:
-                    current_track = copy(current_track)
-                    current_track.apply_start_time_to_changes(
-                        -current_start_times[i])
-
                     current_instrument = current_chord.instruments_numbers[i]
                     # instrument of a track of the piece type could be preset_num or [preset_num, bank_num, (track), (sfid)]
                     if type(current_instrument) == int:
