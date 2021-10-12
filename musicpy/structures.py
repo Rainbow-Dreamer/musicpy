@@ -3149,7 +3149,7 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def merge(self, add_labels=True, add_pan_volume=True):
+    def merge(self, add_labels=True, add_pan_volume=False):
         temp = copy(self)
         if add_labels:
             temp.add_track_labels()
