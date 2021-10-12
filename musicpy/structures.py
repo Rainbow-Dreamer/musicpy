@@ -2081,7 +2081,7 @@ class chord:
         temp.start_time = start_time
         return temp
 
-    def reset_channel(self, channel, reset_msg=True, reset_pitch_bend=False):
+    def reset_channel(self, channel, reset_msg=True, reset_pitch_bend=True):
         if reset_msg:
             for i in self.other_messages:
                 if hasattr(i, 'channel'):
@@ -2091,7 +2091,7 @@ class chord:
                 if type(i) == pitch_bend:
                     each.channel = channel
 
-    def reset_track(self, track, reset_msg=True, reset_pitch_bend=False):
+    def reset_track(self, track, reset_msg=True, reset_pitch_bend=True):
         if reset_msg:
             for i in self.other_messages:
                 i.track = track
@@ -3549,32 +3549,14 @@ class piece:
             temp.start_times = [i + time for i in temp.start_times]
             temp.start_times = [0 if i < 0 else i for i in temp.start_times]
             temp.apply_start_time_to_changes(
-                [time for i in range(len(temp.start_times))])
-            for each in temp.pan:
-                for i in each:
-                    i.start_time += time
-                    if i.start_time < 1:
-                        i.start_time = 1
-            for each in temp.volume:
-                for i in each:
-                    i.start_time += time
-                    if i.start_time < 1:
-                        i.start_time = 1
-            for each in temp.other_messages:
-                each.time += time * 4
-                if each.time < 0:
-                    each.time = 0
+                [time for i in range(len(temp.start_times))],
+                msg=True,
+                pan_volume=True)
         else:
             if ind > 0:
                 ind -= 1
             temp.start_times[ind] += time
-            for i in temp.tracks[ind].notes:
-                types = type(i)
-                if types == tempo or types == pitch_bend:
-                    if i.start_time is not None:
-                        i.start_time += time
-                        if i.start_time < 1:
-                            i.start_time = 1
+            temp.tracks[ind].apply_start_time_to_changes(time, msg=True)
             for each in temp.pan[ind]:
                 each.start_time += time
                 if each.start_time < 1:
@@ -3583,11 +3565,6 @@ class piece:
                 each.start_time += time
                 if each.start_time < 1:
                     each.start_time = 1
-            for each in temp.other_messages:
-                if each.track == ind:
-                    each.time += time * 4
-                    if each.time < 0:
-                        each.time = 0
         return temp
 
     def copy(self):
@@ -3632,8 +3609,8 @@ class piece:
     def reset_channel(self,
                       channels,
                       reset_msg=True,
-                      reset_pitch_bend=False,
-                      reset_pan_volume=False):
+                      reset_pitch_bend=True,
+                      reset_pan_volume=True):
         types = type(channels)
         if types == int or types == float:
             channels = [channels for i in range(len(self.tracks))]
@@ -3661,8 +3638,8 @@ class piece:
     def reset_track(self,
                     tracks,
                     reset_msg=True,
-                    reset_pitch_bend=False,
-                    reset_pan_volume=False):
+                    reset_pitch_bend=True,
+                    reset_pan_volume=True):
         types = type(tracks)
         if types == int or types == float:
             tracks = [tracks for i in range(len(self.tracks))]
