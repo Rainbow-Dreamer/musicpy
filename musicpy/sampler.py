@@ -791,14 +791,16 @@ class sampler:
             if check_special(current_chord) or type(
                     self.channel_sound_modules[current_channel_num]
             ) == rs.sf2_loader:
-                self.export(current_chord,
-                            action='play',
-                            channel_num=current_channel_num,
-                            bpm=bpm,
-                            length=length,
-                            extra_length=extra_length,
-                            track_lengths=track_lengths,
-                            track_extra_lengths=track_extra_lengths)
+                self.export(
+                    current_chord,
+                    action='play',
+                    channel_num=current_channel_num +
+                    1 if current_channel_num >= 0 else current_channel_num,
+                    bpm=bpm,
+                    length=length,
+                    extra_length=extra_length,
+                    track_lengths=track_lengths,
+                    track_extra_lengths=track_extra_lengths)
             else:
                 if current_chord.start_time == 0:
                     self.play_channel(current_chord, current_channel_num, bpm)
