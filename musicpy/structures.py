@@ -2754,7 +2754,9 @@ class piece:
             pan=self.pan[i],
             volume=self.volume[i],
             bpm=self.bpm,
-            name=self.name)
+            name=self.name,
+            sampler_channel=self.sampler_channels[i]
+            if self.sampler_channels else None)
 
     def __delitem__(self, i):
         if i > 0:
@@ -2771,6 +2773,8 @@ class piece:
             del self.pan[i]
         if self.volume:
             del self.volume[i]
+        if self.sampler_channels:
+            del self.sampler_channels[i]
         self.track_number -= 1
 
     def __setitem__(self, i, new_track):
@@ -2788,6 +2792,8 @@ class piece:
             self.pan[i] = new_track.pan
         if self.volume:
             self.volume[i] = new_track.volume
+        if self.sampler_channels and new_track.sampler_channel is not None:
+            self.sampler_channels[i] = new_track.sampler_channel
 
     def __len__(self):
         return len(self.tracks)
@@ -2843,6 +2849,11 @@ class piece:
                 self.volume.append(new_track.volume)
             else:
                 self.volume.append([])
+        if self.sampler_channels:
+            if new_track.sampler_channel:
+                self.sampler_channels.append(new_track.sampler_channel)
+            else:
+                self.sampler_channels.append(0)
         self.track_number += 1
 
     def up(self, n=1, mode=0):
@@ -3797,7 +3808,8 @@ class track:
                  pan=None,
                  volume=None,
                  bpm=120,
-                 name=None):
+                 name=None,
+                 sampler_channel=None):
         self.content = content
         self.instrument = reverse_instruments[instrument] if isinstance(
             instrument, int) else instrument
@@ -3809,6 +3821,7 @@ class track:
         self.name = name
         self.pan = pan
         self.volume = volume
+        self.sampler_channel = sampler_channel
         if self.pan:
             self.pan = [self.pan] if type(self.pan) != list else self.pan
         else:
