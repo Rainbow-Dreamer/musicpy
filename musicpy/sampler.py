@@ -11,13 +11,10 @@ sys.path.append('.')
 from musicpy import *
 from io import BytesIO
 import math
-import array
 import simpleaudio
 from pydub import AudioSegment
 from pydub.playback import _play_with_simpleaudio as play_sound
 from pydub.generators import Sine, Triangle, Sawtooth, Square, WhiteNoise, Pulse
-import librosa
-import soundfile
 import sf2_loader as rs
 import pickle
 
@@ -902,6 +899,7 @@ class pitch:
                                                      format=current_format)
                 os.chdir(abs_path)
                 self.sounds.export('scripts/temp.wav', format='wav')
+                import librosa
                 self.audio = librosa.load('scripts/temp.wav',
                                           sr=self.sounds.frame_rate)[0]
                 os.remove('scripts/temp.wav')
@@ -914,14 +912,17 @@ class pitch:
         self.channels = self.sounds.channels
         self.sample_width = self.sounds.sample_width
         if not audio_load:
+            import librosa
             self.audio = librosa.load(path, sr=self.sample_rate)[0]
 
     def pitch_shift(self, semitones=1, mode='librosa'):
         if mode == 'librosa':
+            import librosa
             data_shifted = librosa.effects.pitch_shift(self.audio,
                                                        self.sample_rate,
                                                        n_steps=semitones)
             current_sound = BytesIO()
+            import soundfile
             soundfile.write(current_sound,
                             data_shifted,
                             self.sample_rate,
@@ -933,12 +934,6 @@ class pitch:
                 self.sounds.raw_data,
                 overrides={'frame_rate': new_sample_rate})
             result = result.set_frame_rate(44100)
-        return result
-
-    def np_array_to_audio(self, np, sample_rate):
-        current_sound = BytesIO()
-        soundfile.write(current_sound, np, sample_rate, format='wav')
-        result = AudioSegment.from_wav(current_sound)
         return result
 
     def __add__(self, semitones):
