@@ -240,6 +240,9 @@ class chord:
                 notes.sort(key=lambda s: s.start_time)
         return chord(notes, interval=intervals, start_time=temp.start_time)
 
+    def get_msg(self, types):
+        return [i for i in self.other_messages if type(i) == types]
+
     def cut(self, ind1=1, ind2=None, start_time=0, return_inds=False):
         # get parts of notes between two bars
         temp = copy(self)
@@ -1385,9 +1388,8 @@ class chord:
                 ind.stop - 1 if ind.stop > 0 else len(self) + ind.stop)
             return self.__getslice__(start, stop)
         temp = copy(self)
-        if ind != 0:
-            if ind > 0:
-                ind -= 1
+        if ind > 0:
+            ind -= 1
         return temp.notes[ind]
 
     def __iter__(self):
@@ -2183,9 +2185,8 @@ class scale:
     def __getitem__(self, ind):
         if isinstance(ind, slice):
             return self.getScale()[ind]
-        if ind != 0:
-            if ind > 0:
-                ind -= 1
+        if ind > 0:
+            ind -= 1
         return self.notes[ind]
 
     def __iter__(self):
@@ -2736,11 +2737,15 @@ class piece:
             f'[piece] {self.name if self.name else ""}\n'
         ) + f'BPM: {round(self.bpm, 3)}\n' + '\n'.join([
             f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] + " " if self.track_names and self.track_names[i] else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
-            for i in range(self.track_number)
+            for i in range(len(self.tracks))
         ])
 
     def __eq__(self, other):
         return isinstance(other, piece) and self.__dict__ == other.__dict__
+
+    def __iter__(self):
+        for i in self.tracks:
+            yield i
 
     def __getitem__(self, i):
         if i > 0:
@@ -3119,6 +3124,11 @@ class piece:
                 [self.get_pitch_bend(i) for i in range(1,
                                                        len(self) + 1)])
         temp = copy(self)
+        if ind == 'all':
+            return concat([
+                self.get_pitch_bend(k) for k in range(1,
+                                                      len(self.tracks) + 1)
+            ])
         if ind > 0:
             ind -= 1
         each = temp.tracks[ind]
@@ -3133,6 +3143,16 @@ class piece:
             current.start_time = current_time
         pitch_bend_changes.sort(key=lambda s: s.start_time)
         return chord(pitch_bend_changes)
+
+    def get_msg(self, types, ind=None):
+        if ind is None:
+            return [i for i in self.other_messages if type(i) == types]
+        else:
+            if ind > 0:
+                ind -= 1
+            return [
+                i for i in self.tracks[ind].other_messages if type(i) == types
+            ]
 
     def add_pan(self, value, ind, start_time=1, mode='percentage'):
         self.pan[ind].append(pan(value, start_time, mode))
