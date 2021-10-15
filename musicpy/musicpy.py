@@ -324,6 +324,7 @@ def read(name,
     changes_track = [
         each for each in whole_tracks if all(i.type != 'note_on' for i in each)
     ]
+    found_bpm = False
     whole_bpm = 120
     if changes_track:
         changes = [
@@ -337,12 +338,19 @@ def read(name,
         whole_bpm_list = [i.bpm for i in changes if type(i) == tempo]
         if whole_bpm_list:
             whole_bpm = whole_bpm_list[0]
+            found_bpm = True
+        if not found_bpm:
+            for each in whole_tracks:
+                current_tempo = [i for i in each if i.type == 'set_tempo']
+                if current_tempo:
+                    whole_bpm = unit.tempo2bpm(current_tempo[0].tempo)
+                    break
     else:
         changes = []
         for each in whole_tracks:
-            curren_tempo = [i for i in each if i.type == 'set_tempo']
-            if curren_tempo:
-                whole_bpm = unit.tempo2bpm(curren_tempo[0].tempo)
+            current_tempo = [i for i in each if i.type == 'set_tempo']
+            if current_tempo:
+                whole_bpm = unit.tempo2bpm(current_tempo[0].tempo)
                 break
     if mode == 'find':
         found = False
@@ -472,13 +480,17 @@ def read(name,
                 return all_tracks
             else:
                 start_times_list = [j[2] for j in all_tracks]
-                channels_numbers = concat(
-                    [[i.channel for i in each if hasattr(i, 'channel')]
-                     for each in available_tracks])
-                channels_list = []
-                for each in channels_numbers:
-                    if each not in channels_list:
-                        channels_list.append(each)
+                if available_tracks:
+                    channels_numbers = concat(
+                        [[i.channel for i in each if hasattr(i, 'channel')]
+                         for each in available_tracks])
+                    channels_list = []
+                    for each in channels_numbers:
+                        if each not in channels_list:
+                            channels_list.append(each)
+                else:
+                    channels_list = None
+
                 instruments_list = []
                 for each in available_tracks:
                     current_program = [

@@ -4914,6 +4914,7 @@ def piece_process_normalize_tempo(self, bpm):
     ]
     self.tracks = new_tracks
     self.start_times = new_start_times
+    self.clear_other_messages(types=track_name, apply_tracks=False)
 
 
 def note_to_degree(obj):
