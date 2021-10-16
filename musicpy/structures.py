@@ -2087,7 +2087,7 @@ class chord:
                       channel,
                       reset_msg=True,
                       reset_pitch_bend=True,
-                      reset_note=False):
+                      reset_note=True):
         if reset_msg:
             for i in self.other_messages:
                 if hasattr(i, 'channel'):
@@ -3650,7 +3650,7 @@ class piece:
                       reset_msg=True,
                       reset_pitch_bend=True,
                       reset_pan_volume=True,
-                      reset_note=False):
+                      reset_note=True):
         types = type(channels)
         if types == int or types == float:
             channels = [channels for i in range(len(self.tracks))]
