@@ -2091,7 +2091,7 @@ class chord:
         if reset_pitch_bend:
             for i in self.notes:
                 if type(i) == pitch_bend:
-                    each.channel = channel
+                    i.channel = channel
 
     def reset_track(self, track, reset_msg=True, reset_pitch_bend=True):
         if reset_msg:
@@ -2100,7 +2100,7 @@ class chord:
         if reset_pitch_bend:
             for i in self.notes:
                 if type(i) == pitch_bend:
-                    each.track = track
+                    i.track = track
 
 
 class scale:
