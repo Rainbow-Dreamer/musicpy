@@ -2083,14 +2083,20 @@ class chord:
         temp.start_time = start_time
         return temp
 
-    def reset_channel(self, channel, reset_msg=True, reset_pitch_bend=True):
+    def reset_channel(self,
+                      channel,
+                      reset_msg=True,
+                      reset_pitch_bend=True,
+                      reset_note=False):
         if reset_msg:
             for i in self.other_messages:
                 if hasattr(i, 'channel'):
                     i.channel = channel
-        if reset_pitch_bend:
+        if reset_pitch_bend or reset_note:
             for i in self.notes:
-                if type(i) == pitch_bend:
+                if type(i) == pitch_bend and reset_pitch_bend:
+                    i.channel = channel
+                elif type(i) == note and reset_note:
                     i.channel = channel
 
     def reset_track(self, track, reset_msg=True, reset_pitch_bend=True):
@@ -3643,7 +3649,8 @@ class piece:
                       channels,
                       reset_msg=True,
                       reset_pitch_bend=True,
-                      reset_pan_volume=True):
+                      reset_pan_volume=True,
+                      reset_note=False):
         types = type(channels)
         if types == int or types == float:
             channels = [channels for i in range(len(self.tracks))]
@@ -3656,9 +3663,11 @@ class piece:
                 for each in current_other_messages:
                     if hasattr(each, 'channel'):
                         each.channel = current_channel
-            if reset_pitch_bend:
+            if reset_pitch_bend or reset_note:
                 for each in current_track.notes:
-                    if type(each) == pitch_bend:
+                    if type(each) == pitch_bend and reset_pitch_bend:
+                        each.channel = current_channel
+                    elif type(each) == note and reset_note:
                         each.channel = current_channel
             if reset_pan_volume:
                 current_pan = self.pan[i]
