@@ -1,5 +1,6 @@
 from copy import deepcopy as copy
 from fractions import Fraction
+from ast import literal_eval
 from .database import *
 import musicpy as mp
 
@@ -3758,9 +3759,9 @@ class pitch_bend:
     def __init__(self,
                  value,
                  start_time=None,
+                 mode='cents',
                  channel=None,
-                 track=None,
-                 mode='cents'):
+                 track=None):
         # general midi pitch bend values could be taken from -8192 to 8192,
         # and the default pitch bend range is -2 semitones to 2 semitones,
         # which is -200 cents to 200 cents, which means 1 cent equals to
@@ -4542,46 +4543,20 @@ def read_notes(note_ls, rootpitch=4):
                 intervals[-1] += each.duration
         elif isinstance(each, str):
             if each.startswith('tempo'):
-                current = each.split(';')[1:]
-                if len(current) == 2:
-                    current_bpm, current_start_time = current
-                else:
-                    current_bpm, current_start_time = current[0], None
-                if current_bpm[0] == '[':
-                    current_bpm = current_bpm[1:-1].split(':')
-                    current_bpm = [float(i) for i in current_bpm]
-                    current_start_time = current_start_time[1:-1].split(':')
-                    current_start_time = [float(i) for i in current_start_time]
-                else:
-                    current_bpm = float(current_bpm)
-                    if current_start_time:
-                        current_start_time = float(current_start_time)
-                notes_result.append(tempo(current_bpm, current_start_time))
+                current = [literal_eval(k) for k in each.split(';')[1:]]
+                current_tempo = tempo(*current)
+                notes_result.append(current_tempo)
                 intervals.append(0)
             elif each.startswith('pitch'):
                 current = each.split(';')[1:]
                 length = len(current)
-                mode = 'cents'
-                if length > 1:
-                    current_time = current[1]
-                    if current_time == 'None':
-                        current[1] = None
-                    else:
-                        current[1] = float(current_time)
                 if length > 2:
-                    mode = current[2]
-                    if mode != 'cents' and mode != 'semitones':
-                        current[0] = int(current[0])
-                    else:
-                        current[0] = float(current[0])
-                    if length > 3:
-                        current[3] = int(current[3])
-                    if length > 4:
-                        current[4] = int(current[3])
-                    del current[2]
+                    current = [literal_eval(k) for k in current[:2]] + [
+                        current[2]
+                    ] + [literal_eval(k) for k in current[3:]]
                 else:
-                    current[0] = float(current[0])
-                current_pitch_bend = pitch_bend(*current, mode=mode)
+                    current = [literal_eval(k) for k in current]
+                current_pitch_bend = pitch_bend(*current)
                 notes_result.append(current_pitch_bend)
                 intervals.append(0)
             else:
