@@ -3160,11 +3160,24 @@ class piece:
                 i for i in self.tracks[ind].other_messages if type(i) == types
             ]
 
-    def add_pan(self, value, ind, start_time=1, mode='percentage'):
-        self.pan[ind].append(pan(value, start_time, mode))
+    def add_pan(self,
+                value,
+                ind,
+                start_time=1,
+                mode='percentage',
+                channel=None,
+                track=None):
+        self.pan[ind].append(pan(value, start_time, mode, channel, track))
 
-    def add_volume(self, value, ind, start_time=1, mode='percentage'):
-        self.volume[ind].append(volume(value, start_time, mode))
+    def add_volume(self,
+                   value,
+                   ind,
+                   start_time=1,
+                   mode='percentage',
+                   channel=None,
+                   track=None):
+        self.volume[ind].append(volume(value, start_time, mode, channel,
+                                       track))
 
     def clear_pan(self, ind='all'):
         if ind == 'all':
@@ -3874,11 +3887,21 @@ class track:
             f'BPM: {round(self.bpm, 3)}\n' if self.bpm is not None else ""
         ) + f'{msg}instrument: {self.instrument} | start time: {self.start_time} | {self.content}'
 
-    def add_pan(self, value, start_time=1, mode='percentage'):
-        self.pan.append(pan(value, start_time, mode))
+    def add_pan(self,
+                value,
+                start_time=1,
+                mode='percentage',
+                channel=None,
+                track=None):
+        self.pan.append(pan(value, start_time, mode, channel, track))
 
-    def add_volume(self, value, start_time=1, mode='percentage'):
-        self.volume.append(volume(value, start_time, mode))
+    def add_volume(self,
+                   value,
+                   start_time=1,
+                   mode='percentage',
+                   channel=None,
+                   track=None):
+        self.volume.append(volume(value, start_time, mode, channel, track))
 
     def play(self, *args, **kwargs):
         mp.play(self, *args, **kwargs)
