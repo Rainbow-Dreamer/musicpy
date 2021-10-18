@@ -335,23 +335,65 @@ def read(name,
             for each in changes_track
         ]
         changes = concat(changes)
-        whole_bpm_list = [i.bpm for i in changes if type(i) == tempo]
+        whole_bpm_list = [i for i in changes if type(i) == tempo]
         if whole_bpm_list:
-            whole_bpm = whole_bpm_list[0]
+            min_start_time = min([i.start_time for i in whole_bpm_list])
+            whole_bpm_list = [
+                i for i in whole_bpm_list if i.start_time == min_start_time
+            ]
+            whole_bpm = whole_bpm_list[-1].bpm
             found_bpm = True
         if not found_bpm:
+            whole_tempo = []
+            whole_tempo_start_time = []
             for each in whole_tracks:
                 current_tempo = [i for i in each if i.type == 'set_tempo']
                 if current_tempo:
-                    whole_bpm = unit.tempo2bpm(current_tempo[0].tempo)
-                    break
+                    for k in range(len(each)):
+                        if each[k].type == 'set_tempo':
+                            current_start_time = sum(
+                                [each[j].time for j in range(k + 1)])
+                            break
+                    whole_tempo_start_time.append(current_start_time)
+                    whole_tempo.append(current_tempo)
+            if whole_tempo:
+                min_start_time = min(whole_tempo_start_time)
+                min_tempo_track = whole_tempo[whole_tempo_start_time.index(
+                    min_start_time)]
+                min_start_time = min_tempo_track[0].time
+                whole_bpm_list = []
+                for each in min_tempo_track:
+                    if each.time == min_start_time:
+                        whole_bpm_list.append(each)
+                    else:
+                        break
+                whole_bpm = unit.tempo2bpm(whole_bpm_list[-1].tempo)
     else:
         changes = []
+        whole_tempo = []
+        whole_tempo_start_time = []
         for each in whole_tracks:
             current_tempo = [i for i in each if i.type == 'set_tempo']
             if current_tempo:
-                whole_bpm = unit.tempo2bpm(current_tempo[0].tempo)
-                break
+                for k in range(len(each)):
+                    if each[k].type == 'set_tempo':
+                        current_start_time = sum(
+                            [each[j].time for j in range(k + 1)])
+                        break
+                whole_tempo_start_time.append(current_start_time)
+                whole_tempo.append(current_tempo)
+        if whole_tempo:
+            min_start_time = min(whole_tempo_start_time)
+            min_tempo_track = whole_tempo[whole_tempo_start_time.index(
+                min_start_time)]
+            min_start_time = min_tempo_track[0].time
+            whole_bpm_list = []
+            for each in min_tempo_track:
+                if each.time == min_start_time:
+                    whole_bpm_list.append(each)
+                else:
+                    break
+            whole_bpm = unit.tempo2bpm(whole_bpm_list[-1].tempo)
     if mode == 'find':
         found = False
         for each in whole_tracks:

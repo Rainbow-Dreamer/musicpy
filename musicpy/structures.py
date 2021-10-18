@@ -1827,16 +1827,20 @@ class chord:
         if mode == 1:
             return available_inds
         if action is None:
-            new_interval = []
-            N = len(available_inds) - 1
-            for i in range(N):
-                new_interval.append(
-                    sum(temp.interval[available_inds[i]:available_inds[i +
-                                                                       1]]))
-            new_interval.append(sum(temp.interval[available_inds[-1]:]))
-            new_notes = [temp.notes[j] for j in available_inds]
-            result = chord(new_notes, interval=new_interval)
-            start_time = sum(temp.interval[:available_inds[0]])
+            if available_inds:
+                new_interval = []
+                N = len(available_inds) - 1
+                for i in range(N):
+                    new_interval.append(
+                        sum(temp.
+                            interval[available_inds[i]:available_inds[i + 1]]))
+                new_interval.append(sum(temp.interval[available_inds[-1]:]))
+                new_notes = [temp.notes[j] for j in available_inds]
+                result = chord(new_notes, interval=new_interval)
+                start_time = sum(temp.interval[:available_inds[0]])
+            else:
+                result = chord([])
+                start_time = 0
             return result, start_time
         else:
             if action_mode == 0:
@@ -1857,15 +1861,20 @@ class chord:
             k for k in range(len(temp))
             if x.degree <= temp.notes[k].degree <= y.degree
         ]
-        new_interval = []
-        N = len(available_inds) - 1
-        for i in range(N):
-            new_interval.append(
-                sum(temp.interval[available_inds[i]:available_inds[i + 1]]))
-        new_interval.append(sum(temp.interval[available_inds[-1]:]))
-        new_notes = [temp.notes[j] for j in available_inds]
-        result = chord(new_notes, interval=new_interval)
-        start_time = sum(temp.interval[:available_inds[0]])
+        if available_inds:
+            new_interval = []
+            N = len(available_inds) - 1
+            for i in range(N):
+                new_interval.append(
+                    sum(temp.interval[available_inds[i]:available_inds[i +
+                                                                       1]]))
+            new_interval.append(sum(temp.interval[available_inds[-1]:]))
+            new_notes = [temp.notes[j] for j in available_inds]
+            result = chord(new_notes, interval=new_interval)
+            start_time = sum(temp.interval[:available_inds[0]])
+        else:
+            result = chord([])
+            start_time = 0
         return result, start_time
 
     def interval_note(self, interval, mode=0):
