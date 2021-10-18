@@ -4469,9 +4469,8 @@ class track_name:
 
 
 class rest:
-    def __init__(self, duration=1 / 4, dotted=None, channel=None):
+    def __init__(self, duration=1 / 4, dotted=None):
         self.duration = duration
-        self.channel = channel
         if dotted is not None:
             self.duration = self.duration * sum([(1 / 2)**i
                                                  for i in range(dotted + 1)])
