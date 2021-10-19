@@ -944,7 +944,7 @@ def read_other_messages(message, other_messages, time, track_ind):
             track=track_ind,
             time=time,
             numerator=message.numerator,
-            denominator=message.denominator,
+            denominator=int(math.log(message.denominator, 2)),
             clocks_per_tick=message.clocks_per_click,
             notes_per_quarter=message.notated_32nd_notes_per_beat)
     elif current_type == 'key_signature':
