@@ -116,7 +116,7 @@ So how do we teach music theory to an AI? In music, ignoring the category of mod
 
 Summary
 -------------
-I started to develop musicpy in October 2019, and now I have a complete set of music theory logic syntax, and there are many composing and arranging functions as well as advanced music theory logic operations. For details, please refer to the wiki. I will continue to update musicpy's video tutorials and wiki.
+I started to develop musicpy in October 2019, and now musicpy has a complete set of music theory logic syntax, and there are many composing and arranging functions as well as advanced music theory logic operations. For details, please refer to the wiki. I will continue to update musicpy's video tutorials and wiki.
 
 I'm working on musicpy continuously and updating musicpy very frequently, more and more musical features will be added, so that musicpy can do more with music.
 
