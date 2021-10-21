@@ -896,13 +896,12 @@ class pitch:
                 self.sounds = AudioSegment.from_file(current_file,
                                                      format=current_format)
                 os.chdir(abs_path)
-                self.sounds.export('scripts/temp.wav', format='wav')
+                self.sounds.export('temp.wav', format='wav')
                 import librosa
-                self.audio = librosa.load('scripts/temp.wav',
+                self.audio = librosa.load('temp.wav',
                                           sr=self.sounds.frame_rate)[0]
-                os.remove('scripts/temp.wav')
+                os.remove('temp.wav')
                 audio_load = True
-
         else:
             self.sounds = path
             self.file_path = None
@@ -915,10 +914,9 @@ class pitch:
                 self.audio = librosa.load(path, sr=self.sample_rate)[0]
             else:
                 os.chdir(abs_path)
-                path.export('scripts/temp.wav', format='wav')
-                self.audio = librosa.load('scripts/temp.wav',
-                                          sr=path.frame_rate)[0]
-                os.remove('scripts/temp.wav')
+                path.export('temp.wav', format='wav')
+                self.audio = librosa.load('temp.wav', sr=path.frame_rate)[0]
+                os.remove('temp.wav')
             audio_load = True
 
     def pitch_shift(self, semitones=1, mode='librosa'):
