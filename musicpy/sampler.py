@@ -11,9 +11,7 @@ sys.path.append('.')
 from musicpy import *
 from io import BytesIO
 import math
-import simpleaudio
 from pydub import AudioSegment
-from pydub.playback import _play_with_simpleaudio as play_sound
 from pydub.generators import Sine, Triangle, Sawtooth, Square, WhiteNoise, Pulse
 import sf2_loader as rs
 import pickle
@@ -646,14 +644,6 @@ class sampler:
             for each in self.piece_playing:
                 each.cancel()
             self.piece_playing.clear()
-        try:
-            simpleaudio.stop_all()
-        except:
-            pass
-        try:
-            pygame.mixer.music.stop()
-        except:
-            pass
 
     def load_channel_settings(self, channel_num=1, text=None, path=None):
         if text is None:
@@ -997,7 +987,7 @@ class pitch:
         play_audio(self)
 
     def stop(self):
-        simpleaudio.stop_all()
+        pygame.mixer.stop()
 
 
 class sound:
@@ -1029,21 +1019,30 @@ class sound:
         play_audio(self)
 
     def stop(self):
-        simpleaudio.stop_all()
+        pygame.mixer.stop()
 
 
 def play_audio(audio):
     if type(audio) in [pitch, sound]:
-        play_sound(audio.sounds)
+        pygame.mixer.quit()
+        pygame.mixer.init(frequency=audio.sounds.frame_rate,
+                          channels=audio.sounds.channels,
+                          size=-audio.sounds.sample_width * 8)
+        pygame.mixer.set_num_channels(1000)
+        current_sound_object = pygame.mixer.Sound(buffer=audio.sounds.raw_data)
+        current_sound_object.play()
     else:
-        play_sound(audio)
+        pygame.mixer.quit()
+        pygame.mixer.init(frequency=audio.frame_rate,
+                          channels=audio.channels,
+                          size=-audio.sample_width * 8)
+        pygame.mixer.set_num_channels(1000)
+        current_sound_object = pygame.mixer.Sound(buffer=audio.raw_data)
+        current_sound_object.play()
 
 
 def stop(audio=None):
-    if type(audio) in [pitch, sound]:
-        audio.sounds.stop()
-    else:
-        simpleaudio.stop_all()
+    pygame.mixer.stop()
 
 
 def load(dic, path):
@@ -1467,7 +1466,6 @@ fade = effect(
     'fade')
 adsr = effect(adsr_func, 'adsr')
 
-pygame.quit()
-pygame.init()
+pygame.mixer.quit()
 pygame.mixer.init(44100, -16, 2, 4096)
 pygame.mixer.set_num_channels(1000)

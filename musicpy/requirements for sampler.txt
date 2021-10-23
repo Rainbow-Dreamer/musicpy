@@ -1,3 +1,2 @@
-simpleaudio
 pydub
 sf2_loader
