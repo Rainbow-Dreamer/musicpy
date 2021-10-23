@@ -766,6 +766,9 @@ class sampler:
                             extra_length=None,
                             track_lengths=None,
                             track_extra_lengths=None):
+        pygame.mixer.quit()
+        pygame.mixer.init(44100, -16, 2, 1024)
+        pygame.mixer.set_num_channels(1000)
         if type(current_chord) == note:
             current_chord = chord([current_chord])
         elif type(current_chord) == list and all(
@@ -1469,5 +1472,5 @@ fade = effect(
 adsr = effect(adsr_func, 'adsr')
 
 pygame.mixer.quit()
-pygame.mixer.init(44100, -16, 2, 4096)
+pygame.mixer.init(44100, -16, 2, 1024)
 pygame.mixer.set_num_channels(1000)
