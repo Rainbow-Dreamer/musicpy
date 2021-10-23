@@ -1032,9 +1032,17 @@ def play_audio(audio, mode=1):
             buffer=current_audio.raw_data)
         current_sound_object.play()
     elif mode == 1:
-        current_file = BytesIO()
-        current_audio.export(current_file, format='wav')
-        current_sound_object = pygame.mixer.Sound(file=current_file)
+        try:
+            current_file = BytesIO()
+            current_audio.export(current_file, format='wav')
+            current_sound_object = pygame.mixer.Sound(file=current_file)
+        except:
+            current_path = os.getcwd()
+            os.chdir(abs_path)
+            current_audio.export('temp.wav', format='wav')
+            current_sound_object = pygame.mixer.Sound(file='temp.wav')
+            os.remove('temp.wav')
+            os.chdir(current_path)
         current_sound_object.play()
 
 
