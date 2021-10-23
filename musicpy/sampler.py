@@ -1022,22 +1022,24 @@ class sound:
         pygame.mixer.stop()
 
 
-def play_audio(audio):
+def play_audio(audio, mode=1):
     if type(audio) in [pitch, sound]:
-        pygame.mixer.quit()
-        pygame.mixer.init(frequency=audio.sounds.frame_rate,
-                          channels=audio.sounds.channels,
-                          size=-audio.sounds.sample_width * 8)
-        pygame.mixer.set_num_channels(1000)
-        current_sound_object = pygame.mixer.Sound(buffer=audio.sounds.raw_data)
-        current_sound_object.play()
+        current_audio = audio.sounds
     else:
-        pygame.mixer.quit()
-        pygame.mixer.init(frequency=audio.frame_rate,
-                          channels=audio.channels,
-                          size=-audio.sample_width * 8)
-        pygame.mixer.set_num_channels(1000)
-        current_sound_object = pygame.mixer.Sound(buffer=audio.raw_data)
+        current_audio = audio
+    pygame.mixer.quit()
+    pygame.mixer.init(frequency=current_audio.frame_rate,
+                      channels=current_audio.channels,
+                      size=-current_audio.sample_width * 8)
+    pygame.mixer.set_num_channels(1000)
+    if mode == 0:
+        current_sound_object = pygame.mixer.Sound(
+            buffer=current_audio.raw_data)
+        current_sound_object.play()
+    elif mode == 1:
+        current_file = BytesIO()
+        current_audio.export(current_file, format='wav')
+        current_sound_object = pygame.mixer.Sound(file=current_file)
         current_sound_object.play()
 
 
