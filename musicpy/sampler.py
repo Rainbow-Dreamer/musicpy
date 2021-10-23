@@ -1033,6 +1033,10 @@ def play_audio(audio, mode=1):
         current_sound_object.play()
     elif mode == 1:
         try:
+            capture = rs.py.io.StdCaptureFD(out=True, in_=False)
+        except:
+            pass
+        try:
             current_file = BytesIO()
             current_audio.export(current_file, format='wav')
             current_sound_object = pygame.mixer.Sound(file=current_file)
@@ -1044,6 +1048,10 @@ def play_audio(audio, mode=1):
             os.remove('temp.wav')
             os.chdir(current_path)
         current_sound_object.play()
+        try:
+            capture.reset()
+        except:
+            pass
 
 
 def stop(audio=None):
