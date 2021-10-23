@@ -766,9 +766,6 @@ class sampler:
                             extra_length=None,
                             track_lengths=None,
                             track_extra_lengths=None):
-        pygame.mixer.quit()
-        pygame.mixer.init(44100, -16, 2, 1024)
-        pygame.mixer.set_num_channels(1000)
         if type(current_chord) == note:
             current_chord = chord([current_chord])
         elif type(current_chord) == list and all(
@@ -1030,11 +1027,6 @@ def play_audio(audio, mode=1):
         current_audio = audio.sounds
     else:
         current_audio = audio
-    pygame.mixer.quit()
-    pygame.mixer.init(frequency=current_audio.frame_rate,
-                      channels=current_audio.channels,
-                      size=-current_audio.sample_width * 8)
-    pygame.mixer.set_num_channels(1000)
     if mode == 0:
         current_sound_object = pygame.mixer.Sound(
             buffer=current_audio.raw_data)
