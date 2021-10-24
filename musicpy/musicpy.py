@@ -3677,6 +3677,7 @@ def distribute(current_chord,
 
 
 def stopall():
+    pygame.mixer.stop()
     pygame.mixer.music.stop()
 
 

@@ -636,6 +636,7 @@ class sampler:
 
     def stop_playing(self):
         pygame.mixer.stop()
+        pygame.mixer.music.stop()
         if self.current_playing:
             for each in self.current_playing:
                 each.cancel()
@@ -1054,8 +1055,9 @@ def play_audio(audio, mode=1):
             pass
 
 
-def stop(audio=None):
+def stop():
     pygame.mixer.stop()
+    pygame.mixer.music.stop()
 
 
 def load(dic, path):
