@@ -621,10 +621,14 @@ def read(name,
                         all_tracks = remain_all_tracks[0]
                     pan_list = all_tracks[1].pan_list
                     volume_list = all_tracks[1].volume_list
-                    instruments_list = [[
+                    current_instruments_list = [[
                         i for i in available_tracks
                         if i.type == 'program_change' and i.channel == k
-                    ][0].program + 1 for k in channels_list]
+                    ] for k in channels_list]
+                    instruments_list = [
+                        each[0].program + 1 if each else 1
+                        for each in current_instruments_list
+                    ]
                     tracks_names_list = [
                         i.name for i in available_tracks
                         if i.type == 'track_name'
