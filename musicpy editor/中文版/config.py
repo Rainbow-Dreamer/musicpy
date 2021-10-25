@@ -5,7 +5,7 @@
     'pairing_symbols': ['()', '[]', "''", '""'],
     'wraplines_number': 2,
     'font_type': 'Consolas',
-    'font_size': 15,
+    'font_size': 12,
     'background_mode': 'white',
     'grammar_highlight': {
         'red': ['/', '@', '^', '~', '%', '&', '|', '+', '-', '?', '*'],

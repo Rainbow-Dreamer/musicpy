@@ -1344,7 +1344,7 @@ class Root(Tk):
             self.inputs.see(current_inds[1])
 
     def search(self, *args):
-        all_text = self.inputs.get('1.0', 'end-1c')[:-1]
+        all_text = self.inputs.get('1.0', 'end-1c')
 
         for each in self.search_inds_list:
             ind1, ind2 = each
