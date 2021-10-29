@@ -28,20 +28,17 @@ you can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to downl
 Installation
 -------------
 Make sure you have installed python (version >= 3.7) in your pc first.
-Execute the following command in the terminal to install musicpy by pip.
+Run the following line in the terminal to install musicpy by pip.
 
 ```shell
 pip install musicpy
 ```
 
-In addition, I also wrote a musicpy editor for writing and compiling musicpy code more easily than regular python IDE with real-time automatic compilation and execution,
-there are some syntactic sugar and you can listen to the music generating from your musicpy code on the fly, it is more convenient and interactive.  
-I strongly recommend to use this musicpy editor to write musicpy code.  
-You can download this musicpy editor at the [latest release](https://github.com/Rainbow-Dreamer/musicpy/releases/latest) of musicpy.  
-Please be sure to download the musicpy folder from github first ([you can click here](https://github.com/Rainbow-Dreamer/musicpy/archive/master.zip)), and then go to the `musicpy editor` folder, you can go to `English Version` folder if you want to use English version of musicpy editor or `中文版` folder if you want to use Chinese version.  
-Put this exe file inside the folder you choose to be able to use this editor.  
-You could also run the python file musicpy editor.pyw in the folder you choose, but you need to make sure you have installed python (version >= 3.7) in your computer first.  
-For more details including abilities and usages of this musicpy editor, see the [documentation](https://github.com/Rainbow-Dreamer/musicpy/wiki/How-to-use-musicpy#I-wrote-an-efficient-IDE-specifically-for-musicpy-for-everyone-to-use) here.
+In addition, I also wrote a musicpy editor for writing and compiling musicpy code more easily than regular python IDE with real-time automatic compilation and execution, there are some syntactic sugar and you can listen to the music generating from your musicpy code on the fly, it is more convenient and interactive.
+
+I strongly recommend to use this musicpy editor to write musicpy code.
+
+You can download this musicpy editor at the repository [musicpy_editor](https://github.com/Rainbow-Dreamer/musicpy_editor), the preparation steps are in the README.
 
 Musicpy is all compatible with Windows, macOS and Linux, but there are some important notes if you encounter some errors on Linux or macOS.
 
@@ -164,13 +161,11 @@ wiki里的语法与功能与最新版本的musicpy是同步的。
 pip install musicpy
 ```
 
-除此之外，我为musicpy专门写了一个编辑器，你可以在这里写musicpy的代码，这个编辑器可以实时自动编译和运行，比在常规的python IDE里更加方便。这个编辑器有一些语法糖，并且你可以实时地听到你写的musicpy代码生成的音乐，更加地方便与互动。  
-我强烈推荐大家使用这个musicpy编辑器来写musicpy代码。  
-你可以到muscipy的[最新发布版本](https://github.com/Rainbow-Dreamer/musicpy/releases/latest)下载这个musicpy编辑器。  
-请务必先从github下载musicpy文件夹（[你可以点击这里](https://github.com/Rainbow-Dreamer/musicpy/archive/master.zip)），然后进入`musicpy editor`文件夹，如果你想使用英文版的musicpy编辑器，你可以进入`English Version`文件夹，如果你想使用中文版，你可以进入`中文版`文件夹。  
-把这个exe文件放在你选择的文件夹里面，就能使用这个编辑器了。  
-你也可以在你选择的文件夹中运行python文件musicpy editor.pyw，但你需要确保你的电脑已经安装了python（版本>=3.7）。 
-如果想要了解这个musicpy编辑器的更多细节(包括功能和使用说明)，可以看这个[文档](https://github.com/Rainbow-Dreamer/musicpy/wiki/How-to-use-musicpy-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8musicpy#%E6%88%91%E4%B8%93%E9%97%A8%E4%B8%BAmusicpy%E8%BF%99%E4%B8%AA%E9%A1%B9%E7%9B%AE%E5%86%99%E4%BA%86%E4%B8%80%E4%B8%AA%E9%AB%98%E6%95%88%E7%9A%84IDE%E4%BE%9B%E5%A4%A7%E5%AE%B6%E4%BD%BF%E7%94%A8)。
+除此之外，我为musicpy专门写了一个编辑器，你可以在这里写musicpy的代码，这个编辑器可以实时自动编译和运行，比在常规的python IDE里更加方便。这个编辑器有一些语法糖，并且你可以实时地听到你写的musicpy代码生成的音乐，更加地方便与互动。
+
+我强烈推荐大家使用这个musicpy编辑器来写musicpy代码。
+
+你可以在仓库[musicpy_editor](https://github.com/Rainbow-Dreamer/musicpy_editor)下载musicpy editor, 准备步骤在README。
 
 Musicpy对于Windows, macOS和Linux都是兼容的, 但是这里有一些在Linux或者macOS上可能会遇到的问题的解决方案。
 
