@@ -278,7 +278,9 @@ def play(current_chord,
         pygame.mixer.music.load(result_file)
         pygame.mixer.music.play()
     else:
-        return file
+        file.seek(0)
+        pygame.mixer.music.load(file)
+        pygame.mixer.music.play()
 
 
 def get_tracks(name):
@@ -987,7 +989,6 @@ def write(current_chord,
           instrument=None,
           i=None,
           save_as_file=True,
-          midi_io=None,
           deinterleave=False,
           ticks_per_quarternote=960,
           remove_duplicates=False,
