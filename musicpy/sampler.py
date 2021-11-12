@@ -1333,7 +1333,6 @@ def make_esi(file_path,
         with open(t, 'rb') as f:
             current_samples[t] = f.read()
     current_esi = esi(current_samples, current_settings, name_mappings)
-    print(current_samples.keys())
     os.chdir(abs_path)
     with open(name, 'wb') as f:
         pickle.dump(current_esi, f)
