@@ -1310,11 +1310,10 @@ def audio_chord(audio_list, interval=0, duration=1 / 4, volume=127):
 
 
 def make_esi(file_path,
-             name='untitled',
+             name='untitled.esi',
              settings=None,
-             info=None,
-             others=None,
-             asfile=True):
+             asfile=True,
+             name_mappings=None):
     abs_path = os.getcwd()
     filenames = os.listdir(file_path)
     current_samples = {}
@@ -1333,11 +1332,12 @@ def make_esi(file_path,
     for t in filenames:
         with open(t, 'rb') as f:
             current_samples[t] = f.read()
-    current_esi = esi(current_samples, current_settings, info, others)
+    current_esi = esi(current_samples, current_settings, name_mappings)
+    print(current_samples.keys())
     os.chdir(abs_path)
-    with open(f'{name}.esi', 'wb') as f:
+    with open(name, 'wb') as f:
         pickle.dump(current_esi, f)
-    print(f'Successfully made ESI file: {name}.esi')
+    print(f'Successfully made ESI file: {name}')
 
 
 def unzip_esi(file_path, folder_name=None):
