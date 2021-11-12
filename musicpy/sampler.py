@@ -702,7 +702,7 @@ class sampler:
             for i in current_dict
         }
         self.channel_sound_modules[channel_num] = note_sounds
-
+        self.channel_note_sounds_path[channel_num] = load_sounds(note_sounds)
         self.channel_sound_audiosegments[channel_num] = {
             i: (result_audio[current_dict[i]]
                 if current_dict[i] in result_audio else None)
