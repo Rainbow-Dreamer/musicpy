@@ -123,7 +123,12 @@ Contact
 -------------
 qq: 2180502841  
 Bilibili account: Rainbow_Dreamer  
-email: 2180502841@qq.com / q1036889495@gmail.com
+email: 2180502841@qq.com / q1036889495@gmail.com  
+Discussion group:
+
+[![Join our Discord server!](https://invidget.switchblade.xyz/m4xEzPQ76V)](http://discord.gg/m4xEzPQ76V)
+
+QQ discussion group: 364834221
 
 musicpy
 =======
@@ -249,4 +254,9 @@ musicpy我一直在持续更新中，不断地加入新的乐理功能，让musi
 -------------
 qq: 2180502841  
 B站账号: Rainbow_Dreamer  
-邮箱: 2180502841@qq.com / q1036889495@gmail.com
+邮箱: 2180502841@qq.com / q1036889495@gmail.com  
+讨论群:
+
+[![Join our Discord server!](https://invidget.switchblade.xyz/m4xEzPQ76V)](http://discord.gg/m4xEzPQ76V)
+
+QQ讨论群: 364834221
