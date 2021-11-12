@@ -100,8 +100,6 @@ class sampler:
         self.channel_names = []
         self.channel_sound_modules_name = []
         self.channel_sound_modules = []
-        self.channel_sound_audiosegments = []
-        self.channel_note_sounds_path = []
         self.channel_dict = []
         self.name = name
         self.bpm = bpm
@@ -118,8 +116,6 @@ class sampler:
             self.channel_names.append(current_channel_name)
             self.channel_sound_modules_name.append('not loaded')
             self.channel_sound_modules.append(None)
-            self.channel_sound_audiosegments.append(None)
-            self.channel_note_sounds_path.append(None)
             self.channel_dict.append(copy(default_notedict))
 
     def add_new_channel(self, name=None):
@@ -127,8 +123,6 @@ class sampler:
         self.channel_names.append(current_channel_name)
         self.channel_sound_modules_name.append('not loaded')
         self.channel_sound_modules.append(None)
-        self.channel_sound_audiosegments.append(None)
-        self.channel_note_sounds_path.append(None)
         self.channel_dict.append(copy(default_notedict))
         self.channel_num += 1
 
@@ -138,8 +132,6 @@ class sampler:
         del self.channel_names[i]
         del self.channel_sound_modules_name[i]
         del self.channel_sound_modules[i]
-        del self.channel_sound_audiosegments[i]
-        del self.channel_note_sounds_path[i]
         del self.channel_dict[i]
         self.channel_num -= 1
 
@@ -153,8 +145,6 @@ class sampler:
             self.channel_names[current_ind] = f'Channel {current_ind+1}'
             self.channel_sound_modules_name[current_ind] = 'not loaded'
             self.channel_sound_modules[current_ind] = None
-            self.channel_sound_audiosegments[current_ind] = None
-            self.channel_note_sounds_path[current_ind] = None
             self.channel_dict[current_ind] = copy(default_notedict)
 
     def clear_all_channels(self):
@@ -164,8 +154,6 @@ class sampler:
             'not loaded' for i in range(self.channel_num)
         ]
         self.channel_sound_modules.clear()
-        self.channel_sound_audiosegments.clear()
-        self.channel_note_sounds_path.clear()
         self.channel_dict.clear()
         self.channel_num = 0
 
@@ -183,8 +171,6 @@ class sampler:
         if current_ind < self.channel_num:
             self.channel_sound_modules_name[current_ind] = 'not loaded'
             self.channel_sound_modules[current_ind] = None
-            self.channel_sound_audiosegments[current_ind] = None
-            self.channel_note_sounds_path[current_ind] = None
             if not keep_notedict:
                 self.channel_dict[current_ind] = copy(default_notedict)
 
@@ -221,13 +207,9 @@ class sampler:
         sound_path = path
         if os.path.isdir(sound_path):
             notedict = self.channel_dict[current_ind]
-            note_sounds = load(notedict, sound_path)
-            note_sounds_path = load_sounds(notedict, sound_path)
-            self.channel_sound_modules[current_ind] = note_sounds
-            self.channel_note_sounds_path[current_ind] = note_sounds_path
-            self.channel_sound_modules_name[current_ind] = sound_path
-            self.channel_sound_audiosegments[current_ind] = load_audiosegments(
+            self.channel_sound_modules[current_ind] = load_audiosegments(
                 notedict, sound_path)
+            self.channel_sound_modules_name[current_ind] = sound_path
         elif os.path.isfile(sound_path):
             self.channel_sound_modules[current_ind] = rs.sf2_loader(sound_path)
             self.channel_sound_modules_name[current_ind] = sound_path
@@ -508,7 +490,7 @@ class sampler:
         current_durations = current_chord.get_duration()
         current_volumes = current_chord.get_volume()
         current_dict = self.channel_dict[current_channel_num]
-        current_sounds = self.channel_sound_audiosegments[current_channel_num]
+        current_sounds = self.channel_sound_modules[current_channel_num]
         current_sound_path = self.channel_sound_modules_name[
             current_channel_num]
         current_start_time = bar_to_real_time(current_start_time, current_bpm,
@@ -671,16 +653,10 @@ class sampler:
         channel_settings = current_esi.settings
         current_samples = current_esi.samples
         filenames = list(current_samples.keys())
-        sound_files = [current_samples[i] for i in filenames]
-        sound_files_pygame = []
-        for each in sound_files:
-            with open('temp', 'wb') as f:
-                f.write(each)
-            sound_files_pygame.append(pygame.mixer.Sound('temp'))
-        os.remove('temp')
         sound_files_audio = [
             AudioSegment.from_file(BytesIO(current_samples[i]),
-                                   format=os.path.splitext(i)[1][1:])
+                                   format=os.path.splitext(i)[1]
+                                   [1:]).set_frame_rate(44100).set_channels(2)
             for i in filenames
         ]
         self.channel_dict[channel_num] = copy(default_notedict)
@@ -688,22 +664,11 @@ class sampler:
             self.load_channel_settings(channel_num, channel_settings)
         current_dict = self.channel_dict[channel_num]
         filenames = [os.path.splitext(i)[0] for i in filenames]
-        result_pygame = {
-            filenames[i]: sound_files_pygame[i]
-            for i in range(len(sound_files))
-        }
         result_audio = {
             filenames[i]: sound_files_audio[i]
-            for i in range(len(sound_files))
+            for i in range(len(filenames))
         }
-        note_sounds = {
-            i: (result_pygame[current_dict[i]]
-                if current_dict[i] in result_pygame else None)
-            for i in current_dict
-        }
-        self.channel_sound_modules[channel_num] = note_sounds
-        self.channel_note_sounds_path[channel_num] = load_sounds(note_sounds)
-        self.channel_sound_audiosegments[channel_num] = {
+        self.channel_sound_modules[channel_num] = {
             i: (result_audio[current_dict[i]]
                 if current_dict[i] in result_audio else None)
             for i in current_dict
@@ -714,21 +679,18 @@ class sampler:
         try:
             sound_path = self.channel_sound_modules_name[current_ind]
             notedict = self.channel_dict[current_ind]
-            note_sounds = load(notedict, sound_path)
-            note_sounds_path = load_sounds(notedict, sound_path)
-            self.channel_sound_modules[current_ind] = note_sounds
-            self.channel_sound_audiosegments[current_ind] = load_audiosegments(
+            self.channel_sound_modules[current_ind] = load_audiosegments(
                 notedict, sound_path)
-            self.channel_note_sounds_path[current_ind] = note_sounds_path
         except Exception as e:
             print(str(e))
 
     def play_note_func(self, name, duration, volume, channel=0):
-        note_sounds_path = self.channel_note_sounds_path[channel]
         note_sounds = self.channel_sound_modules[channel]
         if name in note_sounds:
             current_sound = note_sounds[name]
             if current_sound:
+                current_sound = pygame.mixer.Sound(
+                    buffer=current_sound.raw_data)
                 current_sound.set_volume(volume / 127)
                 duration_time = bar_to_real_time(duration, self.bpm, 1)
                 current_sound.play()
@@ -1026,12 +988,14 @@ class sound:
         pygame.mixer.stop()
 
 
-def play_audio(audio, mode=1):
+def play_audio(audio, mode=0):
     if type(audio) in [pitch, sound]:
         current_audio = audio.sounds
     else:
         current_audio = audio
     if mode == 0:
+        if current_audio.channels == 1:
+            current_audio = current_audio.set_channels(2)
         current_sound_object = pygame.mixer.Sound(
             buffer=current_audio.raw_data)
         current_sound_object.play()
@@ -1063,21 +1027,6 @@ def stop():
     pygame.mixer.music.stop()
 
 
-def load(dic, path):
-    wavedict = {}
-    files = os.listdir(path)
-    filenames_only = [i[:i.rfind('.')] for i in files]
-    current_path = path + '/'
-    for i in dic:
-        try:
-            current_sound = pygame.mixer.Sound(
-                current_path + files[filenames_only.index(dic[i])])
-            wavedict[i] = current_sound
-        except:
-            wavedict[i] = None
-    return wavedict
-
-
 def load_audiosegments(current_dict, current_sound_path):
     current_sounds = {}
     current_sound_files = os.listdir(current_sound_path)
@@ -1093,12 +1042,16 @@ def load_audiosegments(current_dict, current_sound_path):
                                                     rfind('.') + 1:]
             try:
                 current_sounds[i] = AudioSegment.from_file(
-                    current_sound_obj_path, format=current_sound_format)
+                    current_sound_obj_path,
+                    format=current_sound_format).set_frame_rate(
+                        44100).set_channels(2)
             except:
                 with open(current_sound_obj_path, 'rb') as f:
                     current_data = f.read()
                 current_sounds[i] = AudioSegment.from_file(
-                    BytesIO(current_data), format=current_sound_format)
+                    BytesIO(current_data),
+                    format=current_sound_format).set_frame_rate(
+                        44100).set_channels(2)
         else:
             current_sounds[i] = None
     return current_sounds
