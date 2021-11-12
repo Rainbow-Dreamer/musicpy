@@ -24,6 +24,16 @@ class esi:
         self.samples = samples
         self.settings = settings
         self.name_mappings = name_mappings
+        self.file_names = {os.path.splitext(i)[0]: i for i in self.samples}
+
+    def __getitem__(self, ind):
+        if self.name_mappings:
+            if ind in self.name_mappings:
+                return self.samples[self.name_mappings[ind]]
+        if ind in self.samples:
+            return self.samples[ind]
+        if ind in self.file_names:
+            return self.samples[self.file_names[ind]]
 
 
 class effect:
@@ -1358,16 +1368,12 @@ def load_esi(file_path, convert=True):
     with open(file_path, 'rb') as file:
         current_esi = pickle.load(file)
     current_samples = current_esi.samples
-    name_dict = {os.path.splitext(i)[0]: i for i in current_samples}
-    current_esi.name_dict = name_dict
     if convert:
-        sound_files = {
-            os.path.splitext(i)[0]:
-            AudioSegment.from_file(BytesIO(current_samples[i]),
-                                   format=os.path.splitext(i)[1][1:])
+        current_esi.samples = {
+            i: AudioSegment.from_file(BytesIO(current_samples[i]),
+                                      format=os.path.splitext(i)[1][1:])
             for i in current_samples
         }
-        current_esi.samples = sound_files
     return current_esi
 
 
