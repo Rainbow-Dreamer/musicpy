@@ -21,9 +21,9 @@ The syntax and abilities of this wiki is synchronized with the latest released v
 
 [Musicpy composition examples demonstration and musicpy experimental compositions video](https://www.bilibili.com/video/BV18z4y1r7Pk/)
 
-Musicpy's data sturctures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
+Musicpy's data structures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
 
-you can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
+You can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
 
 Installation
 -------------
@@ -44,7 +44,7 @@ Musicpy is all compatible with Windows, macOS and Linux, but there are some impo
 
 Note1: If you encounter ```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` errors on Linux, here is the solutions to fix it, open the terminal and run `sudo apt-get install freepats` and it will fix the errors.
 
-Note2: If you are using macOS, and you encounter problems when you run musicpy codes using your current python version, please to use python 3.7.1/3.7.9 to run musicpy, because it seems that on macOS, some of the requirements python modules of musicpy may not be compatible with some of the newer python versions. It is tested by my friend that on macOS with python 3.7.1 (and python 3.7.9 tested by me), musicpy could run and play the musicpy codes without any errors, but other versions may not. If you don't have problems when you run musicpy codes using your current python version, then you don't need to refer to this note.
+Note2: If you are using macOS, and you encounter problems when you run musicpy codes using your current python version, please use python 3.7.1/3.7.9 to run musicpy, because it seems that on macOS, some of the requirements python modules of musicpy may not be compatible with some of the newer python versions. It is tested by my friend that on macOS with python 3.7.1 (and python 3.7.9 tested by me), musicpy could run and play the musicpy codes without any errors, but other versions may not. If you don't have problems when you run musicpy codes using your current python version, then you don't need to refer to this note.
 
 Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
 
