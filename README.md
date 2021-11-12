@@ -121,6 +121,7 @@ Thank you for your support~
 
 Contact
 -------------
+Discord: Rainbow Dreamer#7122  
 qq: 2180502841  
 Bilibili account: Rainbow_Dreamer  
 email: 2180502841@qq.com / q1036889495@gmail.com  
@@ -252,6 +253,7 @@ musicpy我一直在持续更新中，不断地加入新的乐理功能，让musi
 
 联系方式
 -------------
+Discord: Rainbow Dreamer#7122  
 qq: 2180502841  
 B站账号: Rainbow_Dreamer  
 邮箱: 2180502841@qq.com / q1036889495@gmail.com  
