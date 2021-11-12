@@ -20,17 +20,9 @@ os.chdir(file_path)
 
 
 class esi:
-    def __init__(self,
-                 samples,
-                 settings=None,
-                 info=None,
-                 others=None,
-                 name_dict=None):
+    def __init__(self, samples, settings=None):
         self.samples = samples
         self.settings = settings
-        self.info = info
-        self.others = others
-        self.name_dict = name_dict
 
 
 class effect:
