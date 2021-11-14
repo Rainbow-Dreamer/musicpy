@@ -3643,9 +3643,6 @@ def arpeggio(chord_type,
     return result
 
 
-arp = arpeggio
-
-
 def distribute(current_chord,
                length=1 / 4,
                start=1,
@@ -3724,7 +3721,21 @@ def riff_to_midi(riff_name, name='temp.mid', output_file=False):
         return result
 
 
+def write_data(obj, name='untitled.mpb'):
+    import pickle
+    with open(name, 'wb') as f:
+        pickle.dump(obj, f)
+
+
+def load_data(name):
+    import pickle
+    with open(name, 'rb') as f:
+        result = pickle.load(f)
+    return result
+
+
 C = trans
 N = toNote
 S = toScale
 P = piece
+arp = arpeggio
