@@ -243,7 +243,7 @@ musicpy我一直在持续更新中，不断地加入新的乐理功能，让musi
 
 感谢大家的支持~
 
-如果你对于musicpy的最新进展和开发想法感兴趣，你可以看一下这个repository [musicpy_dev](https://github.com/Rainbow-Dreamer/musicpy_dev)
+如果你对于musicpy的最新进展和开发想法感兴趣，你可以看一下这个仓库 [musicpy_dev](https://github.com/Rainbow-Dreamer/musicpy_dev)
 
 联系方式
 -------------
