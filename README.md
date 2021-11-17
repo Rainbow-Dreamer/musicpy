@@ -109,6 +109,8 @@ I'm working on musicpy continuously and updating musicpy very frequently, more a
 
 Thank you for your support~
 
+If you are interested in the latest progress and develop thoughts of musicpy, take a look at this repository [musicpy_dev](https://github.com/Rainbow-Dreamer/musicpy_dev)
+
 Contact
 -------------
 Discord: Rainbow Dreamer#7122  
