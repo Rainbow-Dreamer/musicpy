@@ -109,7 +109,7 @@ I'm working on musicpy continuously and updating musicpy very frequently, more a
 
 Thank you for your support~
 
-If you are interested in the latest progress and develop thoughts of musicpy, take a look at this repository [musicpy_dev](https://github.com/Rainbow-Dreamer/musicpy_dev)
+If you are interested in the latest progress and develop thoughts of musicpy, you could take a look at this repository [musicpy_dev](https://github.com/Rainbow-Dreamer/musicpy_dev)
 
 Contact
 -------------
@@ -242,6 +242,8 @@ play(guitar, bpm=100, instrument=25)
 musicpy我一直在持续更新中，不断地加入新的乐理功能，让musicpy在音乐上能做到的事情更多。
 
 感谢大家的支持~
+
+如果你对于musicpy的最新进展和开发想法感兴趣，你可以看一下这个repository [musicpy_dev](https://github.com/Rainbow-Dreamer/musicpy_dev)
 
 联系方式
 -------------
