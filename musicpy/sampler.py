@@ -2,12 +2,6 @@ import sys
 import os
 import threading
 from ast import literal_eval
-
-file_path = os.getcwd()
-abs_path = os.path.abspath(os.path.dirname(__file__))
-os.chdir(abs_path)
-sys.path.append('musicpy')
-sys.path.append('.')
 from musicpy import *
 from io import BytesIO
 import math
@@ -16,7 +10,7 @@ from pydub.generators import Sine, Triangle, Sawtooth, Square, WhiteNoise, Pulse
 import sf2_loader as rs
 import pickle
 
-os.chdir(file_path)
+abs_path = os.path.abspath(os.path.dirname(__file__))
 
 
 class esi:
