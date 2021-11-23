@@ -4951,13 +4951,6 @@ def reset(self, **kwargs):
     return temp
 
 
-def reset_note(self, **kwargs):
-    temp = copy(self)
-    for i, j in kwargs.items():
-        setattr(temp, i, j)
-    return temp
-
-
 def event(mode='controller', *args, **kwargs):
     if mode == 'controller':
         return controller_event(*args, **kwargs)
@@ -4989,8 +4982,8 @@ def event(mode='controller', *args, **kwargs):
         return track_name(*args, **kwargs)
 
 
-note.reset = reset_note
 for each in [
-        chord, piece, track, scale, drum, rest, tempo, pitch_bend, pan, volume
+        note, chord, piece, track, scale, drum, rest, tempo, pitch_bend, pan,
+        volume
 ]:
     each.reset = reset
