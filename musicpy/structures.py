@@ -19,9 +19,9 @@ class note:
     @property
     def degree(self):
         return standard[self.name] + 12 * (self.num + 1)
-    
+
     @degree.setter
-    def degree(self,value):
+    def degree(self, value):
         self.name = standard_reverse[value % 12]
         self.num = (value // 12) - 1
 
