@@ -222,7 +222,8 @@ class sampler:
                track_lengths=None,
                track_extra_lengths=None,
                export_args={},
-               show_msg=False):
+               show_msg=False,
+               soundfont_args=soundfont_args):
         if channel_num > 0:
             channel_num -= 1
         if not self.channel_sound_modules:
@@ -277,7 +278,8 @@ class sampler:
                     effects=current_chord.effects
                     if check_effect(current_chord) else None,
                     length=length,
-                    extra_length=extra_length)
+                    extra_length=extra_length,
+                    **soundfont_args)
             else:
                 apply_fadeout_obj = self.apply_fadeout(current_chord,
                                                        current_bpm)
@@ -401,7 +403,8 @@ class sampler:
                             length=None
                             if not track_lengths else track_lengths[i],
                             extra_length=None if not track_extra_lengths else
-                            track_extra_lengths[i]),
+                            track_extra_lengths[i],
+                            **soundfont_args),
                         position=bar_to_real_time(current_start_times[i],
                                                   current_bpm, 1))
 
@@ -1427,6 +1430,8 @@ fade = effect(
     lambda s, duration1, duration2=0: s.fade_in(duration1).fade_out(duration2),
     'fade')
 adsr = effect(adsr_func, 'adsr')
+
+soundfont_args = {'decay': 0, 'fixed_decay': False}
 
 pygame.mixer.quit()
 pygame.mixer.init(44100, -16, 2, 1024)
