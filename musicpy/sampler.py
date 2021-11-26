@@ -223,7 +223,7 @@ class sampler:
                track_extra_lengths=None,
                export_args={},
                show_msg=False,
-               soundfont_args=soundfont_args):
+               soundfont_args=None):
         if channel_num > 0:
             channel_num -= 1
         if not self.channel_sound_modules:
@@ -252,6 +252,8 @@ class sampler:
             result = self.get_current_musicpy_chords(obj, channel_num)
         if result is None:
             return
+        if soundfont_args is None:
+            soundfont_args = default_soundfont_args
         types = result[0]
         current_chord = result[1]
 
@@ -1431,7 +1433,7 @@ fade = effect(
     'fade')
 adsr = effect(adsr_func, 'adsr')
 
-soundfont_args = {'decay': 0, 'fixed_decay': False}
+default_soundfont_args = {'decay': 0, 'fixed_decay': False}
 
 pygame.mixer.quit()
 pygame.mixer.init(44100, -16, 2, 1024)
