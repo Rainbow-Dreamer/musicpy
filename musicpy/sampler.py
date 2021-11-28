@@ -593,7 +593,7 @@ class sampler:
                                             position=current_start_time)
         return silent_audio
 
-    def export_midi_file(self, obj, filename, channel_num=0, **write_args):
+    def export_midi_file(self, obj, filename, channel_num=0, write_args={}):
         result = self.get_current_musicpy_chords(obj, channel_num)
         if result is None:
             return
@@ -717,7 +717,8 @@ class sampler:
              length=None,
              extra_length=None,
              track_lengths=None,
-             track_extra_lengths=None):
+             track_extra_lengths=None,
+             soundfont_args=None):
         if not self.channel_sound_modules:
             return
         self.stop_playing()
@@ -727,7 +728,8 @@ class sampler:
         current_bpm = self.bpm if bpm is None else bpm
         self.play_musicpy_sounds(current_chord, current_channel_num,
                                  current_bpm, length, extra_length,
-                                 track_lengths, track_extra_lengths)
+                                 track_lengths, track_extra_lengths,
+                                 soundfont_args)
 
     def play_musicpy_sounds(self,
                             current_chord,
@@ -736,7 +738,8 @@ class sampler:
                             length=None,
                             extra_length=None,
                             track_lengths=None,
-                            track_extra_lengths=None):
+                            track_extra_lengths=None,
+                            soundfont_args=None):
         if type(current_chord) == note:
             current_chord = chord([current_chord])
         elif type(current_chord) == list and all(
@@ -755,7 +758,8 @@ class sampler:
                     length=length,
                     extra_length=extra_length,
                     track_lengths=track_lengths,
-                    track_extra_lengths=track_extra_lengths)
+                    track_extra_lengths=track_extra_lengths,
+                    soundfont_args=soundfont_args)
             else:
                 if current_chord.start_time == 0:
                     self.play_channel(current_chord, current_channel_num, bpm)
@@ -788,7 +792,8 @@ class sampler:
                             length=length,
                             extra_length=extra_length,
                             track_lengths=track_lengths,
-                            track_extra_lengths=track_extra_lengths)
+                            track_extra_lengths=track_extra_lengths,
+                            soundfont_args=soundfont_args)
                 return
             current_tracks = current_chord.tracks
             bpm = current_chord.bpm
@@ -1439,7 +1444,7 @@ fade = effect(
     'fade')
 adsr = effect(adsr_func, 'adsr')
 
-default_soundfont_args = {'decay': 0, 'fixed_decay': True}
+default_soundfont_args = {'decay': 0.5, 'fixed_decay': True}
 
 pygame.mixer.quit()
 pygame.mixer.init(44100, -16, 2, 1024)
