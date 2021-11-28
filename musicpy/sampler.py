@@ -368,36 +368,41 @@ class sampler:
                 current_track = current_tracks[i]
                 if type(current_sound_modules) == rs.sf2_loader:
                     current_instrument = current_chord.instruments_numbers[i]
-                    # instrument of a track of the piece type could be preset_num or [preset_num, bank_num, (track), (sfid)]
+                    # instrument of a track of the piece type could be preset or [preset, bank, (channel), (sfid)]
                     if type(current_instrument) == int:
                         current_instrument = [
                             current_instrument - 1,
-                            current_sound_modules.current_bank_num
+                            current_sound_modules.current_bank
                         ]
                     else:
                         current_instrument = [current_instrument[0] - 1
                                               ] + current_instrument[1:]
 
-                    current_track2 = copy(current_sound_modules.current_track)
+                    whole_current_channel = copy(
+                        current_sound_modules.current_channel)
+                    current_track_channel = current_chord.channels[
+                        i] if current_chord.channels else i
+                    current_sound_modules.change_channel(
+                        current_instrument[2] if len(current_instrument) > 2
+                        else current_track_channel)
+                    current_channel = copy(
+                        current_sound_modules.current_channel)
                     current_sfid = copy(current_sound_modules.current_sfid)
-                    current_bank_num = copy(
-                        current_sound_modules.current_bank_num)
-                    current_preset_num = copy(
-                        current_sound_modules.current_preset_num)
+                    current_bank = copy(current_sound_modules.current_bank)
+                    current_preset = copy(current_sound_modules.current_preset)
 
                     current_sound_modules.program_select(
-                        track=(current_instrument[2]
-                               if len(current_instrument) > 2 else None),
                         sfid=(current_instrument[3]
                               if len(current_instrument) > 3 else None),
-                        bank_num=current_instrument[1],
-                        preset_num=current_instrument[0])
+                        bank=current_instrument[1],
+                        preset=current_instrument[0])
 
                     silent_audio = silent_audio.overlay(
                         current_sound_modules.export_chord(
                             current_track,
                             bpm=current_bpm,
                             get_audio=True,
+                            channel=current_channel,
                             effects=current_track.effects
                             if check_effect(current_track) else None,
                             pan=current_pan[i],
@@ -411,8 +416,9 @@ class sampler:
                                                   current_bpm, 1))
 
                     current_sound_modules.program_select(
-                        current_track2, current_sfid, current_bank_num,
-                        current_preset_num)
+                        current_channel, current_sfid, current_bank,
+                        current_preset)
+                    current_sound_modules.change_channel(whole_current_channel)
                 else:
                     silent_audio = self.channel_to_audio(
                         current_tracks[i],
@@ -1433,7 +1439,7 @@ fade = effect(
     'fade')
 adsr = effect(adsr_func, 'adsr')
 
-default_soundfont_args = {'decay': 0, 'fixed_decay': False}
+default_soundfont_args = {'decay': 0, 'fixed_decay': True}
 
 pygame.mixer.quit()
 pygame.mixer.init(44100, -16, 2, 1024)
