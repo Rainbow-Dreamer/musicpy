@@ -525,13 +525,12 @@ def read(name,
             else:
                 start_times_list = [j[2] for j in all_tracks]
                 if available_tracks:
-                    channels_numbers = concat(
-                        [[i.channel for i in each if hasattr(i, 'channel')]
-                         for each in available_tracks])
-                    channels_list = []
-                    for each in channels_numbers:
-                        if each not in channels_list:
-                            channels_list.append(each)
+                    channels_list = [[
+                        i.channel for i in each if hasattr(i, 'channel')
+                    ] for each in available_tracks]
+                    channels_list = [
+                        each[0] if each else 0 for each in channels_list
+                    ]
                 else:
                     channels_list = None
 
