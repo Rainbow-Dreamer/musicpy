@@ -382,16 +382,16 @@ class sampler:
                         current_sound_modules.current_channel)
                     current_track_channel = current_chord.channels[
                         i] if current_chord.channels else i
-                    current_sound_modules.change_channel(
-                        current_instrument[2] if len(current_instrument) > 2
-                        else current_track_channel)
+                    current_channel = current_instrument[2] if len(
+                        current_instrument) > 2 else current_track_channel
+                    current_sound_modules.change_channel(current_channel)
                     current_channel = copy(
                         current_sound_modules.current_channel)
                     current_sfid = copy(current_sound_modules.current_sfid)
                     current_bank = copy(current_sound_modules.current_bank)
                     current_preset = copy(current_sound_modules.current_preset)
 
-                    current_sound_modules.program_select(
+                    current_sound_modules.change(
                         sfid=(current_instrument[3]
                               if len(current_instrument) > 3 else None),
                         bank=current_instrument[1],
@@ -415,9 +415,8 @@ class sampler:
                         position=bar_to_real_time(current_start_times[i],
                                                   current_bpm, 1))
 
-                    current_sound_modules.program_select(
-                        current_channel, current_sfid, current_bank,
-                        current_preset)
+                    current_sound_modules.change(current_channel, current_sfid,
+                                                 current_bank, current_preset)
                     current_sound_modules.change_channel(whole_current_channel)
                 else:
                     silent_audio = self.channel_to_audio(
