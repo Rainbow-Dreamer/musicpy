@@ -99,12 +99,12 @@ class sampler:
         self.bpm = bpm
         self.current_playing = []
         self.piece_playing = []
-        self.export_fadeout_use_ratio = True
-        self.export_audio_fadeout_time_ratio = 2
+        self.export_audio_fadeout_time_ratio = 0.5
         self.export_audio_fadeout_time = 500
-        self.play_audio_fadeout_time_ratio = 2
-        self.play_audio_fadeout_time = 800
-        self.play_fadeout_use_ratio = True
+        self.export_fadeout_use_ratio = False
+        self.play_audio_fadeout_time_ratio = 0.5
+        self.play_audio_fadeout_time = 500
+        self.play_fadeout_use_ratio = False
         for i in range(self.channel_num):
             current_channel_name = f'Channel {i+1}'
             self.channel_names.append(current_channel_name)
