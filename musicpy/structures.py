@@ -2919,7 +2919,7 @@ class piece:
 
     def __or__(self, n):
         temp = copy(self)
-        whole_length = None
+        whole_length = temp.bars()
         for i in range(temp.track_number):
             current = temp.tracks[i]
             counter = 0
@@ -2929,20 +2929,21 @@ class piece:
                     current.interval[j] = current.notes[j].duration
                     counter = j
                     break
-            if i == 0:
-                whole_length = current.bars()
-            else:
-                current.interval[counter] += (whole_length - current.bars() -
-                                              temp.start_times[i])
-            unit = copy(current)
+            current_start_time = temp.start_times[i]
+            current.interval[counter] += (whole_length - current.bars() -
+                                          current_start_time)
             for k in range(n - 1):
-                current_start_time = temp.start_times[i]
+                unit = copy(current)
                 if current_start_time:
                     for j in range(len(current) - 1, -1, -1):
                         current_note = current.notes[j]
                         if type(current_note) == note:
                             current.interval[j] += current_start_time
                             break
+                for each in unit.notes:
+                    if isinstance(each, tempo) or isinstance(each, pitch_bend):
+                        if each.start_time is not None:
+                            each.start_time += (k + 1) * whole_length
                 current.notes += unit.notes
                 current.interval += unit.interval
             temp.tracks[i] = current

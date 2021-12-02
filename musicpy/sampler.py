@@ -368,35 +368,30 @@ class sampler:
                 current_track = current_tracks[i]
                 if type(current_sound_modules) == rs.sf2_loader:
                     current_instrument = current_chord.instruments_numbers[i]
-                    # instrument of a track of the piece type could be preset or [preset, bank, (channel), (sfid)]
+                    current_channel = current_chord.channels[
+                        i] if current_chord.channels else current_sound_modules.current_channel
+                    current_sfid, current_bank, current_preset = current_sound_modules.channel_info(
+                        current_channel)
+                    if current_sfid == 0:
+                        current_sound_modules.change_sfid(
+                            current_sound_modules.sfid_list[0],
+                            current_channel)
+                        current_sfid, current_bank, current_preset = current_sound_modules.channel_info(
+                            current_channel)
                     if type(current_instrument) == int:
                         current_instrument = [
-                            current_instrument - 1,
-                            current_sound_modules.current_bank
+                            current_instrument - 1, current_bank
                         ]
                     else:
                         current_instrument = [current_instrument[0] - 1
                                               ] + current_instrument[1:]
-
-                    whole_current_channel = copy(
-                        current_sound_modules.current_channel)
-                    current_track_channel = current_chord.channels[
-                        i] if current_chord.channels else i
-                    current_channel = current_instrument[2] if len(
-                        current_instrument) > 2 else current_track_channel
-                    current_sound_modules.change_channel(current_channel)
-                    current_channel = copy(
-                        current_sound_modules.current_channel)
-                    current_sfid = copy(current_sound_modules.current_sfid)
-                    current_bank = copy(current_sound_modules.current_bank)
-                    current_preset = copy(current_sound_modules.current_preset)
-
                     current_sound_modules.change(
-                        sfid=(current_instrument[3]
-                              if len(current_instrument) > 3 else None),
+                        channel=current_channel,
+                        sfid=(current_instrument[2]
+                              if len(current_instrument) > 2 else None),
                         bank=current_instrument[1],
-                        preset=current_instrument[0])
-
+                        preset=current_instrument[0],
+                        mode=1)
                     silent_audio = silent_audio.overlay(
                         current_sound_modules.export_chord(
                             current_track,
@@ -414,10 +409,11 @@ class sampler:
                             **soundfont_args),
                         position=bar_to_real_time(current_start_times[i],
                                                   current_bpm, 1))
-
-                    current_sound_modules.change(current_channel, current_sfid,
-                                                 current_bank, current_preset)
-                    current_sound_modules.change_channel(whole_current_channel)
+                    current_sound_modules.change(current_channel,
+                                                 current_sfid,
+                                                 current_bank,
+                                                 current_preset,
+                                                 mode=1)
                 else:
                     silent_audio = self.channel_to_audio(
                         current_tracks[i],
