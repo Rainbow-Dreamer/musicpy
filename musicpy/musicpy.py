@@ -949,7 +949,7 @@ def read_other_messages(message, other_messages, time, track_ind):
             track=track_ind,
             time=time,
             numerator=message.numerator,
-            denominator=int(math.log(message.denominator, 2)),
+            denominator=message.denominator,
             clocks_per_tick=message.clocks_per_click,
             notes_per_quarter=message.notated_32nd_notes_per_beat)
     elif current_type == 'key_signature':
@@ -1222,8 +1222,9 @@ def add_other_messages(MyMIDI, other_messages, write_type='piece'):
                 MyMIDI.addText(curernt_track, each.time, each.text)
             elif current_type == time_signature:
                 MyMIDI.addTimeSignature(curernt_track, each.time,
-                                        each.numerator, each.denominator,
-                                        each.clocks_per_tick,
+                                        each.numerator,
+                                        int(math.log(each.denominator,
+                                                     2)), each.clocks_per_tick,
                                         each.notes_per_quarter)
             elif current_type == universal_sysex:
                 MyMIDI.addUniversalSysEx(curernt_track, each.time, each.code,
