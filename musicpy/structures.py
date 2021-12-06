@@ -7,6 +7,10 @@ import musicpy as mp
 
 class note:
     def __init__(self, name, num=4, duration=0.25, volume=100, channel=None):
+        if name not in standard:
+            raise ValueError(
+                f"Invalid note name '{name}', accepted note names are {list(standard.keys())}"
+            )
         self.name = name
         self.num = num
         self.duration = duration
