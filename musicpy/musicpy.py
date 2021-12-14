@@ -6,14 +6,8 @@ import struct
 import chunk
 from io import BytesIO
 from difflib import SequenceMatcher
-from midiutil.MidiFile import *
+import midiutil
 import mido
-from mido.midifiles.midifiles import MidiFile as midi
-from mido import Message
-import mido.midifiles.units as unit
-from mido.midifiles.tracks import merge_tracks as merge
-from mido.midifiles.tracks import MidiTrack
-from mido.midifiles.meta import MetaMessage
 from .database import *
 from .structures import *
 
@@ -21,10 +15,6 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
 pygame.mixer.init(44100, -16, 2, 1024)
-'''
-mido and midiutil is requried for this module, please make sure you have
-these two modules with this file
-'''
 
 
 def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
@@ -283,11 +273,6 @@ def play(current_chord,
         pygame.mixer.music.play()
 
 
-def get_tracks(name):
-    current_midi = midi(name)
-    return current_midi.tracks
-
-
 def read(name,
          trackind=1,
          mode='find',
@@ -306,20 +291,22 @@ def read(name,
     if is_file:
         name.seek(0)
         try:
-            current_midi = midi(file=name)
+            current_midi = mido.midifiles.MidiFile(file=name, clip=True)
             name.close()
         except Exception as OSError:
             name.seek(0)
-            current_midi = midi(file=riff_to_midi(name))
+            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(name),
+                                                   clip=True)
             name.close()
             split_channels = True
         name = name.name
 
     else:
         try:
-            current_midi = midi(name)
+            current_midi = mido.midifiles.MidiFile(name, clip=True)
         except Exception as OSError:
-            current_midi = midi(file=riff_to_midi(name))
+            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(name),
+                                                   clip=True)
             split_channels = True
     whole_tracks = current_midi.tracks
     current_track = None
@@ -369,7 +356,8 @@ def read(name,
                         whole_bpm_list.append(each)
                     else:
                         break
-                whole_bpm = unit.tempo2bpm(whole_bpm_list[-1].tempo)
+                whole_bpm = mido.midifiles.units.tempo2bpm(
+                    whole_bpm_list[-1].tempo)
     else:
         changes = []
         whole_tempo = []
@@ -395,7 +383,8 @@ def read(name,
                     whole_bpm_list.append(each)
                 else:
                     break
-            whole_bpm = unit.tempo2bpm(whole_bpm_list[-1].tempo)
+            whole_bpm = mido.midifiles.units.tempo2bpm(
+                whole_bpm_list[-1].tempo)
     if mode == 'find':
         found = False
         for each in whole_tracks:
@@ -838,8 +827,8 @@ def midi_to_chord(current_midi,
                     current_append_note.track_num = track_ind
             notelist.append(current_append_note)
         elif current_msg.type == 'set_tempo':
-            current_tempo = tempo(unit.tempo2bpm(current_msg.tempo),
-                                  (current_time / interval_unit) + 1,
+            current_tempo = tempo(mido.midifiles.units.tempo2bpm(
+                current_msg.tempo), (current_time / interval_unit) + 1,
                                   track=track_ind)
             if add_track_num:
                 current_tempo.track_num = track_ind
@@ -1022,13 +1011,14 @@ def write(current_chord,
             i if type(i) == int else instruments[i]
             for i in instruments_numbers
         ]
-        MyMIDI = MIDIFile(track_number,
-                          deinterleave=deinterleave,
-                          ticks_per_quarternote=ticks_per_quarternote,
-                          removeDuplicates=remove_duplicates,
-                          file_format=file_format,
-                          adjust_origin=adjust_origin,
-                          eventtime_is_ticks=eventtime_is_ticks)
+        MyMIDI = midiutil.MidiFile.MIDIFile(
+            track_number,
+            deinterleave=deinterleave,
+            ticks_per_quarternote=ticks_per_quarternote,
+            removeDuplicates=remove_duplicates,
+            file_format=file_format,
+            adjust_origin=adjust_origin,
+            eventtime_is_ticks=eventtime_is_ticks)
         MyMIDI.addTempo(track_ind, 0, bpm)
         for i in range(track_number):
             if channels:
@@ -1126,13 +1116,14 @@ def write(current_chord,
             current_chord = chord([current_chord])
         content = concat(current_chord, '|') if isinstance(
             current_chord, list) else current_chord
-        MyMIDI = MIDIFile(track_num,
-                          deinterleave=deinterleave,
-                          ticks_per_quarternote=ticks_per_quarternote,
-                          removeDuplicates=remove_duplicates,
-                          file_format=file_format,
-                          adjust_origin=adjust_origin,
-                          eventtime_is_ticks=eventtime_is_ticks)
+        MyMIDI = midiutil.MidiFile.MIDIFile(
+            track_num,
+            deinterleave=deinterleave,
+            ticks_per_quarternote=ticks_per_quarternote,
+            removeDuplicates=remove_duplicates,
+            file_format=file_format,
+            adjust_origin=adjust_origin,
+            eventtime_is_ticks=eventtime_is_ticks)
         current_channel = channel
         MyMIDI.addTempo(track_ind, 0, bpm)
         if instrument is None:
