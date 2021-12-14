@@ -2631,13 +2631,14 @@ class circle_of_fifths:
         pass
 
     def __getitem__(self, ind):
-        ind -= 1
         if type(ind) == int:
+            ind -= 1
             if not (0 <= ind < 12):
                 ind = ind % 12
             return self.outer[ind]
         elif type(ind) == tuple:
             ind = ind[0]
+            ind -= 1
             if not (0 <= ind < 12):
                 ind = ind % 12
             return self.inner[ind]
@@ -2671,7 +2672,7 @@ class circle_of_fifths:
                         start,
                         step=1,
                         direction='cw',
-                        pitch=None,
+                        pitch=4,
                         inner=False):
         if not inner:
             return scale(note(self.rotate(start, step, direction), pitch),
@@ -3120,7 +3121,19 @@ class piece:
         shift = min(temp.start_times)
         temp = temp.move(-shift)
         piece_process_normalize_tempo(temp, bpm)
-        result = temp.move(shift)
+        original_time_length = max(self.start_times) - min(self.start_times)
+        new_time_length = max(temp.start_times) - min(temp.start_times)
+        if original_time_length == 0:
+            if max(self.start_times) == 0:
+                actual_shift_ratio = 0
+            else:
+                actual_shift_ratio = max(temp.start_times) / max(
+                    self.start_times)
+        else:
+            actual_shift_ratio = new_time_length / original_time_length
+
+        actual_shift = shift * actual_shift_ratio
+        result = temp.move(actual_shift)
         self.start_times = result.start_times
         self.other_messages = result.other_messages
         self.pan = result.pan
@@ -4992,3 +5005,10 @@ for each in [
         volume
 ]:
     each.reset = reset
+
+for each in [
+        controller_event, copyright_event, key_signature, sysex, text_event,
+        time_signature, universal_sysex, rpn, tuning_bank, tuning_program,
+        channel_pressure, program_change, track_name
+]:
+    each.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
