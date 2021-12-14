@@ -3112,34 +3112,38 @@ class piece:
             self.tracks[ind - 1].clear_tempo(cond)
 
     def normalize_tempo(self, bpm=None):
-        tempo_changes = self.get_tempo_changes()
-        if not tempo_changes or all(i.bpm == self.bpm for i in tempo_changes):
+        if not any(isinstance(i, tempo) for each in self.tracks
+                   for i in each) or all(i.bpm == self.bpm
+                                         for each in self.tracks for i in each
+                                         if isinstance(i, tempo)):
             return
         if bpm is None:
             bpm = self.bpm
         temp = copy(self)
         shift = min(temp.start_times)
-        temp = temp.move(-shift)
-        piece_process_normalize_tempo(temp, bpm)
+        piece_process_normalize_tempo(temp, bpm, shift)
         original_time_length = max(self.start_times) - min(self.start_times)
         new_time_length = max(temp.start_times) - min(temp.start_times)
         if original_time_length == 0:
             if max(self.start_times) == 0:
-                actual_shift_ratio = 0
+                adjust_ratio = 0
             else:
-                actual_shift_ratio = max(temp.start_times) / max(
-                    self.start_times)
+                for i in range(len(temp)):
+                    new_bar = temp.tracks[i].bars()
+                    if new_bar > 0:
+                        original_bar = self.tracks[i].bars()
+                        adjust_ratio = new_bar / original_bar
+                        break
         else:
-            actual_shift_ratio = new_time_length / original_time_length
-
-        actual_shift = shift * actual_shift_ratio
-        result = temp.move(actual_shift)
-        self.start_times = result.start_times
-        self.other_messages = result.other_messages
-        self.pan = result.pan
-        self.volume = result.volume
+            adjust_ratio = new_time_length / original_time_length
+        adjust_length = shift * (1 - adjust_ratio)
+        temp.start_times = [i - adjust_length for i in temp.start_times]
+        self.start_times = temp.start_times
+        self.other_messages = temp.other_messages
+        self.pan = temp.pan
+        self.volume = temp.volume
         for i in range(len(self.tracks)):
-            self.tracks[i] = result.tracks[i]
+            self.tracks[i] = temp.tracks[i]
 
     def get_tempo_changes(self, **args):
         temp = copy(self)
@@ -4877,10 +4881,9 @@ def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):
         count_length += current_interval
 
 
-def piece_process_normalize_tempo(self, bpm):
+def piece_process_normalize_tempo(self, bpm, first_track_start_time):
     temp = copy(self)
     start_time_ls = temp.start_times
-    first_track_start_time = 0
     all_tracks = temp.tracks
     length = len(all_tracks)
     for k in range(length):

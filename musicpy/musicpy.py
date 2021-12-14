@@ -944,12 +944,12 @@ def read_other_messages(message, other_messages, time, track_ind):
     elif current_type == 'key_signature':
         current_key = message.key
         if current_key[-1] == 'm':
-            current_mode = MINOR
+            current_mode = midiutil.MidiFile.MINOR
             current_key = scale(current_key[:-1], 'minor')
         else:
-            current_mode = MAJOR
+            current_mode = midiutil.MidiFile.MAJOR
             current_key = scale(current_key, 'major')
-        current_accidental_type = SHARPS
+        current_accidental_type = midiutil.MidiFile.SHARPS
         current_accidentals = len(
             [i for i in current_key.names() if i[-1] == '#'])
         current_message = key_signature(
