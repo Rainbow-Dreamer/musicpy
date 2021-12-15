@@ -828,7 +828,8 @@ def midi_to_chord(current_midi,
             notelist.append(current_append_note)
         elif current_msg.type == 'set_tempo':
             current_tempo = tempo(mido.midifiles.units.tempo2bpm(
-                current_msg.tempo), (current_time / interval_unit) + 1,
+                current_msg.tempo),
+                                  current_time / interval_unit,
                                   track=track_ind)
             if add_track_num:
                 current_tempo.track_num = track_ind
@@ -841,7 +842,7 @@ def midi_to_chord(current_midi,
             else:
                 current_track_ind = track_ind
             current_pitch_bend = pitch_bend(current_msg.pitch,
-                                            (current_time / interval_unit) + 1,
+                                            current_time / interval_unit,
                                             channel=current_msg_channel,
                                             track=current_track_ind,
                                             mode='values')
@@ -857,21 +858,21 @@ def midi_to_chord(current_midi,
                 current_track_ind = track_ind
             if current_msg.control == 10:
                 current_pan_msg = pan(current_msg.value,
-                                      (current_time / interval_unit) + 1,
+                                      current_time / interval_unit,
                                       'value',
                                       channel=current_msg_channel,
                                       track=current_track_ind)
                 pan_list.append(current_pan_msg)
             elif current_msg.control == 7:
                 current_volume_msg = volume(current_msg.value,
-                                            (current_time / interval_unit) + 1,
+                                            current_time / interval_unit,
                                             'value',
                                             channel=current_msg_channel,
                                             track=current_track_ind)
                 volume_list.append(current_volume_msg)
             else:
                 read_other_messages(current_msg, other_messages,
-                                    (current_time / interval_unit) + 1,
+                                    current_time / interval_unit,
                                     current_track_ind)
         else:
             if track_channels and hasattr(current_msg, 'channel'):
@@ -880,7 +881,7 @@ def midi_to_chord(current_midi,
             else:
                 current_track_ind = track_ind
             read_other_messages(current_msg, other_messages,
-                                (current_time / interval_unit) + 1,
+                                current_time / interval_unit,
                                 current_track_ind)
     result = chord(notelist, interval=intervals)
     if clear_empty_notes:

@@ -244,7 +244,7 @@ class chord:
         if get_time and return_type != note:
             no_time = [k for k in inds if temp.notes[k].start_time is None]
             for each in no_time:
-                current_time = temp[:each + 1].bars() + 1
+                current_time = temp[:each + 1].bars()
                 current = temp.notes[each]
                 current.start_time = current_time
             if sort:
@@ -254,19 +254,19 @@ class chord:
     def get_msg(self, types):
         return [i for i in self.other_messages if type(i) == types]
 
-    def cut(self, ind1=1, ind2=None, start_time=0, return_inds=False):
+    def cut(self, ind1=0, ind2=None, start_time=0, return_inds=False):
         # get parts of notes between two bars
         temp = copy(self)
-        start_offset = start_time + 1 - ind1
+        start_offset = start_time - ind1
         if start_offset < 0:
             start_offset = 0
         ind1 -= start_time
-        if ind1 < 1:
-            ind1 = 1
+        if ind1 < 0:
+            ind1 = 0
         if ind2 is not None:
             ind2 -= start_time
-            if ind2 <= 1:
-                ind2 = 1
+            if ind2 <= 0:
+                ind2 = 0
         else:
             ind2 = temp.bars(mode=0)
 
@@ -276,32 +276,32 @@ class chord:
             types = type(each)
             if types == tempo or types == pitch_bend:
                 if each.start_time is None:
-                    each.start_time = temp[:i + 1].bars(mode=0) + 1
-                each.start_time -= (ind1 - 1 + start_time - start_offset)
-                if 1 <= each.start_time < ind2 - ind1 + 1:
+                    each.start_time = temp[:i + 1].bars(mode=0)
+                each.start_time -= (ind1 + start_time - start_offset)
+                if 0 <= each.start_time < ind2 - ind1:
                     changes.append(each)
         temp = temp.only_notes()
 
-        current_bar = 1
+        current_bar = 0
         notes = temp.notes
         intervals = temp.interval
         length = len(notes)
         start_ind = 0
         to_ind = length
         find_start = False
-        if ind1 == 1:
+        if ind1 == 0:
             find_start = True
         for i in range(length):
             current_note = notes[i]
             if type(current_note) == note:
                 current_bar += intervals[i]
                 if (not find_start) and current_bar >= ind1:
-                    start_ind = i + 1
+                    start_ind = i
                     find_start = True
                     if ind2 is None:
                         break
                 elif ind2 and current_bar >= ind2:
-                    to_ind = i + 1
+                    to_ind = i
                     break
         if not find_start:
             start_ind = to_ind
@@ -310,7 +310,7 @@ class chord:
         result = temp[start_ind + 1:to_ind + 1]
         result += chord(changes)
         result.other_messages = [
-            i for i in result.other_messages if ind1 <= i.time / 4 + 1 < ind2
+            i for i in result.other_messages if ind1 <= i.time / 4 < ind2
         ]
         return result
 
@@ -346,12 +346,12 @@ class chord:
             if type(current_note) == note:
                 current_bar += intervals[i]
                 if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
-                    start_ind = i + 1
+                    start_ind = i
                     find_start = True
                     if time2 is None:
                         break
                 elif time2 and (60 / bpm) * current_bar * 4 >= time2:
-                    to_ind = i + 1
+                    to_ind = i
                     break
         if not find_start:
             start_ind = to_ind
@@ -488,7 +488,7 @@ class chord:
     def count_bars(self, ind1, ind2, bars_range=True):
         bars_length = self[ind1:ind2].bars()
         if bars_range:
-            start = self[:ind1].bars() + 1
+            start = self[:ind1].bars()
             return [start, start + bars_length]
         else:
             return bars_length
@@ -902,7 +902,7 @@ class chord:
                 types = type(each)
                 if types == tempo or types == pitch_bend:
                     if each.start_time is None:
-                        each.start_time = temp[:i + 1].bars() + 1
+                        each.start_time = temp[:i + 1].bars()
                     else:
                         each.start_time -= start_time
                     each.start_time = bar_length - each.start_time + 2
@@ -949,7 +949,7 @@ class chord:
             types = type(i)
             if types == tempo or types == pitch_bend:
                 if i.start_time is None:
-                    i.start_time = temp[:i + 1].bars() + 1
+                    i.start_time = temp[:i + 1].bars()
                 else:
                     i.start_time -= start_time
                 i.start_time = bar_length - i.start_time + 2
@@ -1585,7 +1585,7 @@ class chord:
                 k for k in tempo_changes if self.notes[k].start_time is None
             ]
             for each in tempo_changes_no_time:
-                current_time = self[:each + 1].bars(mode=0) + 1
+                current_time = self[:each + 1].bars(mode=0)
                 current_tempo = self.notes[each]
                 current_tempo.start_time = current_time
             tempo_changes = [self.notes[j] for j in tempo_changes]
@@ -1606,7 +1606,7 @@ class chord:
                 for i in range(len(new_tempo_changes) - 1)
             ]
             tempo_changes_ranges.append(
-                (new_tempo_changes[-1].start_time, 1 + self.bars(mode=0),
+                (new_tempo_changes[-1].start_time, self.bars(mode=0),
                  new_tempo_changes[-1].bpm))
             pitch_bend_msg = self.split(pitch_bend, get_time=True)
             self.clear_pitch_bend('all')
@@ -1614,14 +1614,14 @@ class chord:
             process_normalize_tempo(self, tempo_changes_ranges, bpm)
 
             for each in self.other_messages:
-                each.start_time = each.time / 4 + 1
+                each.start_time = each.time / 4
             other_types = pitch_bend_msg.notes + self.other_messages
             if pan_msg:
                 other_types += pan_msg
             if volume_msg:
                 other_types += volume_msg
             other_types.sort(key=lambda s: s.start_time)
-            other_types.insert(0, pitch_bend(0, start_time=1))
+            other_types.insert(0, pitch_bend(0, start_time=0))
             other_types_interval = [
                 other_types[i + 1].start_time - other_types[i].start_time
                 for i in range(len(other_types) - 1)
@@ -1640,7 +1640,7 @@ class chord:
             for i in range(len(other_types_chord.notes)):
                 each = other_types_chord.notes[i]
                 current_type = type(each)
-                current_start_time = sum(other_types_chord.interval[:i]) + 1
+                current_start_time = sum(other_types_chord.interval[:i])
                 if current_type == pitch_bend or current_type == pan or current_type == volume:
                     each.start_time = current_start_time
                 else:
@@ -3055,13 +3055,13 @@ class piece:
                 if temp.track_names is not None:
                     temp.track_names.append(temp2.track_names[i])
         if mode == 'after' and keep_tempo:
-            temp.add_tempo_change(temp2.bpm, 1 + temp_length)
+            temp.add_tempo_change(temp2.bpm, temp_length)
         temp.track_number = len(temp.tracks)
         return temp
 
     def add_pitch_bend(self,
                        value,
-                       start_time=1,
+                       start_time=0,
                        channel='all',
                        track=0,
                        mode='cents',
@@ -3088,7 +3088,7 @@ class piece:
 
     def add_tempo_change(self, bpm, start_time=None, ind=None, track_ind=None):
         if ind is not None and track_ind is not None:
-            self.tracks[track_ind].insert(ind + 1, tempo(bpm, start_time))
+            self.tracks[track_ind].insert(ind, tempo(bpm, start_time))
         else:
             self.tracks[0] += chord([tempo(bpm, start_time)])
 
@@ -3150,7 +3150,7 @@ class piece:
             notes = [each.notes[i] for i in inds]
             no_time = [k for k in inds if each.notes[k].start_time is None]
             for k in no_time:
-                current_time = each[:k + 1].bars() + 1
+                current_time = each[:k + 1].bars()
                 current = each.notes[k]
                 current.start_time = current_time
             tempo_changes += notes
@@ -3177,7 +3177,7 @@ class piece:
         pitch_bend_changes = [each.notes[i] for i in inds]
         no_time = [k for k in inds if each.notes[k].start_time is None]
         for k in no_time:
-            current_time = each[:k + 1].bars() + 1
+            current_time = each[:k + 1].bars()
             current = each.notes[k]
             current.start_time = current_time
         pitch_bend_changes.sort(key=lambda s: s.start_time)
@@ -3196,7 +3196,7 @@ class piece:
     def add_pan(self,
                 value,
                 ind,
-                start_time=1,
+                start_time=0,
                 mode='percentage',
                 channel=None,
                 track=None):
@@ -3205,7 +3205,7 @@ class piece:
     def add_volume(self,
                    value,
                    ind,
-                   start_time=1,
+                   start_time=0,
                    mode='percentage',
                    channel=None,
                    track=None):
@@ -3390,14 +3390,14 @@ class piece:
                                        start_time=start_time,
                                        audio_mode=audio_mode)
 
-    def cut(self, ind1=1, ind2=None, correct=False):
+    def cut(self, ind1=0, ind2=None, correct=False):
         temp_bpm, merged_result, start_time = self.merge()
-        if ind1 < 1:
-            ind1 = 1
+        if ind1 < 0:
+            ind1 = 0
         result = merged_result.cut(ind1, ind2, start_time)
-        offset = ind1 - 1
+        offset = ind1
         temp = copy(self)
-        start_time -= (ind1 - 1)
+        start_time -= ind1
         if start_time < 0:
             start_time = 0
         temp.reconstruct(result, start_time, offset, correct)
@@ -3405,14 +3405,14 @@ class piece:
             ind2 = temp.bars()
         for each in temp.pan:
             for i in each:
-                i.start_time -= (ind1 - 1)
-                if i.start_time < 1:
-                    i.start_time = 1
+                i.start_time -= ind1
+                if i.start_time < 0:
+                    i.start_time = 0
         for each in temp.volume:
             for i in each:
-                i.start_time -= (ind1 - 1)
-                if i.start_time < 1:
-                    i.start_time = 1
+                i.start_time -= ind1
+                if i.start_time < 0:
+                    i.start_time = 0
         temp.pan = [[i for i in each if i.start_time < ind2]
                     for each in temp.pan]
         temp.volume = [[i for i in each if i.start_time < ind2]
@@ -3428,7 +3428,7 @@ class piece:
             k += 1
         track_inds = [each.track_ind for each in temp.tracks]
         temp.other_messages = [
-            i for i in temp.other_messages if ind1 <= i.time / 4 + 1 < ind2
+            i for i in temp.other_messages if ind1 <= i.time / 4 < ind2
         ]
         temp.other_messages = [
             i for i in temp.other_messages if i.track in track_inds
@@ -3448,7 +3448,7 @@ class piece:
         bar_left = time1 / ((60 / temp_bpm) * 4)
         bar_right = time2 / (
             (60 / temp_bpm) * 4) if time2 is not None else temp.bars()
-        result = temp.cut(1 + bar_left, 1 + bar_right)
+        result = temp.cut(bar_left, bar_right)
         return result
 
     def get_bar(self, n):
@@ -3457,7 +3457,7 @@ class piece:
 
     def firstnbars(self, n):
         start_time = min(self.start_times)
-        return self.cut(1 + start_time, n + 1 + start_time)
+        return self.cut(start_time, n + start_time)
 
     def bars(self, mode=1, audio_mode=0):
         return max([
@@ -3919,7 +3919,7 @@ class track:
 
     def add_pan(self,
                 value,
-                start_time=1,
+                start_time=0,
                 mode='percentage',
                 channel=None,
                 track=None):
@@ -3927,7 +3927,7 @@ class track:
 
     def add_volume(self,
                    value,
-                   start_time=1,
+                   start_time=0,
                    mode='percentage',
                    channel=None,
                    track=None):
@@ -4050,7 +4050,7 @@ class pan:
     # of the pan list of a piece
     def __init__(self,
                  value,
-                 start_time=1,
+                 start_time=0,
                  mode='percentage',
                  channel=None,
                  track=None):
@@ -4065,13 +4065,13 @@ class pan:
             self.value_percentage = value
         elif self.mode == 'value':
             self.value = value
-            self.value_percentage = round((self.value / 127) * 100, 3)
+            self.value_percentage = (self.value / 127) * 100
         self.start_time = start_time
         self.channel = channel
         self.track = track
 
     def __str__(self):
-        result = f'pan left to {round(((50-self.value_percentage)/50)*100, 3)}%' if self.value_percentage <= 50 else f'pan right to {round(((self.value_percentage-50)/50)*100, 3)}%'
+        result = f'pan to {round(self.value_percentage, 3)}%'
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
         return result
@@ -4090,7 +4090,7 @@ class volume:
     # of the volume list of a piece
     def __init__(self,
                  value,
-                 start_time=1,
+                 start_time=0,
                  mode='percentage',
                  channel=None,
                  track=None):
@@ -4103,13 +4103,13 @@ class volume:
             self.value_percentage = value
         elif self.mode == 'value':
             self.value = value
-            self.value_percentage = round((self.value / 127) * 100, 3)
+            self.value_percentage = (self.value / 127) * 100
         self.start_time = start_time
         self.channel = channel
         self.track = track
 
     def __str__(self):
-        result = f'volume set to {self.value_percentage}%'
+        result = f'volume set to {round(self.value_percentage, 3)}%'
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
         return result
@@ -4345,62 +4345,62 @@ class controller_event:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=1,
+                 time=0,
                  controller_number=None,
                  parameter=None):
         self.track = track
         self.channel = channel
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.controller_number = controller_number
         self.parameter = parameter
 
 
 class copyright_event:
-    def __init__(self, track=0, time=1, notice=None):
+    def __init__(self, track=0, time=0, notice=None):
         self.track = track
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.notice = notice[:127] if notice else notice
 
 
 class key_signature:
     def __init__(self,
                  track=0,
-                 time=1,
+                 time=0,
                  accidentals=None,
                  accidental_type=None,
                  mode=None):
         self.track = track
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.accidentals = accidentals
         self.accidental_type = accidental_type
         self.mode = mode
 
 
 class sysex:
-    def __init__(self, track=0, time=1, manID=None, payload=None):
+    def __init__(self, track=0, time=0, manID=None, payload=None):
         self.track = track
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.manID = manID
         self.payload = payload
 
 
 class text_event:
-    def __init__(self, track=0, time=1, text=''):
+    def __init__(self, track=0, time=0, text=''):
         self.track = track
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.text = text
 
 
 class time_signature:
     def __init__(self,
                  track=0,
-                 time=1,
+                 time=0,
                  numerator=None,
                  denominator=None,
                  clocks_per_tick=None,
                  notes_per_quarter=8):
         self.track = track
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.numerator = numerator
         self.denominator = denominator
         self.clocks_per_tick = clocks_per_tick
@@ -4410,14 +4410,14 @@ class time_signature:
 class universal_sysex:
     def __init__(self,
                  track=0,
-                 time=1,
+                 time=0,
                  code=None,
                  subcode=None,
                  payload=None,
                  sysExChannel=127,
                  realTime=False):
         self.track = track
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.code = code
         self.subcode = subcode
         self.payload = payload
@@ -4429,7 +4429,7 @@ class rpn:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=1,
+                 time=0,
                  controller_msb=None,
                  controller_lsb=None,
                  data_msb=None,
@@ -4438,7 +4438,7 @@ class rpn:
                  registered=True):
         self.track = track
         self.channel = channel
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.controller_msb = controller_msb
         self.controller_lsb = controller_lsb
         self.data_msb = data_msb
@@ -4451,12 +4451,12 @@ class tuning_bank:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=1,
+                 time=0,
                  bank=None,
                  time_order=False):
         self.track = track
         self.channel = channel
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.bank = bank
         self.time_order = time_order
 
@@ -4465,36 +4465,36 @@ class tuning_program:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=1,
+                 time=0,
                  program=None,
                  time_order=False):
         self.track = track
         self.channel = channel
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.program = program
         self.time_order = time_order
 
 
 class channel_pressure:
-    def __init__(self, track=0, channel=0, time=1, pressure_value=None):
+    def __init__(self, track=0, channel=0, time=0, pressure_value=None):
         self.track = track
         self.channel = channel
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.pressure_value = pressure_value
 
 
 class program_change:
-    def __init__(self, track=0, channel=0, time=1, program=0):
+    def __init__(self, track=0, channel=0, time=0, program=0):
         self.track = track
         self.channel = channel
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.program = program
 
 
 class track_name:
-    def __init__(self, track=0, time=1, name=''):
+    def __init__(self, track=0, time=0, name=''):
         self.track = track
-        self.time = (time - 1) * 4
+        self.time = time * 4
         self.name = name
 
 
