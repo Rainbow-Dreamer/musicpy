@@ -765,7 +765,7 @@ class chord:
 
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
-        # of the chord.
+        # of the chord
         temp = copy(self)
         commands = obj.split(',')
         for each in commands:
@@ -3132,7 +3132,7 @@ class piece:
         else:
             adjust_ratio = new_time_length / original_time_length
         adjust_length = shift * (1 - adjust_ratio)
-        temp.start_times = [i - adjust_length for i in temp.start_times]
+        temp = temp.move(-adjust_length)
         self.start_times = temp.start_times
         self.other_messages = temp.other_messages
         self.pan = temp.pan
