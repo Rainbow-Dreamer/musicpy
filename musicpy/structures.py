@@ -1814,14 +1814,18 @@ class chord:
             return temp
 
     def pitch_filter(self, x='A0', y='C8'):
-        temp = self.copy()
         if type(x) == str:
             x = trans_note(x)
         if type(y) == str:
             y = trans_note(y)
+        if all(x.degree <= i.degree <= y.degree for i in self.notes
+               if isinstance(i, note)):
+            return self, 0
+        temp = self.copy()
         available_inds = [
             k for k in range(len(temp))
-            if x.degree <= temp.notes[k].degree <= y.degree
+            if not (isinstance(temp.notes[k], note)
+                    and not (x.degree <= temp.notes[k].degree <= y.degree))
         ]
         if available_inds:
             new_interval = []
@@ -1832,12 +1836,15 @@ class chord:
                                                                        1]]))
             new_interval.append(sum(temp.interval[available_inds[-1]:]))
             new_notes = [temp.notes[j] for j in available_inds]
-            result = chord(new_notes, interval=new_interval)
             start_time = sum(temp.interval[:available_inds[0]])
+            temp.notes = new_notes
+            temp.interval = new_interval
+
         else:
-            result = chord([])
+            temp.notes.clear()
+            temp.interval.clear()
             start_time = 0
-        return result, start_time
+        return temp, start_time
 
     def interval_note(self, interval, mode=0):
         if mode == 0:

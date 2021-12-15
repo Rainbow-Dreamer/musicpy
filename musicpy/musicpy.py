@@ -250,6 +250,27 @@ def play(current_chord,
         pygame.mixer.music.play()
 
 
+def _add_pan_volume_to_track(current_chord):
+    whole_pan = current_chord.pan_list
+    whole_volume = current_chord.volume_list
+    pan_msg = [
+        controller_event(channel=i.channel,
+                         track=i.track,
+                         time=i.start_time,
+                         controller_number=10,
+                         parameter=i.value) for i in whole_pan
+    ]
+    volume_msg = [
+        controller_event(channel=i.channel,
+                         track=i.track,
+                         time=i.start_time,
+                         controller_number=7,
+                         parameter=i.value) for i in whole_volume
+    ]
+    current_chord.other_messages += pan_msg
+    current_chord.other_messages += volume_msg
+
+
 def read(name,
          trackind=1,
          mode='find',
@@ -376,6 +397,8 @@ def read(name,
         result = midi_to_chord(current_midi, current_track, whole_bpm)
         if changes:
             result[1] += changes
+        if add_pan_volume:
+            _add_pan_volume_to_track(result[1])
         return result
     elif mode == 'all':
         available_tracks = [
@@ -720,6 +743,8 @@ def read(name,
             result = midi_to_chord(current_midi, current_track, whole_bpm)
             if changes:
                 result[1] += changes
+            if add_pan_volume:
+                _add_pan_volume_to_track(result[1])
             return result
         except:
             raise ValueError(f'There is no track {trackind} of this MIDI file')
