@@ -845,7 +845,7 @@ class chord:
         for each in ls:
             if isinstance(each, int):
                 result.append(temp[each])
-                result_interval.append(temp.interval[each - 1])
+                result_interval.append(temp.interval[each])
             elif isinstance(each, float):
                 num, pitch = [int(j) for j in str(each).split('.')]
                 if num > 0:
@@ -853,7 +853,7 @@ class chord:
                 else:
                     current_note = temp[-num] - pitch * octave
                 result.append(current_note)
-                result_interval.append(temp.interval[num - 1])
+                result_interval.append(temp.interval[num])
         return chord(result,
                      interval=result_interval,
                      start_time=temp.start_time)
@@ -1127,7 +1127,6 @@ class chord:
             temp.notes = [temp.notes[k].up(unit[k]) for k in range(len(unit))]
             return temp
         if type(ind) != int and ind is not None:
-            ind = [i - 1 if i > 0 else i for i in ind]
             temp.notes = [
                 temp.notes[i].up(unit) if i in ind else temp.notes[i]
                 for i in range(len(temp.notes))
@@ -1331,8 +1330,6 @@ class chord:
             else:
                 temp.interval[-1] += (temp.notes[-1].duration + length)
         else:
-            if ind > 0:
-                ind -= 1
             if ind == len(temp) - 1:
                 last_interval = temp.interval[-1]
                 if last_interval != 0:
@@ -1646,18 +1643,18 @@ class chord:
             if types == tempo or types == pitch_bend:
                 if i.start_time is not None:
                     i.start_time += time
-                    if i.start_time < 1:
-                        i.start_time = 1
+                    if i.start_time < 0:
+                        i.start_time = 0
         if pan_msg:
             for each in pan_msg:
                 each.start_time += time
-                if each.start_time < 1:
-                    each.start_time = 1
+                if each.start_time < 0:
+                    each.start_time = 0
         if volume_msg:
             for each in volume_msg:
                 each.start_time += time
-                if each.start_time < 1:
-                    each.start_time = 1
+                if each.start_time < 0:
+                    each.start_time = 0
         for each in temp.other_messages:
             each.time += time * 4
             if each.time < 0:
@@ -2066,8 +2063,8 @@ class chord:
             if types == tempo or types == pitch_bend:
                 if each.start_time is not None:
                     each.start_time += start_time
-                    if each.start_time < 1:
-                        each.start_time = 1
+                    if each.start_time < 0:
+                        each.start_time = 0
         if msg:
             for each in self.other_messages:
                 each.time += start_time * 4
@@ -2261,13 +2258,13 @@ class scale:
                             step=2):
         result = []
         high = False
-        if degree1 == 8:
-            degree1 = 1
+        if degree1 == 7:
+            degree1 = 0
             high = True
         temp = copy(self)
         scale_notes = temp.notes[:-1]
         for i in range(degree1, degree1 + step * num, step):
-            result.append(scale_notes[(i % 7) - 1])
+            result.append(scale_notes[i % 7])
         resultchord = chord(result,
                             rootpitch=temp.pitch,
                             interval=interval,
@@ -2295,13 +2292,13 @@ class scale:
         return self.pattern(*x)
 
     def dom(self):
-        return self[5]
+        return self[4]
 
     def dom_mode(self):
         if self.mode is not None:
-            return scale(self[5], mode=self.mode)
+            return scale(self[4], mode=self.mode)
         else:
-            return scale(self[5], interval=self.getInterval())
+            return scale(self[4], interval=self.getInterval())
 
     def fifth(self, step=1, inner=False):
         # move the scale on the circle of fifths by number of steps,
@@ -2324,22 +2321,22 @@ class scale:
                                                    inner=inner)
 
     def tonic(self):
-        return self[1]
+        return self[0]
 
     def supertonic(self):
-        return self[2]
+        return self[1]
 
     def mediant(self):
-        return self[3]
+        return self[2]
 
     def subdominant(self):
-        return self[4]
+        return self[3]
 
     def dominant(self):
-        return self[5]
+        return self[4]
 
     def submediant(self):
-        return self[6]
+        return self[5]
 
     def leading_tone(self):
         return self[0].up(major_seventh)
@@ -2348,22 +2345,22 @@ class scale:
         return self[0].up(minor_seventh)
 
     def tonic_chord(self):
-        return self(1)
+        return self(0)
 
     def subdom(self):
-        return self[4]
+        return self[3]
 
     def subdom_chord(self):
-        return self(4)
+        return self(3)
 
     def dom_chord(self):
-        return self(5)
+        return self(4)
 
     def dom7_chord(self):
-        return self(5) + self[4].up(12)
+        return self(4) + self[3].up(12)
 
     def leading7_chord(self):
-        return chord([self[7].down(octave), self[2], self[4], self[6]])
+        return chord([self[6].down(octave), self[1], self[3], self[5]])
 
     def scalefrom(self, degree=5, mode=None, interval=None):
         # default is pick the dominant mode of the scale
@@ -2398,23 +2395,22 @@ class scale:
                                      interval=interval,
                                      num=num,
                                      step=step)
-            for i in range(1,
-                           len(self.getInterval()) + 2)
+            for i in range(len(self.getInterval()) + 1)
         ]
 
     def relative_key(self):
         if self.mode == 'major':
-            return scale(self[6], 'minor')
+            return scale(self[5], 'minor')
         elif self.mode == 'minor':
-            return scale(self[3], 'major')
+            return scale(self[2], 'major')
         else:
             'this function only applies to major and minor scales'
 
     def parallel_key(self):
         if self.mode == 'major':
-            return scale(self[1], 'minor')
+            return scale(self[0], 'minor')
         elif self.mode == 'minor':
-            return scale(self[1], 'major')
+            return scale(self[0], 'major')
         else:
             return 'this function only applies to major and minor scales'
 
@@ -2464,9 +2460,8 @@ class scale:
         else:
             notes = copy(self.notes)
             if type(ind) == int:
-                notes[ind - 1] = notes[ind - 1].up(unit)
+                notes[ind] = notes[ind].up(unit)
             else:
-                ind = [i - 1 if i > 0 else i for i in ind]
                 notes = [
                     notes[i].up(unit) if i in ind else notes[i]
                     for i in range(len(notes))
@@ -2540,7 +2535,7 @@ class scale:
             types = type(current_chord)
             if types == tuple or types == list:
                 current_degree_name = current_chord[0]
-                current_degree = roman_numerals_dict[current_degree_name]
+                current_degree = roman_numerals_dict[current_degree_name] - 1
                 if current_degree == 'not found':
                     return f'{current_chord} is not a valid roman numerals chord representation'
                 current_note = self[current_degree].name
@@ -2554,7 +2549,7 @@ class scale:
                     for i in each:
                         if current_chord.startswith(i):
                             found = True
-                            current_degree = roman_numerals_dict[i]
+                            current_degree = roman_numerals_dict[i] - 1
                             current_note = self[current_degree].name
                             if i.islower():
                                 current_note += 'm'
@@ -2761,8 +2756,6 @@ class piece:
             if self.sampler_channels else None)
 
     def __delitem__(self, i):
-        if i > 0:
-            i -= 1
         del self.tracks[i]
         del self.instruments_list[i]
         del self.instruments_numbers[i]
@@ -2780,8 +2773,6 @@ class piece:
         self.track_number -= 1
 
     def __setitem__(self, i, new_track):
-        if i > 0:
-            i -= 1
         self.tracks[i] = new_track.content
         self.instruments_list[i] = new_track.instrument
         self.instruments_numbers[i] = new_track.instruments_number
@@ -2807,8 +2798,6 @@ class piece:
             for k in range(len(self.tracks)):
                 self.tracks[k].setvolume(0)
         else:
-            if i > 0:
-                i -= 1
             self.tracks[i].setvolume(0)
 
     def unmute(self, i=None):
@@ -2818,8 +2807,6 @@ class piece:
             for k in range(len(self.tracks)):
                 self.tracks[k].setvolume(self.muted_msg[k])
         else:
-            if i > 0:
-                i -= 1
             self.tracks[i].setvolume(self.muted_msg[i])
 
     def append(self, new_track):
@@ -2955,8 +2942,6 @@ class piece:
         mp.play(self, *args, **kwargs)
 
     def __call__(self, num):
-        if num > 0:
-            num -= 1
         return [
             self.tracks[num], self.instruments_list[num], self.bpm,
             self.start_times[num],
@@ -3127,7 +3112,7 @@ class piece:
         tempo_changes.sort(key=lambda s: s.start_time)
         return chord(tempo_changes)
 
-    def get_pitch_bend(self, ind=1):
+    def get_pitch_bend(self, ind=0):
         if ind == 'all':
             return mp.concat(
                 [self.get_pitch_bend(i) for i in range(len(self))])
@@ -3135,8 +3120,6 @@ class piece:
         if ind == 'all':
             return concat(
                 [self.get_pitch_bend(k) for k in range(len(self.tracks))])
-        if ind > 0:
-            ind -= 1
         each = temp.tracks[ind]
         inds = [
             i for i in range(len(each)) if type(each.notes[i]) == pitch_bend
@@ -3154,8 +3137,6 @@ class piece:
         if ind is None:
             return [i for i in self.other_messages if type(i) == types]
         else:
-            if ind > 0:
-                ind -= 1
             return [
                 i for i in self.tracks[ind].other_messages if type(i) == types
             ]
@@ -3184,8 +3165,6 @@ class piece:
             for each in self.pan:
                 each.clear()
         else:
-            if ind > 0:
-                ind -= 1
             self.pan[ind].clear()
 
     def clear_volume(self, ind='all'):
@@ -3193,8 +3172,6 @@ class piece:
             for each in self.volume:
                 each.clear()
         else:
-            if ind > 0:
-                ind -= 1
             self.volume[ind].clear()
 
     def reassign_channels(self, start=0):
@@ -3464,8 +3441,8 @@ class piece:
                 if types == tempo or types == pitch_bend:
                     if each.start_time is not None:
                         each.start_time += current_start_time
-                        if each.start_time < 1:
-                            each.start_time = 1
+                        if each.start_time < 0:
+                            each.start_time = 0
             if msg:
                 for each in current_track.other_messages:
                     each.time += current_start_time * 4
@@ -3476,12 +3453,12 @@ class piece:
                 current_volume = self.volume[i]
                 for each in current_pan:
                     each.start_time += current_start_time
-                    if each.start_time < 1:
-                        each.start_time = 1
+                    if each.start_time < 0:
+                        each.start_time = 0
                 for each in current_volume:
                     each.start_time += current_start_time
-                    if each.start_time < 1:
-                        each.start_time = 1
+                    if each.start_time < 0:
+                        each.start_time = 0
 
     def reverse(self):
         temp = copy(self)
@@ -3503,13 +3480,13 @@ class piece:
         for each in temp.pan:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         for each in temp.volume:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         return temp
 
     def reverse_chord(self):
@@ -3531,13 +3508,13 @@ class piece:
         for each in temp.pan:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         for each in temp.volume:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         return temp
 
     def __invert__(self):
@@ -3579,8 +3556,6 @@ class piece:
                     for i in instruments_list):
                 self.instruments_numbers = copy(instruments_list)
         else:
-            if ind > 0:
-                ind -= 1
             if type(instruments_list) == int:
                 self.instruments_numbers[ind] = instruments_list
                 self.instruments_list[ind] = reverse_instruments[
@@ -3602,18 +3577,16 @@ class piece:
                 msg=True,
                 pan_volume=True)
         else:
-            if ind > 0:
-                ind -= 1
             temp.start_times[ind] += time
             temp.tracks[ind].apply_start_time_to_changes(time, msg=True)
             for each in temp.pan[ind]:
                 each.start_time += time
-                if each.start_time < 1:
-                    each.start_time = 1
+                if each.start_time < 0:
+                    each.start_time = 0
             for each in temp.volume[ind]:
                 each.start_time += time
-                if each.start_time < 1:
-                    each.start_time = 1
+                if each.start_time < 0:
+                    each.start_time = 0
         return temp
 
     def copy(self):
@@ -3918,13 +3891,13 @@ class track:
         for each in temp.pan:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         for each in temp.volume:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         return temp
 
     def reverse_chord(self, *args, **kwargs):
@@ -3933,13 +3906,13 @@ class track:
         for each in temp.pan:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         for each in temp.volume:
             for i in each:
                 i.start_time = length - i.start_time + 2
-                if i.start_time < 1:
-                    i.start_time = 1
+                if i.start_time < 0:
+                    i.start_time = 0
         return temp
 
     def __invert__(self):

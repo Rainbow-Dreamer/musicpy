@@ -150,30 +150,7 @@ def getchord(start,
         if interval_mode != 'not found':
             interval = interval_mode
         else:
-            if mode[:3] == 'add':
-                try:
-                    addnum = int(mode[3:])
-                    interval = [
-                        major_third, perfect_fifth,
-                        scale(start,
-                              'major').notes[:-1][(addnum % 7) - 1].degree -
-                        start.degree + octave * (addnum // 7)
-                    ]
-                except:
-                    return 'add(n) chord: n should be an integer'
-            elif mode[:4] == 'madd':
-                try:
-                    addnum = int(mode[4:])
-                    interval = [
-                        minor_third, perfect_fifth,
-                        scale(start,
-                              'minor').notes[:-1][(addnum % 7) - 1].degree -
-                        start.degree + octave * (addnum // 7)
-                    ]
-                except:
-                    return 'add(n) chord: n should be an integer'
-            else:
-                return 'could not detect the chord types'
+            raise ValueError('could not detect the chord types')
     for i in range(len(interval)):
         chordlist.append(degree_to_note(initial + interval[i]))
     if addition is not None:
@@ -1038,7 +1015,7 @@ def write(current_chord,
                     current_pan_channel = current_channel if each.channel is None else each.channel
                     MyMIDI.addControllerEvent(current_pan_track,
                                               current_pan_channel,
-                                              (each.start_time - 1) * 4, 10,
+                                              each.start_time * 4, 10,
                                               each.value)
             current_volume_msg = volume_msg[i]
             if current_volume_msg:
@@ -1047,7 +1024,7 @@ def write(current_chord,
                     current_volume_track = i if each.track is None else each.track
                     MyMIDI.addControllerEvent(current_volume_track,
                                               current_volume_channel,
-                                              (each.start_time - 1) * 4, 7,
+                                              each.start_time * 4, 7,
                                               each.value)
 
             content = tracks_contents[i]
@@ -1066,21 +1043,20 @@ def write(current_chord,
                     current_start_time += content_intervals[j] * 4
                 elif current_type == tempo:
                     if current_note.start_time is not None:
-                        if current_note.start_time < 1:
+                        if current_note.start_time < 0:
                             tempo_change_time = 0
                         else:
-                            tempo_change_time = (current_note.start_time -
-                                                 1) * 4
+                            tempo_change_time = current_note.start_time * 4
                     else:
                         tempo_change_time = current_start_time
                     MyMIDI.addTempo(track_ind, tempo_change_time,
                                     current_note.bpm)
                 elif current_type == pitch_bend:
                     if current_note.start_time is not None:
-                        if current_note.start_time < 1:
+                        if current_note.start_time < 0:
                             pitch_bend_time = 0
                         else:
-                            pitch_bend_time = (current_note.start_time - 1) * 4
+                            pitch_bend_time = current_note.start_time * 4
                     else:
                         pitch_bend_time = current_start_time
                     pitch_bend_track = i if current_note.track is None else current_note.track
@@ -1150,19 +1126,19 @@ def write(current_chord,
                 current_start_time += content_intervals[j] * 4
             elif current_type == tempo:
                 if current_note.start_time is not None:
-                    if current_note.start_time < 1:
+                    if current_note.start_time < 0:
                         tempo_change_time = 0
                     else:
-                        tempo_change_time = (current_note.start_time - 1) * 4
+                        tempo_change_time = current_note.start_time * 4
                 else:
                     tempo_change_time = current_start_time
                 MyMIDI.addTempo(track_ind, tempo_change_time, current_note.bpm)
             elif current_type == pitch_bend:
                 if current_note.start_time is not None:
-                    if current_note.start_time < 1:
+                    if current_note.start_time < 0:
                         pitch_bend_time = 0
                     else:
-                        pitch_bend_time = (current_note.start_time - 1) * 4
+                        pitch_bend_time = current_note.start_time * 4
                 else:
                     pitch_bend_time = current_start_time
                 pitch_bend_track = track_ind
@@ -1593,8 +1569,8 @@ def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
                 root_note = root_note_obj.name
                 if root_note in note_names:
                     header = '#'
-        scale_degree = note_names.index(root_note) + 1
-        current_function = chord_functions_roman_numerals[scale_degree]
+        scale_degree = note_names.index(root_note)
+        current_function = chord_functions_roman_numerals[scale_degree + 1]
         if chord_types == '' or chord_types == '5':
             original_chord = mode(scale_degree)
             third_type = original_chord[1].degree - original_chord[0].degree
@@ -3637,7 +3613,7 @@ def arpeggio(chord_type,
 
 def distribute(current_chord,
                length=1 / 4,
-               start=1,
+               start=0,
                stop=None,
                method=translate,
                mode=0):
@@ -3645,8 +3621,6 @@ def distribute(current_chord,
         current_chord = method(current_chord)
     elif type(current_chord) == list:
         current_chord = chord(current_chord)
-    if start > 0:
-        start -= 1
     if stop is None:
         stop = len(current_chord)
     temp = copy(current_chord)
