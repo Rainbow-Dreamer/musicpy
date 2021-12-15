@@ -1393,15 +1393,8 @@ class chord:
 
     def __getitem__(self, ind):
         if isinstance(ind, slice):
-            start = ind.start if ind.start is None else (
-                ind.start - 1 if ind.start > 0 else len(self) + ind.start)
-            stop = ind.stop if ind.stop is None else (
-                ind.stop - 1 if ind.stop > 0 else len(self) + ind.stop)
-            return self.__getslice__(start, stop)
-        temp = copy(self)
-        if ind > 0:
-            ind -= 1
-        return temp.notes[ind]
+            return self.__getslice__(ind.start, ind.stop)
+        return copy(self.notes[ind])
 
     def __iter__(self):
         for i in self.notes:
@@ -2211,8 +2204,6 @@ class scale:
     def __getitem__(self, ind):
         if isinstance(ind, slice):
             return self.getScale()[ind]
-        if ind > 0:
-            ind -= 1
         return self.notes[ind]
 
     def __iter__(self):
@@ -2632,13 +2623,11 @@ class circle_of_fifths:
 
     def __getitem__(self, ind):
         if type(ind) == int:
-            ind -= 1
             if not (0 <= ind < 12):
                 ind = ind % 12
             return self.outer[ind]
         elif type(ind) == tuple:
             ind = ind[0]
-            ind -= 1
             if not (0 <= ind < 12):
                 ind = ind % 12
             return self.inner[ind]
@@ -2775,8 +2764,6 @@ class piece:
             yield i
 
     def __getitem__(self, i):
-        if i > 0:
-            i -= 1
         return track(
             content=self.tracks[i],
             instrument=self.instruments_list[i],
