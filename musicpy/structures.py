@@ -1511,16 +1511,27 @@ class chord:
         temp.interval = [intervals[k] for k in inds]
         return temp
 
-    def normalize_tempo(self, bpm, pan_msg=None, volume_msg=None):
+    def normalize_tempo(self,
+                        bpm,
+                        start_time=0,
+                        pan_msg=None,
+                        volume_msg=None):
         # choose a bpm and apply to all of the notes, if there are tempo
         # changes, use relative ratios of the chosen bpms and changes bpms
         # to re-calculate the notes durations and intervals
+        if start_time > 0:
+            self.notes.insert(0, note('C', 5, duration=0))
+            self.interval.insert(0, start_time)
         tempo_changes = [
             i for i in range(len(self.notes)) if type(self.notes[i]) == tempo
         ]
         if (not tempo_changes) or all(self.notes[i].bpm == bpm
                                       for i in tempo_changes):
+            if start_time > 0:
+                del self.notes[0]
+                del self.interval[0]
             return
+
         tempo_changes_no_time = [
             k for k in tempo_changes if self.notes[k].start_time is None
         ]
@@ -1598,7 +1609,11 @@ class chord:
         result = [new_other_messages]
         if new_pan or new_volume:
             result += [new_pan, new_volume]
-        return result
+        if start_time > 0:
+            start_time = self.interval[0]
+            del self.notes[0]
+            del self.interval[0]
+        return result, start_time
 
     def place_shift(self, time=0, pan_msg=None, volume_msg=None):
         temp = copy(self)
@@ -4785,14 +4800,11 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
                 each.track = k
     whole_pan = mp.concat(self.pan) if self.pan else None
     whole_volume = mp.concat(self.volume) if self.volume else None
-    first_track.notes.insert(0, note('C', 5, duration=0))
-    first_track.interval.insert(0, first_track_start_time)
-    normalize_result = first_track.normalize_tempo(bpm,
-                                                   pan_msg=whole_pan,
-                                                   volume_msg=whole_volume)
-    first_track_start_time = first_track.interval[0]
-    del first_track.notes[0]
-    del first_track.interval[0]
+    normalize_result, first_track_start_time = first_track.normalize_tempo(
+        bpm,
+        start_time=first_track_start_time,
+        pan_msg=whole_pan,
+        volume_msg=whole_volume)
     new_other_messages = normalize_result[0]
     self.other_messages = new_other_messages
     if whole_pan or whole_volume:
