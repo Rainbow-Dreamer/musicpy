@@ -699,7 +699,7 @@ def read(name,
                                 current_track_names[i])
                     if get_off_drums:
                         drum_ind = result_piece.channels.index(9)
-                        del result_piece[drum_ind + 1]
+                        del result_piece[drum_ind]
                 else:
                     if result_piece.tracks:
                         result_piece.other_messages = concat([
@@ -1597,7 +1597,7 @@ def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
         current_function = chord_functions_roman_numerals[scale_degree]
         if chord_types == '' or chord_types == '5':
             original_chord = mode(scale_degree)
-            third_type = original_chord[2].degree - original_chord[1].degree
+            third_type = original_chord[1].degree - original_chord[0].degree
             if third_type == minor_third:
                 current_function = current_function.lower()
         else:
@@ -1745,7 +1745,7 @@ def chord_functions_analysis(current_chord,
             chord_progressions[-1] = chord_progressions[-1][:-len(delimiter)]
             chord_progressions = ('\n' * space_lines).join(chord_progressions)
     spaces = '\n' * space_lines
-    analysis_result = f'key: {scales[1].name} {scales.mode}{spaces}{chord_progressions}'
+    analysis_result = f'key: {scales[0].name} {scales.mode}{spaces}{chord_progressions}'
     if write_to_file:
         with open('chords functions analysis result.txt',
                   'w',
@@ -2085,7 +2085,7 @@ def chord_analysis(chords,
     if formated:
         result = [detect(each, **detect_args) for each in chord_ls]
         result = [i if type(i) != list else i[0] for i in result]
-        result_notes = [chord_notes[k[0] + 1:k[1] + 1] for k in chord_inds]
+        result_notes = [chord_notes[k[0]:k[1]] for k in chord_inds]
         result_notes = [
             each.sortchord() if all(j == 0
                                     for j in each.interval[:-1]) else each
@@ -2113,18 +2113,18 @@ def chord_analysis(chords,
         return chords_formated
     if mode == 'chords':
         if get_original_order:
-            return [chord_notes[k[0] + 1:k[1] + 1] for k in chord_inds]
+            return [chord_notes[k[0]:k[1]] for k in chord_inds]
         return chord_ls
     elif mode == 'chord names':
         result = [detect(each, **detect_args) for each in chord_ls]
         return [i if type(i) != list else i[0] for i in result]
     elif mode == 'inds':
-        return [[i[0] + 1, i[1] + 1] for i in chord_inds]
+        return [[i[0], i[1]] for i in chord_inds]
     elif mode == 'bars':
-        inds = [[i[0] + 1, i[1] + 1] for i in chord_inds]
+        inds = [[i[0], i[1]] for i in chord_inds]
         return [chord_notes.count_bars(k[0], k[1]) for k in inds]
     elif mode == 'bars start':
-        inds = [[i[0] + 1, i[1] + 1] for i in chord_inds]
+        inds = [[i[0], i[1]] for i in chord_inds]
         return [chord_notes.count_bars(k[0], k[1])[0] for k in inds]
 
 
@@ -2162,7 +2162,7 @@ def find_all_continuous(current_chord, value, start=None, stop=None):
                 inds.append(i)
             else:
                 if inds:
-                    inds.append(inds[-1] + 1)
+                    inds.append(inds[-1])
                     result.append(inds)
                 appear = True
                 inds = [i]
@@ -2324,7 +2324,7 @@ def inversion_from(a, b, num=False, mode=0):
     for i in range(1, N):
         temp = b.inversion(i)
         if [x.name for x in temp.notes] == [y.name for y in a.notes]:
-            return f'/{a[1].name}' if not num else f'{i} inversion'
+            return f'/{a[0].name}' if not num else f'{i} inversion'
     for j in range(1, N):
         temp = b.inversion_highest(j)
         if [x.name for x in temp.notes] == [y.name for y in a.notes]:
@@ -2346,10 +2346,10 @@ def omitfrom(a, b, showls=False, alter_notes_show_degree=False):
     b_notes = b.names()
     omitnotes = list(set(b_notes) - set(a_notes))
     if alter_notes_show_degree:
-        b_first_note = b[1].degree
+        b_first_note = b[0].degree
         omitnotes_degree = []
         for j in omitnotes:
-            current = reverse_degree_match[b[b_notes.index(j) + 1].degree -
+            current = reverse_degree_match[b[b_notes.index(j)].degree -
                                            b_first_note]
             if current == 'not found':
                 omitnotes_degree.append(j)
@@ -2380,7 +2380,7 @@ def changefrom(a,
     if octave_b:
         b = b.inoctave()
     if same_degree:
-        b = b.down(12 * (b[1].num - a[1].num))
+        b = b.down(12 * (b[0].num - a[0].num))
     N = min(len(a), len(b))
     anotes = [x.degree for x in a.notes]
     bnotes = [x.degree for x in b.notes]
@@ -2395,7 +2395,7 @@ def changefrom(a,
         if not alter_notes_show_degree:
             changes = [f'b{j[0]}' if j[1] > 0 else f'#{j[0]}' for j in changes]
         else:
-            b_first_note = b[1].degree
+            b_first_note = b[0].degree
             for i in range(len(changes)):
                 note_name, note_change = changes[i]
                 current_degree = reverse_degree_match[
@@ -2434,7 +2434,7 @@ def addfrom(a, b, default=True):
 
 def inversion_way(a, b, inv_num=False, chordtype=None, only_msg=False):
     if samenotes(a, b):
-        return f'{b[1].name}{chordtype}'
+        return f'{b[0].name}{chordtype}'
     if samenote_set(a, b):
         inversion_msg = inversion_from(
             a, b, mode=1) if not inv_num else inversion_from(
@@ -2442,7 +2442,7 @@ def inversion_way(a, b, inv_num=False, chordtype=None, only_msg=False):
         if inversion_msg is not None:
             if not only_msg:
                 if chordtype is not None:
-                    return f'{b[1].name}{chordtype}{inversion_msg}' if not inv_num else f'{b[1].name}{chordtype} {inversion_msg}'
+                    return f'{b[0].name}{chordtype}{inversion_msg}' if not inv_num else f'{b[0].name}{chordtype} {inversion_msg}'
                 else:
                     return inversion_msg
             else:
@@ -2452,13 +2452,13 @@ def inversion_way(a, b, inv_num=False, chordtype=None, only_msg=False):
             if sort_msg is not None:
                 if not only_msg:
                     if chordtype is not None:
-                        return f'{b[1].name}{chordtype} sort as {sort_msg}'
+                        return f'{b[0].name}{chordtype} sort as {sort_msg}'
                     else:
                         return f'sort as {sort_msg}'
                 else:
                     return f'sort as {sort_msg}'
             else:
-                return f'a voicing of {b[1].name}{chordtype}'
+                return f'a voicing of {b[0].name}{chordtype}'
     else:
         return 'not good'
 
@@ -2490,7 +2490,7 @@ def find_similarity(a,
     if b is None:
         wholeTypes = chordTypes.keynames()
         selfname = a.names()
-        rootnote = a[1]
+        rootnote = a[0]
         possible_chords = [(chd(rootnote, i), i) for i in wholeTypes]
         lengths = len(possible_chords)
         if same_note_special:
@@ -2580,9 +2580,9 @@ def find_similarity(a,
                 if result_ratio:
                     return (highest, result) if not getgoodchord else (
                         (highest,
-                         result), chordfrom, f'{chordfrom[1].name}{first[1]}')
+                         result), chordfrom, f'{chordfrom[0].name}{first[1]}')
                 return result if not getgoodchord else (
-                    result, chordfrom, f'{chordfrom[1].name}{first[1]}')
+                    result, chordfrom, f'{chordfrom[0].name}{first[1]}')
             else:
                 if samenote_set(a, chordfrom):
                     result = inversion_from(a, chordfrom, mode=1)
@@ -2632,7 +2632,7 @@ def find_similarity(a,
         if samenotes(a, b):
             if fromchord_name:
                 if provide_name != None:
-                    bname = b[1].name + provide_name
+                    bname = b[0].name + provide_name
                 else:
                     bname = detect(b)
                 return bname if not getgoodchord else (bname, chordfrom, bname)
@@ -2663,7 +2663,7 @@ def find_similarity(a,
         bname = None
         if fromchord_name:
             if provide_name != None:
-                bname = b[1].name + provide_name
+                bname = b[0].name + provide_name
             else:
                 bname = detect(b)
             if type(bname) == list:
@@ -2761,7 +2761,7 @@ def interval_check(a, two_show_interval=True):
         if DIST == 0 and TIMES != 0:
             DIST = 12
         interval_name = INTERVAL[DIST]
-        root_note_name = a[1].name
+        root_note_name = a[0].name
         if interval_name == 'perfect fifth':
             return f'{root_note_name}5 ({root_note_name} power chord) ({root_note_name} with perfect fifth)'
         return f'{root_note_name} with {interval_name}'
@@ -2798,9 +2798,9 @@ def detect(a,
             return f'note {a.notes[0]}'
         if N == 2:
             return interval_check(a, two_show_interval)
-        root = a[1].degree
-        rootNote = a[1].name
-        distance = tuple(i.degree - root for i in a[2:])
+        root = a[0].degree
+        rootNote = a[0].name
+        distance = tuple(i.degree - root for i in a[1:])
         findTypes = detectTypes[distance]
         if findTypes != 'not found':
             return [
@@ -2830,8 +2830,8 @@ def detect(a,
                     original_msg, original_detect[1], original_detect[2])
         for i in range(1, N):
             current = chord(a.inversion(i).names())
-            root = current[1].degree
-            distance = tuple(i.degree - root for i in current[2:])
+            root = current[0].degree
+            distance = tuple(i.degree - root for i in current[1:])
             result1 = detectTypes[distance]
             if result1 != 'not found':
                 inversion_result = inversion_way(a, current, inv_num,
@@ -2841,11 +2841,11 @@ def detect(a,
                 else:
                     return inversion_result if not return_fromchord else (
                         inversion_result, current,
-                        f'{current[1].name}{result1[0]}')
+                        f'{current[0].name}{result1[0]}')
             else:
                 current = current.inoctave()
-                root = current[1].degree
-                distance = tuple(i.degree - root for i in current[2:])
+                root = current[0].degree
+                distance = tuple(i.degree - root for i in current[1:])
                 result1 = detectTypes[distance]
                 if result1 != 'not found':
                     inversion_result = inversion_way(a, current, inv_num,
@@ -2855,11 +2855,11 @@ def detect(a,
                     else:
                         return inversion_result if not return_fromchord else (
                             inversion_result, current,
-                            f'{current[1].name}{result1[0]}')
+                            f'{current[0].name}{result1[0]}')
         for i in range(1, N):
             current = chord(a.inversion_highest(i).names())
-            root = current[1].degree
-            distance = tuple(i.degree - root for i in current[2:])
+            root = current[0].degree
+            distance = tuple(i.degree - root for i in current[1:])
             result1 = detectTypes[distance]
             if result1 != 'not found':
                 inversion_high_result = inversion_way(a, current, inv_num,
@@ -2869,11 +2869,11 @@ def detect(a,
                 else:
                     return inversion_high_result if not return_fromchord else (
                         inversion_high_result, current,
-                        f'{current[1].name}{result1[0]}')
+                        f'{current[0].name}{result1[0]}')
             else:
                 current = current.inoctave()
-                root = current[1].degree
-                distance = tuple(i.degree - root for i in current[2:])
+                root = current[0].degree
+                distance = tuple(i.degree - root for i in current[1:])
                 result1 = detectTypes[distance]
                 if result1 != 'not found':
                     inversion_high_result = inversion_way(
@@ -2883,7 +2883,7 @@ def detect(a,
                     else:
                         return inversion_high_result if not return_fromchord else (
                             inversion_high_result, current,
-                            f'{current[1].name}{result1[0]}')
+                            f'{current[0].name}{result1[0]}')
         if poly_chord_first and N > 3:
             return detect_split(a, N)
         inversion_final = True
@@ -3036,7 +3036,7 @@ def sums(*chordls):
     if len(chordls) == 1:
         chordls = chordls[0]
         start = chordls[0]
-        for i in chordls[1]:
+        for i in chordls[1:]:
             start += i
         return start
     else:
@@ -3134,7 +3134,7 @@ def random_composing(mode,
         newchord = newchordnotes.set(newduration, newinterval)
         '''
         # check if current chord belongs to a kind of (closer to) major/minor
-        check_chord_types = newchord[2].degree - newchord[1].degree
+        check_chord_types = newchord[1].degree - newchord[0].degree
         if check_chord_types == 2:
             chord_types = 'sus2'        
         elif check_chord_types == 3:
@@ -3237,7 +3237,7 @@ def negative_harmony(key, a=None, sort=False, get_map=False):
     notes_dict = [
         'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'
     ] * 2
-    key_tonic = key[1].name
+    key_tonic = key[0].name
     if key_tonic in standard_dict:
         key_tonic = standard_dict[key_tonic]
     inds = notes_dict.index(key_tonic) + 1
