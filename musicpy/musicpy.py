@@ -250,9 +250,11 @@ def play(current_chord,
         pygame.mixer.music.play()
 
 
-def _add_pan_volume_to_track(current_chord):
-    whole_pan = current_chord.pan_list
-    whole_volume = current_chord.volume_list
+def _add_pan_volume_to_track(current_chord, whole_pan=None, whole_volume=None):
+    if whole_pan is None:
+        whole_pan = current_chord.pan_list
+    if whole_volume is None:
+        whole_volume = current_chord.volume_list
     pan_msg = [
         controller_event(channel=i.channel,
                          track=i.track,
@@ -510,6 +512,13 @@ def read(name,
                     )
                 if changes and not split_channels:
                     all_tracks[0][1] += changes
+                if add_pan_volume:
+                    for i in range(len(all_tracks)):
+                        _add_pan_volume_to_track(
+                            all_tracks[i][1],
+                            new_all_tracks.pan[i] if split_channels else None,
+                            new_all_tracks.volume[i]
+                            if split_channels else None)
                 return all_tracks
             else:
                 start_times_list = [j[2] for j in all_tracks]
