@@ -121,8 +121,6 @@ class sampler:
         self.channel_num += 1
 
     def delete_channel(self, i):
-        if i > 0:
-            i -= 1
         del self.channel_names[i]
         del self.channel_sound_modules_name[i]
         del self.channel_sound_modules[i]
@@ -130,10 +128,6 @@ class sampler:
         self.channel_num -= 1
 
     def clear_channel(self, i):
-        if i > 0:
-            i -= 1
-        elif i < 0:
-            i += self.channel_num
         current_ind = i
         if current_ind < self.channel_num:
             self.channel_names[current_ind] = f'Channel {current_ind+1}'
@@ -152,15 +146,9 @@ class sampler:
         self.channel_num = 0
 
     def set_channel_name(self, i, name):
-        if i > 0:
-            i -= 1
         self.channel_names[i] = name
 
     def unload(self, i, keep_notedict=False):
-        if i > 0:
-            i -= 1
-        elif i < 0:
-            i += self.channel_num
         current_ind = i
         if current_ind < self.channel_num:
             self.channel_sound_modules_name[current_ind] = 'not loaded'
@@ -168,7 +156,7 @@ class sampler:
             if not keep_notedict:
                 self.channel_dict[current_ind] = copy(default_notedict)
 
-    def __call__(self, obj, channel_num=1, bpm=None):
+    def __call__(self, obj, channel_num=0, bpm=None):
         return audio(obj, self, channel_num, bpm)
 
     def __len__(self):
@@ -184,8 +172,6 @@ class sampler:
                               ])
 
     def __getitem__(self, i):
-        if i > 0:
-            i -= 1
         return ' | '.join(
             [self.channel_names[i], self.channel_sound_modules_name[i]])
 
@@ -193,8 +179,6 @@ class sampler:
         self.delete_channel(i)
 
     def load(self, current_ind, path=None, esi=None):
-        if current_ind > 0:
-            current_ind -= 1
         if esi is not None:
             self.load_esi_file(current_ind, esi)
             return
@@ -215,7 +199,7 @@ class sampler:
                mode='wav',
                action='export',
                filename='Untitled.wav',
-               channel_num=1,
+               channel_num=0,
                bpm=None,
                length=None,
                extra_length=None,
@@ -224,8 +208,6 @@ class sampler:
                export_args={},
                show_msg=False,
                soundfont_args=None):
-        if channel_num > 0:
-            channel_num -= 1
         if not self.channel_sound_modules:
             if action == 'export':
                 print(
@@ -543,7 +525,7 @@ class sampler:
                 current_position += interval
         if current_pan:
             pan_ranges = [
-                bar_to_real_time(i.start_time - 1, current_bpm, 1)
+                bar_to_real_time(i.start_time, current_bpm, 1)
                 for i in current_pan
             ]
             pan_values = [i.get_pan_value() for i in current_pan]
@@ -562,7 +544,7 @@ class sampler:
 
         if current_volume:
             volume_ranges = [
-                bar_to_real_time(i.start_time - 1, current_bpm, 1)
+                bar_to_real_time(i.start_time, current_bpm, 1)
                 for i in current_volume
             ]
             volume_values = [
@@ -631,7 +613,7 @@ class sampler:
                 each.cancel()
             self.piece_playing.clear()
 
-    def load_channel_settings(self, channel_num=1, text=None, path=None):
+    def load_channel_settings(self, channel_num=0, text=None, path=None):
         if text is None:
             with open(path, encoding='utf-8-sig') as f:
                 data = f.read()
@@ -707,7 +689,7 @@ class sampler:
 
     def play(self,
              current_chord,
-             channel_num=1,
+             channel_num=0,
              bpm=None,
              length=None,
              extra_length=None,
@@ -717,8 +699,6 @@ class sampler:
         if not self.channel_sound_modules:
             return
         self.stop_playing()
-        if channel_num > 0:
-            channel_num -= 1
         current_channel_num = channel_num
         current_bpm = self.bpm if bpm is None else bpm
         self.play_musicpy_sounds(current_chord, current_channel_num,
@@ -827,13 +807,9 @@ class sampler:
                 current_time += bar_to_real_time(current_intervals[i], bpm, 1)
 
     def modules(self, ind):
-        if ind > 0:
-            ind -= 1
         return self.channel_sound_modules[ind]
 
     def module_names(self, ind):
-        if ind > 0:
-            ind -= 1
         return self.channel_sound_modules_name[ind]
 
 
@@ -1247,7 +1223,7 @@ def get_wave(sound, mode='sine', bpm=120, volume=None):
     return temp
 
 
-def audio(obj, sampler, channel_num=1, bpm=None):
+def audio(obj, sampler, channel_num=0, bpm=None):
     if type(obj) == note:
         obj = chord([obj])
     elif type(obj) == track:

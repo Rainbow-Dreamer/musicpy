@@ -1617,7 +1617,7 @@ class chord:
                 if current_type == pitch_bend or current_type == pan or current_type == volume:
                     each.start_time = current_start_time
                 else:
-                    each.time = (current_start_time - 1) * 4
+                    each.time = current_start_time * 4
             del other_types_chord[1]
             for each in other_types_chord.notes:
                 current_type = type(each)
