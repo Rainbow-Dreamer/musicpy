@@ -67,7 +67,7 @@ class note:
         if type(other) == chord:
             temp = copy(other)
             temp.insert(ind, copy(self))
-            temp.interval.insert(ind - 1, interval)
+            temp.interval.insert(ind, interval)
             return temp
 
     def up(self, unit=1):
@@ -903,7 +903,7 @@ class chord:
                         each.start_time = temp[:i].bars()
                     else:
                         each.start_time -= start_time
-                    each.start_time = bar_length - each.start_time + 2
+                    each.start_time = bar_length - each.start_time
                     changes.append(each)
             if temp2.notes:
                 last_interval = temp2.interval[-1]
@@ -950,7 +950,7 @@ class chord:
                     i.start_time = temp[:i].bars()
                 else:
                     i.start_time -= start_time
-                i.start_time = bar_length - i.start_time + 2
+                i.start_time = bar_length - i.start_time
         return temp
 
     def intervalof(self, cummulative=True, translate=False):
@@ -1064,7 +1064,7 @@ class chord:
             rootpitch = temp[indlist[0]].num
         elif rootpitch == 'same':
             rootpitch = temp[0].num
-        new_interval = [temp.interval[i - 1] for i in indlist]
+        new_interval = [temp.interval[i] for i in indlist]
         new_duration = [temp[i].duration for i in indlist]
         return chord(names,
                      rootpitch=rootpitch,
@@ -1161,7 +1161,6 @@ class chord:
         if ind:
             if type(ind[0]) == int:
                 temp = copy(self)
-                ind = [k - 1 for k in ind]
                 length = len(temp)
                 temp.notes = [
                     temp.notes[k] for k in range(length) if k not in ind
@@ -1175,7 +1174,7 @@ class chord:
                 temp = self.same_accidentals()
                 ind = chord(ind).same_accidentals().notes
                 current_ind = [
-                    k + 1 for k in range(len(temp)) if temp.notes[k] in ind
+                    k for k in range(len(temp)) if temp.notes[k] in ind
                 ]
                 return self.drop(current_ind)
             elif type(
@@ -1185,7 +1184,7 @@ class chord:
                 self_notenames = temp.names()
                 ind = chord(ind).same_accidentals().names()
                 current_ind = [
-                    k + 1 for k in range(len(self_notenames))
+                    k for k in range(len(self_notenames))
                     if self_notenames[k] in ind
                 ]
                 return self.drop(current_ind)
@@ -1392,19 +1391,19 @@ class chord:
 
     def setvolume(self, vol, ind='all'):
         if type(ind) == int:
-            each = self.notes[ind - 1]
+            each = self.notes[ind]
             each.setvolume(vol)
         elif type(ind) == list:
             if type(vol) == list:
                 for i in range(len(ind)):
                     current = ind[i]
-                    each = self.notes[current - 1]
+                    each = self.notes[current]
                     each.setvolume(vol[i])
             elif type(vol) in [int, float]:
                 vol = int(vol)
                 for i in range(len(ind)):
                     current = ind[i]
-                    each = self.notes[current - 1]
+                    each = self.notes[current]
                     each.setvolume(vol)
         elif ind == 'all':
             if type(vol) == list:
@@ -1421,11 +1420,11 @@ class chord:
         temp = self.copy()
         if type(x) == dict:
             for i in x:
-                temp.notes[i - 1] = temp.notes[i - 1].up(x[i])
+                temp.notes[i] = temp.notes[i].up(x[i])
             return temp
         if type(x) == list:
             for i in x:
-                temp.notes[i[0] - 1] = temp.notes[i[0] - 1].up(i[1])
+                temp.notes[i[0]] = temp.notes[i[0]].up(i[1])
             return temp
 
     def play(self, *args, **kwargs):
@@ -1486,7 +1485,7 @@ class chord:
             temp.normalize_tempo(tempo_changes[0].bpm)
         volumes = temp.get_volume()
         pitch_intervals = temp.intervalof(cummulative=False)
-        result = mp.getchord_by_interval(temp[1],
+        result = mp.getchord_by_interval(temp[0],
                                          [-i for i in pitch_intervals],
                                          temp.get_duration(), temp.interval,
                                          False)
@@ -1562,7 +1561,7 @@ class chord:
                 current_tempo = self.notes[each]
                 current_tempo.start_time = current_time
             tempo_changes = [self.notes[j] for j in tempo_changes]
-            tempo_changes.insert(0, tempo(bpm, 1))
+            tempo_changes.insert(0, tempo(bpm, 0))
             self.clear_tempo()
             tempo_changes.sort(key=lambda s: s.start_time)
             new_tempo_changes = [tempo_changes[0]]
@@ -1579,13 +1578,11 @@ class chord:
                 for i in range(len(new_tempo_changes) - 1)
             ]
             tempo_changes_ranges.append(
-                (new_tempo_changes[-1].start_time, self.bars(mode=0),
+                (new_tempo_changes[-1].start_time, self.bars(mode=1),
                  new_tempo_changes[-1].bpm))
             pitch_bend_msg = self.split(pitch_bend, get_time=True)
             self.clear_pitch_bend('all')
-
             process_normalize_tempo(self, tempo_changes_ranges, bpm)
-
             for each in self.other_messages:
                 each.start_time = each.time / 4
             other_types = pitch_bend_msg.notes + self.other_messages
@@ -1618,7 +1615,7 @@ class chord:
                     each.start_time = current_start_time
                 else:
                     each.time = current_start_time * 4
-            del other_types_chord[1]
+            del other_types_chord[0]
             for each in other_types_chord.notes:
                 current_type = type(each)
                 if current_type == pitch_bend:
@@ -1877,7 +1874,7 @@ class chord:
                 if current_note in self_notes:
                     return current_note
         elif mode == 1:
-            return self[1] + interval
+            return self[0] + interval
 
     def note_interval(self, current_note, mode=0):
         if type(current_note) == str:
@@ -1958,7 +1955,7 @@ class chord:
             temp = temp.sortchord()
             temp = temp.set(duration=original_duration, volume=original_volume)
             if temp[0].name != root_note.name:
-                temp[1] += octave * (
+                temp[0] += octave * (
                     (12 - (temp[0].degree - root_note.degree)) // octave)
                 temp = temp.sortchord()
             return temp
@@ -2482,7 +2479,7 @@ class scale:
         return self.down()
 
     def __invert__(self):
-        return scale(self[1],
+        return scale(self[0],
                      interval=list(reversed(self.interval)),
                      pitch=self.pitch)
 
@@ -3052,14 +3049,14 @@ class piece:
             for each in self.tracks:
                 each.clear_pitch_bend(value, cond)
         else:
-            self.tracks[ind - 1].clear_pitch_bend(value, cond)
+            self.tracks[ind].clear_pitch_bend(value, cond)
 
     def clear_tempo(self, ind='all', cond=None):
         if ind == 'all':
             for each in self.tracks:
                 each.clear_tempo(cond)
         else:
-            self.tracks[ind - 1].clear_tempo(cond)
+            self.tracks[ind].clear_tempo(cond)
 
     def normalize_tempo(self, bpm=None):
         if not any(isinstance(i, tempo) for each in self.tracks
@@ -3479,12 +3476,12 @@ class piece:
         temp.apply_start_time_to_changes(temp.start_times)
         for each in temp.pan:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         for each in temp.volume:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         return temp
@@ -3507,12 +3504,12 @@ class piece:
         temp.apply_start_time_to_changes(temp.start_times)
         for each in temp.pan:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         for each in temp.volume:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         return temp
@@ -3890,12 +3887,12 @@ class track:
         temp.content = temp.content.reverse(*args, **kwargs)
         for each in temp.pan:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         for each in temp.volume:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         return temp
@@ -3905,12 +3902,12 @@ class track:
         temp.content = temp.content.reverse_chord(*args, **kwargs)
         for each in temp.pan:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         for each in temp.volume:
             for i in each:
-                i.start_time = length - i.start_time + 2
+                i.start_time = length - i.start_time
                 if i.start_time < 0:
                     i.start_time = 0
         return temp
@@ -4774,7 +4771,7 @@ def relative_note(a, b):
 def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):
     whole_notes = obj.notes
     intervals = obj.interval
-    count_length = 1
+    count_length = 0
     for k in range(len(obj)):
         current_note = whole_notes[k]
         current_interval = intervals[k]
