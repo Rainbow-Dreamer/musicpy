@@ -1511,11 +1511,7 @@ class chord:
         temp.interval = [intervals[k] for k in inds]
         return temp
 
-    def normalize_tempo(self,
-                        bpm,
-                        start_time=0,
-                        pan_msg=None,
-                        volume_msg=None):
+    def normalize_tempo(self, bpm, pan_msg=None, volume_msg=None):
         # choose a bpm and apply to all of the notes, if there are tempo
         # changes, use relative ratios of the chosen bpms and changes bpms
         # to re-calculate the notes durations and intervals
@@ -1525,113 +1521,84 @@ class chord:
         if (not tempo_changes) or all(self.notes[i].bpm == bpm
                                       for i in tempo_changes):
             return
-        if start_time:
-            place_shift_result1 = self.place_shift(time=-start_time,
-                                                   pan_msg=pan_msg,
-                                                   volume_msg=volume_msg)
-            if pan_msg or volume_msg:
-                temp, pan_msg, volume_msg = place_shift_result1
+        tempo_changes_no_time = [
+            k for k in tempo_changes if self.notes[k].start_time is None
+        ]
+        for each in tempo_changes_no_time:
+            current_time = self[:each].bars(mode=0)
+            current_tempo = self.notes[each]
+            current_tempo.start_time = current_time
+        tempo_changes = [self.notes[j] for j in tempo_changes]
+        tempo_changes.insert(0, tempo(bpm, 0))
+        self.clear_tempo()
+        tempo_changes.sort(key=lambda s: s.start_time)
+        new_tempo_changes = [tempo_changes[0]]
+        for i in range(len(tempo_changes) - 1):
+            current_tempo = tempo_changes[i]
+            next_tempo = tempo_changes[i + 1]
+            if next_tempo.start_time == current_tempo.start_time:
+                new_tempo_changes[-1] = next_tempo
             else:
-                temp = place_shift_result1
-            normalize_result = temp.normalize_tempo(bpm=bpm,
-                                                    start_time=0,
-                                                    pan_msg=pan_msg,
-                                                    volume_msg=volume_msg)
-            new_pan_msg = normalize_result[1] if pan_msg else None
-            new_volume_msg = normalize_result[2] if volume_msg else None
-            place_shift_result2 = temp.place_shift(time=start_time,
-                                                   pan_msg=new_pan_msg,
-                                                   volume_msg=new_volume_msg)
-            if new_pan_msg or new_volume_msg:
-                temp2, new_pan_msg, new_volume_msg = place_shift_result2
-                result = [temp2.other_messages, new_pan_msg, new_volume_msg]
+                new_tempo_changes.append(next_tempo)
+        tempo_changes_ranges = [
+            (new_tempo_changes[i].start_time,
+             new_tempo_changes[i + 1].start_time, new_tempo_changes[i].bpm)
+            for i in range(len(new_tempo_changes) - 1)
+        ]
+        tempo_changes_ranges.append(
+            (new_tempo_changes[-1].start_time, self.bars(mode=1),
+             new_tempo_changes[-1].bpm))
+        pitch_bend_msg = self.split(pitch_bend, get_time=True)
+        self.clear_pitch_bend('all')
+        process_normalize_tempo(self, tempo_changes_ranges, bpm)
+        for each in self.other_messages:
+            each.start_time = each.time / 4
+        other_types = pitch_bend_msg.notes + self.other_messages
+        if pan_msg:
+            other_types += pan_msg
+        if volume_msg:
+            other_types += volume_msg
+        other_types.sort(key=lambda s: s.start_time)
+        other_types.insert(0, pitch_bend(0, start_time=0))
+        other_types_interval = [
+            other_types[i + 1].start_time - other_types[i].start_time
+            for i in range(len(other_types) - 1)
+        ]
+        other_types_interval.append(0)
+        other_types_chord = chord(other_types, interval=other_types_interval)
+        process_normalize_tempo(other_types_chord,
+                                tempo_changes_ranges,
+                                bpm,
+                                mode=1)
+        new_pitch_bends = []
+        new_pan = []
+        new_volume = []
+        new_other_messages = []
+        for i in range(len(other_types_chord.notes)):
+            each = other_types_chord.notes[i]
+            current_type = type(each)
+            current_start_time = sum(other_types_chord.interval[:i])
+            if current_type == pitch_bend or current_type == pan or current_type == volume:
+                each.start_time = current_start_time
             else:
-                temp2 = place_shift_result2
-                result = [temp2.other_messages]
-            self.notes = temp2.notes
-            self.interval = temp2.interval
-            self.other_messages = temp2.other_messages
-            return result
-        else:
-            tempo_changes_no_time = [
-                k for k in tempo_changes if self.notes[k].start_time is None
-            ]
-            for each in tempo_changes_no_time:
-                current_time = self[:each].bars(mode=0)
-                current_tempo = self.notes[each]
-                current_tempo.start_time = current_time
-            tempo_changes = [self.notes[j] for j in tempo_changes]
-            tempo_changes.insert(0, tempo(bpm, 0))
-            self.clear_tempo()
-            tempo_changes.sort(key=lambda s: s.start_time)
-            new_tempo_changes = [tempo_changes[0]]
-            for i in range(len(tempo_changes) - 1):
-                current_tempo = tempo_changes[i]
-                next_tempo = tempo_changes[i + 1]
-                if next_tempo.start_time == current_tempo.start_time:
-                    new_tempo_changes[-1] = next_tempo
-                else:
-                    new_tempo_changes.append(next_tempo)
-            tempo_changes_ranges = [
-                (new_tempo_changes[i].start_time,
-                 new_tempo_changes[i + 1].start_time, new_tempo_changes[i].bpm)
-                for i in range(len(new_tempo_changes) - 1)
-            ]
-            tempo_changes_ranges.append(
-                (new_tempo_changes[-1].start_time, self.bars(mode=1),
-                 new_tempo_changes[-1].bpm))
-            pitch_bend_msg = self.split(pitch_bend, get_time=True)
-            self.clear_pitch_bend('all')
-            process_normalize_tempo(self, tempo_changes_ranges, bpm)
-            for each in self.other_messages:
-                each.start_time = each.time / 4
-            other_types = pitch_bend_msg.notes + self.other_messages
-            if pan_msg:
-                other_types += pan_msg
-            if volume_msg:
-                other_types += volume_msg
-            other_types.sort(key=lambda s: s.start_time)
-            other_types.insert(0, pitch_bend(0, start_time=0))
-            other_types_interval = [
-                other_types[i + 1].start_time - other_types[i].start_time
-                for i in range(len(other_types) - 1)
-            ]
-            other_types_interval.append(0)
-            other_types_chord = chord(other_types,
-                                      interval=other_types_interval)
-            process_normalize_tempo(other_types_chord,
-                                    tempo_changes_ranges,
-                                    bpm,
-                                    mode=1)
-            new_pitch_bends = []
-            new_pan = []
-            new_volume = []
-            new_other_messages = []
-            for i in range(len(other_types_chord.notes)):
-                each = other_types_chord.notes[i]
-                current_type = type(each)
-                current_start_time = sum(other_types_chord.interval[:i])
-                if current_type == pitch_bend or current_type == pan or current_type == volume:
-                    each.start_time = current_start_time
-                else:
-                    each.time = current_start_time * 4
-            del other_types_chord[0]
-            for each in other_types_chord.notes:
-                current_type = type(each)
-                if current_type == pitch_bend:
-                    new_pitch_bends.append(each)
-                elif current_type == pan:
-                    new_pan.append(each)
-                elif current_type == volume:
-                    new_volume.append(each)
-                else:
-                    new_other_messages.append(each)
-            self.notes.extend(new_pitch_bends)
-            self.interval.extend([0 for i in range(len(new_pitch_bends))])
-            result = [new_other_messages]
-            if new_pan or new_volume:
-                result += [new_pan, new_volume]
-            return result
+                each.time = current_start_time * 4
+        del other_types_chord[0]
+        for each in other_types_chord.notes:
+            current_type = type(each)
+            if current_type == pitch_bend:
+                new_pitch_bends.append(each)
+            elif current_type == pan:
+                new_pan.append(each)
+            elif current_type == volume:
+                new_volume.append(each)
+            else:
+                new_other_messages.append(each)
+        self.notes.extend(new_pitch_bends)
+        self.interval.extend([0 for i in range(len(new_pitch_bends))])
+        result = [new_other_messages]
+        if new_pan or new_volume:
+            result += [new_pan, new_volume]
+        return result
 
     def place_shift(self, time=0, pan_msg=None, volume_msg=None):
         temp = copy(self)
@@ -3067,24 +3034,7 @@ class piece:
         if bpm is None:
             bpm = self.bpm
         temp = copy(self)
-        shift = min(temp.start_times)
-        piece_process_normalize_tempo(temp, bpm, shift)
-        original_time_length = max(self.start_times) - min(self.start_times)
-        new_time_length = max(temp.start_times) - min(temp.start_times)
-        if original_time_length == 0:
-            if max(self.start_times) == 0:
-                adjust_ratio = 0
-            else:
-                for i in range(len(temp)):
-                    new_bar = temp.tracks[i].bars()
-                    if new_bar > 0:
-                        original_bar = self.tracks[i].bars()
-                        adjust_ratio = new_bar / original_bar
-                        break
-        else:
-            adjust_ratio = new_time_length / original_time_length
-        adjust_length = shift * (1 - adjust_ratio)
-        temp = temp.move(-adjust_length)
+        piece_process_normalize_tempo(temp, bpm, min(temp.start_times))
         self.start_times = temp.start_times
         self.other_messages = temp.other_messages
         self.pan = temp.pan
@@ -3323,7 +3273,7 @@ class piece:
         if bpm is not None:
             temp_bpm = bpm
         if normalize_tempo:
-            merged_result.normalize_tempo(temp_bpm, start_time=start_time)
+            merged_result.normalize_tempo(temp_bpm)
         return merged_result.eval_time(temp_bpm,
                                        ind1,
                                        ind2,
@@ -4835,11 +4785,14 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
                 each.track = k
     whole_pan = mp.concat(self.pan) if self.pan else None
     whole_volume = mp.concat(self.volume) if self.volume else None
-    normalize_result = first_track.normalize_tempo(
-        bpm,
-        start_time=first_track_start_time,
-        pan_msg=whole_pan,
-        volume_msg=whole_volume)
+    first_track.notes.insert(0, note('C', 5, duration=0))
+    first_track.interval.insert(0, first_track_start_time)
+    normalize_result = first_track.normalize_tempo(bpm,
+                                                   pan_msg=whole_pan,
+                                                   volume_msg=whole_volume)
+    first_track_start_time = first_track.interval[0]
+    del first_track.notes[0]
+    del first_track.interval[0]
     new_other_messages = normalize_result[0]
     self.other_messages = new_other_messages
     if whole_pan or whole_volume:
