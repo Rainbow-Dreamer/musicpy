@@ -3,7 +3,7 @@ class match:
         # keys and values should both be a list/tuple/set of data,
         # and they should have the same counts
         # if the key itself is given as a dict, then just use it
-        if type(keys) == dict:
+        if isinstance(keys, dict):
             self.dic = keys
         else:
             self.dic = {totuple(keys[i]): values[i] for i in range(len(keys))}
@@ -65,17 +65,16 @@ class match:
 
     def reverse(self):
         dic = self.dic
-        return match({((tuple(j), ) if type(j) != tuple else j): i
+        return match({((tuple(j), ) if not isinstance(j, tuple) else j): i
                       for i, j in dic.items()})
 
     def __repr__(self):
         return str(self.dic)
 
     def update(self, key, value=None):
-        types = type(key)
-        if types == dict:
+        if isinstance(key, dict):
             self.dic.update(key)
-        elif types == match:
+        elif isinstance(key, match):
             self.dic.update(key.dic)
         else:
             if types not in [list, tuple, set]:
