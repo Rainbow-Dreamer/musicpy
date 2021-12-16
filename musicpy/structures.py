@@ -168,7 +168,7 @@ class chord:
                        not j.startswith('pitch'))):
                 standardize_msg = True
         elif isinstance(notes, list) and all(
-                type(i) != note
+                not isinstance(i, note)
                 for i in notes) and all(not any(j.isdigit() for j in i)
                                         for i in notes if isinstance(i, str)):
             standardize_msg = True
@@ -508,7 +508,7 @@ class chord:
             elif value == 'all':
                 inds = [
                     i for i in range(length)
-                    if type(whole_notes[i]) != pitch_bend
+                    if not isinstance(whole_notes[i], pitch_bend)
                 ]
         else:
             inds = [
@@ -523,11 +523,11 @@ class chord:
         length = len(self)
         whole_notes = self.notes
         if cond is None:
-            inds = [i for i in range(length) if type(whole_notes[i]) != tempo]
+            inds = [i for i in range(length) if not isinstance(whole_notes[i], tempo)]
         else:
             inds = [
                 i for i in range(length)
-                if (type(whole_notes[i]) != tempo) or (
+                if (not isinstance(whole_notes[i], tempo)) or (
                     not cond(whole_notes[i]))
             ]
         self.notes = [whole_notes[k] for k in inds]
@@ -3210,7 +3210,7 @@ class piece:
                 each.track_num = k
 
     def reconstruct(self, track, start_time=0, offset=0, correct=False):
-        no_notes = [i for i in track.notes if type(i) != note]
+        no_notes = [i for i in track.notes if not isinstance(i, note)]
         track = track.only_notes()
         first_track, first_track_start_time = track, start_time
         length = len(self.tracks)
@@ -3347,7 +3347,7 @@ class piece:
         k = 0
         while k < len(temp.tracks):
             current = temp.tracks[k]
-            if all(type(i) != note for i in current.notes):
+            if all(not isinstance(i, note) for i in current.notes):
                 del temp[k]
                 continue
             k += 1
@@ -3646,8 +3646,7 @@ class piece:
                     reset_msg=True,
                     reset_pitch_bend=True,
                     reset_pan_volume=True):
-        types = type(tracks)
-        if types == int or types == float:
+        if isinstance(tracks, (int, float)):
             tracks = [tracks for i in range(len(self.tracks))]
         for i in range(len(self.tracks)):
             current_track_num = tracks[i]
@@ -3816,12 +3815,12 @@ class track:
         self.volume = volume
         self.sampler_channel = sampler_channel
         if self.pan:
-            self.pan = [self.pan] if type(self.pan) != list else self.pan
+            self.pan = [self.pan] if not isinstance(self.pan, list) else self.pan
         else:
             self.pan = []
         if self.volume:
             self.volume = [self.volume
-                           ] if type(self.volume) != list else self.volume
+                           ] if not isinstance(self.volume, list) else self.volume
         else:
             self.volume = []
 
@@ -4868,7 +4867,7 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
 
 
 def note_to_degree(obj):
-    if type(obj) != note:
+    if not isinstance(obj, note):
         obj = toNote(obj)
     return standard[obj.name] + 12 * (obj.num + 1)
 
