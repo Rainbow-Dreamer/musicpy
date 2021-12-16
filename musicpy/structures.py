@@ -846,16 +846,16 @@ class chord:
         result_interval = []
         for each in ls:
             if isinstance(each, int):
-                result.append(temp[each])
-                result_interval.append(temp.interval[each])
+                result.append(temp[each - 1])
+                result_interval.append(temp.interval[each - 1])
             elif isinstance(each, float):
                 num, pitch = [int(j) for j in str(each).split('.')]
                 if num > 0:
-                    current_note = temp[num] + pitch * octave
+                    current_note = temp[num - 1] + pitch * octave
                 else:
-                    current_note = temp[-num] - pitch * octave
+                    current_note = temp[-num - 1] - pitch * octave
                 result.append(current_note)
-                result_interval.append(temp.interval[num])
+                result_interval.append(temp.interval[num - 1])
         return chord(result,
                      interval=result_interval,
                      start_time=temp.start_time)
@@ -1061,17 +1061,15 @@ class chord:
 
     def sort(self, indlist, rootpitch=None):
         temp = self.copy()
-        names = [temp[i].name for i in indlist]
+        names = [temp[i - 1].name for i in indlist]
         if rootpitch is None:
-            rootpitch = temp[indlist[0]].num
+            rootpitch = temp[indlist[0] - 1].num
         elif rootpitch == 'same':
             rootpitch = temp[0].num
-        new_interval = [temp.interval[i] for i in indlist]
-        new_duration = [temp[i].duration for i in indlist]
+        new_interval = [temp.interval[i - 1] for i in indlist]
         return chord(names,
                      rootpitch=rootpitch,
                      interval=new_interval,
-                     duration=new_duration,
                      start_time=temp.start_time)
 
     def voicing(self, rootpitch=None):
@@ -1872,8 +1870,8 @@ class chord:
             if not any(i.isdigit() for i in current_note):
                 current_note = toNote(current_note)
                 current_chord = chord([self[0].name, current_note.name])
-                current_interval = current_chord[2].degree - current_chord[
-                    1].degree
+                current_interval = current_chord[1].degree - current_chord[
+                    0].degree
             else:
                 current_note = toNote(current_note)
                 current_interval = current_note.degree - self[0].degree
