@@ -613,7 +613,9 @@ class chord:
             if len(newinterval) == len(self.interval):
                 self.interval = newinterval
             else:
-                return 'please ensure the intervals between notes has the same numbers of the notes'
+                raise ValueError(
+                    'please ensure the intervals between notes has the same numbers of the notes'
+                )
 
     def __str__(self):
         return f'{self.notes} with interval {self.interval}'
@@ -912,10 +914,10 @@ class chord:
                 for i in range(len(temp2.notes)):
                     current_note = temp2.notes[i]
                     current_end_time = current_start_time + current_note.duration
-                    current_end_event = (current_note, current_end_time)
+                    current_end_event = (current_note, current_end_time, i)
                     end_events.append(current_end_event)
                     current_start_time += temp2.interval[i]
-                end_events.sort(key=lambda s: s[1], reverse=True)
+                end_events.sort(key=lambda s: (s[1], s[2]), reverse=True)
                 new_notes = [i[0] for i in end_events]
                 new_interval = [
                     end_events[j][1] - end_events[j + 1][1]
@@ -2183,7 +2185,8 @@ class scale:
         if self.mode is None:
             if self.interval is None:
                 if self.notes is None:
-                    return 'a mode or interval or notes list should be settled'
+                    raise ValueError(
+                        'a mode or interval or notes list should be settled')
                 else:
                     notes = self.notes
                     rootdegree = notes[0].degree
@@ -2201,12 +2204,14 @@ class scale:
             if result != 'not found':
                 return result
             else:
-                return 'could not find this scale'
+                raise ValueError('could not find this scale')
 
     def getScale(self, intervals=0.25, durations=None):
         if self.mode == None:
             if self.interval == None:
-                return 'at least one of mode or interval in the scale should be settled'
+                raise ValueError(
+                    'at least one of mode or interval in the scale should be settled'
+                )
             else:
                 result = [self.start]
                 count = self.start.degree
@@ -2268,7 +2273,7 @@ class scale:
         if type(indlist) == int:
             indlist = [int(i) for i in str(indlist)]
         return [
-            self(n, num=num, step=step).set(duration, interval)
+            self(n - 1, num=num, step=step).set(duration, interval)
             for n in indlist
         ]
 
@@ -2390,7 +2395,8 @@ class scale:
         elif self.mode == 'minor':
             return scale(self[2], 'major')
         else:
-            'this function only applies to major and minor scales'
+            raise ValueError(
+                'this function only applies to major and minor scales')
 
     def parallel_key(self):
         if self.mode == 'major':
@@ -2398,7 +2404,8 @@ class scale:
         elif self.mode == 'minor':
             return scale(self[0], 'major')
         else:
-            return 'this function only applies to major and minor scales'
+            raise ValueError(
+                'this function only applies to major and minor scales')
 
     def get(self, degree):
         return self[degree]
@@ -2797,7 +2804,7 @@ class piece:
 
     def append(self, new_track):
         if type(new_track) != track:
-            return 'must be a track type to be appended'
+            raise ValueError('must be a track type to be appended')
         self.tracks.append(new_track.content)
         self.instruments_list.append(new_track.instrument)
         self.instruments_numbers.append(new_track.instruments_number)

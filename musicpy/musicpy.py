@@ -2240,12 +2240,12 @@ def exp(form, obj_name='x', mode='tail'):
         try:
             func = eval(f'lambda x: x.{form}')
         except:
-            return 'not a valid expression'
+            raise ValueError('not a valid expression')
     elif mode == 'whole':
         try:
             func = eval(f'lambda {obj_name}: {form}')
         except:
-            return 'not a valid expression'
+            raise ValueError('not a valid expression')
 
     return func
 
@@ -2320,7 +2320,8 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                                  rootpitch=pitch,
                                  duration=duration,
                                  interval=interval)
-    return 'not a valid chord representation or chord types not in database'
+    raise ValueError(
+        'not a valid chord representation or chord types not in database')
 
 
 def toScale(obj, pitch=4):
@@ -3020,7 +3021,7 @@ def detect(a,
                 else:
                     return scales
             except:
-                return 'cannot detect this scale'
+                raise ValueError('cannot detect this scale')
         else:
             if type(a) in [chord, scale]:
                 a = a.notes
@@ -3031,7 +3032,7 @@ def detect(a,
                     return scales
                 return scales[0]
             except:
-                return 'cannot detect this scale'
+                raise ValueError('cannot detect this scale')
 
 
 def intervalof(a, cummulative=True, translate=False):
@@ -3279,7 +3280,7 @@ def negative_harmony(key, a=None, sort=False, get_map=False):
                 temp.notes.sort(key=lambda s: s.degree)
             return temp
         else:
-            return 'requires a chord object'
+            raise ValueError('requires a chord object')
     else:
         temp = copy(key)
         if temp.notes[-1].degree - temp.notes[0].degree == octave:
@@ -3578,7 +3579,7 @@ def find_chords_for_melody(melody,
         melody = chord(melody)
     possible_scales = detect_in_scale(melody, num, get_scales=True)
     if not possible_scales:
-        return 'cannot find a scale suitable for this melody'
+        raise ValueError('cannot find a scale suitable for this melody')
     current_scale = possible_scales[0]
     if current_scale.mode != 'major' and current_scale.mode in modern_modes:
         current_scale = current_scale.inversion(
