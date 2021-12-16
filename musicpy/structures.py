@@ -523,7 +523,10 @@ class chord:
         length = len(self)
         whole_notes = self.notes
         if cond is None:
-            inds = [i for i in range(length) if not isinstance(whole_notes[i], tempo)]
+            inds = [
+                i for i in range(length)
+                if not isinstance(whole_notes[i], tempo)
+            ]
         else:
             inds = [
                 i for i in range(length)
@@ -1125,10 +1128,10 @@ class chord:
 
     def up(self, unit=1, ind=None, ind2=None):
         temp = copy(self)
-        if type(unit) != int:
+        if not isinstance(unit, int):
             temp.notes = [temp.notes[k].up(unit[k]) for k in range(len(unit))]
             return temp
-        if type(ind) != int and ind is not None:
+        if not isinstance(ind, int) and ind is not None:
             temp.notes = [
                 temp.notes[i].up(unit) if i in ind else temp.notes[i]
                 for i in range(len(temp.notes))
@@ -1152,13 +1155,13 @@ class chord:
         return temp
 
     def down(self, unit=1, ind=None, ind2=None):
-        if type(unit) != int:
+        if not isinstance(unit, int):
             unit = [-i for i in unit]
             return self.up(unit, ind, ind2)
         return self.up(-unit, ind, ind2)
 
     def drop(self, ind):
-        if type(ind) != list:
+        if not isinstance(ind, list):
             ind = [ind]
         if ind:
             if isinstance(ind[0], int):
@@ -1195,7 +1198,7 @@ class chord:
             return self
 
     def omit(self, ind, mode=0):
-        if type(ind) != list:
+        if not isinstance(ind, list):
             ind = [ind]
         if ind and isinstance(ind[0], int):
             if mode == 0:
@@ -1401,7 +1404,7 @@ class chord:
                     current = ind[i]
                     each = self.notes[current]
                     each.setvolume(vol[i])
-            elif type(vol) in [int, float]:
+            elif isinstance(vol, (int, float)):
                 vol = int(vol)
                 for i in range(len(ind)):
                     current = ind[i]
@@ -1412,7 +1415,7 @@ class chord:
                 for i in range(len(vol)):
                     current = self.notes[i]
                     current.setvolume(vol[i])
-            elif type(vol) in [int, float]:
+            elif isinstance(vol, (int, float)):
                 vol = int(vol)
                 for each in self.notes:
                     each.setvolume(vol)
@@ -1508,7 +1511,7 @@ class chord:
             from pydub import AudioSegment
             inds = [
                 i for i in range(len(temp))
-                if type(whole_notes[i]) in [note, AudioSegment]
+                if isinstance(whole_notes[i], (note, AudioSegment))
             ]
         temp.notes = [whole_notes[k] for k in inds]
         temp.interval = [intervals[k] for k in inds]
@@ -2006,7 +2009,8 @@ class chord:
 
     def clear_program_change(self):
         self.other_messages = [
-            i for i in self.other_messages if type(i) != program_change
+            i for i in self.other_messages
+            if not isinstance(i, program_change)
         ]
 
     def clear_other_messages(self, types=None):
@@ -2014,7 +2018,7 @@ class chord:
             self.other_messages.clear()
         else:
             self.other_messages = [
-                i for i in self.other_messages if type(i) != types
+                i for i in self.other_messages if not isinstance(i, types)
             ]
 
     def dotted(self, ind=-1, num=1, duration=True, interval=False):
@@ -2280,7 +2284,7 @@ class scale:
         ]
 
     def __mod__(self, x):
-        if type(x) in [int, str]:
+        if isinstance(x, (int, str)):
             x = [x]
         return self.pattern(*x)
 
@@ -2434,7 +2438,7 @@ class scale:
         current_note = self[current_degree].name
         if natural:
             temp = mp.C(current_note + chord_type)
-            if type(temp) != chord:
+            if not isinstance(temp, chord):
                 return f'{chord_type} is not a valid chord type'
             length = len(temp)
             return self.pickchord_by_degree(current_degree, num=length)
@@ -2711,11 +2715,13 @@ class piece:
         self.pan = pan
         self.volume = volume
         if self.pan:
-            self.pan = [[i] if type(i) != list else i for i in self.pan]
+            self.pan = [[i] if not isinstance(i, list) else i
+                        for i in self.pan]
         else:
             self.pan = [[] for i in range(self.track_number)]
         if self.volume:
-            self.volume = [[i] if type(i) != list else i for i in self.volume]
+            self.volume = [[i] if not isinstance(i, list) else i
+                           for i in self.volume]
         else:
             self.volume = [[] for i in range(self.track_number)]
         self.other_messages = other_messages
@@ -2805,7 +2811,7 @@ class piece:
             self.tracks[i].setvolume(self.muted_msg[i])
 
     def append(self, new_track):
-        if type(new_track) != track:
+        if not isinstance(new_track, track):
             raise ValueError('must be a track type to be appended')
         self.tracks.append(new_track.content)
         self.instruments_list.append(new_track.instrument)
@@ -3506,7 +3512,8 @@ class piece:
             for each in self.tracks:
                 each.clear_program_change()
         self.other_messages = [
-            i for i in self.other_messages if type(i) != program_change
+            i for i in self.other_messages
+            if not isinstance(i, program_change)
         ]
 
     def clear_other_messages(self, types=None, apply_tracks=True):
@@ -3517,7 +3524,7 @@ class piece:
             self.other_messages.clear()
         else:
             self.other_messages = [
-                i for i in self.other_messages if type(i) != types
+                i for i in self.other_messages if not isinstance(i, types)
             ]
 
     def change_instruments(self, instruments_list, ind=None):
@@ -3815,12 +3822,14 @@ class track:
         self.volume = volume
         self.sampler_channel = sampler_channel
         if self.pan:
-            self.pan = [self.pan] if not isinstance(self.pan, list) else self.pan
+            self.pan = [self.pan
+                        ] if not isinstance(self.pan, list) else self.pan
         else:
             self.pan = []
         if self.volume:
-            self.volume = [self.volume
-                           ] if not isinstance(self.volume, list) else self.volume
+            self.volume = [
+                self.volume
+            ] if not isinstance(self.volume, list) else self.volume
         else:
             self.volume = []
 
