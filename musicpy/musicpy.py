@@ -58,7 +58,7 @@ def totuple(obj):
 
 
 def get_freq(y, standard=440):
-    if type(y) == str:
+    if isinstance(y, str):
         y = toNote(y)
     semitones = y.degree - 69
     return standard * 2**(semitones / 12)
@@ -74,14 +74,14 @@ def freq_to_note(freq, to_str=False, standard=440):
 
 
 def secondary_dom(root, mode='major'):
-    if type(root) == str:
+    if isinstance(root, str):
         root = toNote(root)
     newscale = scale(root, mode)
     return newscale.dom_chord()
 
 
 def secondary_dom7(root, mode='major'):
-    if type(root) == str:
+    if isinstance(root, str):
         root = toNote(root)
     newscale = scale(root, mode)
     return newscale.dom7_chord()
@@ -94,7 +94,7 @@ def getchord_by_interval(start,
                          cummulative=True,
                          start_time=0):
 
-    if type(start) == str:
+    if isinstance(start, str):
         start = toNote(start)
     result = [start]
     if cummulative:
@@ -192,7 +192,9 @@ def concat(chordlist, mode='+', extra=None):
 
 
 def multi_voice(*current_chord, method=chord, start_times=None):
-    current_chord = [method(i) if type(i) == str else i for i in current_chord]
+    current_chord = [
+        method(i) if isinstance(i, str) else i for i in current_chord
+    ]
     if start_times is not None:
         current_chord = [current_chord[0]
                          ] + [i.with_start(0) for i in current_chord[1:]]
@@ -324,7 +326,7 @@ def read(name,
             for each in changes_track
         ]
         changes = concat(changes)
-        whole_bpm_list = [i for i in changes if type(i) == tempo]
+        whole_bpm_list = [i for i in changes if isinstance(i, tempo)]
         if whole_bpm_list:
             min_start_time = min([i.start_time for i in whole_bpm_list])
             whole_bpm_list = [
@@ -671,7 +673,7 @@ def read(name,
                                 each.channel)
                         for k in range(len(result_piece.tracks)):
                             for each in result_piece.tracks[k].notes:
-                                if type(each) == pitch_bend:
+                                if isinstance(each, pitch_bend):
                                     each.track = k
                         result_merge_track.other_messages = [
                             i for i in result_merge_track.other_messages
@@ -725,7 +727,8 @@ def read(name,
                         result_piece.other_messages += changes.other_messages
                 other_messages_no_channels = [
                     i for i in result_piece.other_messages
-                    if not hasattr(i, 'channel') and type(i) != track_name
+                    if not hasattr(i, 'channel')
+                    and not isinstance(i, track_name)
                 ]
                 if clear_other_channel_msg:
                     result_piece.other_messages = [
@@ -898,11 +901,12 @@ def midi_to_chord(current_midi,
     if clear_empty_notes:
         result.interval = [
             result.interval[j] for j in range(len(result))
-            if type(result.notes[j]) != note or result.notes[j].duration > 0
+            if not isinstance(result.notes[j], note)
+            or result.notes[j].duration > 0
         ]
         result.notes = [
             each for each in result.notes
-            if type(each) != note or each.duration > 0
+            if not isinstance(each, note) or each.duration > 0
         ]
     result.pan_list = pan_list
     result.volume_list = volume_list
@@ -1000,7 +1004,7 @@ def write(current_chord,
     if i is not None:
         instrument = i
     is_track_type = False
-    if type(current_chord) == track:
+    if isinstance(current_chord, track):
         is_track_type = True
         if hasattr(current_chord, 'other_messages'):
             msg = current_chord.other_messages
@@ -1020,7 +1024,7 @@ def write(current_chord,
         track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
         current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
         instruments_numbers = [
-            i if type(i) == int else instruments[i]
+            i if isinstance(i, int) else instruments[i]
             for i in instruments_numbers
         ]
         MyMIDI = midiutil.MidiFile.MIDIFile(
@@ -1139,7 +1143,7 @@ def write(current_chord,
         MyMIDI.addTempo(track_ind, 0, bpm)
         if instrument is None:
             instrument = 1
-        if type(instrument) != int:
+        if not isinstance(instrument, int):
             instrument = instruments[instrument]
         instrument -= 1
         MyMIDI.addProgramChange(track_ind, current_channel, 0, instrument)
@@ -1270,7 +1274,7 @@ def detect_in_scale(current_chord,
                     major_minor_preference=True,
                     find_altered=True,
                     altered_max_number=1):
-    if type(current_chord) != chord:
+    if not isinstance(current_chord, chord):
         current_chord = chord([trans_note(i) for i in current_chord])
     whole_notes = current_chord.names()
     note_names = list(set(whole_notes))
@@ -1511,7 +1515,7 @@ def get_chord_root_note(chord_name, get_chord_types=False):
     types = type(chord_name)
     if types == chord:
         chord_name = detect(chord_name)
-        if type(chord_name) == list:
+        if isinstance(chord_name, list):
             chord_name = chord_name[0]
     elif types == list:
         chord_name = chord_name[0]
@@ -1584,7 +1588,7 @@ def get_chord_root_note(chord_name, get_chord_types=False):
 
 
 def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
-    if type(chords) != list:
+    if not isinstance(chords, list):
         chords = [chords]
     note_names = mode.names()
     root_note_list = [get_chord_root_note(i, True) for i in chords]
@@ -1643,7 +1647,7 @@ def get_chord_notations(chords,
                         as_list=False,
                         functions_interval=1,
                         split_symbol='|'):
-    if type(chords) != list:
+    if not isinstance(chords, list):
         chords = [chords]
     root_note_list = [get_chord_root_note(i, True) for i in chords]
     notations = []
@@ -1699,7 +1703,7 @@ def chord_functions_analysis(current_chord,
     result = chord_analysis(current_chord, mode='chords')
     result = [i.standardize() for i in result]
     actual_chords = [detect(i, **detect_args) for i in result if len(i) > 1]
-    actual_chords = [i[0] if type(i) == list else i for i in actual_chords]
+    actual_chords = [i[0] if isinstance(i, list) else i for i in actual_chords]
     if chord_mode == 'function':
         if not write_to_file:
             chord_progressions = get_chord_functions(scales, actual_chords,
@@ -1807,7 +1811,7 @@ def split_melody(current_chord,
             current_chord_notes[k].number = k
         other_messages_inds = [
             i for i in range(whole_length)
-            if type(current_chord_notes[i]) != note
+            if not isinstance(current_chord_notes[i], note)
         ]
         temp = current_chord.only_notes()
         N = len(temp)
@@ -1919,7 +1923,9 @@ def split_chord(current_chord,
                               melody_degree_tol)
     N = len(current_chord)
     whole_notes = current_chord.notes
-    other_messages_inds = [i for i in range(N) if type(whole_notes[i]) != note]
+    other_messages_inds = [
+        i for i in range(N) if not isinstance(whole_notes[i], note)
+    ]
     chord_ind = [
         i for i in range(N)
         if (i not in melody_ind) or (i in other_messages_inds)
@@ -1957,7 +1963,7 @@ def split_all(current_chord,
     whole_notes = current_chord.notes
     chord_ind = [
         i for i in range(N)
-        if (i not in melody_ind) or (type(whole_notes[i]) != note)
+        if (i not in melody_ind) or (not isinstance(whole_notes[i], note))
     ]
     if mode == 'index':
         return [melody_ind, chord_ind]
@@ -1968,8 +1974,8 @@ def split_all(current_chord,
         new_interval_1 = []
         current_chord_interval = current_chord.interval
         whole_interval = [
-            current_chord_interval[k] if type(whole_notes[k]) == note else 0
-            for k in range(N)
+            current_chord_interval[k]
+            if isinstance(whole_notes[k], note) else 0 for k in range(N)
         ]
         chord_len = len(chord_ind) - 1
         for i in range(chord_len):
@@ -1991,10 +1997,10 @@ def split_all(current_chord,
         # depends on which starts earlier, if shift >= 0, chord part starts after main melody,
         # if shift < 0, chord part starts before main melody
         first_chord_ind = [
-            j for j in chord_ind if type(whole_notes[j]) == note
+            j for j in chord_ind if isinstance(whole_notes[j], note)
         ][0]
         first_melody_ind = [
-            j for j in melody_ind if type(whole_notes[j]) == note
+            j for j in melody_ind if isinstance(whole_notes[j], note)
         ][0]
         if first_chord_ind >= first_melody_ind:
             shift = sum(whole_interval[first_melody_ind:first_chord_ind])
@@ -2094,7 +2100,7 @@ def chord_analysis(chords,
     current_chord = []
     if formated:
         result = [detect(each, **detect_args) for each in chord_ls]
-        result = [i if type(i) != list else i[0] for i in result]
+        result = [i if not isinstance(i, list) else i[0] for i in result]
         result_notes = [chord_notes[k[0]:k[1]] for k in chord_inds]
         result_notes = [
             each.sortchord() if all(j == 0
@@ -2127,7 +2133,7 @@ def chord_analysis(chords,
         return chord_ls
     elif mode == 'chord names':
         result = [detect(each, **detect_args) for each in chord_ls]
-        return [i if type(i) != list else i[0] for i in result]
+        return [i if not isinstance(i, list) else i[0] for i in result]
     elif mode == 'inds':
         return [[i[0], i[1]] for i in chord_inds]
     elif mode == 'bars':
@@ -2295,7 +2301,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
         parts = obj.split('/')
         part1, part2 = parts[0], '/'.join(parts[1:])
         first_chord = trans(part1, pitch)
-        if type(first_chord) == chord:
+        if isinstance(first_chord, chord):
             if part2.isdigit() or (part2[0] == '-' and part2[1:].isdigit()):
                 return (first_chord / int(part2)) % (duration, interval)
             elif part2[-1] == '!' and part2[:-1].isdigit():
@@ -2315,7 +2321,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                              interval=interval)
             else:
                 second_chord = trans(part2, pitch)
-                if type(second_chord) == chord:
+                if isinstance(second_chord, chord):
                     return chord(second_chord.names() + first_chord.names(),
                                  rootpitch=pitch,
                                  duration=duration,
@@ -2677,7 +2683,7 @@ def find_similarity(a,
                 bname = b[0].name + provide_name
             else:
                 bname = detect(b)
-            if type(bname) == list:
+            if isinstance(bname, list):
                 bname = bname[0]
         return result if not getgoodchord else (result, chordfrom, bname)
 
@@ -2752,16 +2758,16 @@ def detect_split(a, N=None):
         splitind = 1
         lower = a.notes[0].name
         upper = detect(a.notes[splitind:])
-        if type(upper) == list:
+        if isinstance(upper, list):
             upper = upper[0]
         return f'[{upper}]/{lower}'
     else:
         splitind = N // 2
         lower = detect(a.notes[:splitind])
         upper = detect(a.notes[splitind:])
-        if type(lower) == list:
+        if isinstance(lower, list):
             lower = lower[0]
-        if type(upper) == list:
+        if isinstance(upper, list):
             upper = upper[0]
         return f'[{upper}]/[{lower}]'
 
@@ -2796,7 +2802,7 @@ def detect(a,
            alter_notes_show_degree=False):
     # mode could be chord/scale
     if mode == 'chord':
-        if type(a) != chord:
+        if not isinstance(a, chord):
             a = chord(a, rootpitch=rootpitch)
         N = len(a)
         if N == 1:
@@ -3013,7 +3019,7 @@ def detect(a,
                 return detect_var
 
     elif mode == 'scale':
-        if type(a[0]) == int:
+        if isinstance(a[0], int):
             try:
                 scales = detectScale[tuple(a)]
                 if scales != 'not found':
@@ -3023,7 +3029,7 @@ def detect(a,
             except:
                 raise ValueError('cannot detect this scale')
         else:
-            if type(a) in [chord, scale]:
+            if isinstance(a, (chord, scale)):
                 a = a.notes
             try:
                 scales = detectScale[tuple(a[i].degree - a[i - 1].degree
@@ -3036,9 +3042,9 @@ def detect(a,
 
 
 def intervalof(a, cummulative=True, translate=False):
-    if type(a) == scale:
+    if isinstance(a, scale):
         a = a.getScale()
-    if type(a) != chord:
+    if not isinstance(a, chord):
         a = chord(a)
     return a.intervalof(cummulative, translate)
 
@@ -3264,12 +3270,12 @@ def negative_harmony(key, a=None, sort=False, get_map=False):
     if get_map:
         return map_dict
     if a:
-        if type(a) == chord:
+        if isinstance(a, chord):
             temp = copy(a)
             notes = temp.notes
             for each in range(len(notes)):
                 current = notes[each]
-                if type(current) == note:
+                if isinstance(current, note):
                     if current.name in standard_dict:
                         current.name = standard_dict[current.name]
                     notes[each] = note(map_dict[current.name],
@@ -3327,10 +3333,10 @@ def guitar_chord(frets,
 
 
 def build(*tracks_list, **kwargs):
-    if len(tracks_list) == 1 and type(tracks_list[0]) == list:
+    if len(tracks_list) == 1 and isinstance(tracks_list[0], list):
         current_tracks_list = tracks_list[0]
-        if current_tracks_list and type(
-                current_tracks_list[0]) in [list, track]:
+        if current_tracks_list and isinstance(current_tracks_list[0],
+                                              (list, track)):
             return build(*tracks_list[0], **kwargs)
     tracks = []
     instruments_list = []
@@ -3342,8 +3348,7 @@ def build(*tracks_list, **kwargs):
     sampler_channels = []
     remain_list = [1, 0, None, None, [], [], None]
     for each in tracks_list:
-        types = type(each)
-        if types == track:
+        if isinstance(each, track):
             tracks.append(each.content)
             instruments_list.append(each.instrument)
             start_times.append(each.start_time)
@@ -3543,17 +3548,17 @@ def chord_progression(chords,
     if scale:
         return scale.chord_progression(chords, durations, intervals, volumes,
                                        chords_interval, merge)
-    chords = [(i, ) if type(i) == str else i for i in chords]
+    chords = [(i, ) if isinstance(i, str) else i for i in chords]
     chords_len = len(chords)
-    if type(durations) != list:
+    if not isinstance(durations, list):
         durations = [durations for i in range(chords_len)]
-    if type(intervals) != list:
+    if not isinstance(intervals, list):
         intervals = [intervals for i in range(chords_len)]
-    if volumes and type(volumes) != list:
+    if volumes and not isinstance(volumes, list):
         volumes = [volumes for i in range(chords_len)]
-    if chords_interval and type(chords_interval) != list:
+    if chords_interval and not isinstance(chords_interval, list):
         chords_interval = [chords_interval for i in range(chords_len)]
-    chords = [C(*i) if type(i) == tuple else i for i in chords]
+    chords = [C(*i) if isinstance(i, tuple) else i for i in chords]
     for i in range(chords_len):
         chords[i] %= (durations[i], intervals[i],
                       volumes[i] if volumes else volumes)
@@ -3575,7 +3580,7 @@ def find_chords_for_melody(melody,
                            get_pattern=False,
                            chord_length=None,
                            down_octave=1):
-    if type(melody) in [str, list]:
+    if isinstance(melody, (str, list)):
         melody = chord(melody)
     possible_scales = detect_in_scale(melody, num, get_scales=True)
     if not possible_scales:
@@ -3626,7 +3631,7 @@ def arpeggio(chord_type,
              intervals=1 / 32,
              first_half=True,
              second_half=False):
-    if type(chord_type) == str:
+    if isinstance(chord_type, str):
         rule = lambda chord_type, start, stop: concat([
             C(chord_type, i) % (durations, intervals)
             for i in range(start, stop)
@@ -3652,9 +3657,9 @@ def distribute(current_chord,
                stop=None,
                method=translate,
                mode=0):
-    if type(current_chord) == str:
+    if isinstance(current_chord, str):
         current_chord = method(current_chord)
-    elif type(current_chord) == list:
+    elif isinstance(current_chord, list):
         current_chord = chord(current_chord)
     if stop is None:
         stop = len(current_chord)
@@ -3685,7 +3690,7 @@ def stopall():
 
 
 def riff_to_midi(riff_name, name='temp.mid', output_file=False):
-    if type(riff_name) == str:
+    if isinstance(riff_name, str):
         current_file = open(riff_name, 'rb')
         root = chunk.Chunk(current_file, bigendian=False)
     else:
@@ -3709,7 +3714,7 @@ def riff_to_midi(riff_name, name='temp.mid', output_file=False):
         raise IOError(f"Broken input file: {riff_name}")
 
     root.close()
-    if type(riff_name) == str:
+    if isinstance(riff_name, str):
         current_file.close()
 
     if output_file:
