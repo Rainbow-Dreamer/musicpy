@@ -536,15 +536,14 @@ class chord:
         self.interval = [self.interval[k] for k in inds]
 
     def __mod__(self, alist):
-        types = type(alist)
         if isinstance(alist, (list, tuple)):
             return self.set(*alist)
-        elif types == int:
+        elif isinstance(alist, int):
             temp = copy(self)
             for i in range(alist - 1):
                 temp //= self
             return temp
-        elif types in [str, note]:
+        elif isinstance(alist, (str, note)):
             return self.on(alist)
 
     def standardize(self):
@@ -691,9 +690,9 @@ class chord:
                                  ind=obj[1] if len(obj) == 2 else None)
             else:
                 return self.add(first, start=start, mode='after')
-        elif types == list:
+        elif isinstance(obj, list):
             return self.rest(*obj)
-        elif types == rest:
+        elif isinstance(obj, rest):
             return self.rest(obj.duration)
         return self.add(obj, mode='after')
 
@@ -1588,20 +1587,18 @@ class chord:
         new_other_messages = []
         for i in range(len(other_types_chord.notes)):
             each = other_types_chord.notes[i]
-            current_type = type(each)
             current_start_time = sum(other_types_chord.interval[:i])
-            if current_type == pitch_bend or current_type == pan or current_type == volume:
+            if isinstance(each, (pitch_bend, pan, volume)):
                 each.start_time = current_start_time
             else:
                 each.time = current_start_time * 4
         del other_types_chord[0]
         for each in other_types_chord.notes:
-            current_type = type(each)
-            if current_type == pitch_bend:
+            if isinstance(each, pitch_bend):
                 new_pitch_bends.append(each)
-            elif current_type == pan:
+            elif isinstance(each, pan):
                 new_pan.append(each)
-            elif current_type == volume:
+            elif isinstance(each, volume):
                 new_volume.append(each)
             else:
                 new_other_messages.append(each)
@@ -1619,8 +1616,7 @@ class chord:
     def place_shift(self, time=0, pan_msg=None, volume_msg=None):
         temp = copy(self)
         for i in temp.notes:
-            types = type(i)
-            if types == tempo or types == pitch_bend:
+            if isinstance(i, (tempo, pitch_bend)):
                 if i.start_time is not None:
                     i.start_time += time
                     if i.start_time < 0:
@@ -2047,8 +2043,7 @@ class chord:
 
     def apply_start_time_to_changes(self, start_time, msg=False):
         for each in self.notes:
-            types = type(each)
-            if types == tempo or types == pitch_bend:
+            if isinstance(each, (tempo, pitch_bend)):
                 if each.start_time is not None:
                     each.start_time += start_time
                     if each.start_time < 0:
@@ -2525,8 +2520,7 @@ class scale:
         current_keys.sort(key=lambda s: len(s[0]), reverse=True)
         for k in range(len(chords)):
             current_chord = chords[k]
-            types = type(current_chord)
-            if types == tuple or types == list:
+            if isinstance(current_chord, (tuple, list)):
                 current_degree_name = current_chord[0]
                 current_degree = roman_numerals_dict[current_degree_name] - 1
                 if current_degree == 'not found':
@@ -2619,10 +2613,9 @@ class circle_of_fifths:
     def rotate(self, start, step=1, direction='cw', inner=False):
         if direction == 'ccw':
             step = -step
-        types = type(start)
-        if types == note:
+        if isinstance(start, note):
             startind = self.outer.index(start.name)
-        elif types == str:
+        elif isinstance(start, str):
             startind = self.outer.index(start)
         else:
             startind = start
@@ -2963,8 +2956,7 @@ class piece:
                     current_instrument_number)
                 current_track = temp2.tracks[i]
                 for each in current_track:
-                    types = type(each)
-                    if types == tempo or types == pitch_bend:
+                    if isinstance(each, (tempo, pitch_bend)):
                         if each.start_time is not None:
                             each.start_time += start_time
                 current_start_time = temp2.start_times[
@@ -2980,8 +2972,7 @@ class piece:
                 current_start_time += start_time
                 current_track = temp2.tracks[i]
                 for each in current_track:
-                    types = type(each)
-                    if types == tempo or types == pitch_bend:
+                    if isinstance(each, (tempo, pitch_bend)):
                         if each.start_time is not None:
                             each.start_time += start_time
                 temp.tracks.append(current_track)
@@ -3410,16 +3401,14 @@ class piece:
                                     start_time,
                                     msg=False,
                                     pan_volume=False):
-        types = type(start_time)
-        if types == int or types == float:
+        if isinstance(start_time, (int, float)):
             start_time = [start_time for i in range(len(self.tracks))]
         tracks = self.tracks
         for i in range(len(tracks)):
             current_start_time = start_time[i]
             current_track = tracks[i]
             for each in current_track.notes:
-                types = type(each)
-                if types == tempo or types == pitch_bend:
+                if isinstance(each, (tempo, pitch_bend)):
                     if each.start_time is not None:
                         each.start_time += current_start_time
                         if each.start_time < 0:
@@ -3616,8 +3605,7 @@ class piece:
                       reset_pitch_bend=True,
                       reset_pan_volume=True,
                       reset_note=True):
-        types = type(channels)
-        if types == int or types == float:
+        if isinstance(channels, (int, float)):
             channels = [channels for i in range(len(self.tracks))]
         self.channels = channels
         for i in range(len(self.tracks)):
