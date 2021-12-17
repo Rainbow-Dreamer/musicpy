@@ -121,12 +121,9 @@ def getchord(start,
              mode=None,
              duration=0.25,
              intervals=None,
-             addition=None,
              interval=None,
              cummulative=True,
              pitch=4,
-             b=None,
-             sharp=None,
              ind=0,
              start_time=0):
     if not isinstance(start, note):
@@ -153,14 +150,6 @@ def getchord(start,
             raise ValueError('could not detect the chord types')
     for i in range(len(interval)):
         chordlist.append(degree_to_note(initial + interval[i]))
-    if addition is not None:
-        chordlist.append(degree_to_note(initial + addition))
-    if b != None:
-        for each in b:
-            chordlist[each - 1] = chordlist[each - 1].down()
-    if sharp != None:
-        for every in sharp:
-            chordlist[every - 1] = chordlist[every - 1].up()
     return chord(chordlist, duration, intervals, start_time=start_time)
 
 
