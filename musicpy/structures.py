@@ -296,12 +296,12 @@ class chord:
             if isinstance(current_note, note):
                 current_bar += intervals[i]
                 if (not find_start) and current_bar >= ind1:
-                    start_ind = i
+                    start_ind = i + 1
                     find_start = True
                     if ind2 is None:
                         break
                 elif ind2 and current_bar >= ind2:
-                    to_ind = i
+                    to_ind = i + 1
                     break
         if not find_start:
             start_ind = to_ind
@@ -346,12 +346,12 @@ class chord:
             if isinstance(current_note, note):
                 current_bar += intervals[i]
                 if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
-                    start_ind = i
+                    start_ind = i + 1
                     find_start = True
                     if time2 is None:
                         break
                 elif time2 and (60 / bpm) * current_bar * 4 >= time2:
-                    to_ind = i
+                    to_ind = i + 1
                     break
         if not find_start:
             start_ind = to_ind
