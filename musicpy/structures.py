@@ -4129,7 +4129,7 @@ class drum:
                 else:
                     start_time += current_interval
             elif '(' in i and i[-1] == ')':
-                repeat_times = int(i[i.index('('):-1])
+                repeat_times = int(i[i.index('(') + 1:-1])
                 repeat_part = i[:i.index('(')]
                 if repeat_part.startswith('$'):
                     if '[' in repeat_part and ']' in repeat_part:
