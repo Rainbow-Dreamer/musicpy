@@ -212,7 +212,8 @@ def play(current_chord,
          adjust_origin=False,
          eventtime_is_ticks=False,
          msg=None,
-         nomsg=False):
+         nomsg=False,
+         wait=False):
     file = write(current_chord=current_chord,
                  bpm=bpm,
                  track_ind=track_ind,
@@ -235,10 +236,16 @@ def play(current_chord,
         result_file = name
         pygame.mixer.music.load(result_file)
         pygame.mixer.music.play()
+        if wait:
+            while pygame.mixer.music.get_busy():
+                pygame.time.delay(10)
     else:
         file.seek(0)
         pygame.mixer.music.load(file)
         pygame.mixer.music.play()
+        if wait:
+            while pygame.mixer.music.get_busy():
+                pygame.time.delay(10)
 
 
 def _add_pan_volume_to_track(current_chord, whole_pan=None, whole_volume=None):
