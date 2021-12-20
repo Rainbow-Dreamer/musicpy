@@ -48,7 +48,7 @@ Note2: If you are using macOS, and you encounter problems when you run musicpy c
 
 Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
 
-Note 4: Some python IDEs may prevent the function to play music of musicpy, which makes the music cannot be played normally when playing the codes, such as VS Code, PyCharm, here it is recommended to use more interactive python IDE, such as Jupyter Notebook, Wing IDE, or directly use the interactive shell of python in cmd/terminal (run `python` to enter).
+Note 4: Some python IDEs may prevent the function to play music of musicpy, which makes the music cannot be played normally when playing the codes, such as VS Code, PyCharm, here it is recommended to use more interactive python IDE, such as Jupyter Notebook, Wing IDE, or directly use the interactive shell of python in cmd/terminal (run `python` to enter), or you can set `wait` parameter to True in the function `play` to ensure the playing by waiting till the playing is finished in this case.
 
 Importing
 -------------
@@ -183,7 +183,7 @@ Musicpy对于Windows, macOS和Linux都是兼容的, 但是这里有一些在Linu
 
 情况3: 在Windows, macOS和Linux上，你都可以在终端(cmd/terminal)里使用pip安装musicpy。
 
-情况4: 有一些python IDE可能会阻止musicpy的播放音乐的函数，播放代码时可能无法正常播放音乐，比如VS Code, PyCharm, 这里推荐使用更加交互式的python IDE，比如Jupyter Notebook, Wing IDE，或者直接在cmd/terminal里面使用python自带的交互式shell (运行`python`即可进入)。
+情况4: 有一些python IDE可能会阻止musicpy的播放音乐的函数，播放代码时可能无法正常播放音乐，比如VS Code, PyCharm, 这里推荐使用更加交互式的python IDE，比如Jupyter Notebook, Wing IDE，或者直接在cmd/terminal里面使用python自带的交互式shell (运行`python`即可进入)，或者在这种情况下你也可以将`play`函数中的`wait`参数设置为True来通过等待播放完成来保证播放。
 
 import这个库
 -------------
