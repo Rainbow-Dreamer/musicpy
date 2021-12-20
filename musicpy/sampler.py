@@ -695,7 +695,8 @@ class sampler:
              extra_length=None,
              track_lengths=None,
              track_extra_lengths=None,
-             soundfont_args=None):
+             soundfont_args=None,
+             wait=False):
         if not self.channel_sound_modules:
             return
         self.stop_playing()
@@ -705,6 +706,9 @@ class sampler:
                                  current_bpm, length, extra_length,
                                  track_lengths, track_extra_lengths,
                                  soundfont_args)
+        if wait:
+            while pygame.mixer.get_busy():
+                pygame.time.delay(10)
 
     def play_musicpy_sounds(self,
                             current_chord,
@@ -928,8 +932,8 @@ class pitch:
     def __len__(self):
         return len(self.sounds)
 
-    def play(self):
-        play_audio(self)
+    def play(self, wait=False):
+        play_audio(self, wait=wait)
 
     def stop(self):
         pygame.mixer.stop()
@@ -960,14 +964,14 @@ class sound:
     def __len__(self):
         return len(self.sounds)
 
-    def play(self):
-        play_audio(self)
+    def play(self, wait=False):
+        play_audio(self, wait=wait)
 
     def stop(self):
         pygame.mixer.stop()
 
 
-def play_audio(audio, mode=0):
+def play_audio(audio, mode=0, wait=False):
     if isinstance(audio, (pitch, sound)):
         current_audio = audio.sounds
     else:
@@ -999,6 +1003,9 @@ def play_audio(audio, mode=0):
             capture.reset()
         except:
             pass
+    if wait:
+        while pygame.mixer.get_busy():
+            pygame.time.delay(10)
 
 
 def stop():
