@@ -2326,10 +2326,13 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
         'not a valid chord representation or chord types not in database')
 
 
-def toScale(obj, pitch=4):
-    inds = obj.index(' ')
-    tonic, scale_name = obj[:inds], obj[inds + 1:]
-    return scale(note(tonic, pitch), scale_name)
+def toScale(obj, pitch=None):
+    tonic, scale_name = obj.strip(' ').split(' ', 1)
+    tonic = N(tonic)
+    if pitch is not None:
+        tonic.num = pitch
+    scale_name = scale_name.strip(' ')
+    return scale(tonic, scale_name)
 
 
 def inversion_from(a, b, num=False, mode=0):
