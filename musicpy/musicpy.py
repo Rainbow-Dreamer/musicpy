@@ -308,11 +308,19 @@ def read(name,
             split_channels = True
     whole_tracks = current_midi.tracks
     current_track = None
+    find_changes = False
     changes_track = [
-        each for each in whole_tracks if all(i.type != 'note_on' for i in each)
+        each for each in whole_tracks if all(i.is_meta for i in each)
     ]
-    found_bpm = False
+    if not changes_track:
+        changes_track = [
+            each for each in whole_tracks
+            if any(i.type == 'set_tempo' for i in each)
+        ]
+    else:
+        find_changes = True
     whole_bpm = 120
+    changes = []
     if changes_track:
         changes = [
             midi_to_chord(current_midi,
@@ -329,60 +337,6 @@ def read(name,
                 i for i in whole_bpm_list if i.start_time == min_start_time
             ]
             whole_bpm = whole_bpm_list[-1].bpm
-            found_bpm = True
-        if not found_bpm:
-            whole_tempo = []
-            whole_tempo_start_time = []
-            for each in whole_tracks:
-                current_tempo = [i for i in each if i.type == 'set_tempo']
-                if current_tempo:
-                    for k in range(len(each)):
-                        if each[k].type == 'set_tempo':
-                            current_start_time = sum(
-                                [each[j].time for j in range(k + 1)])
-                            break
-                    whole_tempo_start_time.append(current_start_time)
-                    whole_tempo.append(current_tempo)
-            if whole_tempo:
-                min_start_time = min(whole_tempo_start_time)
-                min_tempo_track = whole_tempo[whole_tempo_start_time.index(
-                    min_start_time)]
-                min_start_time = min_tempo_track[0].time
-                whole_bpm_list = []
-                for each in min_tempo_track:
-                    if each.time == min_start_time:
-                        whole_bpm_list.append(each)
-                    else:
-                        break
-                whole_bpm = mido.midifiles.units.tempo2bpm(
-                    whole_bpm_list[-1].tempo)
-    else:
-        changes = []
-        whole_tempo = []
-        whole_tempo_start_time = []
-        for each in whole_tracks:
-            current_tempo = [i for i in each if i.type == 'set_tempo']
-            if current_tempo:
-                for k in range(len(each)):
-                    if each[k].type == 'set_tempo':
-                        current_start_time = sum(
-                            [each[j].time for j in range(k + 1)])
-                        break
-                whole_tempo_start_time.append(current_start_time)
-                whole_tempo.append(current_tempo)
-        if whole_tempo:
-            min_start_time = min(whole_tempo_start_time)
-            min_tempo_track = whole_tempo[whole_tempo_start_time.index(
-                min_start_time)]
-            min_start_time = min_tempo_track[0].time
-            whole_bpm_list = []
-            for each in min_tempo_track:
-                if each.time == min_start_time:
-                    whole_bpm_list.append(each)
-                else:
-                    break
-            whole_bpm = mido.midifiles.units.tempo2bpm(
-                whole_bpm_list[-1].tempo)
     if mode == 'find':
         found = False
         for each in whole_tracks:
@@ -392,18 +346,17 @@ def read(name,
                 break
         if not found:
             raise ValueError(
-                'No tracks found in the MIDI file, please check if the input MIDI file is empty'
+                'No tracks that has notes found in the MIDI file, please check if the input MIDI file is empty'
             )
         result = midi_to_chord(current_midi, current_track, whole_bpm)
-        if changes:
+        if find_changes and changes:
             result[1] += changes
         if add_pan_volume:
             _add_pan_volume_to_track(result[1])
         return result
     elif mode == 'all':
         available_tracks = [
-            each for each in whole_tracks
-            if any(each_msg.type == 'note_on' for each_msg in each)
+            each for each in whole_tracks if any(not i.is_meta for i in each)
         ]
         if get_off_drums:
             available_tracks = [
@@ -477,7 +430,7 @@ def read(name,
                     [each[1].other_messages for each in all_tracks])
             else:
                 all_track_notes.other_messages = new_all_tracks.other_messages
-            if changes and not split_channels:
+            if find_changes and changes and not split_channels:
                 all_track_notes += changes
             all_track_notes += tempo_changes
             all_track_notes += pitch_bends
@@ -508,7 +461,7 @@ def read(name,
                     raise ValueError(
                         'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
                     )
-                if changes and not split_channels:
+                if find_changes and changes and not split_channels:
                     all_tracks[0][1] += changes
                 if add_pan_volume:
                     for i in range(len(all_tracks)):
@@ -557,7 +510,7 @@ def read(name,
                 if split_channels:
                     remain_available_tracks = [
                         each for each in whole_tracks
-                        if any(j.type == 'note_on' for j in each)
+                        if any(not j.is_meta for j in each)
                     ]
                     channels_numbers = concat(
                         [[i.channel for i in each if hasattr(i, 'channel')]
@@ -717,7 +670,7 @@ def read(name,
                         raise ValueError(
                             'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
                         )
-                if changes:
+                if find_changes and changes:
                     result_piece.tracks[0] += changes
                     if changes.other_messages:
                         result_piece.other_messages += changes.other_messages
@@ -749,7 +702,7 @@ def read(name,
         try:
             current_track = whole_tracks[trackind]
             result = midi_to_chord(current_midi, current_track, whole_bpm)
-            if changes:
+            if find_changes and changes:
                 result[1] += changes
             if add_pan_volume:
                 _add_pan_volume_to_track(result[1])
