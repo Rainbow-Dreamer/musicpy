@@ -156,25 +156,26 @@ def getchord(start,
 chd = getchord
 
 
-def concat(chordlist, mode='+', extra=None):
-    temp = copy(chordlist[0])
+def concat(chordlist, mode='+', extra=None, start=None):
+    temp = copy(chordlist[0]) if start is None else start
+    start_ind = 1 if start is None else 0
     if mode == '+':
-        for t in chordlist[1:]:
+        for t in chordlist[start_ind:]:
             temp += t
     elif mode == '|':
         if not extra:
-            for t in chordlist[1:]:
+            for t in chordlist[start_ind:]:
                 temp |= t
         else:
-            for t in chordlist[1:]:
+            for t in chordlist[start_ind:]:
                 temp |= (t, extra)
     elif mode == '&':
         if not extra:
-            for t in chordlist[1:]:
+            for t in chordlist[start_ind:]:
                 temp &= t
         else:
             extra_unit = extra
-            for t in chordlist[1:]:
+            for t in chordlist[start_ind:]:
                 temp &= (t, extra)
                 extra += extra_unit
     return temp
@@ -476,7 +477,8 @@ def read(name,
         if result_piece.tracks:
             result_piece.other_messages = concat([
                 each_track.other_messages for each_track in result_piece.tracks
-            ])
+            ],
+                                                 start=[])
         else:
             raise ValueError(
                 'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
@@ -485,24 +487,13 @@ def read(name,
         result_piece.tracks[0] += changes
         if changes.other_messages:
             result_piece.other_messages += changes.other_messages
-    other_messages_no_channels = [
-        i for i in result_piece.other_messages
-        if not hasattr(i, 'channel') and not isinstance(i, track_name)
-    ]
+
     if clear_other_channel_msg:
         result_piece.other_messages = [
             i for i in result_piece.other_messages
             if not (hasattr(i, 'channel')
                     and i.channel not in result_piece.channels)
         ]
-        result_piece.tracks[0].other_messages = list(
-            set([i for i in result_piece.other_messages if i.track == 0] +
-                other_messages_no_channels))
-    else:
-        result_piece.tracks[0].other_messages = list(
-            set(result_piece.tracks[0].other_messages +
-                other_messages_no_channels))
-    result_piece.clear_other_messages(types=track_name, apply_tracks=False)
     return result_piece
 
 
@@ -757,7 +748,8 @@ def write(current_chord,
             channels=[channel],
             start_times=[
                 current_chord.start_time if start_time is None else start_time
-            ])
+            ],
+            other_messages=current_chord.other_messages)
     elif isinstance(current_chord, track):
         is_track_type = True
         if hasattr(current_chord, 'other_messages'):
