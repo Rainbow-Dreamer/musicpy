@@ -197,7 +197,7 @@ def multi_voice(*current_chord, method=chord, start_times=None):
 
 
 def play(current_chord,
-         bpm=80,
+         bpm=120,
          channel=0,
          start_time=None,
          name='temp.mid',
@@ -719,7 +719,7 @@ def read_other_messages(message, other_messages, time, track_ind):
 
 
 def write(current_chord,
-          bpm=80,
+          bpm=120,
           channel=0,
           start_time=None,
           name='temp.mid',
