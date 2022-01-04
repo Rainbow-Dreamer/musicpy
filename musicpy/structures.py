@@ -968,7 +968,10 @@ class chord:
 
     def add(self, note1=None, mode='tail', start=0, duration=0.25):
         if len(self) == 0:
-            return note1
+            result = copy(note1)
+            if start != 0:
+                result.start_time += start
+            return result
         temp = copy(self)
         if isinstance(note1, int):
             temp += temp[0].up(note1)
@@ -998,12 +1001,17 @@ class chord:
             temp.clear_tempo()
             note1.clear_pitch_bend(value='all')
             note1.clear_tempo()
+            if not temp.notes:
+                result = note1 + not_notes
+                if start != 0:
+                    result.start_time += start
+                return result
             distance = []
             intervals1 = temp.interval
             intervals2 = note1.interval
             current_start_time = min(temp.start_time, note1.start_time + start)
             start += (note1.start_time - temp.start_time)
-            if start != 0 and temp.notes:
+            if start != 0:
                 note1.notes.insert(0, temp.notes[0])
                 intervals2.insert(0, start)
             counter = 0
@@ -1012,7 +1020,7 @@ class chord:
                 counter += intervals1[i]
             counter = 0
             for j in range(len(intervals2)):
-                if not (j == 0 and start != 0 and temp.notes):
+                if not (j == 0 and start != 0):
                     distance.append([counter, note1.notes[j]])
                 counter += intervals2[j]
             distance.sort(key=lambda s: s[0])
@@ -4810,7 +4818,7 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
     whole_volume = mp.concat(self.volume) if self.volume else None
     normalize_result, first_track_start_time = first_track.normalize_tempo(
         bpm,
-        start_time=first_track_start_time,
+        start_time=first_track_start_time + first_track.start_time,
         pan_msg=whole_pan,
         volume_msg=whole_volume)
     new_other_messages = normalize_result[0]

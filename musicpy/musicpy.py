@@ -793,17 +793,17 @@ def write(current_chord,
             for each in current_pan_msg:
                 current_pan_track = i if each.track is None else each.track
                 current_pan_channel = current_channel if each.channel is None else each.channel
-                MyMIDI.addControllerEvent(current_pan_track,
-                                          current_pan_channel,
-                                          each.start_time * 4, 10, each.value)
+                MyMIDI.addControllerEvent(
+                    current_pan_track if not is_track_type else 0,
+                    current_pan_channel, each.start_time * 4, 10, each.value)
         current_volume_msg = volume_msg[i]
         if current_volume_msg:
             for each in current_volume_msg:
                 current_volume_channel = current_channel if each.channel is None else each.channel
                 current_volume_track = i if each.track is None else each.track
-                MyMIDI.addControllerEvent(current_volume_track,
-                                          current_volume_channel,
-                                          each.start_time * 4, 7, each.value)
+                MyMIDI.addControllerEvent(
+                    current_volume_track if not is_track_type else 0,
+                    current_volume_channel, each.start_time * 4, 7, each.value)
 
         content = tracks_contents[i]
         content_notes = content.notes
@@ -838,15 +838,15 @@ def write(current_chord,
                     pitch_bend_time = current_start_time
                 pitch_bend_track = i if current_note.track is None else current_note.track
                 pitch_bend_channel = current_channel if current_note.channel is None else current_note.channel
-                MyMIDI.addPitchWheelEvent(pitch_bend_track, pitch_bend_channel,
-                                          pitch_bend_time, current_note.value)
+                MyMIDI.addPitchWheelEvent(
+                    pitch_bend_track if not is_track_type else 0,
+                    pitch_bend_channel, pitch_bend_time, current_note.value)
             elif current_type == tuning:
                 note_tuning_track = i if current_note.track is None else current_note.track
-                MyMIDI.changeNoteTuning(note_tuning_track,
-                                        current_note.tunings,
-                                        current_note.sysExChannel,
-                                        current_note.realTime,
-                                        current_note.tuningProgam)
+                MyMIDI.changeNoteTuning(
+                    note_tuning_track if not is_track_type else 0,
+                    current_note.tunings, current_note.sysExChannel,
+                    current_note.realTime, current_note.tuningProgam)
 
     if not nomsg:
         if current_chord.other_messages:
