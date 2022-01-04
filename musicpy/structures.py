@@ -6,6 +6,7 @@ import musicpy as mp
 
 
 class note:
+
     def __init__(self, name, num=4, duration=0.25, volume=100, channel=None):
         if name not in standard:
             raise ValueError(
@@ -152,6 +153,7 @@ class note:
 
 class chord:
     ''' This class can contain a chord with many notes played simultaneously and either has intervals, the default interval is 0.'''
+
     def __init__(self,
                  notes,
                  duration=None,
@@ -2084,6 +2086,7 @@ class chord:
 
 
 class scale:
+
     def __init__(self,
                  start=None,
                  mode=None,
@@ -2661,6 +2664,7 @@ class circle_of_fourths(circle_of_fifths):
 
 
 class piece:
+
     def __init__(self,
                  tracks,
                  instruments_list=None,
@@ -3693,6 +3697,7 @@ class tempo:
 
 
 class pitch_bend:
+
     def __init__(self,
                  value,
                  start_time=None,
@@ -3744,6 +3749,7 @@ class pitch_bend:
 
 
 class tuning:
+
     def __init__(self,
                  tuning_dict,
                  track=None,
@@ -3779,6 +3785,7 @@ class tuning:
 
 
 class track:
+
     def __init__(self,
                  content,
                  instrument=1,
@@ -4028,6 +4035,7 @@ class volume:
 
 
 class drum:
+
     def __init__(self,
                  pattern='',
                  mapping=drum_mapping,
@@ -4252,6 +4260,7 @@ class drum:
 
 
 class controller_event:
+
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4266,6 +4275,7 @@ class controller_event:
 
 
 class copyright_event:
+
     def __init__(self, track=0, time=0, notice=None):
         self.track = track
         self.time = time * 4
@@ -4273,6 +4283,7 @@ class copyright_event:
 
 
 class key_signature:
+
     def __init__(self,
                  track=0,
                  time=0,
@@ -4287,6 +4298,7 @@ class key_signature:
 
 
 class sysex:
+
     def __init__(self, track=0, time=0, manID=None, payload=None):
         self.track = track
         self.time = time * 4
@@ -4295,6 +4307,7 @@ class sysex:
 
 
 class text_event:
+
     def __init__(self, track=0, time=0, text=''):
         self.track = track
         self.time = time * 4
@@ -4302,6 +4315,7 @@ class text_event:
 
 
 class time_signature:
+
     def __init__(self,
                  track=0,
                  time=0,
@@ -4318,6 +4332,7 @@ class time_signature:
 
 
 class universal_sysex:
+
     def __init__(self,
                  track=0,
                  time=0,
@@ -4336,6 +4351,7 @@ class universal_sysex:
 
 
 class rpn:
+
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4358,6 +4374,7 @@ class rpn:
 
 
 class tuning_bank:
+
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4372,6 +4389,7 @@ class tuning_bank:
 
 
 class tuning_program:
+
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4386,6 +4404,7 @@ class tuning_program:
 
 
 class channel_pressure:
+
     def __init__(self, track=0, channel=0, time=0, pressure_value=None):
         self.track = track
         self.channel = channel
@@ -4394,6 +4413,7 @@ class channel_pressure:
 
 
 class program_change:
+
     def __init__(self, track=0, channel=0, time=0, program=0):
         self.track = track
         self.channel = channel
@@ -4402,6 +4422,7 @@ class program_change:
 
 
 class track_name:
+
     def __init__(self, track=0, time=0, name=''):
         self.track = track
         self.time = time * 4
@@ -4409,6 +4430,7 @@ class track_name:
 
 
 class rest:
+
     def __init__(self, duration=1 / 4, dotted=None):
         self.duration = duration
         if dotted is not None:
@@ -4824,9 +4846,10 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
     start_times_inds = [[
         i for i in range(len(first_track))
         if first_track.notes[i].track_num == k
-    ][0] for k in range(length)]
+    ] for k in range(length)]
+    start_times_inds = [each[0] if each else -1 for each in start_times_inds]
     new_start_times = [
-        first_track_start_time + first_track[:k].bars(mode=0)
+        first_track_start_time + first_track[:k].bars(mode=0) if k != -1 else 0
         for k in start_times_inds
     ]
     new_track_notes = [[] for k in range(length)]
@@ -4842,8 +4865,9 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
         sum(whole_interval[inds[i]:inds[i + 1]]) for i in range(len(inds) - 1)
     ] for inds in new_track_inds]
     for i in range(length):
-        new_track_intervals[i].append(
-            sum(whole_interval[new_track_inds[i][-1]:]))
+        if new_track_inds[i]:
+            new_track_intervals[i].append(
+                sum(whole_interval[new_track_inds[i][-1]:]))
     new_tracks = [
         chord(new_track_notes[k],
               interval=new_track_intervals[k],
@@ -4853,7 +4877,6 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
     ]
     self.tracks = new_tracks
     self.start_times = new_start_times
-    self.clear_other_messages(types=track_name, apply_tracks=False)
 
 
 def note_to_degree(obj):

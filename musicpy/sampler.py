@@ -14,6 +14,7 @@ abs_path = os.path.abspath(os.path.dirname(__file__))
 
 
 class esi:
+
     def __init__(self, samples, settings=None, name_mappings=None):
         self.samples = samples
         self.settings = settings
@@ -31,6 +32,7 @@ class esi:
 
 
 class effect:
+
     def __init__(self, func, name=None, *args, unknown_args=None, **kwargs):
         self.func = func
         if name is None:
@@ -76,6 +78,7 @@ class effect:
 
 
 class effect_chain:
+
     def __init__(self, *effects):
         self.effects = list(effects)
 
@@ -89,6 +92,7 @@ class effect_chain:
 
 
 class sampler:
+
     def __init__(self, num=1, name=None, bpm=120):
         self.channel_num = num
         self.channel_names = []
@@ -816,6 +820,7 @@ class sampler:
 
 
 class pitch:
+
     def __init__(self, path, note='C5', format=None):
         self.note = N(note) if isinstance(note, str) else note
         audio_load = False
@@ -940,6 +945,7 @@ class pitch:
 
 
 class sound:
+
     def __init__(self, path, format=None):
         if not isinstance(path, AudioSegment):
             current_format = path[path.rfind('.') + 1:]
