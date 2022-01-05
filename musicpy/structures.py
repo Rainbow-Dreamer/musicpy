@@ -3198,6 +3198,7 @@ class piece:
             ]
             first_track.other_messages += pan_msg
             first_track.other_messages += volume_msg
+        first_track_start_time += first_track.start_time
         return temp.bpm, first_track, first_track_start_time
 
     def add_track_labels(self):
