@@ -158,7 +158,7 @@ wiki里的语法与功能与最新版本的musicpy是同步的。
 
 详细的musicpy数据结构，基础语法以及使用教程，请看我正在写的[wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
 
-我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD)下载，正在不断地更新中。
+我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DSXrksMQhPG0CBjskKYE)下载，正在不断地更新中。
 
 安装musicpy
 -------------
