@@ -3359,6 +3359,7 @@ class piece:
         for each in temp.other_messages:
             each.track = track_inds.index(each.track)
         temp.tracks[0] += tempo_changes
+        temp.reset_track([*range(len(temp.tracks))])
         return temp
 
     def cut_time(self, time1=0, time2=None, bpm=None, start_time=0):
