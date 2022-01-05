@@ -23,7 +23,7 @@ The syntax and abilities of this wiki is synchronized with the latest released v
 
 Musicpy's data structures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
 
-You can click [here](https://www.jianguoyun.com/p/DRJrawoQhPG0CBiL2fMD) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
+You can click [here](https://www.jianguoyun.com/p/DSXrksMQhPG0CBjskKYE) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
 
 Installation
 -------------
