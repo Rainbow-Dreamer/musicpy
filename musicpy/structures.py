@@ -6,7 +6,6 @@ import musicpy as mp
 
 
 class note:
-
     def __init__(self, name, num=4, duration=0.25, volume=100, channel=None):
         if name not in standard:
             raise ValueError(
@@ -153,7 +152,6 @@ class note:
 
 class chord:
     ''' This class can contain a chord with many notes played simultaneously and either has intervals, the default interval is 0.'''
-
     def __init__(self,
                  notes,
                  duration=None,
@@ -1375,7 +1373,9 @@ class chord:
                 if current_name in transdict:
                     temp.notes[k] = toNote(
                         f'{transdict[current_name]}{current.num}',
-                        current.duration, current.volume)
+                        current.duration,
+                        current.volume,
+                        channel=current.channel)
         return temp
 
     def __getitem__(self, ind):
@@ -2109,7 +2109,6 @@ class chord:
 
 
 class scale:
-
     def __init__(self,
                  start=None,
                  mode=None,
@@ -2687,7 +2686,6 @@ class circle_of_fourths(circle_of_fifths):
 
 
 class piece:
-
     def __init__(self,
                  tracks,
                  instruments_list=None,
@@ -3722,7 +3720,6 @@ class tempo:
 
 
 class pitch_bend:
-
     def __init__(self,
                  value,
                  start_time=None,
@@ -3774,7 +3771,6 @@ class pitch_bend:
 
 
 class tuning:
-
     def __init__(self,
                  tuning_dict,
                  track=None,
@@ -3810,7 +3806,6 @@ class tuning:
 
 
 class track:
-
     def __init__(self,
                  content,
                  instrument=1,
@@ -4060,7 +4055,6 @@ class volume:
 
 
 class drum:
-
     def __init__(self,
                  pattern='',
                  mapping=drum_mapping,
@@ -4285,7 +4279,6 @@ class drum:
 
 
 class controller_event:
-
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4300,7 +4293,6 @@ class controller_event:
 
 
 class copyright_event:
-
     def __init__(self, track=0, time=0, notice=None):
         self.track = track
         self.time = time * 4
@@ -4308,7 +4300,6 @@ class copyright_event:
 
 
 class key_signature:
-
     def __init__(self,
                  track=0,
                  time=0,
@@ -4323,7 +4314,6 @@ class key_signature:
 
 
 class sysex:
-
     def __init__(self, track=0, time=0, manID=None, payload=None):
         self.track = track
         self.time = time * 4
@@ -4332,7 +4322,6 @@ class sysex:
 
 
 class text_event:
-
     def __init__(self, track=0, time=0, text=''):
         self.track = track
         self.time = time * 4
@@ -4340,7 +4329,6 @@ class text_event:
 
 
 class time_signature:
-
     def __init__(self,
                  track=0,
                  time=0,
@@ -4357,7 +4345,6 @@ class time_signature:
 
 
 class universal_sysex:
-
     def __init__(self,
                  track=0,
                  time=0,
@@ -4376,7 +4363,6 @@ class universal_sysex:
 
 
 class rpn:
-
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4399,7 +4385,6 @@ class rpn:
 
 
 class tuning_bank:
-
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4414,7 +4399,6 @@ class tuning_bank:
 
 
 class tuning_program:
-
     def __init__(self,
                  track=0,
                  channel=0,
@@ -4429,7 +4413,6 @@ class tuning_program:
 
 
 class channel_pressure:
-
     def __init__(self, track=0, channel=0, time=0, pressure_value=None):
         self.track = track
         self.channel = channel
@@ -4438,7 +4421,6 @@ class channel_pressure:
 
 
 class program_change:
-
     def __init__(self, track=0, channel=0, time=0, program=0):
         self.track = track
         self.channel = channel
@@ -4447,7 +4429,6 @@ class program_change:
 
 
 class track_name:
-
     def __init__(self, track=0, time=0, name=''):
         self.track = track
         self.time = time * 4
@@ -4455,7 +4436,6 @@ class track_name:
 
 
 class rest:
-
     def __init__(self, duration=1 / 4, dotted=None):
         self.duration = duration
         if dotted is not None:
