@@ -1453,14 +1453,7 @@ def split_melody(current_chord,
         result = split_melody(current_chord, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
-        whole_interval = current_chord.interval
-        whole_notes = current_chord.notes
-        new_interval = []
-        N = len(result) - 1
-        for i in range(N):
-            new_interval.append(sum(whole_interval[result[i]:result[i + 1]]))
-        new_interval.append(sum(whole_interval[result[-1]:]))
-        return chord([whole_notes[j] for j in result], interval=new_interval)
+        return current_chord.pick(result)
 
     elif mode == 'index':
         current_chord_notes = current_chord.notes
@@ -1594,16 +1587,7 @@ def split_chord(current_chord,
     elif mode == 'notes':
         return [whole_notes[k] for k in chord_ind]
     elif mode == 'hold':
-        whole_notes = current_chord.notes
-        new_interval = []
-        whole_interval = current_chord.interval
-        M = len(chord_ind) - 1
-        for i in range(M):
-            new_interval.append(
-                sum(whole_interval[chord_ind[i]:chord_ind[i + 1]]))
-        new_interval.append(sum(whole_interval[chord_ind[-1]:]))
-        return chord([whole_notes[j] for j in chord_ind],
-                     interval=new_interval)
+        return current_chord.pick(chord_ind)
 
 
 def split_all(current_chord,
@@ -1630,41 +1614,14 @@ def split_all(current_chord,
         return [[whole_notes[j] for j in melody_ind],
                 [whole_notes[k] for k in chord_ind]]
     elif mode == 'hold':
-        new_interval_1 = []
-        current_chord_interval = current_chord.interval
-        whole_interval = [
-            current_chord_interval[k]
-            if isinstance(whole_notes[k], note) else 0 for k in range(N)
-        ]
-        chord_len = len(chord_ind) - 1
-        for i in range(chord_len):
-            new_interval_1.append(
-                sum(whole_interval[chord_ind[i]:chord_ind[i + 1]]))
-        new_interval_1.append(sum(whole_interval[chord_ind[-1]:]))
-        new_interval_2 = []
-        melody_len = len(melody_ind) - 1
-        for j in range(melody_len):
-            new_interval_2.append(
-                sum(whole_interval[melody_ind[j]:melody_ind[j + 1]]))
-        new_interval_2.append(sum(whole_interval[melody_ind[-1]:]))
-        result_chord = chord([whole_notes[i] for i in chord_ind],
-                             interval=new_interval_1)
-        result_melody = chord([whole_notes[j] for j in melody_ind],
-                              interval=new_interval_2)
+        result_chord = current_chord.pick(chord_ind)
+        result_melody = current_chord.pick(melody_ind)
         # shift is the start time that chord part starts after main melody starts,
         # or the start time that main melody starts after chord part starts,
         # depends on which starts earlier, if shift >= 0, chord part starts after main melody,
         # if shift < 0, chord part starts before main melody
-        first_chord_ind = [
-            j for j in chord_ind if isinstance(whole_notes[j], note)
-        ][0]
-        first_melody_ind = [
-            j for j in melody_ind if isinstance(whole_notes[j], note)
-        ][0]
-        if first_chord_ind >= first_melody_ind:
-            shift = sum(whole_interval[first_melody_ind:first_chord_ind])
-        else:
-            shift = -sum(whole_interval[first_chord_ind:first_melody_ind])
+        shift = result_chord.start_time - result_melody.start_time
+        result_chord.start_time = 0
         return [result_melody, result_chord, shift]
 
 
@@ -1837,7 +1794,7 @@ def find_all_continuous(current_chord, value, start=None, stop=None):
                 inds.append(i)
             else:
                 if inds:
-                    inds.append(inds[-1])
+                    inds.append(inds[-1] + 1)
                     result.append(inds)
                 appear = True
                 inds = [i]
