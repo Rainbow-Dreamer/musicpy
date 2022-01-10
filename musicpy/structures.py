@@ -1458,7 +1458,7 @@ class chord:
     def clear_at(self, duration=0, interval=None, volume=None):
         temp = copy(self)
         i = 0
-        while i <= len(temp):
+        while i < len(temp):
             current = temp[i]
             if duration is not None:
                 if current.duration <= duration:
