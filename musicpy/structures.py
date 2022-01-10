@@ -1381,18 +1381,17 @@ class chord:
     def __getitem__(self, ind):
         if isinstance(ind, slice):
             return self.__getslice__(ind.start, ind.stop)
-        return copy(self.notes[ind])
+        return self.notes[ind]
 
     def __iter__(self):
         for i in self.notes:
             yield i
 
     def __getslice__(self, i, j):
-        temp = copy(self)
-        return chord(temp.notes[i:j],
-                     interval=temp.interval[i:j],
-                     other_messages=temp.other_messages,
-                     start_time=temp.start_time)
+        return chord(self.notes[i:j],
+                     interval=self.interval[i:j],
+                     other_messages=self.other_messages,
+                     start_time=self.start_time)
 
     def __len__(self):
         return len(self.notes)
@@ -1458,7 +1457,7 @@ class chord:
 
     def clear_at(self, duration=0, interval=None, volume=None):
         temp = copy(self)
-        i = 1
+        i = 0
         while i <= len(temp):
             current = temp[i]
             if duration is not None:
@@ -2188,8 +2187,6 @@ class scale:
                     if note1 in standard_dict else note1) in names
 
     def __getitem__(self, ind):
-        if isinstance(ind, slice):
-            return self.getScale()[ind]
         return self.notes[ind]
 
     def __iter__(self):
