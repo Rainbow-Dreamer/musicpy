@@ -1,5 +1,6 @@
 musicpy
 =======
+[中文](README_cn.md)
 
 Have you ever thought about writing music with codes in a very concise, human-readable syntax?
 
