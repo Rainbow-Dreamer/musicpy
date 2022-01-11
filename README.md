@@ -1,6 +1,6 @@
 musicpy
 =======
-[中文](README_cn.md)
+[中文](https://github.com/Rainbow-Dreamer/musicpy/blob/master/README_cn.md)
 
 Have you ever thought about writing music with codes in a very concise, human-readable syntax?
 
@@ -8,7 +8,7 @@ Musicpy is a music programming language in Python designed to write music in ver
 
 Musicpy can do way more than just writing music. This package can also be used to analyze music through music theory logic, and you can design algorithms to explore the endless possibilities of music, all with musicpy.
 
-With musicpy, you can express notes, chords, melodies, rhythms, volumes and other information of a piece of music with a very concise syntax. It can generate music through music theory logic and perform advanced music theory operations. You can easily output musicpy codes into MIDI file format, and you can also easily load any MIDI files and convert to musicpy's data structures to do a lot of advanced music theory operations. The syntax of musicpy is very concise and flexible, and it makes the codes written in musicpy very human-readable, and musicpy is fully compatible with python, which means you can write python codes to interact with musicpy. Because musicpy is involved with everything in music theory, I recommend using this package after learning at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) I wrote if you are already familiar with music theory.
+With musicpy, you can express notes, chords, melodies, rhythms, volumes and other information of a piece of music with a very concise syntax. It can generate music through music theory logic and perform advanced music theory operations. You can easily output musicpy codes into MIDI file format, and you can also easily load any MIDI files and convert to musicpy's data structures to do a lot of advanced music theory operations. The syntax of musicpy is very concise and flexible, and it makes the codes written in musicpy very human-readable, and musicpy is fully compatible with python, which means you can write python codes to interact with musicpy. Because musicpy is involved with everything in music theory, I recommend using this package after learning at least some fundamentals of music theory so you can use musicpy more clearly and satisfiedly. On the other hand, you should be able to play around with them after having a look at the documentation I wrote if you are already familiar with music theory.
 
 Documentation
 -------------
@@ -16,13 +16,7 @@ See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) for complete
 This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly.  
 The syntax and abilities of this wiki is synchronized with the latest released version of musicpy.
 
-[Musicpy introduction and tutorial video part 1](https://www.bilibili.com/video/BV1754y197a9/)
-
-[Musicpy composition examples demonstration and musicpy experimental compositions video](https://www.bilibili.com/video/BV18z4y1r7Pk/)
-
-Musicpy's data structures, basic syntax, usage and more details are in this [wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki), I'll try to make sure everything is detailed and clear, and with examples.
-
-You can click [here](https://www.jianguoyun.com/p/DSXrksMQhPG0CBjskKYE) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
+You can click [here](https://www.jianguoyun.com/p/Dapi5bEQhPG0CBijkqYE) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
 
 Installation
 -------------

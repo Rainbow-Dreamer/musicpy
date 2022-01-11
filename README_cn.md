@@ -7,7 +7,7 @@ Musicpy是一个可以让你用编程写音乐的python领域特定语言，可�
 
 Musicpy除了用来创作音乐之外，还可以从乐理层面上来创作音乐和分析音乐，并且你可以在musicpy的基础上设计乐理算法来探索音乐的可能性。
 
-Musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和弦，旋律，节奏，力度等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作。你可以很容易地把musicpy代码输出为MIDI文件的格式，也可以很简单地加载MIDI文件并且转换为musicpy的数据结构进行高级乐理的操作。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我在[wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)正在写的教程之后你应该很快就可以上手了。
+Musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和弦，旋律，节奏，力度等信息，可以通过乐理逻辑来生成曲子，并且进行高级的乐理操作。你可以很容易地把musicpy代码输出为MIDI文件的格式，也可以很简单地加载MIDI文件并且转换为musicpy的数据结构进行高级乐理的操作。musicpy的语法设计非常地简洁与灵活，因此musicpy的代码的可读性比较强，并且musicpy和python完全兼容，因此你可以写python代码和musicpy进行互动。这个库里面涉及到非常多的乐理知识，所以个人推荐至少要先了解一部分乐理再来使用会比较上手。相对地，如果你是一个对乐理比较了解的人，那么看完我写的教程之后你应该很快就可以上手了。
 
 使用说明文档
 -------------
@@ -15,13 +15,7 @@ Musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和�
 这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。  
 wiki里的语法与功能与最新版本的musicpy是同步的。
 
-[musicpy介绍与使用教程视频第一期](https://www.bilibili.com/video/BV1754y197a9/)
-
-[musicpy作曲示例实际演示以及musicpy实验作曲视频](https://www.bilibili.com/video/BV18z4y1r7Pk/)
-
-详细的musicpy数据结构，基础语法以及使用教程，请看我正在写的[wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，我会尽量把所有的细节都讲清楚，并且提供示例代码。 
-
-我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/DSXrksMQhPG0CBjskKYE)下载，正在不断地更新中。
+我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/Dapi5bEQhPG0CBijkqYE)下载，正在不断地更新中。
 
 安装musicpy
 -------------
