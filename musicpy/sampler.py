@@ -640,9 +640,9 @@ class sampler:
         current_samples = current_esi.samples
         filenames = list(current_samples.keys())
         sound_files_audio = [
-            AudioSegment.from_file(BytesIO(current_samples[i]),
-                                   format=os.path.splitext(i)[1]
-                                   [1:]).set_frame_rate(44100).set_channels(2)
+            AudioSegment.from_file(
+                BytesIO(current_samples[i]), format=os.path.splitext(i)[1]
+                [1:]).set_frame_rate(44100).set_channels(2).set_sample_width(2)
             for i in filenames
         ]
         self.channel_dict[channel_num] = copy(default_notedict)
@@ -849,6 +849,8 @@ class pitch:
             self.file_path = None
         self.sample_rate = self.sounds.frame_rate
         self.channels = self.sounds.channels
+        if self.sounds.sample_width != 2:
+            self.sounds = self.sounds.set_sample_width(2)
         self.sample_width = self.sounds.sample_width
         if not audio_load:
             import librosa
@@ -965,6 +967,8 @@ class sound:
             self.file_path = None
         self.sample_rate = self.sounds.frame_rate
         self.channels = self.sounds.channels
+        if self.sounds.sample_width != 2:
+            self.sounds = self.sounds.set_sample_width(2)
         self.sample_width = self.sounds.sample_width
 
     def __len__(self):
@@ -1033,17 +1037,23 @@ def load_audiosegments(current_dict, current_sound_path):
             current_sound_format = current_filename[current_filename.
                                                     rfind('.') + 1:]
             try:
-                current_sounds[i] = AudioSegment.from_file(
+                current_sound = AudioSegment.from_file(
                     current_sound_obj_path,
                     format=current_sound_format).set_frame_rate(
                         44100).set_channels(2)
+                if current_sound.sample_width != 2:
+                    current_sound = current_sound.set_sample_width(2)
+                current_sounds[i] = current_sound
             except:
                 with open(current_sound_obj_path, 'rb') as f:
                     current_data = f.read()
-                current_sounds[i] = AudioSegment.from_file(
+                current_sound = AudioSegment.from_file(
                     BytesIO(current_data),
                     format=current_sound_format).set_frame_rate(
                         44100).set_channels(2)
+                if current_sound.sample_width != 2:
+                    current_sound = current_sound.set_sample_width(2)
+                current_sounds[i] = current_sound
         else:
             current_sounds[i] = None
     return current_sounds
@@ -1306,10 +1316,9 @@ def load_esi(file_path, convert=True):
     current_samples = current_esi.samples
     if convert:
         current_esi.samples = {
-            i:
-            AudioSegment.from_file(BytesIO(current_samples[i]),
-                                   format=os.path.splitext(i)[1]
-                                   [1:]).set_frame_rate(44100).set_channels(2)
+            i: AudioSegment.from_file(
+                BytesIO(current_samples[i]), format=os.path.splitext(i)[1]
+                [1:]).set_frame_rate(44100).set_channels(2).set_sample_width(2)
             for i in current_samples
         }
     return current_esi
