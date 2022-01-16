@@ -1428,6 +1428,9 @@ adsr = effect(adsr_func, 'adsr')
 
 default_soundfont_args = {'decay': 0.5, 'fixed_decay': True}
 
-pygame.mixer.quit()
-pygame.mixer.init(44100, -16, 2, 1024)
-pygame.mixer.set_num_channels(1000)
+try:
+    pygame.mixer.quit()
+    pygame.mixer.init(44100, -16, 2, 1024)
+    pygame.mixer.set_num_channels(1000)
+except pygame.error:
+    has_audio_interface = False

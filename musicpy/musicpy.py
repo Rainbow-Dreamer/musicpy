@@ -14,7 +14,11 @@ from .structures import *
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-pygame.mixer.init(44100, -16, 2, 1024)
+has_audio_interface = True
+try:
+    pygame.mixer.init(44100, -16, 2, 1024)
+except pygame.error:
+    has_audio_interface = False
 
 
 def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
