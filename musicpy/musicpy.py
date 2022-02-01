@@ -2377,7 +2377,7 @@ def interval_check(current_chord):
     interval_name = INTERVAL[DIST]
     root_note_name = current_chord[0].name
     if interval_name == 'perfect fifth':
-        return f'{root_note_name}5 ({root_note_name} power chord) ({root_note_name} with perfect fifth)'
+        return f'{root_note_name} with perfect fifth / {root_note_name}5 ({root_note_name} power chord)'
     return f'{root_note_name} with {interval_name}'
 
 
