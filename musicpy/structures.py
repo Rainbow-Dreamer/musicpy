@@ -765,7 +765,7 @@ class chord:
                 return mp.negative_harmony(obj, self)
 
     def negative_harmony(self, *args, **kwargs):
-        return mp.negative_harmony(a=self, *args, **kwargs)
+        return mp.negative_harmony(current_chord=self, *args, **kwargs)
 
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
