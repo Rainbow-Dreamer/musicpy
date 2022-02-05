@@ -1959,7 +1959,7 @@ def inversion_from(a, b, num=False, mode=0):
         temp = b.inversion(i)
         if [x.name for x in temp.notes] == [y.name for y in a.notes]:
             return f'/{a[0].name}' if not num else f'{i} inversion'
-    return f'could not get chord {a.notes} from a single inversion of chord {b.notes}, you could try sort_from' if mode == 0 else None
+    return f'could not get chord {a.notes} from a single inversion of chord {b.notes}, you could try sort from' if mode == 0 else None
 
 
 def sort_from(a, b, getorder=False):
