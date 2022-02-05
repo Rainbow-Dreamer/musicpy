@@ -249,10 +249,6 @@ def read(name,
          split_channels=False,
          clear_empty_notes=False,
          clear_other_channel_msg=False):
-    # read from a MIDI file and return the BPM, chord types, start times of its tracks, or convert the MIDI file to a piece type
-
-    # if mode is set to 'find', then this function will automatically search for
-    # the first available midi track (has notes inside it)
     if is_file:
         name.seek(0)
         try:
@@ -431,7 +427,9 @@ def read(name,
         result_piece.pan = [[] for i in range(len(channels_list))]
         result_piece.volume = [[] for i in range(len(channels_list))]
         result_piece.track_number = len(channels_list)
-        result_piece.reconstruct(result_merge_track, all_tracks[2])
+        result_piece.reconstruct(result_merge_track,
+                                 all_tracks[2],
+                                 include_empty_track=True)
         if len(result_piece.channels) != channels_num:
             pan_list = [
                 i for i in pan_list if i.channel in result_piece.channels
@@ -457,17 +455,13 @@ def read(name,
                     each.track = result_piece.channels.index(each.channel)
         result_piece.other_messages = result_merge_track.other_messages
         for k in range(len(result_piece)):
-            current_channel = result_piece.channels[k]
             current_other_messages = [
-                i for i in result_piece.other_messages
-                if hasattr(i, 'channel') and i.channel == current_channel
+                i for i in result_piece.other_messages if i.track == k
             ]
             result_piece.tracks[k].other_messages = current_other_messages
-            current_pan = [i for i in pan_list if i.channel == current_channel]
+            current_pan = [i for i in pan_list if i.track == k]
             result_piece.pan[k] = current_pan
-            current_volume = [
-                i for i in volume_list if i.channel == current_channel
-            ]
+            current_volume = [i for i in volume_list if i.track == k]
             result_piece.volume[k] = current_volume
         if not rename_track_names:
             current_track_names = result_piece.get_msg(track_name)

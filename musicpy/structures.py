@@ -3226,7 +3226,12 @@ class piece:
             for each in all_tracks[k]:
                 each.track_num = k
 
-    def reconstruct(self, track, start_time=0, offset=0, correct=False):
+    def reconstruct(self,
+                    track,
+                    start_time=0,
+                    offset=0,
+                    correct=False,
+                    include_empty_track=False):
         no_notes = [i for i in track.notes if not isinstance(i, note)]
         track = track.only_notes()
         first_track, first_track_start_time = track, start_time
@@ -3236,15 +3241,25 @@ class piece:
             if isinstance(first_track.notes[i], note)
             and first_track.notes[i].track_num == k
         ] for k in range(length)]
-        available_tracks_inds = [
-            k for k in range(length) if start_times_inds[k]
-        ]
+        if not include_empty_track:
+            available_tracks_inds = [
+                k for k in range(length) if start_times_inds[k]
+            ]
+        else:
+            available_tracks_inds = [k for k in range(length)]
         available_tracks_messages = [
             self.tracks[i].other_messages for i in available_tracks_inds
         ]
-        start_times_inds = [i[0] for i in start_times_inds if i]
+        if not include_empty_track:
+            start_times_inds = [i[0] for i in start_times_inds if i]
+        else:
+            empty_track_inds = [
+                i for i in range(length) if not start_times_inds[i]
+            ]
+            start_times_inds = [i[0] if i else -1 for i in start_times_inds]
         new_start_times = [
-            first_track_start_time + first_track[:k].bars(mode=0)
+            first_track_start_time +
+            first_track[:k].bars(mode=0) if k != -1 else 0
             for k in start_times_inds
         ]
         if correct:
@@ -3257,6 +3272,11 @@ class piece:
             ],
                                     key=lambda s: abs(s))
             new_start_times = [i + start_time_offset for i in new_start_times]
+            if include_empty_track:
+                new_start_times = [
+                    new_start_times[i] if i not in empty_track_inds else 0
+                    for i in range(length)
+                ]
         new_start_times = [i if i >= 0 else 0 for i in new_start_times]
         new_track_notes = [[] for k in range(length)]
         new_track_inds = [[] for k in range(length)]
@@ -3272,8 +3292,9 @@ class piece:
             for i in range(len(inds) - 1)
         ] for inds in new_track_inds]
         for i in available_tracks_inds:
-            new_track_intervals[i].append(
-                sum(whole_interval[new_track_inds[i][-1]:]))
+            if new_track_inds[i]:
+                new_track_intervals[i].append(
+                    sum(whole_interval[new_track_inds[i][-1]:]))
         if no_notes:
             for i in range(length):
                 current_no_notes = [j for j in no_notes if j.track_num == i]
