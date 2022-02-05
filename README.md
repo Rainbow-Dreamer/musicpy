@@ -33,15 +33,7 @@ I strongly recommend to use this musicpy editor to write musicpy code.
 
 You can download this musicpy editor at the repository [musicpy_editor](https://github.com/Rainbow-Dreamer/musicpy_editor), the preparation steps are in the README.
 
-Musicpy is all compatible with Windows, macOS and Linux, but there are some important notes if you encounter some errors on Linux or macOS.
-
-Note1: If you encounter ```pygame.error: Couldn't open /etc/timidity/freepats.cfg``` errors on Linux, here is the solutions to fix it, open the terminal and run `sudo apt-get install freepats` and it will fix the errors.
-
-Note2: If you are using macOS, and you encounter problems when you run musicpy codes using your current python version, please use python 3.7.1/3.7.9 to run musicpy, because it seems that on macOS, some of the requirements python modules of musicpy may not be compatible with some of the newer python versions. It is tested by my friend that on macOS with python 3.7.1 (and python 3.7.9 tested by me), musicpy could run and play the musicpy codes without any errors, but other versions may not. If you don't have problems when you run musicpy codes using your current python version, then you don't need to refer to this note.
-
-Note3: On all of Windows, macOS and Linux, you can use pip to install musicpy in cmd/terminal.
-
-Note 4: Some python IDEs may prevent the function to play music of musicpy, which makes the music cannot be played normally when playing the codes, such as VS Code, PyCharm, here it is recommended to use more interactive python IDE, such as Jupyter Notebook, Wing IDE, or directly use the interactive shell of python in cmd/terminal (run `python` to enter), or you can set `wait` parameter to True in the function `play` to ensure the playing by waiting till the playing is finished in this case.
+Musicpy is all compatible with Windows, macOS and Linux.
 
 Importing
 -------------
