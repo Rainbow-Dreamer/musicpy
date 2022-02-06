@@ -482,9 +482,10 @@ def read(name,
                 'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
             )
     if find_changes and changes:
-        result_piece.tracks[0] += changes
-        if changes.other_messages:
-            result_piece.other_messages += changes.other_messages
+        result_piece.tracks[0].notes.extend(changes.notes)
+        result_piece.tracks[0].interval.extend(changes.interval)
+        result_piece.tracks[0].other_messages.extend(changes.other_messages)
+        result_piece.other_messages.extend(changes.other_messages)
 
     if clear_other_channel_msg:
         result_piece.other_messages = [
