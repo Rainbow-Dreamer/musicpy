@@ -1350,7 +1350,9 @@ class chord:
     def modulation(self, old_scale, new_scale):
         # change notes (including both of melody and chords) in the given piece
         # of music from a given scale to another given scale, and return
-        # the new changing piece of music.
+        # the new changing piece of music
+
+        # this modulation function only supports modulate from a scale with equal or more notes to another scale
         temp = copy(self)
         old_scale_names = [
             i if i not in standard_dict else standard_dict[i]
@@ -1360,6 +1362,12 @@ class chord:
             i if i not in standard_dict else standard_dict[i]
             for i in new_scale.names()
         ]
+        old_scale_names_len = len(old_scale_names)
+        new_scale_names_len = len(new_scale_names)
+        if new_scale_names_len < old_scale_names_len:
+            new_scale_names += new_scale_names[-(old_scale_names_len -
+                                                 new_scale_names_len):]
+            new_scale_names.sort(key=lambda s: standard[s])
         number = len(new_scale_names)
         transdict = {
             old_scale_names[i]: new_scale_names[i]
