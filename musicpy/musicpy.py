@@ -272,19 +272,14 @@ def read(name,
     whole_tracks = current_midi.tracks
     current_track = None
     find_changes = False
-    changes_track = [
-        each for each in whole_tracks if all(i.is_meta for i in each)
-    ]
-    if not changes_track:
-        changes_track = [
-            each for each in whole_tracks
-            if any(i.type == 'set_tempo' for i in each)
-        ]
-    else:
-        find_changes = True
     whole_bpm = 120
     changes = []
+    changes_track = [
+        each for each in whole_tracks
+        if any(i.type == 'set_tempo' for i in each)
+    ]
     if changes_track:
+        find_changes = True
         changes = [
             midi_to_chord(current_midi,
                           each,
