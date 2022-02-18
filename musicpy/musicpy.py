@@ -275,11 +275,16 @@ def read(name,
     whole_bpm = 120
     changes = []
     changes_track = [
-        each for each in whole_tracks
-        if any(i.type == 'set_tempo' for i in each)
+        each for each in whole_tracks if all(i.is_meta for i in each)
     ]
-    if changes_track:
+    if not changes_track:
+        changes_track = [
+            each for each in whole_tracks
+            if any(i.type == 'set_tempo' for i in each)
+        ]
+    else:
         find_changes = True
+    if changes_track:
         changes = [
             midi_to_chord(current_midi,
                           each,
@@ -315,7 +320,24 @@ def read(name,
     if available_tracks:
         channels_list = [[i.channel for i in each if hasattr(i, 'channel')]
                          for each in available_tracks]
-        channels_list = [each[0] if each else 0 for each in channels_list]
+        channels_list = [each[0] if each else -1 for each in channels_list]
+        unassigned_channels = channels_list.count(-1)
+        if unassigned_channels > 0:
+            free_channel_numbers = [
+                i for i in range(16) if i not in channels_list
+            ]
+            free_channel_numbers_length = len(free_channel_numbers)
+            unassigned_channels_number = []
+            for k in range(unassigned_channels):
+                if k < free_channel_numbers_length:
+                    unassigned_channels_number.append(free_channel_numbers[k])
+                else:
+                    unassigned_channels_number.append(
+                        16 + k - free_channel_numbers_length)
+            channels_list = [
+                each if each != -1 else unassigned_channels_number.pop(0)
+                for each in channels_list
+            ]
     else:
         channels_list = None
 
@@ -479,8 +501,8 @@ def read(name,
     if find_changes and changes:
         result_piece.tracks[0].notes.extend(changes.notes)
         result_piece.tracks[0].interval.extend(changes.interval)
-        result_piece.tracks[0].other_messages.extend(changes.other_messages)
-        result_piece.other_messages.extend(changes.other_messages)
+        result_piece.tracks[0].other_messages[0:0] = changes.other_messages
+        result_piece.other_messages[0:0] = changes.other_messages
 
     if clear_other_channel_msg:
         result_piece.other_messages = [
@@ -488,6 +510,13 @@ def read(name,
             if not (hasattr(i, 'channel')
                     and i.channel not in result_piece.channels)
         ]
+    whole_tempo_changes = concat([[i for i in each if isinstance(i, tempo)]
+                                  for each in result_piece.tracks],
+                                 start=[])
+    min_start_time = min([each.start_time for each in whole_tempo_changes])
+    result_piece.bpm = [
+        i for i in whole_tempo_changes if i.start_time == min_start_time
+    ][-1].bpm
     return result_piece
 
 
