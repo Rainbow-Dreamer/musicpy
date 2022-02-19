@@ -3446,7 +3446,15 @@ class piece:
         return sum([each.count(note1, mode) for each in self.tracks])
 
     def most_appear(self, choices=None, mode='name', as_standard=False):
-        return self.merge()[1].most_appear(choices, mode, as_standard)
+        return self.quick_merge().most_appear(choices, mode, as_standard)
+
+    def quick_merge(self):
+        result = chord([])
+        for each in self.tracks:
+            result.notes += each.notes
+            result.interval += each.interval
+            result.other_messages += each.other_messages
+        return result
 
     def standard_notation(self):
         temp = copy(self)
@@ -3454,7 +3462,7 @@ class piece:
         return temp
 
     def count_appear(self, choices=None, as_standard=True, sort=False):
-        return self.merge()[1].count_appear(choices, as_standard, sort)
+        return self.quick_merge().count_appear(choices, as_standard, sort)
 
     def apply_start_time_to_changes(self,
                                     start_time,
