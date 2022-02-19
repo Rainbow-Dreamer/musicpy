@@ -3439,8 +3439,14 @@ class piece:
             for i in range(len(self.tracks))
         ])
 
-    def total(self):
-        return sum([len(i) for i in self.tracks])
+    def total(self, mode='all'):
+        if mode == 'all':
+            return sum([len(i) for i in self.tracks])
+        elif mode == 'notes':
+            return sum([
+                len([k for k, each in enumerate(i) if isinstance(each, note)])
+                for i in self.tracks
+            ])
 
     def count(self, note1, mode='name'):
         return sum([each.count(note1, mode) for each in self.tracks])
