@@ -275,7 +275,8 @@ def read(name,
     whole_bpm = 120
     changes = []
     changes_track = [
-        each for each in whole_tracks if all(i.is_meta for i in each)
+        each for each in whole_tracks
+        if all((i.is_meta or i.type == 'sysex') for i in each)
     ]
     if not changes_track:
         changes_track = [
@@ -301,7 +302,8 @@ def read(name,
             ]
             whole_bpm = whole_bpm_list[-1].bpm
     available_tracks = [
-        each for each in whole_tracks if any(not i.is_meta for i in each)
+        each for each in whole_tracks
+        if any(not (i.is_meta or i.type == 'sysex') for i in each)
     ]
     if get_off_drums:
         available_tracks = [
@@ -363,7 +365,8 @@ def read(name,
                          volume_list)
     if split_channels:
         remain_available_tracks = [
-            each for each in whole_tracks if any(not j.is_meta for j in each)
+            each for each in whole_tracks
+            if any(not (j.is_meta or j.type == 'sysex') for j in each)
         ]
         channels_numbers = concat(
             [[i.channel for i in each if hasattr(i, 'channel')]
@@ -510,13 +513,6 @@ def read(name,
             if not (hasattr(i, 'channel')
                     and i.channel not in result_piece.channels)
         ]
-    whole_tempo_changes = concat([[i for i in each if isinstance(i, tempo)]
-                                  for each in result_piece.tracks],
-                                 start=[])
-    min_start_time = min([each.start_time for each in whole_tempo_changes])
-    result_piece.bpm = [
-        i for i in whole_tempo_changes if i.start_time == min_start_time
-    ][-1].bpm
     return result_piece
 
 
