@@ -3439,8 +3439,11 @@ class piece:
             for i in range(len(self.tracks))
         ])
 
+    def total(self):
+        return sum([len(i) for i in self.tracks])
+
     def count(self, note1, mode='name'):
-        return self.merge()[1].count(note1, mode)
+        return sum([each.count(note1, mode) for each in self.tracks])
 
     def most_appear(self, choices=None, mode='name', as_standard=False):
         return self.merge()[1].most_appear(choices, mode, as_standard)
