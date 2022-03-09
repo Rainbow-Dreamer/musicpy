@@ -52,6 +52,26 @@ def degree_to_note(degree, duration=0.25, volume=100, channel=None):
     return note(name, num, duration, volume, channel)
 
 
+def degrees_to_chord(ls, *args, **kwargs):
+    return chord([degree_to_note(i) for i in ls], *args, **kwargs)
+
+
+def note_to_degree(obj):
+    if not isinstance(obj, note):
+        obj = mp.toNote(obj)
+    return standard[obj.name] + 12 * (obj.num + 1)
+
+
+def trans_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
+    num = ''.join([x for x in notename if x.isdigit()])
+    if not num:
+        num = pitch
+    else:
+        num = eval(num)
+    name = ''.join([x for x in notename if not x.isdigit()])
+    return note(name, num, duration, volume, channel)
+
+
 def totuple(obj):
     if isinstance(obj, str):
         return (obj, )
@@ -3348,8 +3368,439 @@ def load_data(name):
     return result
 
 
+def dotted(duration, num=1):
+    return duration * sum([(1 / 2)**i for i in range(num + 1)])
+
+
+def relative_note(a, b):
+    # return the notation of note a from note b with accidentals
+    # (how note b adds accidentals to match the same pitch as note a),
+    # works for the accidentals including sharp, flat, natural,
+    # double sharp, double flat
+    # (a, b are strings that represents a note, could be with accidentals)
+    len_a, len_b = len(a), len(b)
+    a_name, b_name, accidental_a, accidental_b = a[0], b[0], a[1:], b[1:]
+    if len_a == 1 and len_b > 1 and a_name == b_name:
+        return a + '♮'
+    if a in standard:
+        a = note(a, 5)
+    else:
+        a = note(a_name, 5)
+        if accidental_a == 'b':
+            a = a.down()
+        elif accidental_a == 'bb':
+            a = a.down(2)
+        elif accidental_a == '#':
+            a = a.up()
+        elif accidental_a == 'x':
+            a = a.up(2)
+        elif accidental_a == '♮':
+            pass
+        else:
+            return f'unrecognizable accidentals {accidental_a}'
+    if b in standard:
+        b = note(b, 5)
+    else:
+        b = note(b_name, 5)
+        if accidental_b == 'b':
+            b = b.down()
+        elif accidental_b == 'bb':
+            b = b.down(2)
+        elif accidental_b == '#':
+            b = b.up()
+        elif accidental_b == 'x':
+            b = b.up(2)
+        elif accidental_b == '♮':
+            pass
+        else:
+            return f'unrecognizable accidentals {accidental_b}'
+    degree1, degree2 = a.degree, b.degree
+    diff1, diff2 = degree1 - degree2, (degree1 - degree2 -
+                                       12 if degree1 >= degree2 else degree1 +
+                                       12 - degree2)
+    if abs(diff1) < abs(diff2):
+        diff = diff1
+    else:
+        diff = diff2
+    if diff == 0:
+        return b.name
+    if diff == 1:
+        return b.name + '#'
+    if diff == 2:
+        return b.name + 'x'
+    if diff == -1:
+        return b.name + 'b'
+    if diff == -2:
+        return b.name + 'bb'
+
+
+def reset(self, **kwargs):
+    temp = copy(self)
+    for i, j in kwargs.items():
+        setattr(temp, i, j)
+    return temp
+
+
+def event(mode='controller', *args, **kwargs):
+    if mode == 'controller':
+        return controller_event(*args, **kwargs)
+    elif mode == 'copyright':
+        return copyright_event(*args, **kwargs)
+    elif mode == 'key signature':
+        return key_signature(*args, **kwargs)
+    elif mode == 'sysex':
+        return sysex(*args, **kwargs)
+    elif mode == 'text':
+        return text_event(*args, **kwargs)
+    elif mode == 'time signature':
+        return time_signature(*args, **kwargs)
+    elif mode == 'universal sysex':
+        return universal_sysex(*args, **kwargs)
+    elif mode == 'nrpn':
+        return rpn(*args, **kwargs, registered=False)
+    elif mode == 'rpn':
+        return rpn(*args, **kwargs, registered=True)
+    elif mode == 'tuning bank':
+        return tuning_bank(*args, **kwargs)
+    elif mode == 'tuning program':
+        return tuning_program(*args, **kwargs)
+    elif mode == 'channel pressure':
+        return channel_pressure(*args, **kwargs)
+    elif mode == 'program change':
+        return program_change(*args, **kwargs)
+    elif mode == 'track name':
+        return track_name(*args, **kwargs)
+
+
+def read_notes(note_ls, rootpitch=4):
+    intervals = []
+    notes_result = []
+    start_time = 0
+    for each in note_ls:
+        if each == '':
+            continue
+        if isinstance(each, note):
+            notes_result.append(each)
+        elif isinstance(each, (tempo, pitch_bend)):
+            notes_result.append(each)
+        elif isinstance(each, rest):
+            if not notes_result:
+                start_time += each.duration
+            elif intervals:
+                intervals[-1] += each.duration
+        elif isinstance(each, str):
+            if each.startswith('tempo'):
+                current = [literal_eval(k) for k in each.split(';')[1:]]
+                current_tempo = tempo(*current)
+                notes_result.append(current_tempo)
+                intervals.append(0)
+            elif each.startswith('pitch'):
+                current = each.split(';')[1:]
+                length = len(current)
+                if length > 2:
+                    current = [literal_eval(k) for k in current[:2]] + [
+                        current[2]
+                    ] + [literal_eval(k) for k in current[3:]]
+                else:
+                    current = [literal_eval(k) for k in current]
+                current_pitch_bend = pitch_bend(*current)
+                notes_result.append(current_pitch_bend)
+                intervals.append(0)
+            else:
+                if any(all(i in each for i in j) for j in ['()', '[]', '{}']):
+                    split_symbol = '(' if '(' in each else (
+                        '[' if '[' in each else '{')
+                    notename, info = each.split(split_symbol)
+                    volume = 100
+                    info = info[:-1].split(';')
+                    info_len = len(info)
+                    if info_len == 1:
+                        duration = info[0]
+                        if duration[0] == '.':
+                            if '.' in duration[1:]:
+                                dotted_notes = duration[1:].count('.')
+                                duration = duration.replace('.', '')
+                                duration = (1 / eval(duration)) * sum(
+                                    [(1 / 2)**i for i in range(dotted_notes)])
+                            else:
+                                duration = 1 / eval(duration[1:])
+                        else:
+                            if duration[-1] == '.':
+                                dotted_notes = duration.count('.')
+                                duration = duration.replace('.', '')
+                                duration = eval(duration) * sum(
+                                    [(1 / 2)**i for i in range(dotted_notes)])
+                            else:
+                                duration = eval(duration)
+                        if notename != 'r':
+                            intervals.append(0)
+                    else:
+                        if info_len == 2:
+                            duration, interval = info
+                        else:
+                            duration, interval, volume = info
+                            volume = eval(volume)
+                        if duration[0] == '.':
+                            if '.' in duration[1:]:
+                                dotted_notes = duration[1:].count('.')
+                                duration = duration.replace('.', '')
+                                duration = (1 / eval(duration)) * sum(
+                                    [(1 / 2)**i for i in range(dotted_notes)])
+                            else:
+                                duration = 1 / eval(duration[1:])
+                        else:
+                            if duration[-1] == '.':
+                                dotted_notes = duration.count('.')
+                                duration = duration.replace('.', '')
+                                duration = eval(duration) * sum(
+                                    [(1 / 2)**i for i in range(dotted_notes)])
+                            else:
+                                duration = eval(duration)
+                        if interval[0] == '.':
+                            if len(interval) > 1 and interval[1].isdigit():
+                                if '.' in interval[1:]:
+                                    dotted_notes = interval[1:].count('.')
+                                    interval = interval.replace('.', '')
+                                    interval = (1 / eval(interval)) * sum([
+                                        (1 / 2)**i for i in range(dotted_notes)
+                                    ])
+                                else:
+                                    interval = 1 / eval(interval[1:])
+                            else:
+                                interval = eval(
+                                    interval.replace('.', str(duration)))
+                        else:
+                            if interval[-1] == '.':
+                                dotted_notes = interval.count('.')
+                                interval = interval.replace('.', '')
+                                interval = eval(interval) * sum(
+                                    [(1 / 2)**i for i in range(dotted_notes)])
+                            else:
+                                interval = eval(interval)
+                        if notename != 'r':
+                            intervals.append(interval)
+                    if notename == 'r':
+                        if not notes_result:
+                            start_time += duration
+                        elif intervals:
+                            intervals[-1] += duration
+                    else:
+                        notes_result.append(
+                            mp.toNote(notename, duration, volume, rootpitch))
+                else:
+                    if each == 'r':
+                        if not notes_result:
+                            start_time += 1 / 4
+                        elif intervals:
+                            intervals[-1] += 1 / 4
+                    else:
+                        intervals.append(0)
+                        notes_result.append(mp.toNote(each, pitch=rootpitch))
+        else:
+            notes_result.append(each)
+    if len(intervals) != len(notes_result):
+        intervals = []
+    return notes_result, intervals, start_time
+
+
+def process_dotted_note(value):
+    length = len(value)
+    if value[0] != '.':
+        num_ind = length - 1
+        for k in range(num_ind, -1, -1):
+            if value[k] != '.':
+                num_ind = k
+                break
+        dotted_notes = value[num_ind + 1:].count('.')
+        value = value[:num_ind + 1]
+        value = eval(value) * sum([(1 / 2)**i
+                                   for i in range(dotted_notes + 1)])
+    elif length > 1:
+        dotted_notes = value[1:].count('.')
+        value = value.replace('.', '')
+        value = (1 / eval(value)) * sum([(1 / 2)**i
+                                         for i in range(dotted_notes + 1)])
+    return value
+
+
+def process_settings(settings):
+    length = len(settings)
+    if length == 1:
+        settings += ['n', 'n']
+    elif length == 2:
+        settings += ['n']
+    if length >= 2 and settings[1] == '.':
+        settings[1] = settings[0]
+    duration = settings[0]
+    interval = settings[1]
+    if duration[-1] == '.':
+        settings[0] = process_dotted_note(duration)
+    elif ',' in duration:
+        duration = duration.split(',')
+        duration = [
+            process_dotted_note(i) if i[-1] == '.' else
+            (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in duration
+        ]
+        settings[0] = duration
+    elif duration[0] == '.':
+        settings[0] = (1 / eval(duration[1:]))
+    elif duration == 'n':
+        settings[0] = None
+    else:
+        settings[0] = eval(duration)
+    if interval[-1] == '.':
+        settings[1] = process_dotted_note(interval)
+    elif ',' in interval:
+        interval = interval.split(',')
+        interval = [
+            process_dotted_note(i) if i[-1] == '.' else
+            (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in interval
+        ]
+        settings[1] = interval
+    elif interval[0] == '.':
+        settings[1] = (1 / eval(interval[1:]))
+    elif interval == 'n':
+        settings[1] = None
+    else:
+        settings[1] = eval(interval)
+    if settings[2] == 'n':
+        settings[2] = None
+    else:
+        settings[2] = eval(settings[2])
+    return settings
+
+
+def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):
+    whole_notes = obj.notes
+    intervals = obj.interval
+    count_length = 0
+    for k in range(len(obj)):
+        current_note = whole_notes[k]
+        current_interval = intervals[k]
+        if mode == 0:
+            current_note_left, current_note_right = count_length, count_length + current_note.duration
+            new_note_duration = 0
+        current_interval_left, current_interval_right = count_length, count_length + current_interval
+        new_interval_duration = 0
+        for each in tempo_changes_ranges:
+            each_left, each_right, each_tempo = each
+            if mode == 0:
+                if not (current_note_left >= each_right
+                        or current_note_right <= each_left):
+                    valid_length = min(current_note_right, each_right) - max(
+                        current_note_left, each_left)
+                    current_ratio = each_tempo / bpm
+                    valid_length /= current_ratio
+                    new_note_duration += valid_length
+
+            if not (current_interval_left >= each_right
+                    or current_interval_right <= each_left):
+                valid_length = min(current_interval_right, each_right) - max(
+                    current_interval_left, each_left)
+                current_ratio = each_tempo / bpm
+                valid_length /= current_ratio
+                new_interval_duration += valid_length
+        if mode == 0:
+            current_note.duration = new_note_duration
+        obj.interval[k] = new_interval_duration
+
+        count_length += current_interval
+
+
+def piece_process_normalize_tempo(self, bpm, first_track_start_time):
+    temp = copy(self)
+    start_time_ls = temp.start_times
+    all_tracks = temp.tracks
+    length = len(all_tracks)
+    for k in range(length):
+        for each in all_tracks[k]:
+            each.track_num = k
+
+    first_track_ind = start_time_ls.index(first_track_start_time)
+    start_time_ls.insert(0, start_time_ls.pop(first_track_ind))
+
+    all_tracks.insert(0, all_tracks.pop(first_track_ind))
+    first_track = all_tracks[0]
+
+    for i in range(1, length):
+        first_track &= (all_tracks[i],
+                        start_time_ls[i] - first_track_start_time)
+    if self.pan:
+        for k in range(len(self.pan)):
+            current_pan = self.pan[k]
+            for each in current_pan:
+                each.track = k
+    if self.volume:
+        for k in range(len(self.volume)):
+            current_volume = self.volume[k]
+            for each in current_volume:
+                each.track = k
+    whole_pan = mp.concat(self.pan) if self.pan else None
+    whole_volume = mp.concat(self.volume) if self.volume else None
+    normalize_result, first_track_start_time = first_track.normalize_tempo(
+        bpm,
+        start_time=first_track_start_time + first_track.start_time,
+        pan_msg=whole_pan,
+        volume_msg=whole_volume)
+    new_other_messages = normalize_result[0]
+    self.other_messages = new_other_messages
+    if whole_pan or whole_volume:
+        whole_pan, whole_volume = normalize_result[1], normalize_result[2]
+        self.pan = [[i for i in whole_pan if i.track == j]
+                    for j in range(len(self.tracks))]
+        self.volume = [[i for i in whole_volume if i.track == j]
+                       for j in range(len(self.tracks))]
+    start_times_inds = [[
+        i for i in range(len(first_track))
+        if first_track.notes[i].track_num == k
+    ] for k in range(length)]
+    start_times_inds = [each[0] if each else -1 for each in start_times_inds]
+    new_start_times = [
+        first_track_start_time + first_track[:k].bars(mode=0) if k != -1 else 0
+        for k in start_times_inds
+    ]
+    new_track_notes = [[] for k in range(length)]
+    new_track_inds = [[] for k in range(length)]
+    new_track_intervals = [[] for k in range(length)]
+    whole_length = len(first_track)
+    for j in range(whole_length):
+        current_note = first_track.notes[j]
+        new_track_notes[current_note.track_num].append(current_note)
+        new_track_inds[current_note.track_num].append(j)
+    whole_interval = first_track.interval
+    new_track_intervals = [[
+        sum(whole_interval[inds[i]:inds[i + 1]]) for i in range(len(inds) - 1)
+    ] for inds in new_track_inds]
+    for i in range(length):
+        if new_track_inds[i]:
+            new_track_intervals[i].append(
+                sum(whole_interval[new_track_inds[i][-1]:]))
+    new_tracks = [
+        chord(new_track_notes[k],
+              interval=new_track_intervals[k],
+              other_messages=[
+                  each for each in new_other_messages if each.track == k
+              ]) for k in range(length)
+    ]
+    self.tracks = new_tracks
+    self.start_times = new_start_times
+
+
 C = trans
 N = toNote
 S = toScale
 P = piece
 arp = arpeggio
+
+for each in [
+        note, chord, piece, track, scale, drum, rest, tempo, pitch_bend, pan,
+        volume
+]:
+    each.reset = reset
+
+for each in [
+        controller_event, copyright_event, key_signature, sysex, text_event,
+        time_signature, universal_sysex, rpn, tuning_bank, tuning_program,
+        channel_pressure, program_change, track_name
+]:
+    each.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
