@@ -228,14 +228,6 @@ class chord:
             other, chord
         ) and self.notes == other.notes and self.interval == other.interval
 
-    def addnote(self, newnote):
-        if isinstance(newnote, note):
-            self.notes.append(newnote)
-            self.interval.append(self.interval[-1])
-        else:
-            self.notes.append(mp.toNote(newnote))
-            self.interval.append(self.interval[-1])
-
     def split(self, return_type, get_time=False, sort=False):
         temp = copy(self)
         inds = [
@@ -1270,21 +1262,17 @@ class chord:
             self.notes.remove(note1)
             del self.interval[inds]
 
-    def append(self, value, interval=None):
+    def append(self, value, interval=0):
         if isinstance(value, str):
             value = mp.toNote(value)
         self.notes.append(value)
-        if interval is None:
-            interval = self.interval[-1]
         self.interval.append(interval)
 
-    def extend(self, values, intervals=None):
+    def extend(self, values, intervals=0):
         values = [
             mp.toNote(value) if isinstance(value, str) else value
             for value in values
         ]
-        if intervals is None:
-            intervals = self.interval[-1]
         if isinstance(intervals, int):
             intervals = [intervals for i in range(len(values))]
         self.notes.extend(values)
@@ -1294,7 +1282,7 @@ class chord:
         del self.notes[ind]
         del self.interval[ind]
 
-    def insert(self, ind, value, interval=None):
+    def insert(self, ind, value, interval=0):
         if isinstance(value, chord):
             self.notes[ind:ind] = value.notes
             self.interval[ind:ind] = value.interval
@@ -1302,11 +1290,9 @@ class chord:
             if isinstance(value, str):
                 value = mp.toNote(value)
             self.notes.insert(ind, value)
-            if interval is None:
-                interval = self.interval[-1]
             self.interval.insert(ind, interval)
 
-    def replace(self, ind1, ind2=None, value=None, interval=None):
+    def replace(self, ind1, ind2=None, value=None, interval=0):
         if ind2 is None:
             ind2 = ind1 + (len(value) if isinstance(value, chord) else 1)
         if isinstance(value, chord):
@@ -1316,8 +1302,6 @@ class chord:
             if isinstance(value, str):
                 value = mp.toNote(value)
             self.notes[ind1] = value
-            if interval is None:
-                interval = self.interval[-1]
             self.interval[ind1] = interval
 
     def drops(self, ind):
