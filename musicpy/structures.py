@@ -142,6 +142,13 @@ class note:
         temp.name = name
         return temp
 
+    def reset_name(self, name):
+        temp = mp.toNote(name)
+        temp.duration = self.duration
+        temp.volume = self.volume
+        temp.channel = self.channel
+        return temp
+
     def set_channel(self, channel):
         self.channel = channel
 
