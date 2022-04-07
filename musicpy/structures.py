@@ -1299,17 +1299,25 @@ class chord:
             self.notes.insert(ind, value)
             self.interval.insert(ind, interval)
 
-    def replace(self, ind1, ind2=None, value=None, interval=0):
+    def replace_chord(self, ind1, ind2=None, value=None, mode=0):
+        if not isinstance(value, chord):
+            value = chord(value)
         if ind2 is None:
-            ind2 = ind1 + (len(value) if isinstance(value, chord) else 1)
-        if isinstance(value, chord):
+            ind2 = ind1 + len(value)
+        if mode == 0:
             self.notes[ind1:ind2] = value.notes
             self.interval[ind1:ind2] = value.interval
-        else:
-            if isinstance(value, str):
-                value = mp.toNote(value)
-            self.notes[ind1] = value
-            self.interval[ind1] = interval
+        elif mode == 1:
+            N = len(self.notes)
+            for i in range(ind1, ind2):
+                current_value = value.notes[i - ind1]
+                if i < N:
+                    current = self.notes[i]
+                    current.name = current_value.name
+                    current.num = current_value.num
+                else:
+                    self.notes[i:i] = [current_value]
+                    self.interval[i:i] = [value.interval[i - ind1]]
 
     def drops(self, ind):
         temp = self.copy()
