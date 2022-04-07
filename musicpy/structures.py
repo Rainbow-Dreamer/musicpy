@@ -2871,22 +2871,16 @@ class piece:
     def up(self, n=1, mode=0):
         temp = copy(self)
         for i in range(temp.track_number):
-            if mode == 0 or (
-                    mode == 1 and not (temp.channels and temp.channels[i] == 9)
-            ) or (mode == 2
-                  and not ((temp.channels and temp.channels[i] == 9) or
-                           ('drum' in temp.instruments_list[i].lower()))):
+            if mode == 0 or (mode == 1 and
+                             not (temp.channels and temp.channels[i] == 9)):
                 temp.tracks[i] += n
         return temp
 
     def down(self, n=1, mode=0):
         temp = copy(self)
         for i in range(temp.track_number):
-            if mode == 0 or (
-                    mode == 1 and not (temp.channels and temp.channels[i] == 9)
-            ) or (mode == 2
-                  and not ((temp.channels and temp.channels[i] == 9) or
-                           ('drum' in temp.instruments_list[i].lower()))):
+            if mode == 0 or (mode == 1 and
+                             not (temp.channels and temp.channels[i] == 9)):
                 temp.tracks[i] -= n
         return temp
 
