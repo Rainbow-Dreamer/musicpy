@@ -3728,9 +3728,12 @@ class piece:
 
 
 class tempo:
-    # this is a class to change tempo for the notes after it when it is read,
-    # it can be inserted into a chord, and if the chord is in a piece,
-    # then it also works for the piece.
+    '''
+    this is a class to change tempo for the notes after it when it is read,
+    it can be inserted into a chord, and if the chord is in a piece,
+    then it also works for the piece.
+    '''
+
     def __init__(self, bpm, start_time=None, channel=None, track=None):
         self.bpm = bpm
         self.start_time = start_time
@@ -3771,14 +3774,16 @@ class pitch_bend:
                  mode='cents',
                  channel=None,
                  track=None):
-        # general midi pitch bend values could be taken from -8192 to 8192,
-        # and the default pitch bend range is -2 semitones to 2 semitones,
-        # which is -200 cents to 200 cents, which means 1 cent equals to
-        # 8192/200 = 40.96, about 41 values, and 1 semitone equals to
-        # 8192/2 = 4096 values.
-        # if mode == 'cents', convert value as cents to midi pitch bend values,
-        # if mode == 'semitones', convert value as semitones to midi pitch bend values,
-        # if mode == other values, use value as midi pitch bend values
+        '''
+        general midi pitch bend values could be taken from -8192 to 8192,
+        and the default pitch bend range is -2 semitones to 2 semitones,
+        which is -200 cents to 200 cents, which means 1 cent equals to
+        8192/200 = 40.96, about 41 values, and 1 semitone equals to
+        8192/2 = 4096 values.
+        if mode == 'cents', convert value as cents to midi pitch bend values,
+        if mode == 'semitones', convert value as semitones to midi pitch bend values,
+        if mode == other values, use value as midi pitch bend values
+        '''
         self.value = value
         self.start_time = start_time
         self.channel = channel
@@ -4030,9 +4035,12 @@ class track:
 
 
 class pan:
-    # this is a class to set the pan position for a midi channel,
-    # it only works in piece class or track class, and must be set as one of the elements
-    # of the pan list of a piece
+    '''
+    this is a class to set the pan position for a midi channel,
+    it only works in piece class or track class, and must be set as one of the elements
+    of the pan list of a piece
+    '''
+
     def __init__(self,
                  value,
                  start_time=0,
@@ -4070,9 +4078,12 @@ class pan:
 
 
 class volume:
-    # this is a class to set the volume for a midi channel,
-    # it only works in piece class or track class, and must be set as one of the elements
-    # of the volume list of a piece
+    '''
+    this is a class to set the volume for a midi channel,
+    it only works in piece class or track class, and must be set as one of the elements
+    of the volume list of a piece
+    '''
+
     def __init__(self,
                  value,
                  start_time=0,

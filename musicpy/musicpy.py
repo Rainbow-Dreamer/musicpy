@@ -1119,10 +1119,12 @@ def detect_scale(current_chord,
                  not_split=False,
                  most_appear_num=5,
                  major_minor_preference=True):
-    # receive a piece of music and analyze what modes it is using,
-    # return a list of most likely and exact modes the music has.
+    '''
+    receive a piece of music and analyze what modes it is using,
+    return a list of most likely and exact modes the music has.
 
-    # newly added on 2020/4/25, currently in development
+    newly added on 2020/4/25, currently in development
+    '''
     current_chord = current_chord.only_notes()
     counts = current_chord.count_appear(sort=True)
     most_appeared_note = [N(each[0]) for each in counts[:most_appear_num]]
@@ -1130,65 +1132,6 @@ def detect_scale(current_chord,
         most_appear_notes_detect_scale(current_chord, each, get_scales)
         for each in most_appeared_note
     ]
-    '''
-        if result_scale_types == 'major':
-            melody_notes = split_melody(
-                current_chord, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
-                average_degree_length,
-                melody_degree_tol) if not not_split else current_chord
-            melody_notes = [i.name for i in melody_notes]
-            scale_notes = result_scale.names()
-            scale_notes_counts = [melody_notes.count(k) for k in scale_notes]
-            # each mode's (except major and minor modes) tonic checking parameter is the sum of
-            # melody notes's counts of 3 notes: the mode's first note (tonic note),
-            # the third note (b3 or 3 or other special cases),
-            # the most important characteristic note of the mode.
-            # if the the mode to check is either major or minor modes,
-            # then these 3 notes are the tonic triad of the mode,
-            # for major scale it is 1, 3, 5, for minor scale it is 6, 1, 3 (in terms of major scale 1234567)
-            current_mode_check_parameters = [[
-                each[0],
-                sum(scale_notes_counts[j - 1] for j in each[1]), each[2]
-            ] for each in mode_check_parameters]
-            current_mode_check_parameters.sort(key=lambda j: j[1],
-                                               reverse=True)
-            most_probably = current_mode_check_parameters[:most_like_num]
-            most_probably_scale_ls = [
-                result_scale.inversion(each[2]) for each in most_probably
-            ]
-            if get_scales:
-                return most_probably_scale_ls
-            return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in most_probably_scale_ls])}'
-    else:
-        melody_notes = split_melody(
-            current_chord, 'notes', melody_tol, chord_tol, get_off_overlap_notes,
-            average_degree_length, melody_degree_tol) if not not_split else current_chord
-        melody_notes = [i.name for i in melody_notes]
-        appear_note_names = set(whole_notes)
-        notes_count = {y: whole_notes.count(y) for y in appear_note_names}
-        counts = list(notes_count.keys())
-        counts.sort(key=lambda j: notes_count[j], reverse=True)
-        try_scales = [scale(g, 'major') for g in counts[:count_num]]
-        scale_notes_counts_ls = [[
-            each.start.name, [melody_notes.count(k) for k in each.names()]
-        ] for each in try_scales]
-        current_mode_check_parameters = [[[
-            y[0], each[0],
-            sum(y[1][j - 1] for j in each[1]), each[2]
-        ] for each in mode_check_parameters] for y in scale_notes_counts_ls]
-        for each in current_mode_check_parameters:
-            each.sort(key=lambda j: j[2], reverse=True)
-        count_ls = [i for j in current_mode_check_parameters for i in j]
-        count_ls.sort(key=lambda y: y[2], reverse=True)
-        most_probably = count_ls[:most_like_num]
-        most_probably_scale_ls = [
-            scale(each[0], 'major').inversion(each[3])
-            for each in most_probably
-        ]
-        if get_scales:
-            return most_probably_scale_ls
-        return f'most likely scales: {", ".join([f"{each.start.name} {each.mode}" for each in most_probably_scale_ls])}'
-    '''
     if major_minor_preference:
         if get_scales:
             major_minor_inds = [
@@ -1476,9 +1419,11 @@ def split_melody(current_chord,
                  get_off_overlap_notes=True,
                  average_degree_length=8,
                  melody_degree_tol=toNote('B4')):
-    # if mode == 'notes', return a list of main melody notes
-    # if mode == 'index', return a list of indexes of main melody notes
-    # if mode == 'hold', return a chord with main melody notes with original places
+    '''
+    if mode == 'notes', return a list of main melody notes
+    if mode == 'index', return a list of indexes of main melody notes
+    if mode == 'hold', return a chord with main melody notes with original places
+    '''
     if not isinstance(melody_degree_tol, note):
         melody_degree_tol = toNote(melody_degree_tol)
     if mode == 'notes':
@@ -1636,8 +1581,10 @@ def split_all(current_chord,
               get_off_overlap_notes=True,
               average_degree_length=8,
               melody_degree_tol=toNote('B4')):
-    # split the main melody and chords part of a piece of music,
-    # return both of main melody and chord part
+    '''
+    split the main melody and chords part of a piece of music,
+    return both of main melody and chord part
+    '''
     melody_ind = split_melody(current_chord, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
@@ -1888,15 +1835,19 @@ def add_to_last_index(current_chord, value, start=None, stop=None, step=1):
 
 
 def modulation(current_chord, old_scale, new_scale):
-    # change notes (including both of melody and chords) in the given piece
-    # of music from a given scale to another given scale, and return
-    # the new changing piece of music.
+    '''
+    change notes (including both of melody and chords) in the given piece
+    of music from a given scale to another given scale, and return
+    the new changing piece of music.
+    '''
     return current_chord.modulation(old_scale, new_scale)
 
 
 def exp(form, obj_name='x', mode='tail'):
-    # return a function that follows a mode of translating a given chord to the wanted result,
-    # form is a chains of functions you want to perform on the variables.
+    '''
+    return a function that follows a mode of translating a given chord to the wanted result,
+    form is a chains of functions you want to perform on the variables.
+    '''
     if mode == 'tail':
         try:
             func = eval(f'lambda x: x.{form}')
@@ -2043,9 +1994,11 @@ def change_from(a,
                 octave_b=False,
                 same_degree=True,
                 alter_notes_show_degree=False):
-    # how a is changed from b (flat or sharp some notes of b to get a)
-    # this is used only when two chords have the same number of notes
-    # in the detect chord function
+    '''
+    how a is changed from b (flat or sharp some notes of b to get a)
+    this is used only when two chords have the same number of notes
+    in the detect chord function
+    '''
     if octave_a:
         a = a.inoctave()
     if octave_b:
@@ -2082,8 +2035,10 @@ def change_from(a,
 
 
 def contains(a, b):
-    # if b contains a (notes), in other words,
-    # all of a's notes is inside b's notes
+    '''
+    if b contains a (notes), in other words,
+    all of a's notes is inside b's notes
+    '''
     return set(a.names()) < set(b.names()) and len(a) < len(b)
 
 
@@ -2427,7 +2382,6 @@ def detect(current_chord,
            poly_chord_first=False,
            root_position_return_first=True,
            alter_notes_show_degree=False):
-    # mode could be chord/scale
     if mode == 'chord':
         if not isinstance(current_chord, chord):
             current_chord = chord(current_chord)
@@ -2738,9 +2692,11 @@ def random_composing(mode,
                      choose_durations=[1 / 8, 1 / 4, 1 / 2],
                      melody_interval_tol=perfect_fourth,
                      choose_from_chord=False):
-    # Composing a piece of music randomly from a given mode (here means scale),
-    # difficulty, number of start notes (or given notes) and an approximate length.
-    # length is the total approximate total number of notes you want the music to be.
+    '''
+    Composing a piece of music randomly from a given mode (here means scale),
+    difficulty, number of start notes (or given notes) and an approximate length.
+    length is the total approximate total number of notes you want the music to be.
+    '''
     if pattern is not None:
         pattern = [int(x) for x in pattern]
     standard = mode.notes[:-1]
@@ -2777,18 +2733,6 @@ def random_composing(mode,
         newduration = random.choice(choose_durations)
         newinterval = random.choice(choose_intervals)
         newchord = newchordnotes.set(newduration, newinterval)
-        '''
-        # check if current chord belongs to a kind of (closer to) major/minor
-        check_chord_types = newchord[1].degree - newchord[0].degree
-        if check_chord_types == 2:
-            chord_types = 'sus2'        
-        elif check_chord_types == 3:
-            chord_types = 'minor'
-        elif check_chord_types == 4:
-            chord_types = 'major'
-        elif check_chord_types == 5:
-            chord_types = 'sus4'
-        '''
         newchord_len = len(newchord)
         if newchord_len < left_hand_meter:
             choose_more = [x for x in mode if x not in newchord]
@@ -2866,7 +2810,9 @@ def fugue(mode,
 
 
 def perm(n, k=None):
-    # return all of the permutations of the elements in x
+    '''
+    return all of the permutations of the elements in x
+    '''
     if isinstance(n, int):
         n = list(range(1, n + 1))
     if isinstance(n, str):
@@ -2938,18 +2884,20 @@ def guitar_chord(frets,
                  duration=0.25,
                  interval=0,
                  **detect_args):
-    # the default tuning is the standard tuning E-A-D-G-B-E,
-    # you can set the tuning to whatever you want
-    # the parameter frets is a list contains the frets of each string of
-    # the guitar you want to press in this chord, sorting from 6th string
-    # to 1st string (which is from E2 string to E4 string in standard tuning),
-    # the fret of a string is an integer, if it is 0, then it means you
-    # play that string open (not press any fret on that string),
-    # if it is 3 for example, then it means you press the third fret on that
-    # string, if it is None, then that means you did not play that string
-    # (mute or just not touch that string)
-    # this function will return the chord types that form by the frets pressing
-    # at the strings on a guitar, or you can choose to just return the chord
+    '''
+    the default tuning is the standard tuning E-A-D-G-B-E,
+    you can set the tuning to whatever you want
+    the parameter frets is a list contains the frets of each string of
+    the guitar you want to press in this chord, sorting from 6th string
+    to 1st string (which is from E2 string to E4 string in standard tuning),
+    the fret of a string is an integer, if it is 0, then it means you
+    play that string open (not press any fret on that string),
+    if it is 3 for example, then it means you press the third fret on that
+    string, if it is None, then that means you did not play that string
+    (mute or just not touch that string)
+    this function will return the chord types that form by the frets pressing
+    at the strings on a guitar, or you can choose to just return the chord
+    '''
     tuning = [N(i) for i in tuning]
     guitar_notes = [
         tuning[j].up(frets[j]) for j in range(6) if frets[j] is not None
@@ -3373,11 +3321,13 @@ def dotted(duration, num=1):
 
 
 def relative_note(a, b):
-    # return the notation of note a from note b with accidentals
-    # (how note b adds accidentals to match the same pitch as note a),
-    # works for the accidentals including sharp, flat, natural,
-    # double sharp, double flat
-    # (a, b are strings that represents a note, could be with accidentals)
+    '''
+    return the notation of note a from note b with accidentals
+    (how note b adds accidentals to match the same pitch as note a),
+    works for the accidentals including sharp, flat, natural,
+    double sharp, double flat
+    (a, b are strings that represents a note, could be with accidentals)
+    '''
     len_a, len_b = len(a), len(b)
     a_name, b_name, accidental_a, accidental_b = a[0], b[0], a[1:], b[1:]
     if len_a == 1 and len_b > 1 and a_name == b_name:
