@@ -2091,9 +2091,9 @@ def find_similarity(a,
                     ratio_chordname=False,
                     provide_name=None,
                     result_ratio=False,
+                    get_types=False,
                     change_from_first=False,
                     same_note_special=True,
-                    get_types=False,
                     alter_notes_show_degree=False):
     result = ''
     types = None
@@ -2241,7 +2241,11 @@ def find_similarity(a,
                 if provide_name != None:
                     bname = b[0].name + provide_name
                 else:
-                    bname = detect(b)
+                    bname = detect(
+                        b,
+                        change_from_first=change_from_first,
+                        same_note_special=same_note_special,
+                        alter_notes_show_degree=alter_notes_show_degree)
                 return bname if not getgoodchord else (bname, chordfrom, bname)
             else:
                 return 'same'
@@ -2270,7 +2274,10 @@ def find_similarity(a,
             if provide_name != None:
                 bname = b[0].name + provide_name
             else:
-                bname = detect(b)
+                bname = detect(b,
+                               change_from_first=change_from_first,
+                               same_note_special=same_note_special,
+                               alter_notes_show_degree=alter_notes_show_degree)
             if isinstance(bname, list):
                 bname = bname[0]
         return result if not getgoodchord else (result, chordfrom, bname)
@@ -2340,18 +2347,18 @@ def detect_variation(current_chord,
             return result
 
 
-def detect_split(current_chord, N=None):
+def detect_split(current_chord, N=None, **detect_args):
     if N < 6:
         splitind = 1
         lower = current_chord.notes[0].name
-        upper = detect(current_chord.notes[splitind:])
+        upper = detect(current_chord.notes[splitind:], **detect_args)
         if isinstance(upper, list):
             upper = upper[0]
         return f'[{upper}]/{lower}'
     else:
         splitind = N // 2
-        lower = detect(current_chord.notes[:splitind])
-        upper = detect(current_chord.notes[splitind:])
+        lower = detect(current_chord.notes[:splitind], **detect_args)
+        upper = detect(current_chord.notes[splitind:], **detect_args)
         if isinstance(lower, list):
             lower = lower[0]
         if isinstance(upper, list):
@@ -2483,7 +2490,18 @@ def detect(current_chord,
                             inversion_high_result, current,
                             f'{current[0].name}{result1[0]}')
         if poly_chord_first and N > 3:
-            return detect_split(current_chord, N)
+            return detect_split(
+                current_chord,
+                N,
+                inv_num=inv_num,
+                change_from_first=change_from_first,
+                original_first=original_first,
+                same_note_special=same_note_special,
+                whole_detect=whole_detect,
+                return_fromchord=return_fromchord,
+                poly_chord_first=poly_chord_first,
+                root_position_return_first=root_position_return_first,
+                alter_notes_show_degree=alter_notes_show_degree)
         inversion_final = True
         possibles = [
             (find_similarity(current_chord.inversion(j),
@@ -2530,7 +2548,19 @@ def detect(current_chord,
                         return_fromchord,
                         alter_notes_show_degree=alter_notes_show_degree)
                     if result_change is None:
-                        return detect_split(current_chord, N)
+                        return detect_split(
+                            current_chord,
+                            N,
+                            inv_num=inv_num,
+                            change_from_first=change_from_first,
+                            original_first=original_first,
+                            same_note_special=same_note_special,
+                            whole_detect=whole_detect,
+                            return_fromchord=return_fromchord,
+                            poly_chord_first=poly_chord_first,
+                            root_position_return_first=
+                            root_position_return_first,
+                            alter_notes_show_degree=alter_notes_show_degree)
                     else:
                         return result_change
                 else:
@@ -2593,7 +2623,18 @@ def detect(current_chord,
                     return_fromchord,
                     alter_notes_show_degree=alter_notes_show_degree)
                 if result_change is None:
-                    return detect_split(current_chord, N)
+                    return detect_split(
+                        current_chord,
+                        N,
+                        inv_num=inv_num,
+                        change_from_first=change_from_first,
+                        original_first=original_first,
+                        same_note_special=same_note_special,
+                        whole_detect=whole_detect,
+                        return_fromchord=return_fromchord,
+                        poly_chord_first=poly_chord_first,
+                        root_position_return_first=root_position_return_first,
+                        alter_notes_show_degree=alter_notes_show_degree)
                 else:
                     return result_change
             else:
