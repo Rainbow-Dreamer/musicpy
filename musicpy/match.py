@@ -78,7 +78,7 @@ class match:
         elif isinstance(key, match):
             self.dic.update(key.dic)
         else:
-            if types not in [list, tuple, set]:
+            if not isinstance(key, (list, tuple, set)):
                 key = (key, )
             self.dic[tuple(key)] = value
 

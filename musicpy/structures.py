@@ -3156,7 +3156,7 @@ class piece:
                 [self.get_pitch_bend(i) for i in range(len(self))])
         temp = copy(self)
         if ind == 'all':
-            return concat(
+            return mp.concat(
                 [self.get_pitch_bend(k) for k in range(len(self.tracks))])
         each = temp.tracks[ind]
         inds = [
@@ -3976,6 +3976,7 @@ class track:
     def reverse(self, *args, **kwargs):
         temp = copy(self)
         temp.content = temp.content.reverse(*args, **kwargs)
+        length = temp.bars()
         for each in temp.pan:
             for i in each:
                 i.start_time = length - i.start_time
@@ -3991,6 +3992,7 @@ class track:
     def reverse_chord(self, *args, **kwargs):
         temp = copy(self)
         temp.content = temp.content.reverse_chord(*args, **kwargs)
+        length = temp.bars()
         for each in temp.pan:
             for i in each:
                 i.start_time = length - i.start_time

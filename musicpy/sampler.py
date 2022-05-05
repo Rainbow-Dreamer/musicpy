@@ -1,7 +1,5 @@
-import sys
 import os
 import threading
-from ast import literal_eval
 from musicpy import *
 from io import BytesIO
 import math
