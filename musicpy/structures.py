@@ -2161,26 +2161,21 @@ class chord:
 
 class scale:
 
-    def __init__(self,
-                 start=None,
-                 mode=None,
-                 interval=None,
-                 notes=None,
-                 pitch=4):
+    def __init__(self, start=None, mode=None, interval=None, notes=None):
         self.interval = interval
         if notes is not None:
             notes = [mp.toNote(i) if isinstance(i, str) else i for i in notes]
             self.notes = notes
             self.start = notes[0]
             self.mode = mode
-            self.pitch = pitch
         else:
             if isinstance(start, str):
                 start = mp.trans_note(start)
             self.start = start
-            self.pitch = self.start.num
             if mode is not None:
                 self.mode = mode.lower()
+            else:
+                self.mode = mode
             self.notes = self.getScale().notes
 
         if interval is None:
@@ -2548,9 +2543,7 @@ class scale:
         return self.down()
 
     def __invert__(self):
-        return scale(self[0],
-                     interval=list(reversed(self.interval)),
-                     pitch=self.pitch)
+        return scale(self[0], interval=list(reversed(self.interval)))
 
     def move(self, x):
         notes = copy(self.getScale())
