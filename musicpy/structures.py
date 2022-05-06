@@ -2165,16 +2165,13 @@ class scale:
                  start=None,
                  mode=None,
                  interval=None,
-                 name=None,
-                 notels=None,
+                 notes=None,
                  pitch=4):
         self.interval = interval
-        if notels is not None:
-            notels = [
-                mp.toNote(i) if isinstance(i, str) else i for i in notels
-            ]
-            self.notes = notels
-            self.start = notels[0]
+        if notes is not None:
+            notes = [mp.toNote(i) if isinstance(i, str) else i for i in notes]
+            self.notes = notes
+            self.start = notes[0]
             self.mode = mode
             self.pitch = pitch
         else:
@@ -2184,8 +2181,6 @@ class scale:
             self.pitch = self.start.num
             if mode is not None:
                 self.mode = mode.lower()
-            else:
-                self.mode = name
             self.notes = self.getScale().notes
 
         if interval is None:
@@ -2274,7 +2269,15 @@ class scale:
             if result != 'not found':
                 return result
             else:
-                raise ValueError('could not find this scale')
+                if self.notes is None:
+                    raise ValueError('could not find this scale')
+                else:
+                    notes = self.notes
+                    rootdegree = notes[0].degree
+                    return [
+                        notes[i].degree - notes[i - 1].degree
+                        for i in range(1, len(notes))
+                    ]
 
     def getScale(self, intervals=0.25, durations=None):
         if self.mode == None:
