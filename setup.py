@@ -12,7 +12,7 @@ setup(
     author_email='1036889495@qq.com',
     url='https://github.com/Rainbow-Dreamer/musicpy.git',
     download_url=
-    'https://github.com/Rainbow-Dreamer/musicpy/archive/5.17.tar.gz',
+    'https://github.com/Rainbow-Dreamer/musicpy/archive/5.18.tar.gz',
     keywords=[
         'music language', 'use codes to write music', 'music language for AI'
     ],
