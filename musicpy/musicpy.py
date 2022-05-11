@@ -2366,11 +2366,14 @@ def detect_split(current_chord, N=None, **detect_args):
 
 
 def interval_check(current_chord):
-    TIMES, DIST = divmod(
+    times, dist = divmod(
         (current_chord.notes[1].degree - current_chord.notes[0].degree), 12)
-    if DIST == 0 and TIMES != 0:
-        DIST = 12
-    interval_name = INTERVAL[DIST]
+    if times > 0:
+        dist = 12 + dist
+    if dist in INTERVAL:
+        interval_name = INTERVAL[dist]
+    else:
+        interval_name = INTERVAL[dist % 12]
     root_note_name = current_chord[0].name
     if interval_name == 'perfect fifth':
         return f'{root_note_name} with perfect fifth / {root_note_name}5 ({root_note_name} power chord)'

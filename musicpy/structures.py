@@ -1664,6 +1664,21 @@ class chord:
              **detect_args):
         chord_type = self.detect(
             alter_notes_show_degree=alter_notes_show_degree, **detect_args)
+        standard_notes = self.standardize()
+        if len(standard_notes) == 1:
+            if get_dict:
+                return {'note name': str(standard_notes[0]), 'type': 'note'}
+            else:
+                return f'note name: {standard_notes[0]}'
+        elif len(standard_notes) == 2:
+            if get_dict:
+                return {
+                    'interval name': chord_type.split('with ')[1],
+                    'root': str(standard_notes[0]),
+                    'type': 'interval'
+                }
+            else:
+                return f'interval name: {chord_type.split("with ")[1]}\nroot: {standard_notes[0]}'
         original_chord_type = copy(chord_type)
         other_msg = {
             'omit': None,
@@ -1687,11 +1702,12 @@ class chord:
             else:
                 chord_speciality = 'root position'
         if 'omit' in chord_type:
-            other_msg['omit'] = [
-                int(i) if i.isdigit() else i
-                for i in chord_type.split('/', 1)[0].split('sort as', 1)
-                [0].strip('[]').split('omit', 1)[1].replace(' ', '').split(',')
-            ]
+            if chord_speciality != 'polychord':
+                other_msg['omit'] = [
+                    int(i) if i.isdigit() else i for i in chord_type.split(
+                        '/', 1)[0].split('sort as', 1)[0].strip('[]').split(
+                            'omit', 1)[1].replace(' ', '').split(',')
+                ]
         if 'sort as' in chord_type:
             other_msg['voicing'] = [
                 int(i) for i in chord_type.split('/', 1)[0].strip('[]').split(
@@ -1789,7 +1805,9 @@ class chord:
                 inversion_msg
                 if chord_speciality == 'inverted chord' else None,
                 'other':
-                other_msg
+                other_msg,
+                'type':
+                'chord'
             }
         else:
             other_msg_str = '\n'.join(
