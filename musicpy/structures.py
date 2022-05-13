@@ -2343,7 +2343,7 @@ class scale:
         for i in range(degree1, degree1 + step * num, step):
             result.append(scale_notes[i % 7])
         resultchord = chord(result,
-                            rootpitch=temp.pitch,
+                            rootpitch=temp[0].num,
                             interval=interval,
                             duration=duration).standardize()
         if high:
