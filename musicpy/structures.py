@@ -4178,12 +4178,19 @@ class drum:
                  name=None,
                  notes=None,
                  i=1,
-                 start_time=None):
+                 start_time=None,
+                 default_duration=1 / 8,
+                 default_interval=1 / 8,
+                 default_volume=100):
         self.pattern = pattern
         self.mapping = mapping
         self.name = name
-        self.notes = self.translate(self.pattern,
-                                    self.mapping) if not notes else notes
+        self.notes = self.translate(
+            self.pattern,
+            self.mapping,
+            default_duration=default_duration,
+            default_interval=default_interval,
+            default_volume=default_volume) if not notes else notes
         if start_time is not None:
             self.notes.start_time = start_time
         self.instrument = i if isinstance(i, int) else (
@@ -4194,7 +4201,12 @@ class drum:
 
     __repr__ = __str__
 
-    def translate(self, pattern, mapping):
+    def translate(self,
+                  pattern,
+                  mapping,
+                  default_duration=1 / 8,
+                  default_interval=1 / 8,
+                  default_volume=100):
         start_time = 0
         notes = []
         pattern_intervals = []
@@ -4222,24 +4234,58 @@ class drum:
             whole_set_values = units[0][1:].split(';')
             whole_set_values = [k.replace('|', ',') for k in whole_set_values]
             whole_set_values = mp.process_settings(whole_set_values)
-            return self.translate(','.join(units[1:]),
-                                  mapping).special_set(*whole_set_values)
+            return self.translate(
+                ','.join(units[1:]),
+                mapping,
+                default_duration=default_duration,
+                default_interval=default_interval,
+                default_volume=default_volume).special_set(*whole_set_values)
         elif units[-1].startswith('!'):
             whole_set = True
             whole_set_values = units[-1][1:].split(';')
             whole_set_values = [k.replace('|', ',') for k in whole_set_values]
             whole_set_values = mp.process_settings(whole_set_values)
-            return self.translate(','.join(units[:-1]),
-                                  mapping).special_set(*whole_set_values)
+            return self.translate(
+                ','.join(units[:-1]),
+                mapping,
+                default_duration=default_duration,
+                default_interval=default_interval,
+                default_volume=default_volume).special_set(*whole_set_values)
         for i in units:
             if i == '':
                 continue
             if i[0] == '{' and i[-1] == '}':
                 part_replace_ind2 = len(notes)
                 current_part = parts[part_counter]
-                current_part_notes = self.translate(current_part, mapping)
                 part_counter += 1
                 part_settings = i[1:-1].split('|')
+                find_default = False
+                for each in part_settings:
+                    if each.startswith('de:'):
+                        find_default = True
+                        current_default_settings = each[3:].split(';')
+                        current_default_settings = mp.process_settings(
+                            current_default_settings)
+                        if current_default_settings[0] is None:
+                            current_default_settings[0] = 1 / 8
+                        if current_default_settings[1] is None:
+                            current_default_settings[1] = 1 / 8
+                        if current_default_settings[2] is None:
+                            current_default_settings[2] = 100
+                        current_part_notes = self.translate(
+                            current_part,
+                            mapping,
+                            default_duration=current_default_settings[0],
+                            default_interval=current_default_settings[1],
+                            default_volume=current_default_settings[2])
+                        break
+                if not find_default:
+                    current_part_notes = self.translate(
+                        current_part,
+                        mapping,
+                        default_duration=default_duration,
+                        default_interval=default_interval,
+                        default_volume=default_volume)
                 for each in part_settings:
                     if each.startswith('!'):
                         current_settings = each[1:].split(';')
@@ -4290,7 +4336,12 @@ class drum:
                     else:
                         repeat_part = named_dict[repeat_part]
                 else:
-                    repeat_part = self.translate(repeat_part, mapping)
+                    repeat_part = self.translate(
+                        repeat_part,
+                        mapping,
+                        default_duration=default_duration,
+                        default_interval=default_interval,
+                        default_volume=default_volume)
                 current_notes = repeat_part % repeat_times
                 notes.extend(current_notes.notes)
                 pattern_intervals.extend(current_notes.interval)
@@ -4312,7 +4363,12 @@ class drum:
                     else:
                         config_part = named_dict[config_part]
                 else:
-                    config_part = self.translate(config_part, mapping)
+                    config_part = self.translate(
+                        config_part,
+                        mapping,
+                        default_duration=default_duration,
+                        default_interval=default_interval,
+                        default_volume=default_volume)
                 current_notes = config_part.special_set(*current_drum_settings)
                 notes.extend(current_notes.notes)
                 pattern_intervals.extend(current_notes.interval)
@@ -4321,7 +4377,12 @@ class drum:
             elif ';' in i:
                 same_time_notes = i.split(';')
                 current_notes = [
-                    self.translate(k, mapping) for k in same_time_notes
+                    self.translate(k,
+                                   mapping,
+                                   default_duration=default_duration,
+                                   default_interval=default_interval,
+                                   default_volume=default_volume)
+                    for k in same_time_notes
                 ]
                 current_notes = mp.concat(
                     [k.set(interval=0)
@@ -4340,9 +4401,9 @@ class drum:
                 pattern_volumes.extend(current_notes.get_volume())
             else:
                 notes.append(mp.degree_to_note(mapping[i]))
-                pattern_intervals.append(1 / 8)
-                pattern_durations.append(1 / 8)
-                pattern_volumes.append(100)
+                pattern_intervals.append(default_interval)
+                pattern_durations.append(default_duration)
+                pattern_volumes.append(default_volume)
 
         intervals = pattern_intervals
         durations = pattern_durations

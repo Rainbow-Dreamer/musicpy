@@ -3007,7 +3007,10 @@ def build(*tracks_list, **kwargs):
     return result
 
 
-def translate(pattern):
+def translate(pattern,
+              default_duration=1 / 8,
+              default_interval=0,
+              default_volume=100):
     start_time = 0
     notes = []
     pattern_intervals = []
@@ -3035,22 +3038,54 @@ def translate(pattern):
         whole_set_values = units[0][1:].split(';')
         whole_set_values = [k.replace('|', ',') for k in whole_set_values]
         whole_set_values = process_settings(whole_set_values)
-        return translate(','.join(units[1:])).special_set(*whole_set_values)
+        return translate(
+            ','.join(units[1:]),
+            default_duration=default_duration,
+            default_interval=default_interval,
+            default_volume=default_volume).special_set(*whole_set_values)
     elif units[-1].startswith('!'):
         whole_set = True
         whole_set_values = units[-1][1:].split(';')
         whole_set_values = [k.replace('|', ',') for k in whole_set_values]
         whole_set_values = process_settings(whole_set_values)
-        return translate(','.join(units[:-1])).special_set(*whole_set_values)
+        return translate(
+            ','.join(units[:-1]),
+            default_duration=default_duration,
+            default_interval=default_interval,
+            default_volume=default_volume).special_set(*whole_set_values)
     for i in units:
         if i == '':
             continue
         if i[0] == '{' and i[-1] == '}':
             part_replace_ind2 = len(notes)
             current_part = parts[part_counter]
-            current_part_notes = translate(current_part)
             part_counter += 1
             part_settings = i[1:-1].split('|')
+            find_default = False
+            for each in part_settings:
+                if each.startswith('de:'):
+                    find_default = True
+                    current_default_settings = each[3:].split(';')
+                    current_default_settings = process_settings(
+                        current_default_settings)
+                    if current_default_settings[0] is None:
+                        current_default_settings[0] = 1 / 8
+                    if current_default_settings[1] is None:
+                        current_default_settings[1] = 0
+                    if current_default_settings[2] is None:
+                        current_default_settings[2] = 100
+                    current_part_notes = translate(
+                        current_part,
+                        default_duration=current_default_settings[0],
+                        default_interval=current_default_settings[1],
+                        default_volume=current_default_settings[2])
+                    break
+            if not find_default:
+                current_part_notes = translate(
+                    current_part,
+                    default_duration=default_duration,
+                    default_interval=default_interval,
+                    default_volume=default_volume)
             for each in part_settings:
                 if each.startswith('!'):
                     current_settings = each[1:].split(';')
@@ -3099,7 +3134,10 @@ def translate(pattern):
                 else:
                     repeat_part = named_dict[repeat_part]
             else:
-                repeat_part = translate(repeat_part)
+                repeat_part = translate(repeat_part,
+                                        default_duration=default_duration,
+                                        default_interval=default_interval,
+                                        default_volume=default_volume)
             current_notes = repeat_part % repeat_times
             notes.extend(current_notes.notes)
             pattern_intervals.extend(current_notes.interval)
@@ -3119,7 +3157,10 @@ def translate(pattern):
                 else:
                     config_part = named_dict[config_part]
             else:
-                config_part = translate(config_part)
+                config_part = translate(config_part,
+                                        default_duration=default_duration,
+                                        default_interval=default_interval,
+                                        default_volume=default_volume)
             current_notes = config_part.special_set(*current_drum_settings)
             notes.extend(current_notes.notes)
             pattern_intervals.extend(current_notes.interval)
@@ -3127,7 +3168,13 @@ def translate(pattern):
             pattern_volumes.extend(current_notes.get_volume())
         elif ';' in i:
             same_time_notes = i.split(';')
-            current_notes = [translate(k) for k in same_time_notes]
+            current_notes = [
+                translate(k,
+                          default_duration=default_duration,
+                          default_interval=default_interval,
+                          default_volume=default_volume)
+                for k in same_time_notes
+            ]
             current_notes = concat(
                 [k.set(interval=0)
                  for k in current_notes[:-1]] + [current_notes[-1]])
@@ -3145,9 +3192,9 @@ def translate(pattern):
             pattern_volumes.extend(current_notes.get_volume())
         else:
             notes.append(N(i))
-            pattern_intervals.append(0)
-            pattern_durations.append(1 / 8)
-            pattern_volumes.append(100)
+            pattern_intervals.append(default_interval)
+            pattern_durations.append(default_duration)
+            pattern_volumes.append(default_volume)
 
     intervals = pattern_intervals
     durations = pattern_durations
