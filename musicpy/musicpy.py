@@ -2922,7 +2922,7 @@ def negative_harmony(key, current_chord=None, sort=False, get_map=False):
 
 
 def guitar_chord(frets,
-                 return_chord=False,
+                 return_chord=True,
                  tuning=['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
                  duration=0.25,
                  interval=0,
