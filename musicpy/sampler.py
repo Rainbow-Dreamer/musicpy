@@ -617,7 +617,7 @@ class sampler:
 
     def load_channel_settings(self, channel_num=0, text=None, path=None):
         if text is None:
-            with open(path, encoding='utf-8-sig') as f:
+            with open(path, encoding='utf-8') as f:
                 data = f.read()
         else:
             data = text
@@ -1274,7 +1274,7 @@ def make_esi(file_path,
     current_settings = None
     if settings is not None:
         if asfile:
-            with open(settings, encoding='utf-8-sig') as f:
+            with open(settings, encoding='utf-8') as f:
                 current_settings = f.read()
         else:
             current_settings = settings
