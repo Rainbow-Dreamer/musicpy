@@ -2277,10 +2277,16 @@ class scale:
         if isinstance(n, int):
             return self.pickchord_by_degree(n, duration, interval, num, step)
         elif isinstance(n, str):
-            if n.startswith('#'):
-                return self.up(1, int(n.split('#')[1]) - 1)
-            elif n.startswith('b'):
-                return self.down(1, int(n.split('b')[1]) - 1)
+            altered_notes = n.replace(' ', '').split(',')
+            notes = copy(self.notes)
+            for each in altered_notes:
+                if each.startswith('#'):
+                    current_ind = int(each.split('#')[1]) - 1
+                    notes[current_ind] = notes[current_ind].up()
+                elif each.startswith('b'):
+                    current_ind = int(each.split('b')[1]) - 1
+                    notes[current_ind] = notes[current_ind].down()
+            return scale(notes=notes)
 
     def getInterval(self):
         if self.mode is None:
