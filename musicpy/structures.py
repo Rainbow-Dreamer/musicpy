@@ -1,6 +1,5 @@
 from copy import deepcopy as copy
 from fractions import Fraction
-from ast import literal_eval
 if __name__ == 'musicpy.structures':
     from .database import *
 else:
@@ -763,12 +762,12 @@ class chord:
             return self.inv(self.names().index(obj))
         else:
             if isinstance(obj, tuple):
-                return mp.negative_harmony(obj[0], self, *obj[1:])
+                return mp.alg.negative_harmony(obj[0], self, *obj[1:])
             else:
-                return mp.negative_harmony(obj, self)
+                return mp.alg.negative_harmony(obj, self)
 
     def negative_harmony(self, *args, **kwargs):
-        return mp.negative_harmony(current_chord=self, *args, **kwargs)
+        return mp.alg.negative_harmony(current_chord=self, *args, **kwargs)
 
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
@@ -843,7 +842,7 @@ class chord:
         return temp
 
     def detect(self, *args, **kwargs):
-        return mp.detect(self, *args, **kwargs)
+        return mp.alg.detect(self, *args, **kwargs)
 
     def get(self, ls):
         temp = copy(self)
@@ -1090,7 +1089,7 @@ class chord:
         notenames = self.names()
         return [
             chord(x, rootpitch=rootpitch).set(duration, interval)
-            for x in mp.perm(notenames)
+            for x in mp.alg.perm(notenames)
         ]
 
     def inversion_highest(self, ind):
@@ -1451,22 +1450,22 @@ class chord:
         mp.play(self, *args, **kwargs)
 
     def split_melody(self, *args, **kwargs):
-        return mp.split_melody(self, *args, **kwargs)
+        return mp.alg.split_melody(self, *args, **kwargs)
 
     def split_chord(self, *args, **kwargs):
-        return mp.split_chord(self, *args, **kwargs)
+        return mp.alg.split_chord(self, *args, **kwargs)
 
     def split_all(self, *args, **kwargs):
-        return mp.split_all(self, *args, **kwargs)
+        return mp.alg.split_all(self, *args, **kwargs)
 
     def detect_scale(self, *args, **kwargs):
-        return mp.detect_scale(self, *args, **kwargs)
+        return mp.alg.detect_scale(self, *args, **kwargs)
 
     def detect_in_scale(self, *args, **kwargs):
-        return mp.detect_in_scale(self, *args, **kwargs)
+        return mp.alg.detect_in_scale(self, *args, **kwargs)
 
     def chord_analysis(self, *args, **kwargs):
-        return mp.chord_analysis(self, *args, **kwargs)
+        return mp.alg.chord_analysis(self, *args, **kwargs)
 
     def clear_at(self, duration=0, interval=None, volume=None):
         temp = copy(self)
@@ -1758,9 +1757,9 @@ class chord:
                 break
         if has_split:
             try:
-                inversion_msg = mp.inversion_from(mp.C(chord_type),
-                                                  mp.C(chord_types_root),
-                                                  num=True)
+                inversion_msg = mp.alg.inversion_from(mp.C(chord_type),
+                                                      mp.C(chord_types_root),
+                                                      num=True)
             except:
                 if 'omit' in first_part and first_part[0] != '[':
                     temp_ind = first_part.index(' ')
@@ -1770,7 +1769,7 @@ class chord:
                 else:
                     current_chord_types_root = chord_types_root
                 try:
-                    inversion_msg = mp.inversion_from(
+                    inversion_msg = mp.alg.inversion_from(
                         self, mp.C(current_chord_types_root), num=True)
                     if 'could not get chord' in inversion_msg:
                         if inversion_split[1][0] == '[':
@@ -2216,7 +2215,8 @@ class scale:
         if interval is None:
             self.interval = self.getInterval()
         if mode is None:
-            current_mode = mp.detect_scale_type(self.interval, mode='interval')
+            current_mode = mp.alg.detect_scale_type(self.interval,
+                                                    mode='interval')
             if current_mode != 'not found':
                 self.mode = current_mode
 
@@ -2486,7 +2486,7 @@ class scale:
         return self.pickchord_by_index(indlist)
 
     def detect(self):
-        return mp.detect_scale_type(self)
+        return mp.alg.detect_scale_type(self)
 
     def get_allchord(self, duration=None, interval=0, num=3, step=2):
         return [

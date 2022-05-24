@@ -2,251 +2,234 @@ if __name__ == '__main__' or __name__ == 'algorithms':
     from musicpy import *
 else:
     from .musicpy import *
+import random
+from difflib import SequenceMatcher
 
-    def inversion_from(a, b, num=False, mode=0):
-        N = len(b)
-        for i in range(1, N):
-            temp = b.inversion(i)
-            if [x.name for x in temp.notes] == [y.name for y in a.notes]:
-                return f'/{a[0].name}' if not num else f'{i} inversion'
-        return f'could not get chord {a.notes} from a single inversion of chord {b.notes}, you could try sort from' if mode == 0 else None
 
-    def sort_from(a, b, getorder=False):
-        names = [i.name for i in b]
-        try:
-            order = [names.index(j.name) + 1 for j in a]
-            return f'{b.notes} sort as {order}' if not getorder else order
-        except:
-            return
+def inversion_from(a, b, num=False, mode=0):
+    N = len(b)
+    for i in range(1, N):
+        temp = b.inversion(i)
+        if [x.name for x in temp.notes] == [y.name for y in a.notes]:
+            return f'/{a[0].name}' if not num else f'{i} inversion'
+    return f'could not get chord {a.notes} from a single inversion of chord {b.notes}, you could try sort from' if mode == 0 else None
 
-    def omit_from(a, b, showls=False, alter_notes_show_degree=False):
-        a_notes = a.names()
-        b_notes = b.names()
-        omitnotes = list(set(b_notes) - set(a_notes))
-        if alter_notes_show_degree:
-            b_first_note = b[0].degree
-            omitnotes_degree = []
-            for j in omitnotes:
-                current = reverse_degree_match[b[b_notes.index(j)].degree -
-                                               b_first_note]
-                if current == 'not found':
-                    omitnotes_degree.append(j)
-                else:
-                    omitnotes_degree.append(current)
-            omitnotes = omitnotes_degree
-        if showls:
-            result = omitnotes
-        else:
-            result = f"omit {', '.join(omitnotes)}"
-            order_omit = chord([x for x in b_notes if x in a_notes])
-            if order_omit.names() != a.names():
-                result += ' ' + inversion_way(a, order_omit)
-        return result
 
-    def change_from(a,
-                    b,
-                    octave_a=False,
-                    octave_b=False,
-                    same_degree=True,
-                    alter_notes_show_degree=False):
-        '''
-        how a is changed from b (flat or sharp some notes of b to get a)
-        this is used only when two chords have the same number of notes
-        in the detect chord function
-        '''
-        if octave_a:
-            a = a.inoctave()
-        if octave_b:
-            b = b.inoctave()
-        if same_degree:
-            b = b.down(12 * (b[0].num - a[0].num))
-        N = min(len(a), len(b))
-        anotes = [x.degree for x in a.notes]
-        bnotes = [x.degree for x in b.notes]
-        anames = a.names()
-        bnames = b.names()
-        M = min(len(anotes), len(bnotes))
-        changes = [(bnames[i], bnotes[i] - anotes[i]) for i in range(M)]
-        changes = [x for x in changes if x[1] != 0]
-        if any(abs(j[1]) != 1 for j in changes):
-            changes = []
-        else:
-            if not alter_notes_show_degree:
-                changes = [
-                    f'b{j[0]}' if j[1] > 0 else f'#{j[0]}' for j in changes
-                ]
+def sort_from(a, b, getorder=False):
+    names = [i.name for i in b]
+    try:
+        order = [names.index(j.name) + 1 for j in a]
+        return f'{b.notes} sort as {order}' if not getorder else order
+    except:
+        return
+
+
+def omit_from(a, b, showls=False, alter_notes_show_degree=False):
+    a_notes = a.names()
+    b_notes = b.names()
+    omitnotes = list(set(b_notes) - set(a_notes))
+    if alter_notes_show_degree:
+        b_first_note = b[0].degree
+        omitnotes_degree = []
+        for j in omitnotes:
+            current = reverse_degree_match[b[b_notes.index(j)].degree -
+                                           b_first_note]
+            if current == 'not found':
+                omitnotes_degree.append(j)
             else:
-                b_first_note = b[0].degree
-                for i in range(len(changes)):
-                    note_name, note_change = changes[i]
-                    current_degree = reverse_degree_match[
-                        bnotes[bnames.index(note_name)] - b_first_note]
-                    if current_degree == 'not found':
-                        current_degree = note_name
-                    if note_change > 0:
-                        changes[i] = f'b{current_degree}'
-                    else:
-                        changes[i] = f'#{current_degree}'
+                omitnotes_degree.append(current)
+        omitnotes = omitnotes_degree
+    if showls:
+        result = omitnotes
+    else:
+        result = f"omit {', '.join(omitnotes)}"
+        order_omit = chord([x for x in b_notes if x in a_notes])
+        if order_omit.names() != a.names():
+            result += ' ' + inversion_way(a, order_omit)
+    return result
 
-        return ', '.join(changes)
 
-    def contains(a, b):
-        '''
-        if b contains a (notes), in other words,
-        all of a's notes is inside b's notes
-        '''
-        return set(a.names()) < set(b.names()) and len(a) < len(b)
+def change_from(a,
+                b,
+                octave_a=False,
+                octave_b=False,
+                same_degree=True,
+                alter_notes_show_degree=False):
+    '''
+    how a is changed from b (flat or sharp some notes of b to get a)
+    this is used only when two chords have the same number of notes
+    in the detect chord function
+    '''
+    if octave_a:
+        a = a.inoctave()
+    if octave_b:
+        b = b.inoctave()
+    if same_degree:
+        b = b.down(12 * (b[0].num - a[0].num))
+    N = min(len(a), len(b))
+    anotes = [x.degree for x in a.notes]
+    bnotes = [x.degree for x in b.notes]
+    anames = a.names()
+    bnames = b.names()
+    M = min(len(anotes), len(bnotes))
+    changes = [(bnames[i], bnotes[i] - anotes[i]) for i in range(M)]
+    changes = [x for x in changes if x[1] != 0]
+    if any(abs(j[1]) != 1 for j in changes):
+        changes = []
+    else:
+        if not alter_notes_show_degree:
+            changes = [f'b{j[0]}' if j[1] > 0 else f'#{j[0]}' for j in changes]
+        else:
+            b_first_note = b[0].degree
+            for i in range(len(changes)):
+                note_name, note_change = changes[i]
+                current_degree = reverse_degree_match[
+                    bnotes[bnames.index(note_name)] - b_first_note]
+                if current_degree == 'not found':
+                    current_degree = note_name
+                if note_change > 0:
+                    changes[i] = f'b{current_degree}'
+                else:
+                    changes[i] = f'#{current_degree}'
 
-    def inversion_way(a, b, inv_num=False, chordtype=None, only_msg=False):
-        if samenotes(a, b):
-            return f'{b[0].name}{chordtype}'
-        if samenote_set(a, b):
-            inversion_msg = inversion_from(
-                a, b, mode=1) if not inv_num else inversion_from(
-                    a, b, num=True, mode=1)
-            if inversion_msg is not None:
-                if not only_msg:
-                    if chordtype is not None:
-                        return f'{b[0].name}{chordtype}{inversion_msg}' if not inv_num else f'{b[0].name}{chordtype} {inversion_msg}'
-                    else:
-                        return inversion_msg
+    return ', '.join(changes)
+
+
+def contains(a, b):
+    '''
+    if b contains a (notes), in other words,
+    all of a's notes is inside b's notes
+    '''
+    return set(a.names()) < set(b.names()) and len(a) < len(b)
+
+
+def inversion_way(a, b, inv_num=False, chordtype=None, only_msg=False):
+    if samenotes(a, b):
+        return f'{b[0].name}{chordtype}'
+    if samenote_set(a, b):
+        inversion_msg = inversion_from(
+            a, b, mode=1) if not inv_num else inversion_from(
+                a, b, num=True, mode=1)
+        if inversion_msg is not None:
+            if not only_msg:
+                if chordtype is not None:
+                    return f'{b[0].name}{chordtype}{inversion_msg}' if not inv_num else f'{b[0].name}{chordtype} {inversion_msg}'
                 else:
                     return inversion_msg
             else:
-                sort_msg = sort_from(a, b, getorder=True)
-                if sort_msg is not None:
-                    if not only_msg:
-                        if chordtype is not None:
-                            return f'{b[0].name}{chordtype} sort as {sort_msg}'
-                        else:
-                            return f'sort as {sort_msg}'
+                return inversion_msg
+        else:
+            sort_msg = sort_from(a, b, getorder=True)
+            if sort_msg is not None:
+                if not only_msg:
+                    if chordtype is not None:
+                        return f'{b[0].name}{chordtype} sort as {sort_msg}'
                     else:
                         return f'sort as {sort_msg}'
                 else:
-                    return f'a voicing of {b[0].name}{chordtype}'
-        else:
-            return 'not good'
-
-    def samenotes(a, b):
-        return a.names() == b.names()
-
-    def samenote_set(a, b):
-        return set(a.names()) == set(b.names())
-
-    def find_similarity(a,
-                        b=None,
-                        only_ratio=False,
-                        fromchord_name=True,
-                        getgoodchord=False,
-                        listall=False,
-                        ratio_and_chord=False,
-                        ratio_chordname=False,
-                        provide_name=None,
-                        result_ratio=False,
-                        get_types=False,
-                        change_from_first=False,
-                        same_note_special=True,
-                        alter_notes_show_degree=False):
-        result = ''
-        types = None
-        if b is None:
-            wholeTypes = chordTypes.keynames()
-            selfname = a.names()
-            rootnote = a[0]
-            possible_chords = [(chd(rootnote, i), i) for i in wholeTypes]
-            lengths = len(possible_chords)
-            if same_note_special:
-                ratios = [(1 if samenote_set(a, x[0]) else SequenceMatcher(
-                    None, selfname, x[0].names()).ratio(), x[1])
-                          for x in possible_chords]
+                    return f'sort as {sort_msg}'
             else:
-                ratios = [(SequenceMatcher(None, selfname,
-                                           x[0].names()).ratio(), x[1])
-                          for x in possible_chords]
-            alen = len(a)
-            ratios_temp = [
-                ratios[k] for k in range(len(ratios))
-                if len(possible_chords[k][0]) >= alen
-            ]
-            if len(ratios_temp) != 0:
-                ratios = ratios_temp
-            ratios.sort(key=lambda x: x[0], reverse=True)
-            if listall:
-                return ratios
-            if only_ratio:
-                return ratios[0]
-            first = ratios[0]
-            highest = first[0]
-            chordfrom = possible_chords[wholeTypes.index(first[1])][0]
-            if ratio_and_chord:
-                if ratio_chordname:
-                    return first, chordfrom
-                return highest, chordfrom
-            if highest > 0.6:
-                if change_from_first:
-                    result = find_similarity(
-                        a,
-                        chordfrom,
-                        fromchord_name=False,
-                        alter_notes_show_degree=alter_notes_show_degree)
-                    cff_ind = 0
-                    while result == 'not good':
-                        cff_ind += 1
-                        try:
-                            first = ratios[cff_ind]
-                        except:
-                            first = ratios[0]
-                            highest = first[0]
-                            chordfrom = possible_chords[wholeTypes.index(
-                                first[1])][0]
-                            result = ''
-                            break
+                return f'a voicing of {b[0].name}{chordtype}'
+    else:
+        return 'not good'
+
+
+def samenotes(a, b):
+    return a.names() == b.names()
+
+
+def samenote_set(a, b):
+    return set(a.names()) == set(b.names())
+
+
+def find_similarity(a,
+                    b=None,
+                    only_ratio=False,
+                    fromchord_name=True,
+                    getgoodchord=False,
+                    listall=False,
+                    ratio_and_chord=False,
+                    ratio_chordname=False,
+                    provide_name=None,
+                    result_ratio=False,
+                    get_types=False,
+                    change_from_first=False,
+                    same_note_special=True,
+                    alter_notes_show_degree=False):
+    result = ''
+    types = None
+    if b is None:
+        wholeTypes = chordTypes.keynames()
+        selfname = a.names()
+        rootnote = a[0]
+        possible_chords = [(chd(rootnote, i), i) for i in wholeTypes]
+        lengths = len(possible_chords)
+        if same_note_special:
+            ratios = [(1 if samenote_set(a, x[0]) else SequenceMatcher(
+                None, selfname, x[0].names()).ratio(), x[1])
+                      for x in possible_chords]
+        else:
+            ratios = [(SequenceMatcher(None, selfname,
+                                       x[0].names()).ratio(), x[1])
+                      for x in possible_chords]
+        alen = len(a)
+        ratios_temp = [
+            ratios[k] for k in range(len(ratios))
+            if len(possible_chords[k][0]) >= alen
+        ]
+        if len(ratios_temp) != 0:
+            ratios = ratios_temp
+        ratios.sort(key=lambda x: x[0], reverse=True)
+        if listall:
+            return ratios
+        if only_ratio:
+            return ratios[0]
+        first = ratios[0]
+        highest = first[0]
+        chordfrom = possible_chords[wholeTypes.index(first[1])][0]
+        if ratio_and_chord:
+            if ratio_chordname:
+                return first, chordfrom
+            return highest, chordfrom
+        if highest > 0.6:
+            if change_from_first:
+                result = find_similarity(
+                    a,
+                    chordfrom,
+                    fromchord_name=False,
+                    alter_notes_show_degree=alter_notes_show_degree)
+                cff_ind = 0
+                while result == 'not good':
+                    cff_ind += 1
+                    try:
+                        first = ratios[cff_ind]
+                    except:
+                        first = ratios[0]
                         highest = first[0]
                         chordfrom = possible_chords[wholeTypes.index(
                             first[1])][0]
-                        if highest > 0.6:
-                            result = find_similarity(
-                                a,
-                                chordfrom,
-                                fromchord_name=False,
-                                alter_notes_show_degree=alter_notes_show_degree
-                            )
-                        else:
-                            first = ratios[0]
-                            highest = first[0]
-                            chordfrom = possible_chords[wholeTypes.index(
-                                first[1])][0]
-                            result = ''
-                            break
-                if highest == 1:
-                    chordfrom_type = first[1]
-                    if samenotes(a, chordfrom):
-                        result = f'{rootnote.name}{chordfrom_type}'
-                        types = 'original'
+                        result = ''
+                        break
+                    highest = first[0]
+                    chordfrom = possible_chords[wholeTypes.index(first[1])][0]
+                    if highest > 0.6:
+                        result = find_similarity(
+                            a,
+                            chordfrom,
+                            fromchord_name=False,
+                            alter_notes_show_degree=alter_notes_show_degree)
                     else:
-                        if samenote_set(a, chordfrom):
-                            result = inversion_from(a, chordfrom, mode=1)
-                            types = 'inversion'
-                            if result is None:
-                                sort_message = sort_from(a,
-                                                         chordfrom,
-                                                         getorder=True)
-                                if sort_message is None:
-                                    result = f'a voicing of the chord {rootnote.name}{chordfrom_type}'
-                                else:
-                                    result = f'{rootnote.name}{chordfrom_type} sort as {sort_message}'
-                            else:
-                                result = f'{rootnote.name}{chordfrom_type} {result}'
-                        else:
-                            return 'not good'
-                    if get_types:
-                        result = [result, types]
-                    if result_ratio:
-                        return (highest, result) if not getgoodchord else (
-                            (highest, result), chordfrom,
-                            f'{chordfrom[0].name}{first[1]}')
-                    return result if not getgoodchord else (
-                        result, chordfrom, f'{chordfrom[0].name}{first[1]}')
+                        first = ratios[0]
+                        highest = first[0]
+                        chordfrom = possible_chords[wholeTypes.index(
+                            first[1])][0]
+                        result = ''
+                        break
+            if highest == 1:
+                chordfrom_type = first[1]
+                if samenotes(a, chordfrom):
+                    result = f'{rootnote.name}{chordfrom_type}'
+                    types = 'original'
                 else:
                     if samenote_set(a, chordfrom):
                         result = inversion_from(a, chordfrom, mode=1)
@@ -255,78 +238,66 @@ else:
                             sort_message = sort_from(a,
                                                      chordfrom,
                                                      getorder=True)
-                            types = 'inversion'
                             if sort_message is None:
-                                return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
+                                result = f'a voicing of the chord {rootnote.name}{chordfrom_type}'
                             else:
-                                result = f'sort as {sort_message}'
-                    elif contains(a, chordfrom):
-                        result = omit_from(
-                            a,
-                            chordfrom,
-                            alter_notes_show_degree=alter_notes_show_degree)
-                        types = 'omit'
-                    elif len(a) == len(chordfrom):
-                        result = change_from(
-                            a,
-                            chordfrom,
-                            alter_notes_show_degree=alter_notes_show_degree)
-                        types = 'change'
-                    if result == '':
+                                result = f'{rootnote.name}{chordfrom_type} sort as {sort_message}'
+                        else:
+                            result = f'{rootnote.name}{chordfrom_type} {result}'
+                    else:
                         return 'not good'
-
-                    if fromchord_name:
-                        from_chord_names = f'{rootnote.name}{first[1]}'
-                        result = f'{from_chord_names} {result}'
-                    if get_types:
-                        result = [result, types]
-                    if result_ratio:
-                        return (highest, result) if not getgoodchord else ((
-                            highest, result), chordfrom, from_chord_names)
-                    return result if not getgoodchord else (result, chordfrom,
-                                                            from_chord_names)
-
+                if get_types:
+                    result = [result, types]
+                if result_ratio:
+                    return (highest, result) if not getgoodchord else (
+                        (highest,
+                         result), chordfrom, f'{chordfrom[0].name}{first[1]}')
+                return result if not getgoodchord else (
+                    result, chordfrom, f'{chordfrom[0].name}{first[1]}')
             else:
-                return 'not good'
-        else:
-            if samenotes(a, b):
+                if samenote_set(a, chordfrom):
+                    result = inversion_from(a, chordfrom, mode=1)
+                    types = 'inversion'
+                    if result is None:
+                        sort_message = sort_from(a, chordfrom, getorder=True)
+                        types = 'inversion'
+                        if sort_message is None:
+                            return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
+                        else:
+                            result = f'sort as {sort_message}'
+                elif contains(a, chordfrom):
+                    result = omit_from(
+                        a,
+                        chordfrom,
+                        alter_notes_show_degree=alter_notes_show_degree)
+                    types = 'omit'
+                elif len(a) == len(chordfrom):
+                    result = change_from(
+                        a,
+                        chordfrom,
+                        alter_notes_show_degree=alter_notes_show_degree)
+                    types = 'change'
+                if result == '':
+                    return 'not good'
+
                 if fromchord_name:
-                    if provide_name != None:
-                        bname = b[0].name + provide_name
-                    else:
-                        bname = detect(
-                            b,
-                            change_from_first=change_from_first,
-                            same_note_special=same_note_special,
-                            alter_notes_show_degree=alter_notes_show_degree)
-                    return bname if not getgoodchord else (bname, chordfrom,
-                                                           bname)
-                else:
-                    return 'same'
-            if only_ratio or listall:
-                return SequenceMatcher(None, a.names(), b.names()).ratio()
-            chordfrom = b
-            if samenote_set(a, chordfrom):
-                result = inversion_from(a, chordfrom, mode=1)
-                if result is None:
-                    sort_message = sort_from(a, chordfrom, getorder=True)
-                    if sort_message is None:
-                        return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
-                    else:
-                        result = f'sort as {sort_message}'
-            elif contains(a, chordfrom):
-                result = omit_from(
-                    a,
-                    chordfrom,
-                    alter_notes_show_degree=alter_notes_show_degree)
-            elif len(a) == len(chordfrom):
-                result = change_from(
-                    a,
-                    chordfrom,
-                    alter_notes_show_degree=alter_notes_show_degree)
-            if result == '':
-                return 'not good'
-            bname = None
+                    from_chord_names = f'{rootnote.name}{first[1]}'
+                    result = f'{from_chord_names} {result}'
+                if get_types:
+                    result = [result, types]
+                if result_ratio:
+                    return (highest,
+                            result) if not getgoodchord else ((highest,
+                                                               result),
+                                                              chordfrom,
+                                                              from_chord_names)
+                return result if not getgoodchord else (result, chordfrom,
+                                                        from_chord_names)
+
+        else:
+            return 'not good'
+    else:
+        if samenotes(a, b):
             if fromchord_name:
                 if provide_name != None:
                     bname = b[0].name + provide_name
@@ -336,104 +307,136 @@ else:
                         change_from_first=change_from_first,
                         same_note_special=same_note_special,
                         alter_notes_show_degree=alter_notes_show_degree)
-                if isinstance(bname, list):
-                    bname = bname[0]
-            return result if not getgoodchord else (result, chordfrom, bname)
+                return bname if not getgoodchord else (bname, chordfrom, bname)
+            else:
+                return 'same'
+        if only_ratio or listall:
+            return SequenceMatcher(None, a.names(), b.names()).ratio()
+        chordfrom = b
+        if samenote_set(a, chordfrom):
+            result = inversion_from(a, chordfrom, mode=1)
+            if result is None:
+                sort_message = sort_from(a, chordfrom, getorder=True)
+                if sort_message is None:
+                    return f'a voicing of the chord {rootnote.name}{chordfrom_type}'
+                else:
+                    result = f'sort as {sort_message}'
+        elif contains(a, chordfrom):
+            result = omit_from(a,
+                               chordfrom,
+                               alter_notes_show_degree=alter_notes_show_degree)
+        elif len(a) == len(chordfrom):
+            result = change_from(
+                a, chordfrom, alter_notes_show_degree=alter_notes_show_degree)
+        if result == '':
+            return 'not good'
+        bname = None
+        if fromchord_name:
+            if provide_name != None:
+                bname = b[0].name + provide_name
+            else:
+                bname = detect(b,
+                               change_from_first=change_from_first,
+                               same_note_special=same_note_special,
+                               alter_notes_show_degree=alter_notes_show_degree)
+            if isinstance(bname, list):
+                bname = bname[0]
+        return result if not getgoodchord else (result, chordfrom, bname)
 
-    def detect_variation(current_chord,
-                         inv_num=False,
-                         change_from_first=False,
-                         original_first=False,
-                         same_note_special=True,
-                         N=None,
-                         alter_notes_show_degree=False):
-        for each in range(1, N):
-            each_current = current_chord.inversion(each)
-            each_detect = detect(
-                each_current,
-                inv_num,
-                change_from_first,
-                original_first,
-                same_note_special,
-                whole_detect=False,
-                return_fromchord=True,
-                alter_notes_show_degree=alter_notes_show_degree)
-            if each_detect is not None:
-                detect_msg, change_from_chord, chord_name_str = each_detect
-                inv_msg = inversion_way(current_chord, each_current, inv_num)
-                result = f'{detect_msg} {inv_msg}'
-                if any(x in detect_msg
-                       for x in ['sort', '/']) and any(y in inv_msg
-                                                       for y in ['sort', '/']):
-                    inv_msg = inversion_way(current_chord, change_from_chord,
-                                            inv_num)
-                    if inv_msg == 'not good':
-                        inv_msg = find_similarity(
-                            current_chord,
-                            change_from_chord,
-                            alter_notes_show_degree=alter_notes_show_degree)
-                    result = f'{chord_name_str} {inv_msg}'
-                return result
-        for each2 in range(1, N):
-            each_current = current_chord.inversion_highest(each2)
-            each_detect = detect(
-                each_current,
-                inv_num,
-                change_from_first,
-                original_first,
-                same_note_special,
-                whole_detect=False,
-                return_fromchord=True,
-                alter_notes_show_degree=alter_notes_show_degree)
-            if each_detect is not None:
-                detect_msg, change_from_chord, chord_name_str = each_detect
-                inv_msg = inversion_way(current_chord, each_current, inv_num)
-                result = f'{detect_msg} {inv_msg}'
-                if any(x in detect_msg
-                       for x in ['sort', '/']) and any(y in inv_msg
-                                                       for y in ['sort', '/']):
-                    inv_msg = inversion_way(current_chord, change_from_chord,
-                                            inv_num)
-                    if inv_msg == 'not good':
-                        inv_msg = find_similarity(
-                            current_chord,
-                            change_from_chord,
-                            alter_notes_show_degree=alter_notes_show_degree)
-                    result = f'{chord_name_str} {inv_msg}'
-                return result
 
-    def detect_split(current_chord, N=None, **detect_args):
-        if N < 6:
-            splitind = 1
-            lower = current_chord.notes[0].name
-            upper = detect(current_chord.notes[splitind:], **detect_args)
-            if isinstance(upper, list):
-                upper = upper[0]
-            return f'[{upper}]/{lower}'
-        else:
-            splitind = N // 2
-            lower = detect(current_chord.notes[:splitind], **detect_args)
-            upper = detect(current_chord.notes[splitind:], **detect_args)
-            if isinstance(lower, list):
-                lower = lower[0]
-            if isinstance(upper, list):
-                upper = upper[0]
-            return f'[{upper}]/[{lower}]'
+def detect_variation(current_chord,
+                     inv_num=False,
+                     change_from_first=False,
+                     original_first=False,
+                     same_note_special=True,
+                     N=None,
+                     alter_notes_show_degree=False):
+    for each in range(1, N):
+        each_current = current_chord.inversion(each)
+        each_detect = detect(each_current,
+                             inv_num,
+                             change_from_first,
+                             original_first,
+                             same_note_special,
+                             whole_detect=False,
+                             return_fromchord=True,
+                             alter_notes_show_degree=alter_notes_show_degree)
+        if each_detect is not None:
+            detect_msg, change_from_chord, chord_name_str = each_detect
+            inv_msg = inversion_way(current_chord, each_current, inv_num)
+            result = f'{detect_msg} {inv_msg}'
+            if any(x in detect_msg
+                   for x in ['sort', '/']) and any(y in inv_msg
+                                                   for y in ['sort', '/']):
+                inv_msg = inversion_way(current_chord, change_from_chord,
+                                        inv_num)
+                if inv_msg == 'not good':
+                    inv_msg = find_similarity(
+                        current_chord,
+                        change_from_chord,
+                        alter_notes_show_degree=alter_notes_show_degree)
+                result = f'{chord_name_str} {inv_msg}'
+            return result
+    for each2 in range(1, N):
+        each_current = current_chord.inversion_highest(each2)
+        each_detect = detect(each_current,
+                             inv_num,
+                             change_from_first,
+                             original_first,
+                             same_note_special,
+                             whole_detect=False,
+                             return_fromchord=True,
+                             alter_notes_show_degree=alter_notes_show_degree)
+        if each_detect is not None:
+            detect_msg, change_from_chord, chord_name_str = each_detect
+            inv_msg = inversion_way(current_chord, each_current, inv_num)
+            result = f'{detect_msg} {inv_msg}'
+            if any(x in detect_msg
+                   for x in ['sort', '/']) and any(y in inv_msg
+                                                   for y in ['sort', '/']):
+                inv_msg = inversion_way(current_chord, change_from_chord,
+                                        inv_num)
+                if inv_msg == 'not good':
+                    inv_msg = find_similarity(
+                        current_chord,
+                        change_from_chord,
+                        alter_notes_show_degree=alter_notes_show_degree)
+                result = f'{chord_name_str} {inv_msg}'
+            return result
 
-    def interval_check(current_chord):
-        times, dist = divmod(
-            (current_chord.notes[1].degree - current_chord.notes[0].degree),
-            12)
-        if times > 0:
-            dist = 12 + dist
-        if dist in INTERVAL:
-            interval_name = INTERVAL[dist]
-        else:
-            interval_name = INTERVAL[dist % 12]
-        root_note_name = current_chord[0].name
-        if interval_name == 'perfect fifth':
-            return f'{root_note_name} with perfect fifth / {root_note_name}5 ({root_note_name} power chord)'
-        return f'{root_note_name} with {interval_name}'
+
+def detect_split(current_chord, N=None, **detect_args):
+    if N < 6:
+        splitind = 1
+        lower = current_chord.notes[0].name
+        upper = detect(current_chord.notes[splitind:], **detect_args)
+        if isinstance(upper, list):
+            upper = upper[0]
+        return f'[{upper}]/{lower}'
+    else:
+        splitind = N // 2
+        lower = detect(current_chord.notes[:splitind], **detect_args)
+        upper = detect(current_chord.notes[splitind:], **detect_args)
+        if isinstance(lower, list):
+            lower = lower[0]
+        if isinstance(upper, list):
+            upper = upper[0]
+        return f'[{upper}]/[{lower}]'
+
+
+def interval_check(current_chord):
+    times, dist = divmod(
+        (current_chord.notes[1].degree - current_chord.notes[0].degree), 12)
+    if times > 0:
+        dist = 12 + dist
+    if dist in INTERVAL:
+        interval_name = INTERVAL[dist]
+    else:
+        interval_name = INTERVAL[dist % 12]
+    root_note_name = current_chord[0].name
+    if interval_name == 'perfect fifth':
+        return f'{root_note_name} with perfect fifth / {root_note_name}5 ({root_note_name} power chord)'
+    return f'{root_note_name} with {interval_name}'
 
 
 def detect(current_chord,

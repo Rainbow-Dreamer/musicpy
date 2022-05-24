@@ -1,12 +1,11 @@
 import os
 import math
-import random
 import struct
 import chunk
 from io import BytesIO
-from difflib import SequenceMatcher
 import midiutil
 import mido
+from ast import literal_eval
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     from database import *
@@ -1923,6 +1922,6 @@ for each in [
     each.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
 
 if __name__ == '__main__' or __name__ == 'musicpy':
-    from algorithms import *
+    import algorithms as alg
 else:
-    from .algorithms import *
+    from . import algorithms as alg
