@@ -1506,7 +1506,7 @@ def split_melody(current_chord,
     '''
     if mode == 'notes', return a list of main melody notes
     if mode == 'index', return a list of indexes of main melody notes
-    if mode == 'hold', return a chord with main melody notes with original places
+    if mode == 'chord', return a chord with main melody notes with original places
     '''
     if not isinstance(melody_degree_tol, note):
         melody_degree_tol = toNote(melody_degree_tol)
@@ -1517,7 +1517,7 @@ def split_melody(current_chord,
         current_chord_notes = current_chord.notes
         melody = [current_chord_notes[t] for t in result]
         return melody
-    elif mode == 'hold':
+    elif mode == 'chord':
         result = split_melody(current_chord, 'index', melody_tol, chord_tol,
                               get_off_overlap_notes, average_degree_length,
                               melody_degree_tol)
@@ -1654,7 +1654,7 @@ def split_chord(current_chord,
         return chord_ind
     elif mode == 'notes':
         return [whole_notes[k] for k in chord_ind]
-    elif mode == 'hold':
+    elif mode == 'chord':
         return current_chord.pick(chord_ind)
 
 
@@ -1683,7 +1683,7 @@ def split_all(current_chord,
     elif mode == 'notes':
         return [[whole_notes[j] for j in melody_ind],
                 [whole_notes[k] for k in chord_ind]]
-    elif mode == 'hold':
+    elif mode == 'chord':
         result_chord = current_chord.pick(chord_ind)
         result_melody = current_chord.pick(melody_ind)
         # shift is the start time that chord part starts after main melody starts,
@@ -1719,7 +1719,7 @@ def chord_analysis(chords,
     '''
     chords = chords.only_notes()
     if not is_chord:
-        chord_notes = split_chord(chords, 'hold', melody_tol, chord_tol,
+        chord_notes = split_chord(chords, 'chord', melody_tol, chord_tol,
                                   get_off_overlap_notes, average_degree_length,
                                   melody_degree_tol)
     else:
