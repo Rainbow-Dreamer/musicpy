@@ -1,8 +1,10 @@
 from copy import deepcopy as copy
 from fractions import Fraction
 from ast import literal_eval
-from .database import *
-import musicpy as mp
+if __name__ == 'musicpy.structures':
+    from .database import *
+else:
+    from database import *
 
 
 class note:
@@ -2176,6 +2178,21 @@ class chord:
                      start_time=start_time,
                      other_messages=temp.other_messages)
 
+    def remove_duplicates(self):
+        temp = copy(self)
+        inds = []
+        degrees = []
+        notes = []
+        intervals = []
+        for i, each in enumerate(temp.notes):
+            if each.degree not in degrees:
+                degrees.append(each.degree)
+                notes.append(each)
+                intervals.append(temp.interval[i])
+        temp.notes = notes
+        temp.interval = intervals
+        return temp
+
 
 class scale:
 
@@ -2199,7 +2216,7 @@ class scale:
         if interval is None:
             self.interval = self.getInterval()
         if mode is None:
-            current_mode = mp.detect(self.interval, mode='scale')
+            current_mode = mp.detect_scale_type(self.interval, mode='interval')
             if current_mode != 'not found':
                 self.mode = current_mode
 
@@ -2257,7 +2274,13 @@ class scale:
             yield i
 
     def __call__(self, n, duration=0.25, interval=0, num=3, step=2):
-        return self.pickchord_by_degree(n, duration, interval, num, step)
+        if isinstance(n, int):
+            return self.pickchord_by_degree(n, duration, interval, num, step)
+        elif isinstance(n, str):
+            if n.startswith('#'):
+                return self.up(1, int(n.split('#')[1]) - 1)
+            elif n.startswith('b'):
+                return self.down(1, int(n.split('b')[1]) - 1)
 
     def getInterval(self):
         if self.mode is None:
@@ -2462,8 +2485,8 @@ class scale:
     def __matmul__(self, indlist):
         return self.pickchord_by_index(indlist)
 
-    def detect(self, *args, **kwargs):
-        return mp.detect(self, *args, **kwargs, mode='scale')
+    def detect(self):
+        return mp.detect_scale_type(self)
 
     def get_allchord(self, duration=None, interval=0, num=3, step=2):
         return [
@@ -2530,7 +2553,7 @@ class scale:
     def up(self, unit=1, ind=None, ind2=None):
         if ind2 is not None:
             notes = copy(self.notes)
-            return scale(notels=[
+            return scale(notes=[
                 notes[i].up(unit) if ind <= i < ind2 else notes[i]
                 for i in range(len(notes))
             ])
@@ -2545,10 +2568,7 @@ class scale:
                     notes[i].up(unit) if i in ind else notes[i]
                     for i in range(len(notes))
                 ]
-            result = scale(notels=notes)
-            current_mode = result.detect()
-            if current_mode != 'not found':
-                result.mode = current_mode
+            result = scale(notes=notes)
             return result
 
     def down(self, unit=1, ind=None, ind2=None):
@@ -2563,9 +2583,12 @@ class scale:
     def __invert__(self):
         return scale(self[0], interval=list(reversed(self.interval)))
 
+    def reverse(self):
+        return ~self
+
     def move(self, x):
         notes = copy(self.getScale())
-        return scale(notels=notes.move(x))
+        return scale(notes=notes.move(x))
 
     def inversion(self, ind, parallel=False, start=None):
         # return the inversion of a scale with the beginning note of a given index
@@ -4638,3 +4661,6 @@ class rest:
 
     def __repr__(self):
         return f'rest {self.duration}'
+
+
+import musicpy as mp

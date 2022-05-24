@@ -1,4 +1,7 @@
-from .match import match
+if __name__ == 'musicpy.database':
+    from .match import match
+else:
+    from match import match
 
 perfect_unison = diminished_second = P1 = d2 = 0
 minor_second = augmented_unison = m2 = A1 = 1
