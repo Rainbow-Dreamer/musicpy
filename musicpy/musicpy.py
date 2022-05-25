@@ -512,7 +512,7 @@ def read(name,
                 result_piece.tracks[i].other_messages.append(
                     current_track_names[i])
         if get_off_drums:
-            if 9 in result_piece.channels:
+            while 9 in result_piece.channels:
                 drum_ind = result_piece.channels.index(9)
                 del result_piece[drum_ind]
     else:
