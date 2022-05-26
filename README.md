@@ -27,6 +27,8 @@ Run the following line in the terminal to install musicpy by pip.
 pip install musicpy
 ```
 
+**Note: On Linux, you need to make sure the installed pygame version is older than 2.0.3, otherwise the play function of musicpy won't work properly, this is due to an existing bug with newer versions of pygame. You can run `pip install pygame==2.0.2` in terminal to install pygame 2.0.2 or any version that is older than 2.0.3. You also need to install freepats to make the play function works on Linux, you can run `sudo apt-get install freepats` (on Ubuntu).**
+
 In addition, I also wrote a musicpy editor for writing and compiling musicpy code more easily than regular python IDE with real-time automatic compilation and execution, there are some syntactic sugar and you can listen to the music generating from your musicpy code on the fly, it is more convenient and interactive.
 
 I strongly recommend to use this musicpy editor to write musicpy code.
