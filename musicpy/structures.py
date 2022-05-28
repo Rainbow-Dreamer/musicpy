@@ -1806,8 +1806,12 @@ class chord:
             chord_types_root = chord_types_root.split(',')[0]
             chord_type = original_chord_type
         root_note = standard_dict.get(root_note, root_note)
-        chord_type_name = chord_types_root[
-            len(root_note):] if chord_speciality != 'polychord' else chord_type
+        if chord_speciality == 'polychord' or (chord_speciality
+                                               == 'inverted chord'
+                                               and inversion_msg is None):
+            chord_type_name = chord_type
+        else:
+            chord_type_name = chord_types_root[len(root_note):]
         if get_dict:
             return {
                 'type':
