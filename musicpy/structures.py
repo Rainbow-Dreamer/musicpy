@@ -1668,7 +1668,11 @@ class chord:
         standard_notes = self.standardize()
         if len(standard_notes) == 1:
             if get_dict:
-                return {'note name': str(standard_notes[0]), 'type': 'note'}
+                return {
+                    'note name': str(standard_notes[0]),
+                    'whole name': chord_type,
+                    'type': 'note'
+                }
             else:
                 return f'note name: {standard_notes[0]}'
         elif len(standard_notes) == 2:
@@ -1676,6 +1680,7 @@ class chord:
                 return {
                     'interval name': chord_type.split('with ')[1],
                     'root': str(standard_notes[0]),
+                    'whole name': chord_type,
                     'type': 'interval'
                 }
             else:
@@ -1796,6 +1801,8 @@ class chord:
                 except:
                     chord_type = original_chord_type
                     chord_types_root = chord_type
+                    if chord_speciality == 'inverted chord':
+                        inversion_msg = None
         if other_msg['altered']:
             chord_types_root = chord_types_root.split(',')[0]
             chord_type = original_chord_type
