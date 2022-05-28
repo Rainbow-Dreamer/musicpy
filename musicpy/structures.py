@@ -89,14 +89,13 @@ class note:
         name = self.name
         if name in standard_dict:
             if '#' in name:
-                return self.reset(name=reverse_standard_dict[name],
-                                  num=self.num)
+                return self.reset(name=reverse_standard_dict[name])
             else:
-                return self.reset(name=standard_dict[name], num=self.num)
+                return self.reset(name=standard_dict[name])
         elif name in reverse_standard_dict:
-            return self.reset(name=reverse_standard_dict[name], num=self.num)
+            return self.reset(name=reverse_standard_dict[name])
         else:
-            return self.reset(name=name, num=self.num)
+            return self.reset(name=name)
 
     def play(self, *args, **kwargs):
         mp.play(self, *args, **kwargs)
