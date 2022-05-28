@@ -1690,7 +1690,7 @@ class chord:
         has_split = False
         if '/' in chord_type:
             has_split = True
-            if chord_type[0] == '[':
+            if ']/[' in chord_type:
                 chord_speciality = 'polychord'
             else:
                 chord_speciality = 'inverted chord'
@@ -1760,6 +1760,17 @@ class chord:
                 inversion_msg = mp.alg.inversion_from(mp.C(chord_type),
                                                       mp.C(chord_types_root),
                                                       num=True)
+                if 'could not get chord' in inversion_msg:
+                    if inversion_split[1][0] == '[':
+                        chord_type = original_chord_type
+                        chord_types_root = chord_type
+                    else:
+                        first_part, second_part = chord_type.split('/', 1)
+                        if first_part[0] == '[':
+                            first_part = first_part[1:-1]
+                        chord_speciality = self._get_chord_speciality_helper(
+                            first_part)
+                        other_msg['non-chord bass note'] = second_part
             except:
                 if 'omit' in first_part and first_part[0] != '[':
                     temp_ind = first_part.index(' ')
@@ -1789,7 +1800,8 @@ class chord:
             chord_types_root = chord_types_root.split(',')[0]
             chord_type = original_chord_type
         root_note = standard_dict.get(root_note, root_note)
-        chord_type_name = chord_types_root[len(root_note):]
+        chord_type_name = chord_types_root[
+            len(root_note):] if chord_speciality != 'polychord' else chord_type
         if get_dict:
             return {
                 'chord name':
