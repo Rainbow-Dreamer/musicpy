@@ -1668,19 +1668,19 @@ class chord:
         if len(standard_notes) == 1:
             if get_dict:
                 return {
+                    'type': 'note',
                     'note name': str(standard_notes[0]),
-                    'whole name': chord_type,
-                    'type': 'note'
+                    'whole name': chord_type
                 }
             else:
                 return f'note name: {standard_notes[0]}'
         elif len(standard_notes) == 2:
             if get_dict:
                 return {
+                    'type': 'interval',
                     'interval name': chord_type.split('with ')[1],
                     'root': str(standard_notes[0]),
-                    'whole name': chord_type,
-                    'type': 'interval'
+                    'whole name': chord_type
                 }
             else:
                 return f'interval name: {chord_type.split("with ")[1]}\nroot: {standard_notes[0]}'
@@ -1810,6 +1810,8 @@ class chord:
             len(root_note):] if chord_speciality != 'polychord' else chord_type
         if get_dict:
             return {
+                'type':
+                'chord',
                 'chord name':
                 chord_type,
                 'root position':
@@ -1824,9 +1826,7 @@ class chord:
                 inversion_msg
                 if chord_speciality == 'inverted chord' else None,
                 'other':
-                other_msg,
-                'type':
-                'chord'
+                other_msg
             }
         else:
             other_msg_str = '\n'.join(
