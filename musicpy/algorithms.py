@@ -1236,25 +1236,33 @@ def detect_scale(current_chord,
     return f'most likely scales: {", ".join(result_scales)}'
 
 
-def get_chord_root_note(chord_name, get_chord_types=False):
+def get_chord_root_note(chord_name,
+                        get_chord_types=False,
+                        to_standard=False,
+                        **detect_args):
     types = type(chord_name)
     if types == chord:
-        chord_name = detect(chord_name)
+        chord_name = detect(chord_name, **detect_args)
         if isinstance(chord_name, list):
             chord_name = chord_name[0]
     elif types == list:
         chord_name = chord_name[0]
     elif types == note:
         chord_name = str(chord_name)
+    if chord_name in standard:
+        if get_chord_types:
+            return chord_name, ''
+        else:
+            return chord_name
     if chord_name.startswith('note '):
         result = chord_name.split('note ')[1][:2]
         if result in standard:
-            if result not in standard2:
+            if to_standard and result not in standard2:
                 result = standard_dict[result]
         else:
             result = result[0]
             if result in standard:
-                if result not in standard2:
+                if to_standard and result not in standard2:
                     result = standard_dict[result]
         if get_chord_types:
             return result, ''
@@ -1312,55 +1320,90 @@ def get_chord_root_note(chord_name, get_chord_types=False):
     return result
 
 
+def get_chord_type_location(current_chord, mode='functions'):
+    if current_chord in chordTypes:
+        chord_types = [
+            i for i in list(chordTypes.keys()) if current_chord in i
+        ][0]
+        if mode == 'functions':
+            for each, value in chord_function_dict.items():
+                if each in chord_types:
+                    return value
+        elif mode == 'notations':
+            for each, value in chord_notation_dict.items():
+                if each in chord_types:
+                    return value
+
+
 def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
     if not isinstance(chords, list):
         chords = [chords]
     note_names = mode.names()
-    root_note_list = [get_chord_root_note(i, True) for i in chords]
+    root_note_list = [
+        get_chord_root_note(i, True)
+        if '/' not in i else [get_chord_root_note(i.split('/', 1), True), i]
+        for i in chords
+    ]
     functions = []
     for each in root_note_list:
-        root_note, chord_types = each
-        root_note_obj = note(root_note, 5)
-        header = ''
-        if root_note not in note_names:
-            root_note_obj = root_note_obj.up(1)
-            root_note = root_note_obj.name
-            if root_note in note_names:
-                header = 'b'
-            else:
-                root_note_obj = root_note_obj.down(2)
-                root_note = root_note_obj.name
-                if root_note in note_names:
-                    header = '#'
-        scale_degree = note_names.index(root_note)
-        current_function = chord_functions_roman_numerals[scale_degree + 1]
-        if chord_types == '' or chord_types == '5':
-            original_chord = mode(scale_degree)
-            third_type = original_chord[1].degree - original_chord[0].degree
-            if third_type == minor_third:
-                current_function = current_function.lower()
+        if isinstance(each[0], tuple):
+            current_note, inversion_note = each[1].split('/', 1)
+            header = ''
+            if inversion_note not in note_names:
+                inversion_note, header = inversion_note[:-1], inversion_note[
+                    -1]
+            ind = note_names.index(inversion_note) + 1
+            current_function = f'{get_chord_functions(mode, current_note)}/{header}{ind}'
         else:
-            current_chord = chd(root_note, chord_types)
-            if current_chord != 'could not detect the chord types':
-                current_chord_names = current_chord.names()
-            else:
-                current_chord_names = [
-                    root_note_obj.name,
-                    root_note_obj.up(NAME_OF_INTERVAL[chord_types[5:]]).name
-                ]
-            if chord_types in chord_function_dict:
-                to_lower, function_name = chord_function_dict[chord_types]
-                if to_lower:
+            root_note, chord_types = each
+            root_note_obj = note(root_note, 5)
+            header = ''
+            if root_note not in note_names:
+                root_note, header = root_note[:-1], root_note[-1]
+            scale_degree = note_names.index(root_note)
+            current_function = chord_functions_roman_numerals[scale_degree + 1]
+            if chord_types == '' or chord_types == '5':
+                original_chord = mode(scale_degree)
+                third_type = original_chord[1].degree - original_chord[0].degree
+                if third_type == minor_third:
                     current_function = current_function.lower()
-                current_function += function_name
             else:
-                M3 = root_note_obj.up(major_third).name
-                m3 = root_note_obj.up(minor_third).name
-                if m3 in current_chord_names:
-                    current_function = current_function.lower()
-                if len(current_chord_names) >= 3:
-                    current_function += '?'
-        current_function = header + current_function
+                if chord_types in chordTypes:
+                    current_chord = chd(root_note, chord_types)
+                    current_chord_names = current_chord.names()
+                else:
+                    if chord_types[5:] not in NAME_OF_INTERVAL:
+                        current_chord_names = None
+                    else:
+                        current_chord_names = [
+                            root_note_obj.name,
+                            root_note_obj.up(
+                                NAME_OF_INTERVAL[chord_types[5:]]).name
+                        ]
+                if chord_types in chord_function_dict:
+                    to_lower, function_name = chord_function_dict[chord_types]
+                    if to_lower:
+                        current_function = current_function.lower()
+                    current_function += function_name
+                else:
+                    function_result = get_chord_type_location(chord_types,
+                                                              mode='functions')
+                    if function_result:
+                        to_lower, function_name = function_result
+                        if to_lower:
+                            current_function = current_function.lower()
+                        current_function += function_name
+                    else:
+                        if current_chord_names:
+                            M3 = root_note_obj.up(major_third).name
+                            m3 = root_note_obj.up(minor_third).name
+                            if m3 in current_chord_names:
+                                current_function = current_function.lower()
+                            if len(current_chord_names) >= 3:
+                                current_function += '?'
+                        else:
+                            current_function += '?'
+            current_function = header + current_function
         functions.append(current_function)
     if as_list:
         return functions
@@ -1383,20 +1426,32 @@ def get_chord_notations(chords,
         if chord_types in chord_notation_dict:
             current_notation += chord_notation_dict[chord_types]
         else:
-            current_chord = chd(root_note, chord_types)
-            if current_chord != 'could not detect the chord types':
-                current_chord_names = current_chord.names()
+            notation_result = get_chord_type_location(chord_types,
+                                                      mode='notations')
+            if notation_result:
+                current_notation += notation_result
             else:
-                current_chord_names = [
-                    root_note_obj.name,
-                    root_note_obj.up(NAME_OF_INTERVAL[chord_types[5:]]).name
-                ]
-            M3 = root_note_obj.up(major_third).name
-            m3 = root_note_obj.up(minor_third).name
-            if m3 in current_chord_names:
-                current_notation += '-'
-            if len(current_chord_names) >= 3:
-                current_notation += '?'
+                if chord_types in chordTypes:
+                    current_chord = chd(root_note, chord_types)
+                    current_chord_names = current_chord.names()
+                else:
+                    if chord_types[5:] not in NAME_OF_INTERVAL:
+                        current_chord_names = None
+                    else:
+                        current_chord_names = [
+                            root_note_obj.name,
+                            root_note_obj.up(
+                                NAME_OF_INTERVAL[chord_types[5:]]).name
+                        ]
+                if current_chord_names:
+                    M3 = root_note_obj.up(major_third).name
+                    m3 = root_note_obj.up(minor_third).name
+                    if m3 in current_chord_names:
+                        current_notation += '-'
+                    if len(current_chord_names) >= 3:
+                        current_notation += '?'
+                else:
+                    current_notation += '?'
         notations.append(current_notation)
     if as_list:
         return notations
@@ -1411,29 +1466,56 @@ def chord_functions_analysis(current_chord,
                              split_symbol='|',
                              chord_mode='function',
                              fixed_scale_type=None,
+                             return_scale_degrees=False,
                              write_to_file=False,
                              each_line_chords_number=15,
                              space_lines=2,
                              full_chord_msg=False,
-                             **detect_args):
-    current_chord = current_chord.only_notes()
+                             is_chord_analysis=True,
+                             is_detect=True,
+                             detect_args={},
+                             chord_analysis_args={}):
+    if is_chord_analysis:
+        current_chord = current_chord.only_notes()
+    else:
+        if isinstance(current_chord, chord):
+            current_chord = [current_chord]
     if fixed_scale_type:
         scales = fixed_scale_type
     else:
-        scales = current_chord.detect_scale(get_scales=True)
+        scales = current_chord.detect_scale(
+            get_scales=True
+        ) if is_chord_analysis else current_chord[0].detect_scale(
+            get_scales=True)
         if scale_type:
             scales = [i for i in scales if i.mode == scale_type][0]
         else:
             scales = scales[0]
-    result = chord_analysis(current_chord, mode='chords')
-    result = [i.standardize() for i in result]
-    actual_chords = [detect(i, **detect_args) for i in result if len(i) > 1]
-    actual_chords = [i[0] if isinstance(i, list) else i for i in actual_chords]
+    if is_chord_analysis:
+        result = chord_analysis(current_chord,
+                                mode='chords',
+                                **chord_analysis_args)
+        result = [i.standardize() for i in result]
+    else:
+        result = current_chord
+    if is_detect:
+        actual_chords = [detect(i, **detect_args) for i in result]
+        actual_chords = [
+            i[0] if isinstance(i, list) else i for i in actual_chords
+        ]
+    else:
+        actual_chords = current_chord
     if chord_mode == 'function':
         if not write_to_file:
             chord_progressions = get_chord_functions(scales, actual_chords,
                                                      as_list,
                                                      functions_interval)
+            if full_chord_msg:
+                chord_progressions = [
+                    chord_progressions[i] + ' ' +
+                    ' '.join(actual_chords[i].split(' ')[1:])
+                    for i in range(len(chord_progressions))
+                ]
         else:
             chord_progressions = get_chord_functions(scales, actual_chords,
                                                      True, functions_interval)
@@ -1485,15 +1567,18 @@ def chord_functions_analysis(current_chord,
             chord_progressions = ('\n' * space_lines).join(chord_progressions)
     spaces = '\n' * space_lines
     analysis_result = f'key: {scales[0].name} {scales.mode}{spaces}{chord_progressions}'
-    if write_to_file:
-        with open('chords functions analysis result.txt',
-                  'w',
-                  encoding='utf-8') as f:
-            f.write(analysis_result)
-        analysis_result += spaces + "Successfully write the chord analysis result as a text file, please see 'chords functions analysis result.txt'."
-        return analysis_result
+    if return_scale_degrees:
+        return chord_progressions
     else:
-        return analysis_result
+        if write_to_file:
+            with open('chords functions analysis result.txt',
+                      'w',
+                      encoding='utf-8') as f:
+                f.write(analysis_result)
+            analysis_result += spaces + "Successfully write the chord analysis result as a text file, please see 'chords functions analysis result.txt'."
+            return analysis_result
+        else:
+            return analysis_result
 
 
 def split_melody(current_chord,
