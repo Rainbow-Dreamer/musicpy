@@ -1153,9 +1153,7 @@ def detect_in_scale(current_chord,
         return results
 
 
-def most_appear_notes_detect_scale(current_chord,
-                                   most_appeared_note,
-                                   get_scales=False):
+def most_appear_notes_detect_scale(current_chord, most_appeared_note):
     third_degree_major = most_appeared_note.up(major_third).name
     third_degree_minor = most_appeared_note.up(minor_third).name
     if current_chord.count(third_degree_major) > current_chord.count(
@@ -1186,9 +1184,7 @@ def most_appear_notes_detect_scale(current_chord,
                             diminished_fifth).name) > current_chord.count(
                                 most_appeared_note.up(perfect_fifth).name):
                     current_mode = 'locrian'
-    if get_scales:
-        return scale(most_appeared_note.name, current_mode)
-    return f'{most_appeared_note.name} {current_mode}'
+    return scale(most_appeared_note.name, current_mode)
 
 
 def detect_scale(current_chord,
@@ -1213,27 +1209,55 @@ def detect_scale(current_chord,
     counts = current_chord.count_appear(sort=True)
     most_appeared_note = [N(each[0]) for each in counts[:most_appear_num]]
     result_scales = [
-        most_appear_notes_detect_scale(current_chord, each, get_scales)
+        most_appear_notes_detect_scale(current_chord, each)
         for each in most_appeared_note
     ]
     if major_minor_preference:
-        if get_scales:
-            major_minor_inds = [
-                i for i in range(len(result_scales))
-                if result_scales[i].mode in ['major', 'minor']
-            ]
-        else:
-            major_minor_inds = [
-                i for i in range(len(result_scales))
-                if any(k in result_scales[i] for k in ['major', 'minor'])
-            ]
+        major_minor_inds = [
+            i for i in range(len(result_scales))
+            if result_scales[i].mode in ['major', 'minor']
+        ]
         result_scales = [result_scales[i] for i in major_minor_inds] + [
             result_scales[i]
             for i in range(len(result_scales)) if i not in major_minor_inds
         ]
+        if major_minor_inds:
+            major_minor_inds = [
+                i for i in range(len(result_scales))
+                if result_scales[i].mode in ['major', 'minor']
+            ]
+            major_inds = [
+                i for i in major_minor_inds if result_scales[i].mode == 'major'
+            ]
+            minor_inds = [
+                i for i in major_minor_inds if result_scales[i].mode == 'minor'
+            ]
+            current_chord_analysis = chord_analysis(current_chord,
+                                                    is_chord=True,
+                                                    get_original_order=True,
+                                                    mode='chords')
+            if current_chord_analysis:
+                first_chord = current_chord_analysis[0]
+                first_chord_info = first_chord.info(get_dict=True)
+                if first_chord_info['type'] == 'chord':
+                    if first_chord_info['chord type'].startswith('maj'):
+                        result_scales = [result_scales[i]
+                                         for i in major_inds] + [
+                                             result_scales[j]
+                                             for j in range(len(result_scales))
+                                             if j not in major_inds
+                                         ]
+                    elif first_chord_info['chord type'].startswith('m'):
+                        result_scales = [result_scales[i]
+                                         for i in minor_inds] + [
+                                             result_scales[j]
+                                             for j in range(len(result_scales))
+                                             if j not in minor_inds
+                                         ]
+
     if get_scales:
         return result_scales
-    return f'most likely scales: {", ".join(result_scales)}'
+    return f'most likely scales: {", ".join([f"{i.start.name} {i.mode}" for i in result_scales])}'
 
 
 def get_chord_root_note(chord_name,
