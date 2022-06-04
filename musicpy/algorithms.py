@@ -1820,13 +1820,7 @@ def split_all(current_chord,
 
 
 def chord_analysis(chords,
-                   melody_tol=minor_seventh,
-                   chord_tol=major_sixth,
-                   get_off_overlap_notes=True,
-                   average_degree_length=8,
-                   melody_degree_tol=toNote('B4'),
                    mode='chord names',
-                   get_chord_inds=False,
                    is_chord=False,
                    new_chord_tol=minor_seventh,
                    get_original_order=False,
@@ -1837,15 +1831,14 @@ def chord_analysis(chords,
                    functions_interval=1,
                    split_symbol='|',
                    space_lines=2,
-                   **detect_args):
+                   detect_args={},
+                   split_chord_args={}):
     '''
     analysis the chord progressions of a chord instance
     '''
     chords = chords.only_notes()
     if not is_chord:
-        chord_notes = split_chord(chords, 'chord', melody_tol, chord_tol,
-                                  get_off_overlap_notes, average_degree_length,
-                                  melody_degree_tol)
+        chord_notes = split_chord(chords, 'chord', **split_chord_args)
     else:
         chord_notes = chords
     if formated or (mode in ['inds', 'bars', 'bars start']):
