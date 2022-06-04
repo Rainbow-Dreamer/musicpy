@@ -1352,8 +1352,11 @@ def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
             if inversion_note not in note_names:
                 inversion_note, header = inversion_note[:-1], inversion_note[
                     -1]
-            ind = note_names.index(inversion_note) + 1
-            current_function = f'{get_chord_functions(mode, current_note)}/{header}{ind}'
+            if inversion_note not in note_names:
+                current_function = each[1]
+            else:
+                ind = note_names.index(inversion_note) + 1
+                current_function = f'{get_chord_functions(mode, current_note)}/{header}{ind}'
         else:
             root_note, chord_types = each
             root_note_obj = note(root_note, 5)
@@ -1417,41 +1420,49 @@ def get_chord_notations(chords,
                         split_symbol='|'):
     if not isinstance(chords, list):
         chords = [chords]
-    root_note_list = [get_chord_root_note(i, True) for i in chords]
+    root_note_list = [
+        get_chord_root_note(i, True)
+        if '/' not in i else [get_chord_root_note(i.split('/', 1), True), i]
+        for i in chords
+    ]
     notations = []
     for each in root_note_list:
-        root_note, chord_types = each
-        current_notation = root_note
-        root_note_obj = note(root_note, 5)
-        if chord_types in chord_notation_dict:
-            current_notation += chord_notation_dict[chord_types]
+        if isinstance(each[0], tuple):
+            current_note, inversion_note = each[1].split('/', 1)
+            current_notation = f'{get_chord_notations(current_note)}/{inversion_note}'
         else:
-            notation_result = get_chord_type_location(chord_types,
-                                                      mode='notations')
-            if notation_result:
-                current_notation += notation_result
+            root_note, chord_types = each
+            current_notation = root_note
+            root_note_obj = note(root_note, 5)
+            if chord_types in chord_notation_dict:
+                current_notation += chord_notation_dict[chord_types]
             else:
-                if chord_types in chordTypes:
-                    current_chord = chd(root_note, chord_types)
-                    current_chord_names = current_chord.names()
+                notation_result = get_chord_type_location(chord_types,
+                                                          mode='notations')
+                if notation_result:
+                    current_notation += notation_result
                 else:
-                    if chord_types[5:] not in NAME_OF_INTERVAL:
-                        current_chord_names = None
+                    if chord_types in chordTypes:
+                        current_chord = chd(root_note, chord_types)
+                        current_chord_names = current_chord.names()
                     else:
-                        current_chord_names = [
-                            root_note_obj.name,
-                            root_note_obj.up(
-                                NAME_OF_INTERVAL[chord_types[5:]]).name
-                        ]
-                if current_chord_names:
-                    M3 = root_note_obj.up(major_third).name
-                    m3 = root_note_obj.up(minor_third).name
-                    if m3 in current_chord_names:
-                        current_notation += '-'
-                    if len(current_chord_names) >= 3:
+                        if chord_types[5:] not in NAME_OF_INTERVAL:
+                            current_chord_names = None
+                        else:
+                            current_chord_names = [
+                                root_note_obj.name,
+                                root_note_obj.up(
+                                    NAME_OF_INTERVAL[chord_types[5:]]).name
+                            ]
+                    if current_chord_names:
+                        M3 = root_note_obj.up(major_third).name
+                        m3 = root_note_obj.up(minor_third).name
+                        if m3 in current_chord_names:
+                            current_notation += '-'
+                        if len(current_chord_names) >= 3:
+                            current_notation += '?'
+                    else:
                         current_notation += '?'
-                else:
-                    current_notation += '?'
         notations.append(current_notation)
     if as_list:
         return notations
