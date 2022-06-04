@@ -442,7 +442,7 @@ class chord:
             choices = copy(standard2) if as_standard else copy(standard)
         else:
             choices = [
-                mp.toNote(i).anme if isinstance(i, str) else i.name
+                mp.toNote(i).name if isinstance(i, str) else i.name
                 for i in choices
             ]
         result = {i: test_obj.count(i) for i in choices}
