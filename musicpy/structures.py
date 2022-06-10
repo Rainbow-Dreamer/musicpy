@@ -1664,6 +1664,8 @@ class chord:
              **detect_args):
         chord_type = self.detect(
             alter_notes_show_degree=alter_notes_show_degree, **detect_args)
+        if chord_type is None:
+            return
         standard_notes = self.standardize()
         if len(standard_notes) == 1:
             if get_dict:
@@ -1714,10 +1716,12 @@ class chord:
                             'omit', 1)[1].replace(' ', '').split(',')
                 ]
         if 'sort as' in chord_type:
-            other_msg['voicing'] = [
-                int(i) for i in chord_type.split('/', 1)[0].strip('[]').split(
-                    'sort as', 1)[1].replace(' ', '').strip('[]').split(',')
-            ]
+            if chord_speciality != 'polychord':
+                other_msg['voicing'] = [
+                    int(i) for i in chord_type.split(
+                        '/', 1)[0].strip('[]').split('sort as', 1)[1].replace(
+                            ' ', '').strip('[]').split(',')
+                ]
         try:
             alter_notes = chord_type.split('/', 1)[0].split(
                 'sort as',
