@@ -1276,14 +1276,18 @@ class chord:
         self.interval.append(interval)
 
     def extend(self, values, intervals=0):
-        values = [
-            mp.toNote(value) if isinstance(value, str) else value
-            for value in values
-        ]
-        if isinstance(intervals, int):
-            intervals = [intervals for i in range(len(values))]
-        self.notes.extend(values)
-        self.interval.extend(intervals)
+        if isinstance(values, chord):
+            self.notes.extend(values.notes)
+            self.interval.extend(values.interval)
+        else:
+            values = [
+                mp.toNote(value) if isinstance(value, str) else value
+                for value in values
+            ]
+            if isinstance(intervals, int):
+                intervals = [intervals for i in range(len(values))]
+            self.notes.extend(values)
+            self.interval.extend(intervals)
 
     def delete(self, ind):
         del self.notes[ind]
