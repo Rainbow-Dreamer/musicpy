@@ -1815,7 +1815,6 @@ def split_all(current_chord,
         # depends on which starts earlier, if shift >= 0, chord part starts after main melody,
         # if shift < 0, chord part starts before main melody
         shift = result_chord.start_time - result_melody.start_time
-        result_chord.start_time = 0
         return [result_melody, result_chord, shift]
 
 

@@ -2201,7 +2201,7 @@ class chord:
         for i in range(M):
             new_interval.append(sum(whole_interval[indlist[i]:indlist[i + 1]]))
         new_interval.append(sum(whole_interval[indlist[-1]:]))
-        start_time = temp[:indlist[0]].bars()
+        start_time = temp[:indlist[0]].bars(mode=0)
         return chord([whole_notes[j] for j in indlist],
                      interval=new_interval,
                      start_time=start_time,
