@@ -822,12 +822,16 @@ def write(current_chord,
                                         **midi_args)
     MyMIDI.addTempo(0, 0, bpm)
     for i in range(track_number):
+        duplicate_channel = False
         if channels:
             current_channel = channels[i]
+            if current_channel in channels[:i]:
+                duplicate_channel = True
         else:
             current_channel = i
-        MyMIDI.addProgramChange(i, current_channel, 0,
-                                instruments_numbers[i] - 1)
+        if not duplicate_channel:
+            MyMIDI.addProgramChange(i, current_channel, 0,
+                                    instruments_numbers[i] - 1)
         if track_names:
             MyMIDI.addTrackName(i, 0, track_names[i])
 
