@@ -1995,9 +1995,16 @@ class chord:
                      rootpitch=pitch,
                      start_time=copy(self.start_time))
 
-    def near_voicing(self, other, keep_root=True, root_lower=False):
-        temp = self.standardize()
-        other = other.standardize()
+    def near_voicing(self,
+                     other,
+                     keep_root=True,
+                     root_lower=False,
+                     standardize=True):
+        if standardize:
+            temp = self.standardize()
+            other = other.standardize()
+        else:
+            temp = copy(self)
         original_duration = temp.get_duration()
         original_volume = temp.get_volume()
         if keep_root:
@@ -2089,6 +2096,12 @@ class chord:
         if isinstance(pitch, str):
             pitch = mp.toNote(pitch)
         return self + (pitch.degree - self[0].degree)
+
+    def reset_same_octave(self, octave):
+        temp = copy(self)
+        for each in temp.notes:
+            each.num = octave
+        return temp
 
     def reset_same_channel(self, channel=None):
         for each in self.notes:
