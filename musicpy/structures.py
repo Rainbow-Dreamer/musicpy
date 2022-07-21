@@ -1386,11 +1386,10 @@ class chord:
                 else:
                     current_name = current.name
                 if current_name in transdict:
-                    temp.notes[k] = mp.toNote(
-                        f'{transdict[current_name]}{current.num}',
-                        current.duration,
-                        current.volume,
-                        channel=current.channel)
+                    current_note = mp.closest_note(current,
+                                                   transdict[current_name])
+                    temp.notes[k] = current.reset(name=current_note.name,
+                                                  num=current_note.num)
         return temp
 
     def __getitem__(self, ind):

@@ -1907,6 +1907,20 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
     self.start_times = new_start_times
 
 
+def closest_note(note1, note2):
+    if not isinstance(note1, note):
+        note1 = toNote(note1)
+    if isinstance(note2, note):
+        note2 = note2.name
+    current_note = [
+        note(note2, note1.num),
+        note(note2, note1.num - 1),
+        note(note2, note1.num + 1)
+    ]
+    result = min(current_note, key=lambda s: abs(s.degree - note1.degree))
+    return result
+
+
 C = trans
 N = toNote
 S = toScale

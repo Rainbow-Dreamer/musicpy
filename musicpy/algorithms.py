@@ -902,7 +902,11 @@ def perm(n, k=None):
         locals())
 
 
-def negative_harmony(key, current_chord=None, sort=False, get_map=False):
+def negative_harmony(key,
+                     current_chord=None,
+                     sort=False,
+                     get_map=False,
+                     keep_root=True):
     notes_dict = [
         'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'
     ] * 2
@@ -930,7 +934,10 @@ def negative_harmony(key, current_chord=None, sort=False, get_map=False):
                 if isinstance(current, note):
                     if current.name in standard_dict:
                         current.name = standard_dict[current.name]
-                    notes[each] = current.reset(name=map_dict[current.name])
+                    current_note = closest_note(current,
+                                                map_dict[current.name])
+                    notes[each] = current.reset(name=current_note.name,
+                                                num=current_note.num)
             if sort:
                 temp.notes.sort(key=lambda s: s.degree)
             return temp
@@ -943,14 +950,26 @@ def negative_harmony(key, current_chord=None, sort=False, get_map=False):
         notes = temp.notes
         for each in range(len(notes)):
             current = notes[each]
+            if current.name in standard_dict:
+                current.name = standard_dict[current.name]
             notes[each] = current.reset(name=map_dict[current.name])
-        temp.notes.sort(key=lambda s: s.degree)
-        temp.notes.append(temp.notes[0].up(octave))
-        temp.mode = None
-        temp.interval = None
-        temp.interval = temp.getInterval()
-        temp.mode = detect_scale_type(temp)
-        return temp
+        if keep_root:
+            root_note = key[0].name
+            if root_note in standard_dict:
+                root_note = standard_dict[root_note]
+            root_note_ind = [i.name for i in notes].index(root_note)
+            new_notes = [
+                i.name
+                for i in notes[root_note_ind + 1:] + notes[:root_note_ind + 1]
+            ]
+            new_notes.reverse()
+            new_notes.append(new_notes[0])
+        else:
+            new_notes = [i.name for i in notes]
+            new_notes.append(new_notes[0])
+            new_notes.reverse()
+        result = scale(notes=chord(new_notes))
+        return result
 
 
 def guitar_chord(frets,
