@@ -192,6 +192,7 @@ class chord:
         if standardize_msg and notes:
             root = notes[0]
             notels = [root]
+            last = None
             for i in range(1, len(notes)):
                 last_note = notels[i - 1]
                 if isinstance(last_note, note):
@@ -200,9 +201,12 @@ class chord:
                 if not isinstance(current_note, note):
                     notels.append(current_note)
                 else:
-                    current = note(current_note.name, last.num)
-                    if standard[current.name] <= standard[last.name]:
-                        current = note(current.name, last.num + 1)
+                    if last is not None:
+                        current = note(current_note.name, last.num)
+                        if standard[current.name] <= standard[last.name]:
+                            current = note(current.name, last.num + 1)
+                    else:
+                        current = current_note
                     notels.append(current)
             notes = notels
         self.notes = notes

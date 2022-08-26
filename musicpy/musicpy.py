@@ -1829,6 +1829,7 @@ def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):
 
 
 def piece_process_normalize_tempo(self, bpm, first_track_start_time):
+    other_messages = self.other_messages
     temp = copy(self)
     start_time_ls = temp.start_times
     all_tracks = temp.tracks
@@ -1846,6 +1847,7 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
     for i in range(1, length):
         first_track &= (all_tracks[i],
                         start_time_ls[i] - first_track_start_time)
+    first_track.other_messages = other_messages
     if self.pan:
         for k in range(len(self.pan)):
             current_pan = self.pan[k]
