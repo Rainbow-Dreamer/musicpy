@@ -1212,7 +1212,7 @@ def detect_scale(current_chord,
                  major_minor_preference=True,
                  is_chord=True):
     '''
-    receive a piece of music and analyze what modes it is using,
+    Receive a piece of music and analyze what modes it is using,
     return a list of most likely and exact modes the music has.
 
     newly added on 2020/4/25, currently in development
@@ -1285,7 +1285,72 @@ def detect_scale(current_chord,
 
     if get_scales:
         return result_scales
-    return f'most likely scales: {", ".join([f"{i.start.name} {i.mode}" for i in result_scales])}'
+    else:
+        return f'most likely scales: {", ".join([f"{i.start.name} {i.mode}" for i in result_scales])}'
+
+
+def detect_scale2(current_chord,
+                  is_chord=True,
+                  major_minor_preference=True,
+                  get_scales=False):
+    '''
+    Receive a piece of music and analyze what modes it is using,
+    return a list of most likely and exact modes the music has.
+    
+    This algorithm uses different detect factors from detect_scale function,
+    which are firstly the appearances of the third of the note and then the appearance of the note.
+    '''
+    if not is_chord:
+        original_chord = current_chord
+        current_chord = concat(current_chord, mode='|')
+    current_chord = current_chord.only_notes()
+    counts = current_chord.count_appear(sort=True)
+    counts_dict = {i[0]: i[1] for i in counts}
+    most_appeared_note = [N(each[0]) for each in counts]
+    note_scale_count = [
+        (i, sum([counts_dict[k] for k in scale(i, 'major').names()]))
+        for i in most_appeared_note
+    ]
+    most_appeared_note = max(note_scale_count, key=lambda s: s[1])[0]
+    current_scale = scale(most_appeared_note, 'major')
+    scale_notes_counts = [(k, counts_dict[k]) for k in current_scale.names()]
+    scale_notes_counts_original = copy(scale_notes_counts)
+    length = len(scale_notes_counts)
+    scale_notes_counts.sort(key=lambda s: scale_notes_counts_original[
+        (scale_notes_counts_original.index(s) + 2) % length][1],
+                            reverse=True)
+    if major_minor_preference:
+        scale_notes_counts = [
+            i for i in scale_notes_counts if i[0] in [
+                scale_notes_counts_original[0][0],
+                scale_notes_counts_original[5][0]
+            ]
+        ]
+        inds = [current_scale.names().index(i[0]) for i in scale_notes_counts]
+        current_count = [
+            scale_notes_counts_original[i][1] +
+            scale_notes_counts_original[(i + 2) % length][1] for i in inds
+        ]
+        current_tonic_ind = current_count.index(max(current_count))
+        current_tonic = scale_notes_counts[current_tonic_ind][0]
+        current_ind = current_scale.names().index(current_tonic)
+        current_mode = mode_check_parameters[current_ind][0]
+        current_tonic2 = scale_notes_counts[1 - current_tonic_ind][0]
+        current_ind2 = current_scale.names().index(current_tonic2)
+        current_mode2 = mode_check_parameters[current_ind2][0]
+        result_scale = [
+            scale(current_tonic, current_mode),
+            scale(current_tonic2, current_mode2)
+        ]
+    else:
+        current_tonic = max(scale_notes_counts[:2], key=lambda s: s[1])[0]
+        current_ind = current_scale.names().index(current_tonic)
+        current_mode = mode_check_parameters[current_ind][0]
+        result_scale = [scale(current_tonic, current_mode)]
+    if get_scales:
+        return result_scale
+    else:
+        return ', '.join([f"{i.start.name} {i.mode}" for i in result_scale])
 
 
 def get_chord_root_note(chord_name,

@@ -3310,8 +3310,20 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def merge(self, add_labels=True, add_pan_volume=False):
+    def get_off_drums(self):
+        if self.channels:
+            while 9 in self.channels:
+                del self[self.channels.index(9)]
+
+    def merge(self,
+              add_labels=True,
+              add_pan_volume=False,
+              get_off_drums=False):
         temp = copy(self)
+        if get_off_drums:
+            if temp.channels:
+                while 9 in temp.channels:
+                    del temp[temp.channels.index(9)]
         if add_labels:
             temp.add_track_labels()
         tempo_changes = temp.get_tempo_changes()
