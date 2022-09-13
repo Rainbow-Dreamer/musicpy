@@ -1363,8 +1363,8 @@ def detect_scale3(current_chord,
     Receive a piece of music and analyze what modes it is using,
     return a list of most likely and exact modes the music has.
     
-    This algorithm uses different detect factors from detect_scale function,
-    which are firstly the appearances of the third of the note and then the appearance of the note.
+    This algorithm uses the same detect factors as detect_scale2 function,
+    but detect the key of the piece in units, which makes modulation detections possible.
     '''
     if not is_chord:
         original_chord = current_chord
