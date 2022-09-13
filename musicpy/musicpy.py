@@ -366,13 +366,13 @@ def read(name,
     else:
         channels_list = None
 
-    instruments_list = []
+    instruments = []
     for each in available_tracks:
         current_program = [i.program for i in each if hasattr(i, 'program')]
         if current_program:
-            instruments_list.append(current_program[0] + 1)
+            instruments.append(current_program[0] + 1)
         else:
-            instruments_list.append(1)
+            instruments.append(1)
     chords_list = [each[1] for each in all_tracks]
     pan_list = [k.pan_list for k in chords_list]
     volume_list = [k.volume_list for k in chords_list]
@@ -382,8 +382,8 @@ def read(name,
         tracks_names_list = [j[0] for j in tracks_names_list]
     else:
         tracks_names_list = None
-    result_piece = piece(chords_list, instruments_list, whole_bpm,
-                         start_times_list, tracks_names_list, channels_list,
+    result_piece = piece(chords_list, instruments, whole_bpm, start_times_list,
+                         tracks_names_list, channels_list,
                          os.path.splitext(os.path.basename(name))[0], pan_list,
                          volume_list)
     if split_channels:
@@ -447,7 +447,7 @@ def read(name,
             i for i in available_tracks
             if i.type == 'program_change' and i.channel == k
         ] for k in channels_list]
-        instruments_list = [
+        instruments = [
             each[0].program + 1 if each else 1
             for each in current_instruments_list
         ]
@@ -461,10 +461,10 @@ def read(name,
             rename_track_names = True
         result_merge_track = all_tracks[1]
         result_piece.tracks = [chord([]) for i in range(len(channels_list))]
-        result_piece.instruments_list = [
-            reverse_instruments[i] for i in instruments_list
+        result_piece.instruments = [
+            reverse_instruments[i] for i in instruments
         ]
-        result_piece.instruments_numbers = instruments_list
+        result_piece.instruments_numbers = instruments
         result_piece.track_names = tracks_names_list
         result_piece.channels = channels_list
         result_piece.pan = [[] for i in range(len(channels_list))]
@@ -813,7 +813,7 @@ def write(current_chord,
     track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
     current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
     instruments_numbers = [
-        i if isinstance(i, int) else instruments[i]
+        i if isinstance(i, int) else INSTRUMENTS[i]
         for i in instruments_numbers
     ]
     MyMIDI = midiutil.MidiFile.MIDIFile(track_number,
@@ -983,6 +983,17 @@ def modulation(current_chord, old_scale, new_scale):
 
 def trans(obj, pitch=4, duration=0.25, interval=None):
     obj = obj.replace(' ', '')
+    if obj.count('/') > 1:
+        current_parts = obj.split('/')
+        current_parts = [int(i) if i.isdigit() else i for i in current_parts]
+        result = trans(current_parts[0], pitch, duration, interval)
+        for each in current_parts[1:]:
+            if each in standard:
+                each = standard_dict.get(each, each)
+            elif not isinstance(each, int):
+                each = trans(each, pitch, duration, interval)
+            result /= each
+        return result
     if obj in standard:
         return chd(obj,
                    'M',
@@ -1090,7 +1101,7 @@ def build(*tracks_list, **kwargs):
                                               (list, track)):
             return build(*tracks_list[0], **kwargs)
     tracks = []
-    instruments_list = []
+    instruments = []
     start_times = []
     channels = []
     track_names = []
@@ -1101,7 +1112,7 @@ def build(*tracks_list, **kwargs):
     for each in tracks_list:
         if isinstance(each, track):
             tracks.append(each.content)
-            instruments_list.append(each.instrument)
+            instruments.append(each.instrument)
             start_times.append(each.start_time)
             channels.append(each.channel)
             track_names.append(each.track_name)
@@ -1111,7 +1122,7 @@ def build(*tracks_list, **kwargs):
         else:
             new_each = each + remain_list[len(each) - 1:]
             tracks.append(new_each[0])
-            instruments_list.append(new_each[1])
+            instruments.append(new_each[1])
             start_times.append(new_each[2])
             channels.append(new_each[3])
             track_names.append(new_each[4])
@@ -1127,7 +1138,7 @@ def build(*tracks_list, **kwargs):
     if any(i is None for i in sampler_channels):
         sampler_channels = None
     result = P(tracks=tracks,
-               instruments_list=instruments_list,
+               instruments=instruments,
                start_times=start_times,
                track_names=track_names,
                channels=channels,

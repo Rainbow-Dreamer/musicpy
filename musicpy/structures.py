@@ -31,10 +31,8 @@ class note:
         self.name = standard_reverse[value % 12]
         self.num = (value // 12) - 1
 
-    def __str__(self):
+    def __repr__(self):
         return f'{self.name}{self.num}'
-
-    __repr__ = __str__
 
     def __eq__(self, other):
         return isinstance(
@@ -627,21 +625,8 @@ class chord:
                     'please ensure the intervals between notes has the same numbers of the notes'
                 )
 
-    def __str__(self):
+    def __repr__(self):
         return f'{self.notes} with interval {self.interval}'
-
-    def details(self):
-        notes_only = self.only_notes()
-        notes_part = 'notes: ' + ', '.join([
-            f"{notes_only.notes[i]}[{Fraction(notes_only.notes[i].duration)};{Fraction(notes_only.interval[i])};{notes_only.notes[i].volume}]"
-            for i in range(len(notes_only.notes))
-        ])
-        tempo_part = 'tempo changes: ' + str(self.split(tempo, get_time=True))
-        pitch_bend_part = 'pitch bend changes: ' + str(
-            self.split(pitch_bend, get_time=True))
-        return '\n'.join([notes_part, tempo_part, pitch_bend_part])
-
-    __repr__ = __str__
 
     def __contains__(self, note1):
         if not isinstance(note1, note):
@@ -2272,10 +2257,8 @@ class scale:
     def change_interval(self, interval):
         self.interval = interval
 
-    def __str__(self):
+    def __repr__(self):
         return f'scale name: {self.start} {self.mode} scale\nscale intervals: {self.getInterval()}\nscale notes: {self.getScale().notes}'
-
-    __repr__ = __str__
 
     def __eq__(self, other):
         return isinstance(other, scale) and self.notes == other.notes
@@ -2830,7 +2813,7 @@ class piece:
 
     def __init__(self,
                  tracks,
-                 instruments_list=None,
+                 instruments=None,
                  bpm=120,
                  start_times=None,
                  track_names=None,
@@ -2841,20 +2824,20 @@ class piece:
                  other_messages=[],
                  sampler_channels=None):
         self.tracks = tracks
-        if instruments_list is None:
-            self.instruments_list = [
+        if instruments is None:
+            self.instruments = [
                 reverse_instruments[1] for i in range(len(self.tracks))
             ]
             self.instruments_numbers = [
-                instruments[j] for j in self.instruments_list
+                INSTRUMENTS[j] for j in self.instruments
             ]
         else:
-            self.instruments_list = [
+            self.instruments = [
                 reverse_instruments[i] if isinstance(i, int) else i
-                for i in instruments_list
+                for i in instruments
             ]
             self.instruments_numbers = [
-                instruments[j] for j in self.instruments_list
+                INSTRUMENTS[j] for j in self.instruments
             ]
         self.bpm = bpm
         self.start_times = start_times
@@ -2883,7 +2866,7 @@ class piece:
         return (
             f'[piece] {self.name if self.name else ""}\n'
         ) + f'BPM: {round(self.bpm, 3)}\n' + '\n'.join([
-            f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] + " " if self.track_names and self.track_names[i] else ""}| instrument: {self.instruments_list[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
+            f'track {i+1}{" channel " + str(self.channels[i]) if self.channels else ""} {self.track_names[i] + " " if self.track_names and self.track_names[i] else ""}| instrument: {self.instruments[i]} | start time: {self.start_times[i]} | {self.tracks[i]}'
             for i in range(len(self.tracks))
         ])
 
@@ -2897,7 +2880,7 @@ class piece:
     def __getitem__(self, i):
         return track(
             content=self.tracks[i],
-            instrument=self.instruments_list[i],
+            instrument=self.instruments[i],
             start_time=self.start_times[i],
             channel=self.channels[i] if self.channels else None,
             track_name=self.track_names[i] if self.track_names else None,
@@ -2910,7 +2893,7 @@ class piece:
 
     def __delitem__(self, i):
         del self.tracks[i]
-        del self.instruments_list[i]
+        del self.instruments[i]
         del self.instruments_numbers[i]
         del self.start_times[i]
         if self.track_names:
@@ -2927,7 +2910,7 @@ class piece:
 
     def __setitem__(self, i, new_track):
         self.tracks[i] = new_track.content
-        self.instruments_list[i] = new_track.instrument
+        self.instruments[i] = new_track.instrument
         self.instruments_numbers[i] = new_track.instruments_number
         self.start_times[i] = new_track.start_time
         if self.track_names and new_track.track_name:
@@ -2966,7 +2949,7 @@ class piece:
         if not isinstance(new_track, track):
             raise ValueError('must be a track type to be appended')
         self.tracks.append(new_track.content)
-        self.instruments_list.append(new_track.instrument)
+        self.instruments.append(new_track.instrument)
         self.instruments_numbers.append(new_track.instruments_number)
         self.start_times.append(new_track.start_time)
         if self.channels:
@@ -3090,7 +3073,7 @@ class piece:
 
     def __call__(self, num):
         return [
-            self.tracks[num], self.instruments_list[num], self.bpm,
+            self.tracks[num], self.instruments[num], self.bpm,
             self.start_times[num],
             self.channels[num] if self.channels else None,
             self.track_names[num] if self.track_names else None, self.pan[num],
@@ -3124,8 +3107,8 @@ class piece:
                 if current_start_time < 0:
                     temp.start_times[current_ind] += current_start_time
             else:
-                current_instrument = temp2.instruments_list[i]
-                temp.instruments_list.append(current_instrument)
+                current_instrument = temp2.instruments[i]
+                temp.instruments.append(current_instrument)
                 temp.instruments_numbers.append(current_instrument_number)
                 current_start_time = temp2.start_times[i]
                 current_start_time += start_time
@@ -3463,9 +3446,7 @@ class piece:
             int(i) if isinstance(i, float) and i.is_integer() else i
             for i in new_start_times
         ]
-        self.instruments_list = [
-            self.instruments_list[k] for k in available_tracks_inds
-        ]
+        self.instruments = [self.instruments[k] for k in available_tracks_inds]
         self.instruments_numbers = [
             self.instruments_numbers[k] for k in available_tracks_inds
         ]
@@ -3722,33 +3703,32 @@ class piece:
                 i for i in self.other_messages if not isinstance(i, types)
             ]
 
-    def change_instruments(self, instruments_list, ind=None):
+    def change_instruments(self, instruments, ind=None):
         if ind is None:
-            if all(isinstance(i, int) for i in instruments_list):
-                self.instruments_numbers = copy(instruments_list)
-                self.instruments_list = [
+            if all(isinstance(i, int) for i in instruments):
+                self.instruments_numbers = copy(instruments)
+                self.instruments = [
                     reverse_instruments[i] for i in self.instruments_numbers
                 ]
-            elif all(isinstance(i, str) for i in instruments_list):
-                self.instruments_list = copy(instruments_list)
+            elif all(isinstance(i, str) for i in instruments):
+                self.instruments = copy(instruments)
                 self.instruments_numbers = [
-                    instruments[i] for i in self.instruments_list
+                    INSTRUMENTS[i] for i in self.instruments
                 ]
             elif any(
                     isinstance(i, list) and all(isinstance(j, int) for j in i)
-                    for i in instruments_list):
-                self.instruments_numbers = copy(instruments_list)
+                    for i in instruments):
+                self.instruments_numbers = copy(instruments)
         else:
-            if isinstance(instruments_list, int):
-                self.instruments_numbers[ind] = instruments_list
-                self.instruments_list[ind] = reverse_instruments[
-                    instruments_list]
-            elif isinstance(instruments_list, str):
-                self.instruments_list[ind] = instruments_list
-                self.instruments_numbers[ind] = instruments[instruments_list]
-            elif isinstance(instruments_list, list) and all(
-                    isinstance(j, int) for j in instruments_list):
-                self.instruments_numbers[ind] = copy(instruments_list)
+            if isinstance(instruments, int):
+                self.instruments_numbers[ind] = instruments
+                self.instruments[ind] = reverse_instruments[instruments]
+            elif isinstance(instruments, str):
+                self.instruments[ind] = instruments
+                self.instruments_numbers[ind] = INSTRUMENTS[instruments]
+            elif isinstance(instruments, list) and all(
+                    isinstance(j, int) for j in instruments):
+                self.instruments_numbers[ind] = copy(instruments)
 
     def move(self, time=0, ind='all'):
         temp = copy(self)
@@ -3885,7 +3865,7 @@ class tempo:
         self.channel = channel
         self.track = track
 
-    def __str__(self):
+    def __repr__(self):
         result = f'tempo change to {self.bpm}'
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
@@ -3896,8 +3876,6 @@ class tempo:
         if vol > 127:
             vol = 127
         self.volume = vol
-
-    __repr__ = __str__
 
     def set_channel(self, channel):
         self.channel = channel
@@ -3939,7 +3917,7 @@ class pitch_bend:
         self.duration = 0
         self.volume = 100
 
-    def __str__(self):
+    def __repr__(self):
         result = f'pitch bend {"up" if self.value >= 0 else "down"} by {abs(self.value/40.96)} cents'
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
@@ -3950,8 +3928,6 @@ class pitch_bend:
         if vol > 127:
             vol = 127
         self.volume = vol
-
-    __repr__ = __str__
 
     def set_channel(self, channel):
         self.channel = channel
@@ -3985,10 +3961,8 @@ class tuning:
         self.tuningProgam = tuningProgam
         self.channel = channel
 
-    def __str__(self):
+    def __repr__(self):
         return f'tuning: {self.tuning_dict}'
-
-    __repr__ = __str__
 
     def set_channel(self, channel):
         self.channel = channel
@@ -4015,7 +3989,7 @@ class track:
         self.content = content
         self.instrument = reverse_instruments[instrument] if isinstance(
             instrument, int) else instrument
-        self.instruments_number = instruments[self.instrument]
+        self.instruments_number = INSTRUMENTS[self.instrument]
         self.bpm = bpm
         self.start_time = start_time
         self.track_name = track_name
@@ -4207,7 +4181,7 @@ class pan:
         self.channel = channel
         self.track = track
 
-    def __str__(self):
+    def __repr__(self):
         result = f'pan to {round(self.value_percentage, 3)}%'
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
@@ -4217,8 +4191,6 @@ class pan:
         return -((50 - self.value_percentage) /
                  50) if self.value_percentage <= 50 else (
                      self.value_percentage - 50) / 50
-
-    __repr__ = __str__
 
 
 class volume:
@@ -4248,13 +4220,11 @@ class volume:
         self.channel = channel
         self.track = track
 
-    def __str__(self):
+    def __repr__(self):
         result = f'volume set to {round(self.value_percentage, 3)}%'
         if self.start_time is not None:
             result += f' starts at {self.start_time}'
         return result
-
-    __repr__ = __str__
 
 
 class drum:
@@ -4283,10 +4253,8 @@ class drum:
         self.instrument = i if isinstance(i, int) else (
             drum_set_dict_reverse[i] if i in drum_set_dict_reverse else 1)
 
-    def __str__(self):
+    def __repr__(self):
         return f"[drum] {self.name if self.name else ''}\n{self.notes}"
-
-    __repr__ = __str__
 
     def translate(self,
                   pattern,

@@ -304,7 +304,7 @@ reverse_precise_degree_match = {
     augmented_thirteenth: '#13'
 }
 
-instruments = {
+INSTRUMENTS = {
     'Acoustic Grand Piano': 1,
     'Bright Acoustic Piano': 2,
     'Electric Grand Piano': 3,
@@ -435,7 +435,7 @@ instruments = {
     'Gunshot': 128
 }
 
-reverse_instruments = {j: i for i, j in instruments.items()}
+reverse_instruments = {j: i for i, j in INSTRUMENTS.items()}
 
 mode_check_parameters = [['major', [1, 3, 5], 1], ['dorian', [2, 4, 7], 2],
                          ['phrygian', [3, 5, 4], 3], ['lydian', [4, 6, 7], 4],
