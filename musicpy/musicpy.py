@@ -1945,6 +1945,7 @@ for each in [
         volume
 ]:
     each.reset = reset
+    each.__hash__ = lambda self: hash(repr(self))
 
 for each in [
         controller_event, copyright_event, key_signature, sysex, text_event,
@@ -1952,6 +1953,7 @@ for each in [
         channel_pressure, program_change, track_name
 ]:
     each.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
+    each.__hash__ = lambda self: hash(repr(self))
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import algorithms as alg
