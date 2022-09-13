@@ -1353,6 +1353,108 @@ def detect_scale2(current_chord,
         return ', '.join([f"{i.start.name} {i.mode}" for i in result_scale])
 
 
+def detect_scale3(current_chord,
+                  is_chord=True,
+                  major_minor_preference=True,
+                  get_scales=False,
+                  unit=5,
+                  key_accuracy_tol=0.9):
+    '''
+    Receive a piece of music and analyze what modes it is using,
+    return a list of most likely and exact modes the music has.
+    
+    This algorithm uses different detect factors from detect_scale function,
+    which are firstly the appearances of the third of the note and then the appearance of the note.
+    '''
+    if not is_chord:
+        original_chord = current_chord
+        current_chord = concat(current_chord, mode='|')
+    current_chord = current_chord.only_notes()
+    result_scale = []
+    total_bars = current_chord.bars()
+    current_key = None
+    current_key_range = [0, 0]
+    for i in range(math.ceil(total_bars / unit)):
+        current_range = [unit * i, unit * (i + 1)]
+        current_part = current_chord.cut(*current_range)
+        if not current_part:
+            current_key_range[1] = current_range[1]
+            result_scale[-1][0][1] = current_range[1]
+            continue
+        counts = current_part.count_appear(sort=True)
+        counts_dict = {i[0]: i[1] for i in counts}
+        most_appeared_note = [N(each[0]) for each in counts]
+        note_scale_count = [
+            (i, sum([counts_dict[k]
+                     for k in scale(i, 'major').names()]) / len(current_part))
+            for i in most_appeared_note
+        ]
+        most_appeared_note, current_key_rate = max(note_scale_count,
+                                                   key=lambda s: s[1])
+        if current_key_rate < key_accuracy_tol:
+            current_key_range[1] = current_range[1]
+            result_scale[-1][0][1] = current_range[1]
+            continue
+        current_scale = scale(most_appeared_note, 'major')
+        scale_notes_counts = [(k, counts_dict[k])
+                              for k in current_scale.names()]
+        scale_notes_counts_original = copy(scale_notes_counts)
+        length = len(scale_notes_counts)
+        scale_notes_counts.sort(key=lambda s: scale_notes_counts_original[
+            (scale_notes_counts_original.index(s) + 2) % length][1],
+                                reverse=True)
+        if major_minor_preference:
+            scale_notes_counts = [
+                i for i in scale_notes_counts if i[0] in [
+                    scale_notes_counts_original[0][0],
+                    scale_notes_counts_original[5][0]
+                ]
+            ]
+            inds = [
+                current_scale.names().index(i[0]) for i in scale_notes_counts
+            ]
+            current_count = [
+                scale_notes_counts_original[i][1] +
+                scale_notes_counts_original[(i + 2) % length][1] for i in inds
+            ]
+            current_tonic_ind = current_count.index(max(current_count))
+            current_tonic = scale_notes_counts[current_tonic_ind][0]
+            current_ind = current_scale.names().index(current_tonic)
+            current_mode = mode_check_parameters[current_ind][0]
+            current_tonic2 = scale_notes_counts[1 - current_tonic_ind][0]
+            current_ind2 = current_scale.names().index(current_tonic2)
+            current_mode2 = mode_check_parameters[current_ind2][0]
+            current_result_scale = [
+                scale(current_tonic, current_mode),
+                scale(current_tonic2, current_mode2)
+            ]
+        else:
+            current_tonic = max(scale_notes_counts[:2], key=lambda s: s[1])[0]
+            current_ind = current_scale.names().index(current_tonic)
+            current_mode = mode_check_parameters[current_ind][0]
+            current_result_scale = [scale(current_tonic, current_mode)]
+        if not current_key:
+            current_key = current_result_scale
+        if not result_scale:
+            result_scale.append([current_key_range, current_result_scale])
+        if set([str(i) for i in current_result_scale]) != set(
+            [str(i) for i in current_key]):
+            current_key_range = current_range
+            current_key = current_result_scale
+            result_scale.append([current_key_range, current_result_scale])
+        else:
+            current_key_range[1] = current_range[1]
+            result_scale[-1][0][1] = current_range[1]
+    if get_scales:
+        return result_scale
+    else:
+        return ', '.join([
+            str(i[0]) + ' ' +
+            ', '.join([f"{j.start.name} {j.mode}" for j in i[1]])
+            for i in result_scale
+        ])
+
+
 def get_chord_root_note(chord_name,
                         get_chord_types=False,
                         to_standard=False,
