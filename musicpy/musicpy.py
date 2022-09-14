@@ -1353,10 +1353,15 @@ def chord_progression(chords,
                       volumes=None,
                       chords_interval=None,
                       merge=True,
-                      scale=None):
+                      scale=None,
+                      separator=','):
     if scale:
         return scale.chord_progression(chords, durations, intervals, volumes,
                                        chords_interval, merge)
+    if isinstance(chords, str):
+        if ' ' not in separator:
+            chords = chords.replace(' ', '')
+        chords = chords.split(separator)
     chords = [(i, ) if isinstance(i, str) else i for i in chords]
     chords_len = len(chords)
     if not isinstance(durations, list):
@@ -1373,10 +1378,13 @@ def chord_progression(chords,
                       volumes[i] if volumes else volumes)
     if merge:
         result = chords[0]
+        current_interval = 0
         for i in range(1, chords_len):
             if chords_interval:
-                result |= chords_interval[i - 1]
-            result |= chords[i]
+                current_interval += chords_interval[i - 1]
+                result = result & (chords[i], current_interval)
+            else:
+                result |= chords[i]
         return result
     else:
         return chords
