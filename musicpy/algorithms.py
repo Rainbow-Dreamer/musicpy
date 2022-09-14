@@ -1437,8 +1437,7 @@ def detect_scale3(current_chord,
             current_key = current_result_scale
         if not result_scale:
             result_scale.append([current_key_range, current_result_scale])
-        if set([str(i) for i in current_result_scale]) != set(
-            [str(i) for i in current_key]):
+        if set(current_result_scale) != set(current_key):
             current_key_range = current_range
             current_key = current_result_scale
             result_scale.append([current_key_range, current_result_scale])
