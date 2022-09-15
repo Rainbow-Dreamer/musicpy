@@ -1290,63 +1290,60 @@ def detect_scale(current_chord,
 
 
 def detect_scale2(current_chord,
-                  is_chord=True,
+                  get_scales=False,
+                  most_appear_num=3,
                   major_minor_preference=True,
-                  get_scales=False):
+                  is_chord=True):
     '''
     Receive a piece of music and analyze what modes it is using,
     return a list of most likely and exact modes the music has.
     
     This algorithm uses different detect factors from detect_scale function,
-    which are firstly the appearances of the third of the note and then the appearance of the note.
+    which are the appearance rate of the notes in the tonic chord.
     '''
     if not is_chord:
-        original_chord = current_chord
         current_chord = concat(current_chord, mode='|')
     current_chord = current_chord.only_notes()
     counts = current_chord.count_appear(sort=True)
     counts_dict = {i[0]: i[1] for i in counts}
-    most_appeared_note = [N(each[0]) for each in counts]
+    appeared_note = [N(each[0]) for each in counts]
     note_scale_count = [
-        (i, sum([counts_dict[k] for k in scale(i, 'major').names()]))
-        for i in most_appeared_note
+        (i, sum([counts_dict[k]
+                 for k in scale(i, 'major').names()]) / len(current_chord))
+        for i in appeared_note
     ]
-    most_appeared_note = max(note_scale_count, key=lambda s: s[1])[0]
+    note_scale_count.sort(key=lambda s: s[1], reverse=True)
+    most_appeared_note, current_key_rate = note_scale_count[0]
     current_scale = scale(most_appeared_note, 'major')
-    scale_notes_counts = [(k, counts_dict[k]) for k in current_scale.names()]
-    scale_notes_counts_original = copy(scale_notes_counts)
-    length = len(scale_notes_counts)
-    scale_notes_counts.sort(key=lambda s: scale_notes_counts_original[
-        (scale_notes_counts_original.index(s) + 2) % length][1],
-                            reverse=True)
+    current_scale_names = current_scale.names()
+    current_scale_num = len(current_scale_names)
+    tonic_chords = [[
+        current_scale_names[i],
+        current_scale_names[(i + 2) % current_scale_num],
+        current_scale_names[(i + 4) % current_scale_num]
+    ] for i in range(current_scale_num)]
+    scale_notes_counts = [(current_scale_names[k],
+                           sum([counts_dict[i] for i in tonic_chords[k]]))
+                          for k in range(current_scale_num)]
+    scale_notes_counts.sort(key=lambda s: s[1], reverse=True)
     if major_minor_preference:
         scale_notes_counts = [
-            i for i in scale_notes_counts if i[0] in [
-                scale_notes_counts_original[0][0],
-                scale_notes_counts_original[5][0]
-            ]
+            i for i in scale_notes_counts
+            if i[0] in [current_scale_names[0], current_scale_names[5]]
         ]
-        inds = [current_scale.names().index(i[0]) for i in scale_notes_counts]
-        current_count = [
-            scale_notes_counts_original[i][1] +
-            scale_notes_counts_original[(i + 2) % length][1] for i in inds
-        ]
-        current_tonic_ind = current_count.index(max(current_count))
-        current_tonic = scale_notes_counts[current_tonic_ind][0]
-        current_ind = current_scale.names().index(current_tonic)
-        current_mode = mode_check_parameters[current_ind][0]
-        current_tonic2 = scale_notes_counts[1 - current_tonic_ind][0]
-        current_ind2 = current_scale.names().index(current_tonic2)
-        current_mode2 = mode_check_parameters[current_ind2][0]
         result_scale = [
-            scale(current_tonic, current_mode),
-            scale(current_tonic2, current_mode2)
+            scale(i[0],
+                  mode_check_parameters[current_scale_names.index(i[0])][0])
+            for i in scale_notes_counts
         ]
     else:
-        current_tonic = max(scale_notes_counts[:2], key=lambda s: s[1])[0]
-        current_ind = current_scale.names().index(current_tonic)
-        current_mode = mode_check_parameters[current_ind][0]
-        result_scale = [scale(current_tonic, current_mode)]
+        current_tonic = [i[0] for i in scale_notes_counts[:most_appear_num]]
+        current_ind = [current_scale_names.index(i) for i in current_tonic]
+        current_mode = [mode_check_parameters[i][0] for i in current_ind]
+        result_scale = [
+            scale(current_tonic[i], current_mode[i])
+            for i in range(len(current_tonic))
+        ]
     if get_scales:
         return result_scale
     else:
@@ -1354,11 +1351,12 @@ def detect_scale2(current_chord,
 
 
 def detect_scale3(current_chord,
-                  is_chord=True,
-                  major_minor_preference=True,
                   get_scales=False,
+                  most_appear_num=3,
+                  major_minor_preference=True,
                   unit=5,
-                  key_accuracy_tol=0.9):
+                  key_accuracy_tol=0.9,
+                  is_chord=True):
     '''
     Receive a piece of music and analyze what modes it is using,
     return a list of most likely and exact modes the music has.
@@ -1367,7 +1365,6 @@ def detect_scale3(current_chord,
     but detect the key of the piece in units, which makes modulation detections possible.
     '''
     if not is_chord:
-        original_chord = current_chord
         current_chord = concat(current_chord, mode='|')
     current_chord = current_chord.only_notes()
     result_scale = []
@@ -1376,6 +1373,8 @@ def detect_scale3(current_chord,
     current_key_range = [0, 0]
     for i in range(math.ceil(total_bars / unit)):
         current_range = [unit * i, unit * (i + 1)]
+        if current_range[1] >= total_bars:
+            current_range[1] = total_bars
         current_part = current_chord.cut(*current_range)
         if not current_part:
             current_key_range[1] = current_range[1]
@@ -1383,56 +1382,51 @@ def detect_scale3(current_chord,
             continue
         counts = current_part.count_appear(sort=True)
         counts_dict = {i[0]: i[1] for i in counts}
-        most_appeared_note = [N(each[0]) for each in counts]
+        appeared_note = [N(each[0]) for each in counts]
         note_scale_count = [
             (i, sum([counts_dict[k]
                      for k in scale(i, 'major').names()]) / len(current_part))
-            for i in most_appeared_note
+            for i in appeared_note
         ]
-        most_appeared_note, current_key_rate = max(note_scale_count,
-                                                   key=lambda s: s[1])
+        note_scale_count.sort(key=lambda s: s[1], reverse=True)
+        most_appeared_note, current_key_rate = note_scale_count[0]
         if current_key_rate < key_accuracy_tol:
             current_key_range[1] = current_range[1]
             result_scale[-1][0][1] = current_range[1]
             continue
         current_scale = scale(most_appeared_note, 'major')
-        scale_notes_counts = [(k, counts_dict[k])
-                              for k in current_scale.names()]
-        scale_notes_counts_original = copy(scale_notes_counts)
-        length = len(scale_notes_counts)
-        scale_notes_counts.sort(key=lambda s: scale_notes_counts_original[
-            (scale_notes_counts_original.index(s) + 2) % length][1],
-                                reverse=True)
+        current_scale_names = current_scale.names()
+        current_scale_num = len(current_scale_names)
+        tonic_chords = [[
+            current_scale_names[i],
+            current_scale_names[(i + 2) % current_scale_num],
+            current_scale_names[(i + 4) % current_scale_num]
+        ] for i in range(current_scale_num)]
+        scale_notes_counts = [(current_scale_names[k],
+                               sum([counts_dict[i] for i in tonic_chords[k]]))
+                              for k in range(current_scale_num)]
+        scale_notes_counts.sort(key=lambda s: s[1], reverse=True)
         if major_minor_preference:
             scale_notes_counts = [
-                i for i in scale_notes_counts if i[0] in [
-                    scale_notes_counts_original[0][0],
-                    scale_notes_counts_original[5][0]
-                ]
+                i for i in scale_notes_counts
+                if i[0] in [current_scale_names[0], current_scale_names[5]]
             ]
-            inds = [
-                current_scale.names().index(i[0]) for i in scale_notes_counts
-            ]
-            current_count = [
-                scale_notes_counts_original[i][1] +
-                scale_notes_counts_original[(i + 2) % length][1] for i in inds
-            ]
-            current_tonic_ind = current_count.index(max(current_count))
-            current_tonic = scale_notes_counts[current_tonic_ind][0]
-            current_ind = current_scale.names().index(current_tonic)
-            current_mode = mode_check_parameters[current_ind][0]
-            current_tonic2 = scale_notes_counts[1 - current_tonic_ind][0]
-            current_ind2 = current_scale.names().index(current_tonic2)
-            current_mode2 = mode_check_parameters[current_ind2][0]
             current_result_scale = [
-                scale(current_tonic, current_mode),
-                scale(current_tonic2, current_mode2)
+                scale(
+                    i[0],
+                    mode_check_parameters[current_scale_names.index(i[0])][0])
+                for i in scale_notes_counts
             ]
         else:
-            current_tonic = max(scale_notes_counts[:2], key=lambda s: s[1])[0]
-            current_ind = current_scale.names().index(current_tonic)
-            current_mode = mode_check_parameters[current_ind][0]
-            current_result_scale = [scale(current_tonic, current_mode)]
+            current_tonic = [
+                i[0] for i in scale_notes_counts[:most_appear_num]
+            ]
+            current_ind = [current_scale_names.index(i) for i in current_tonic]
+            current_mode = [mode_check_parameters[i][0] for i in current_ind]
+            current_result_scale = [
+                scale(current_tonic[i], current_mode[i])
+                for i in range(len(current_tonic))
+            ]
         if not current_key:
             current_key = current_result_scale
         if not result_scale:
@@ -1701,6 +1695,8 @@ def chord_functions_analysis(current_chord,
                              space_lines=2,
                              full_chord_msg=False,
                              is_chord_analysis=True,
+                             detect_scale_function=detect_scale2,
+                             major_minor_preference=True,
                              is_detect=True,
                              detect_args={},
                              chord_analysis_args={}):
@@ -1712,10 +1708,15 @@ def chord_functions_analysis(current_chord,
     if fixed_scale_type:
         scales = fixed_scale_type
     else:
-        scales = detect_scale(
+        scales = detect_scale_function(
             current_chord,
-            get_scales=True)[0] if is_chord_analysis else detect_scale(
-                current_chord, get_scales=True, is_chord=False)[0]
+            major_minor_preference=major_minor_preference,
+            get_scales=True
+        )[0] if is_chord_analysis else detect_scale_function(
+            current_chord,
+            major_minor_preference=major_minor_preference,
+            get_scales=True,
+            is_chord=False)[0]
     if is_chord_analysis:
         result = chord_analysis(current_chord,
                                 mode='chords',
