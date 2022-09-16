@@ -159,13 +159,13 @@ def piece_to_event_list(current_chord, set_instrument=False):
     return event_list
 
 
-def play_send_midi(current_chord,
-                   ports,
-                   channel=0,
-                   start_time=0,
-                   bpm=120,
-                   track_num=None,
-                   set_instrument=False):
+def start(current_chord,
+          ports,
+          channel=0,
+          start_time=0,
+          bpm=120,
+          track_num=None,
+          set_instrument=False):
     if isinstance(current_chord, note):
         current_chord = chord([current_chord])
     if isinstance(current_chord, chord):
