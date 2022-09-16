@@ -1015,9 +1015,9 @@ def find_chords_for_melody(melody,
     if not possible_scales:
         raise ValueError('cannot find a scale suitable for this melody')
     current_scale = possible_scales[0]
-    if current_scale.mode != 'major' and current_scale.mode in modern_modes:
+    if current_scale.mode != 'major' and current_scale.mode in diatonic_modes:
         current_scale = current_scale.inversion(
-            8 - modern_modes.index(current_scale.mode))
+            8 - diatonic_modes.index(current_scale.mode))
     chordtypes = list(chordTypes.dic.keys())
     result = []
     if get_pattern:
@@ -1332,14 +1332,13 @@ def detect_scale2(current_chord,
             if i[0] in [current_scale_names[0], current_scale_names[5]]
         ]
         result_scale = [
-            scale(i[0],
-                  mode_check_parameters[current_scale_names.index(i[0])][0])
+            scale(i[0], diatonic_modes[current_scale_names.index(i[0])])
             for i in scale_notes_counts
         ]
     else:
         current_tonic = [i[0] for i in scale_notes_counts[:most_appear_num]]
         current_ind = [current_scale_names.index(i) for i in current_tonic]
-        current_mode = [mode_check_parameters[i][0] for i in current_ind]
+        current_mode = [diatonic_modes[i] for i in current_ind]
         result_scale = [
             scale(current_tonic[i], current_mode[i])
             for i in range(len(current_tonic))
@@ -1412,9 +1411,7 @@ def detect_scale3(current_chord,
                 if i[0] in [current_scale_names[0], current_scale_names[5]]
             ]
             current_result_scale = [
-                scale(
-                    i[0],
-                    mode_check_parameters[current_scale_names.index(i[0])][0])
+                scale(i[0], diatonic_modes[current_scale_names.index(i[0])])
                 for i in scale_notes_counts
             ]
         else:
@@ -1422,7 +1419,7 @@ def detect_scale3(current_chord,
                 i[0] for i in scale_notes_counts[:most_appear_num]
             ]
             current_ind = [current_scale_names.index(i) for i in current_tonic]
-            current_mode = [mode_check_parameters[i][0] for i in current_ind]
+            current_mode = [diatonic_modes[i] for i in current_ind]
             current_result_scale = [
                 scale(current_tonic[i], current_mode[i])
                 for i in range(len(current_tonic))

@@ -250,7 +250,7 @@ scaleTypes = match({
     ('major pentatonic', ): [2, 2, 3, 2, 3],
     ('minor pentatonic', ): [3, 2, 2, 3, 2]
 })
-modern_modes = [
+diatonic_modes = [
     'major', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'minor', 'locrian'
 ]
 # you can sort the chord types from most commonly used to least commonly used
@@ -523,10 +523,10 @@ INSTRUMENTS = {
 
 reverse_instruments = {j: i for i, j in INSTRUMENTS.items()}
 
-mode_check_parameters = [['major', [1, 3, 5], 1], ['dorian', [2, 4, 7], 2],
-                         ['phrygian', [3, 5, 4], 3], ['lydian', [4, 6, 7], 4],
-                         ['mixolydian', [5, 7, 4], 5], ['minor', [6, 1, 3], 6],
-                         ['locrian', [7, 2, 4], 7]]
+mode_check_parameters = [['major', [1, 3, 5]], ['dorian', [2, 4, 7]],
+                         ['phrygian', [3, 5, 4]], ['lydian', [4, 6, 7]],
+                         ['mixolydian', [5, 7, 4]], ['minor', [6, 1, 3]],
+                         ['locrian', [7, 2, 4]]]
 
 chord_functions_roman_numerals = {
     1: 'I',
