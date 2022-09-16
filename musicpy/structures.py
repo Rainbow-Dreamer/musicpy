@@ -3347,7 +3347,7 @@ class piece:
             first_track.other_messages += pan_msg
             first_track.other_messages += volume_msg
         first_track_start_time += first_track.start_time
-        return temp.bpm, first_track, first_track_start_time
+        return first_track, temp.bpm, first_track_start_time
 
     def add_track_labels(self):
         all_tracks = self.tracks
@@ -3469,7 +3469,7 @@ class piece:
                   mode='seconds',
                   normalize_tempo=False,
                   audio_mode=0):
-        temp_bpm, merged_result, start_time = self.merge()
+        merged_result, temp_bpm, start_time = self.merge()
         if bpm is not None:
             temp_bpm = bpm
         if normalize_tempo:
@@ -3482,7 +3482,7 @@ class piece:
                                        audio_mode=audio_mode)
 
     def cut(self, ind1=0, ind2=None, correct=False):
-        temp_bpm, merged_result, start_time = self.merge()
+        merged_result, temp_bpm, start_time = self.merge()
         if ind1 < 0:
             ind1 = 0
         result = merged_result.cut(ind1, ind2, start_time)
