@@ -5,7 +5,6 @@ import chunk
 from io import BytesIO
 import midiutil
 import mido
-from ast import literal_eval
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     from database import *
@@ -70,7 +69,7 @@ def trans_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
     if not num:
         num = pitch
     else:
-        num = eval(num)
+        num = int(num)
     name = ''.join([x for x in notename if not x.isdigit()])
     return note(name, num, duration, volume, channel)
 
@@ -1630,7 +1629,7 @@ def read_notes(note_ls, rootpitch=4):
                 intervals[-1] += each.duration
         elif isinstance(each, str):
             if each.startswith('tempo'):
-                current = [literal_eval(k) for k in each.split(';')[1:]]
+                current = [eval(k) for k in each.split(';')[1:]]
                 current_tempo = tempo(*current)
                 notes_result.append(current_tempo)
                 intervals.append(0)
@@ -1638,11 +1637,11 @@ def read_notes(note_ls, rootpitch=4):
                 current = each.split(';')[1:]
                 length = len(current)
                 if length > 2:
-                    current = [literal_eval(k) for k in current[:2]] + [
-                        current[2]
-                    ] + [literal_eval(k) for k in current[3:]]
+                    current = [eval(k) for k in current[:2]] + [current[2]] + [
+                        eval(k) for k in current[3:]
+                    ]
                 else:
-                    current = [literal_eval(k) for k in current]
+                    current = [eval(k) for k in current]
                 current_pitch_bend = pitch_bend(*current)
                 notes_result.append(current_pitch_bend)
                 intervals.append(0)
@@ -1775,8 +1774,8 @@ def process_settings(settings):
     interval = settings[1]
     if duration[-1] == '.':
         settings[0] = process_dotted_note(duration)
-    elif ',' in duration:
-        duration = duration.split(',')
+    elif ';' in duration:
+        duration = duration.split(';')
         duration = [
             process_dotted_note(i) if i[-1] == '.' else
             (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in duration
@@ -1790,8 +1789,8 @@ def process_settings(settings):
         settings[0] = eval(duration)
     if interval[-1] == '.':
         settings[1] = process_dotted_note(interval)
-    elif ',' in interval:
-        interval = interval.split(',')
+    elif ';' in interval:
+        interval = interval.split(';')
         interval = [
             process_dotted_note(i) if i[-1] == '.' else
             (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in interval
@@ -1806,7 +1805,7 @@ def process_settings(settings):
     if settings[2] == 'n':
         settings[2] = None
     else:
-        settings[2] = eval(settings[2])
+        settings[2] = list(eval(settings[2].replace(';', ',')))
     return settings
 
 

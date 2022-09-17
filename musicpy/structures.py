@@ -4262,210 +4262,270 @@ class drum:
                   default_duration=1 / 8,
                   default_interval=1 / 8,
                   default_volume=100):
+        rest_symbol = 'x'
+        continue_symbol = '-'
+        if -1 in mapping.values():
+            rest_symbol = [i for i, j in mapping.items() if j == -1][0]
+        if -2 in mapping.values():
+            continue_symbol = [i for i, j in mapping.items() if j == -2][0]
         start_time = 0
-        notes = []
-        pattern_intervals = []
-        pattern_durations = []
-        pattern_volumes = []
+        current_has_keyword = False
+        whole_parts = []
+        whole_keywords = []
+        current_keyword = []
+        current_part = []
+        global_keywords = []
         pattern = pattern.replace(' ', '').replace('\n', '')
-        units = pattern.split(',')
+        whole_units = [each.split(',') for each in pattern.split('|')]
         repeat_times = 1
         whole_set = False
-        left_part_symbol_inds = [
-            i - 1 for i in range(len(pattern)) if pattern[i] == '{'
-        ]
-        right_part_symbol_inds = [0] + [
-            i + 2 for i in range(len(pattern)) if pattern[i] == '}'
-        ][:-1]
-        part_ranges = [[right_part_symbol_inds[k], left_part_symbol_inds[k]]
-                       for k in range(len(left_part_symbol_inds))]
-        parts = [pattern[k[0]:k[1]] for k in part_ranges]
-        part_counter = 0
-        named_dict = dict()
-        part_replace_ind1 = 0
-        part_replace_ind2 = 0
-        if units[0].startswith('!'):
-            whole_set = True
-            whole_set_values = units[0][1:].split(';')
-            whole_set_values = [k.replace('|', ',') for k in whole_set_values]
-            whole_set_values = mp.process_settings(whole_set_values)
-            return self.translate(
-                ','.join(units[1:]),
-                mapping,
-                default_duration=default_duration,
-                default_interval=default_interval,
-                default_volume=default_volume).special_set(*whole_set_values)
-        elif units[-1].startswith('!'):
-            whole_set = True
-            whole_set_values = units[-1][1:].split(';')
-            whole_set_values = [k.replace('|', ',') for k in whole_set_values]
-            whole_set_values = mp.process_settings(whole_set_values)
-            return self.translate(
-                ','.join(units[:-1]),
-                mapping,
-                default_duration=default_duration,
-                default_interval=default_interval,
-                default_volume=default_volume).special_set(*whole_set_values)
-        for i in units:
-            if i == '':
-                continue
-            if i[0] == '{' and i[-1] == '}':
-                part_replace_ind2 = len(notes)
-                current_part = parts[part_counter]
-                part_counter += 1
-                part_settings = i[1:-1].split('|')
-                find_default = False
-                for each in part_settings:
-                    if each.startswith('de:'):
-                        find_default = True
-                        current_default_settings = each[3:].split(';')
-                        current_default_settings = mp.process_settings(
-                            current_default_settings)
-                        if current_default_settings[0] is None:
-                            current_default_settings[0] = 1 / 8
-                        if current_default_settings[1] is None:
-                            current_default_settings[1] = 1 / 8
-                        if current_default_settings[2] is None:
-                            current_default_settings[2] = 100
-                        current_part_notes = self.translate(
-                            current_part,
-                            mapping,
-                            default_duration=current_default_settings[0],
-                            default_interval=current_default_settings[1],
-                            default_volume=current_default_settings[2])
-                        break
-                if not find_default:
-                    current_part_notes = self.translate(
-                        current_part,
-                        mapping,
-                        default_duration=default_duration,
-                        default_interval=default_interval,
-                        default_volume=default_volume)
-                for each in part_settings:
-                    if each.startswith('!'):
-                        current_settings = each[1:].split(';')
-                        current_settings = [
-                            k.replace('`', ',') for k in current_settings
-                        ]
-                        current_settings = mp.process_settings(
-                            current_settings)
-                        current_part_notes = current_part_notes.special_set(
-                            *current_settings)
-                    elif each.isdigit():
-                        current_part_notes %= int(each)
-                    elif each.startswith('$'):
-                        named_dict[each] = current_part_notes
-                notes[part_replace_ind1:
-                      part_replace_ind2] = current_part_notes.notes
-                pattern_intervals[
-                    part_replace_ind1:
-                    part_replace_ind2] = current_part_notes.interval
-                pattern_durations[
-                    part_replace_ind1:
-                    part_replace_ind2] = current_part_notes.get_duration()
-                pattern_volumes[
-                    part_replace_ind1:
-                    part_replace_ind2] = current_part_notes.get_volume()
-                part_replace_ind1 = len(notes)
-            elif i[0] == '[' and i[-1] == ']':
-                current_content = i[1:-1]
-                current_interval = mp.process_settings([current_content])[0]
-                if pattern_intervals:
-                    pattern_intervals[-1] += current_interval
+        for units in whole_units:
+            current_has_keyword = False
+            for each in units:
+                if ':' in each and each[:each.index(':')] in drum_keywords:
+                    current_keyword.append(each)
+                    if not current_has_keyword:
+                        current_has_keyword = True
+                        whole_parts.append(current_part)
+                        current_part = []
+                elif each.startswith('!'):
+                    global_keywords.append(each)
                 else:
-                    start_time += current_interval
-            elif '(' in i and i[-1] == ')':
-                repeat_times = int(i[i.index('(') + 1:-1])
-                repeat_part = i[:i.index('(')]
-                if repeat_part.startswith('$'):
-                    if '[' in repeat_part and ']' in repeat_part:
-                        current_drum_settings = (
-                            repeat_part[repeat_part.index('[') +
-                                        1:repeat_part.index(']')].replace(
-                                            '|', ',')).split(';')
-                        repeat_part = repeat_part[:repeat_part.index('[')]
-                        current_drum_settings = mp.process_settings(
-                            current_drum_settings)
-                        repeat_part = named_dict[repeat_part].special_set(
-                            *current_drum_settings)
-                    else:
-                        repeat_part = named_dict[repeat_part]
-                else:
-                    repeat_part = self.translate(
-                        repeat_part,
-                        mapping,
-                        default_duration=default_duration,
-                        default_interval=default_interval,
-                        default_volume=default_volume)
-                current_notes = repeat_part % repeat_times
-                notes.extend(current_notes.notes)
-                pattern_intervals.extend(current_notes.interval)
-                pattern_durations.extend(current_notes.get_duration())
-                pattern_volumes.extend(current_notes.get_volume())
-            elif '[' in i and ']' in i:
-                current_drum_settings = (i[i.index('[') +
-                                           1:i.index(']')].replace(
-                                               '|', ',')).split(';')
-                current_drum_settings = mp.process_settings(
-                    current_drum_settings)
-                config_part = i[:i.index('[')]
-                if config_part.startswith('$'):
-                    if '(' in config_part and ')' in config_part:
-                        repeat_times = int(config_part[config_part.index('(') +
-                                                       1:-1])
-                        config_part = config_part[:config_part.index('(')]
-                        config_part = named_dict[config_part] % repeat_times
-                    else:
-                        config_part = named_dict[config_part]
-                else:
-                    config_part = self.translate(
-                        config_part,
-                        mapping,
-                        default_duration=default_duration,
-                        default_interval=default_interval,
-                        default_volume=default_volume)
-                current_notes = config_part.special_set(*current_drum_settings)
-                notes.extend(current_notes.notes)
-                pattern_intervals.extend(current_notes.interval)
-                pattern_durations.extend(current_notes.get_duration())
-                pattern_volumes.extend(current_notes.get_volume())
-            elif ';' in i:
-                same_time_notes = i.split(';')
-                current_notes = [
-                    self.translate(k,
-                                   mapping,
-                                   default_duration=default_duration,
-                                   default_interval=default_interval,
-                                   default_volume=default_volume)
-                    for k in same_time_notes
-                ]
-                current_notes = mp.concat(
-                    [k.set(interval=0)
-                     for k in current_notes[:-1]] + [current_notes[-1]])
-                for j in current_notes.notes[:-1]:
-                    j.keep_same_time = True
-                notes.extend(current_notes.notes)
-                pattern_intervals.extend(current_notes.interval)
-                pattern_durations.extend(current_notes.get_duration())
-                pattern_volumes.extend(current_notes.get_volume())
-            elif i.startswith('$'):
-                current_notes = named_dict[i]
-                notes.extend(current_notes.notes)
-                pattern_intervals.extend(current_notes.interval)
-                pattern_durations.extend(current_notes.get_duration())
-                pattern_volumes.extend(current_notes.get_volume())
+                    current_part.append(each)
+                    if current_has_keyword:
+                        current_has_keyword = False
+                        whole_keywords.append(current_keyword)
+                        current_keyword = []
+            if not current_has_keyword:
+                whole_parts.append(current_part)
+                current_part = []
+                whole_keywords.append([])
             else:
-                notes.append(mp.degree_to_note(mapping[i]))
-                pattern_intervals.append(default_interval)
-                pattern_durations.append(default_duration)
-                pattern_volumes.append(default_volume)
-
-        intervals = pattern_intervals
-        durations = pattern_durations
-        volumes = pattern_volumes
+                whole_keywords.append(current_keyword)
+                current_keyword = []
+        notes = []
+        durations = []
+        intervals = []
+        volumes = []
+        name_dict = {}
+        for i in range(len(whole_parts)):
+            current_part = whole_parts[i]
+            current_keyword = whole_keywords[i]
+            current_notes = []
+            current_durations = []
+            current_intervals = []
+            current_volumes = []
+            if not current_part:
+                if current_keyword:
+                    for each in current_keyword:
+                        if each.startswith('i:'):
+                            current_keyword_interval = eval(each[2:])
+                            if current_intervals:
+                                current_intervals[
+                                    -1] += current_keyword_interval
+                            else:
+                                start_time = current_keyword_interval
+            else:
+                current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_extra_interval, current_part_name, current_part_use_name = self._translate_keyword_parser(
+                    current_keyword, default_duration, default_interval,
+                    default_volume)
+                for each in current_part:
+                    if '[' in each and ']' in each:
+                        current_append_notes, current_append_durations, current_append_intervals, current_append_volumes = self._translate_setting_parser(
+                            each, mapping, default_duration, default_interval,
+                            default_volume, rest_symbol, continue_symbol)
+                        current_notes.append(current_append_notes)
+                        current_durations.append(current_append_durations)
+                        current_intervals.append(current_append_intervals)
+                        current_volumes.append(current_append_volumes)
+                    else:
+                        pass
+            notes.extend(current_notes)
+            durations.extend(current_durations)
+            intervals.extend(current_intervals)
+            volumes.extend(current_volumes)
         result = chord(notes) % (durations, intervals, volumes)
         result.start_time = start_time
         return result
+
+    def _translate_setting_parser(self, each, mapping, default_duration,
+                                  default_interval, default_volume,
+                                  rest_symbol, continue_symbol):
+        left_bracket_inds = [k for k in range(len(each)) if each[k] == '[']
+        right_bracket_inds = [k for k in range(len(each)) if each[k] == ']']
+        current_brackets = [
+            each[left_bracket_inds[k] + 1:right_bracket_inds[k]]
+            for k in range(len(left_bracket_inds))
+        ]
+        current_append_notes = each[:left_bracket_inds[0]]
+        if ';' in current_append_notes:
+            current_append_notes = current_append_notes.split(';')
+        else:
+            current_append_notes = [current_append_notes]
+        current_append_notes = [
+            mp.degree_to_note(mapping[each_note])
+            if each_note not in [rest_symbol, continue_symbol] else each_note
+            for each_note in current_append_notes
+        ]
+        current_same_time = True
+        current_repeat_times = 1
+        current_fix_length = None
+        current_append_intervals = [
+            default_interval for k in current_append_notes
+        ]
+        current_append_durations = [
+            default_duration for k in current_append_notes
+        ]
+        current_append_volumes = [default_volume for k in current_append_notes]
+        custom_durations = False
+        for j in current_brackets:
+            num_keywords = j.count(':')
+            if num_keywords == 1:
+                current_bracket_settings = [j.split(':')]
+            else:
+                current_bracket_settings = [k.split(':') for k in j.split(';')]
+            for each_setting in current_bracket_settings:
+                current_setting_keyword, current_content = each_setting
+                if current_setting_keyword == 's':
+                    if current_content == 'F':
+                        current_same_time = False
+                    elif current_content == 'T':
+                        current_same_time = True
+                elif current_setting_keyword == 'r':
+                    current_repeat_times = int(current_content)
+                elif current_setting_keyword == 't':
+                    current_fix_length = float(current_content)
+                elif current_setting_keyword == 'i':
+                    if current_content == '.':
+                        current_append_intervals = current_append_durations
+                    else:
+                        current_append_intervals = mp.process_settings(
+                            ['n', current_content, 'n'])[1]
+                    if not isinstance(current_append_intervals, list):
+                        current_append_intervals = [
+                            current_append_intervals
+                            for k in current_append_notes
+                        ]
+                elif current_setting_keyword == 'l':
+                    current_append_durations = mp.process_settings(
+                        [current_content, 'n', 'n'])[0]
+                    if not isinstance(current_append_durations, list):
+                        current_append_durations = [
+                            current_append_durations
+                            for k in current_append_notes
+                        ]
+                        custom_durations = True
+                elif current_setting_keyword == 'v':
+                    current_append_volumes = mp.process_settings(
+                        ['n', 'n', current_content])[2]
+                    if not isinstance(current_append_volumes, list):
+                        current_append_volumes = [
+                            current_append_volumes
+                            for k in current_append_notes
+                        ]
+        if current_same_time:
+            current_append_intervals = [
+                0 for k in range(len(current_append_notes) - 1)
+            ] + [current_append_intervals[-1]]
+        else:
+            if current_fix_length is not None:
+                current_fix_length_unit = current_fix_length / len(
+                    current_append_notes)
+                current_append_intervals = [
+                    current_fix_length_unit for k in current_append_notes
+                ]
+                if not custom_durations:
+                    current_append_durations = [
+                        current_fix_length_unit for k in current_append_notes
+                    ]
+        rest_note_inds = [
+            k for k, each_note in enumerate(current_append_notes)
+            if each_note == rest_symbol
+        ]
+        continue_note_inds = [
+            k for k, each_note in enumerate(current_append_notes)
+            if each_note == continue_symbol
+        ]
+        for k in rest_note_inds:
+            if k != 0:
+                current_append_intervals[k - 1] += current_append_intervals[k]
+        for k in continue_note_inds:
+            if k != 0:
+                current_append_intervals[k - 1] += current_append_intervals[k]
+                current_append_durations[k - 1] += current_append_durations[k]
+        current_note_ind = [
+            k for k in range(len(current_append_notes))
+            if (k not in rest_note_inds) and (k not in continue_note_inds)
+        ]
+        if len(current_note_ind) != len(current_append_notes):
+            current_append_notes = [
+                current_append_notes[k] for k in current_note_ind
+            ]
+            current_append_intervals = [
+                current_append_intervals[k] for k in current_note_ind
+            ]
+            current_append_durations = [
+                current_append_durations[k] for k in current_note_ind
+            ]
+            current_append_volumes = [
+                current_append_volumes[k] for k in current_note_ind
+            ]
+        if current_repeat_times > 1:
+            current_append_notes *= current_repeat_times
+            current_append_intervals *= current_repeat_times
+            current_append_durations *= current_repeat_times
+            current_append_volumes *= current_repeat_times
+        return current_append_notes, current_append_durations, current_append_intervals, current_append_volumes
+
+    def _translate_keyword_parser(self, current_keyword, default_duration,
+                                  default_interval, default_volume):
+        current_part_default_duration = default_duration
+        current_part_default_interval = default_interval
+        current_part_default_volume = default_volume
+        current_part_repeat_times = 1
+        current_part_all_same_duration = None
+        current_part_all_same_interval = None
+        current_part_all_same_volume = None
+        current_part_fix_length = None
+        current_part_extra_interval = 0
+        current_part_name = None
+        current_part_use_name = None
+        for each in current_keyword:
+            keyword, content = each.split(':')
+            if keyword == 't':
+                current_part_fix_length = float(content)
+            elif keyword == 'r':
+                current_part_repeat_times = int(content)
+            elif keyword == 'i':
+                current_part_extra_interval = mp.process_settings([content])[0]
+            elif keyword == 'n':
+                current_part_name = content
+            elif keyword == 'u':
+                current_part_use_name = content
+            elif keyword == 'd':
+                current_part_default_duration, current_part_default_interval, current_part_default_volume = mp.process_settings(
+                    content.split(';'))
+            elif keyword == 'a':
+                current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume = mp.process_settings(
+                    content.split(';'))
+            elif keyword == 'dl':
+                current_part_default_duration = mp.process_settings([content
+                                                                     ])[0]
+            elif keyword == 'di':
+                current_part_default_interval = mp.process_settings([content
+                                                                     ])[0]
+            elif keyword == 'dv':
+                current_part_default_volume = mp.process_settings([content])[0]
+            elif keyword == 'al':
+                current_part_all_same_duration = mp.process_settings([content
+                                                                      ])[0]
+            elif keyword == 'al':
+                current_part_all_same_interval = mp.process_settings([content
+                                                                      ])[0]
+            elif keyword == 'al':
+                current_part_all_same_volume = mp.process_settings([content
+                                                                    ])[0]
+        return current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_extra_interval, current_part_name, current_part_use_name
 
     def play(self, *args, **kwargs):
         mp.play(self, *args, **kwargs)
