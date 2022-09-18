@@ -4308,6 +4308,10 @@ class drum:
         intervals = []
         volumes = []
         name_dict = {}
+
+        global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length = self._translate_global_keyword_parser(
+            global_keywords)
+
         for i in range(len(whole_parts)):
             current_part = whole_parts[i]
             current_keyword = whole_keywords[i]
@@ -4319,11 +4323,18 @@ class drum:
             current_same_times = []
             if current_part:
                 current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name = self._translate_keyword_parser(
-                    current_keyword, default_duration, default_interval,
-                    default_volume)
+                    current_keyword,
+                    default_duration if global_default_duration is None else
+                    global_default_duration,
+                    default_interval if global_default_interval is None else
+                    global_default_interval, default_volume if
+                    global_default_volume is None else global_default_volume,
+                    global_all_same_duration, global_all_same_interval,
+                    global_all_same_volume, global_fix_length)
                 for each in current_part:
                     if each.startswith('i:'):
-                        current_extra_interval = eval(each[2:])
+                        current_extra_interval = mp.process_settings(
+                            [each[2:]])[0]
                         if current_intervals:
                             current_intervals[-1][-1] += current_extra_interval
                         else:
@@ -4331,7 +4342,7 @@ class drum:
                                 intervals[-1] += current_extra_interval
                             else:
                                 start_time = current_extra_interval
-                            continue
+                        continue
                     elif each.startswith('u:'):
                         content = each[2:]
                         if content in name_dict:
@@ -4364,9 +4375,12 @@ class drum:
                         current_part_all_same_duration for k in each_part
                     ] for each_part in current_durations]
                 if current_part_all_same_interval is not None:
-                    current_intervals = [[
-                        current_part_all_same_interval for k in each_part
-                    ] for each_part in current_intervals]
+                    current_intervals = [
+                        [current_part_all_same_interval for k in each_part]
+                        if not (len(each_part) > 1 and current_same_times[j])
+                        else each_part[:-1] + [current_part_all_same_interval]
+                        for j, each_part in enumerate(current_intervals)
+                    ]
                 if current_part_all_same_volume is not None:
                     current_volumes = [[
                         current_part_all_same_volume for k in each_part
@@ -4439,6 +4453,11 @@ class drum:
             durations.extend(current_durations)
             intervals.extend(current_intervals)
             volumes.extend(current_volumes)
+        if global_repeat_times > 1:
+            notes *= global_repeat_times
+            durations *= global_repeat_times
+            intervals *= global_repeat_times
+            volumes *= global_repeat_times
         result = chord(notes) % (durations, intervals, volumes)
         result.start_time = start_time
         return result
@@ -4489,7 +4508,8 @@ class drum:
                 elif current_setting_keyword == 'r':
                     current_repeat_times = int(current_content)
                 elif current_setting_keyword == 't':
-                    current_fix_length = float(current_content)
+                    current_fix_length = mp.process_settings([current_content
+                                                              ])[0]
                 elif current_setting_keyword == 'i':
                     if current_content == '.':
                         current_append_intervals = current_append_durations
@@ -4567,20 +4587,23 @@ class drum:
         return current_append_notes, current_append_durations, current_append_intervals, current_append_volumes
 
     def _translate_keyword_parser(self, current_keyword, default_duration,
-                                  default_interval, default_volume):
+                                  default_interval, default_volume,
+                                  default_all_same_duration,
+                                  default_all_same_interval,
+                                  default_all_same_volume, default_fix_length):
         current_part_default_duration = default_duration
         current_part_default_interval = default_interval
         current_part_default_volume = default_volume
         current_part_repeat_times = 1
-        current_part_all_same_duration = None
-        current_part_all_same_interval = None
-        current_part_all_same_volume = None
-        current_part_fix_length = None
+        current_part_all_same_duration = default_all_same_duration
+        current_part_all_same_interval = default_all_same_interval
+        current_part_all_same_volume = default_all_same_volume
+        current_part_fix_length = default_fix_length
         current_part_name = None
         for each in current_keyword:
             keyword, content = each.split(':')
             if keyword == 't':
-                current_part_fix_length = float(content)
+                current_part_fix_length = mp.process_settings([content])[0]
             elif keyword == 'r':
                 current_part_repeat_times = int(content)
             elif keyword == 'n':
@@ -4609,6 +4632,41 @@ class drum:
                 current_part_all_same_volume = mp.process_settings([content
                                                                     ])[0]
         return current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name
+
+    def _translate_global_keyword_parser(self, global_keywords):
+        global_default_duration = None
+        global_default_interval = None
+        global_default_volume = None
+        global_repeat_times = 1
+        global_all_same_duration = None
+        global_all_same_interval = None
+        global_all_same_volume = None
+        global_fix_length = None
+        for each in global_keywords:
+            keyword, content = each[1:].split(':')
+            if keyword == 't':
+                global_fix_length = mp.process_settings([content])[0]
+            elif keyword == 'r':
+                global_repeat_times = int(content)
+            elif keyword == 'd':
+                global_default_duration, global_default_interval, global_default_volume = mp.process_settings(
+                    content.split(';'))
+            elif keyword == 'a':
+                global_all_same_duration, global_all_same_interval, global_all_same_volume = mp.process_settings(
+                    content.split(';'))
+            elif keyword == 'dl':
+                global_default_duration = mp.process_settings([content])[0]
+            elif keyword == 'di':
+                global_default_interval = mp.process_settings([content])[0]
+            elif keyword == 'dv':
+                global_default_volume = mp.process_settings([content])[0]
+            elif keyword == 'al':
+                global_all_same_duration = mp.process_settings([content])[0]
+            elif keyword == 'al':
+                global_all_same_interval = mp.process_settings([content])[0]
+            elif keyword == 'al':
+                global_all_same_volume = mp.process_settings([content])[0]
+        return global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length
 
     def play(self, *args, **kwargs):
         mp.play(self, *args, **kwargs)
