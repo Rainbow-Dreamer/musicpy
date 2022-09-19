@@ -4238,16 +4238,22 @@ class drum:
                  start_time=None,
                  default_duration=1 / 8,
                  default_interval=1 / 8,
-                 default_volume=100):
+                 default_volume=100,
+                 translate_mode=0):
         self.pattern = pattern
         self.mapping = mapping
         self.name = name
+        self.default_duration = default_duration
+        self.default_interval = default_interval
+        self.default_volume = default_volume
+        self.translate_mode = translate_mode
         self.notes = self.translate(
             self.pattern,
             self.mapping,
-            default_duration=default_duration,
-            default_interval=default_interval,
-            default_volume=default_volume) if not notes else notes
+            default_duration=self.default_duration,
+            default_interval=self.default_interval,
+            default_volume=self.default_volume,
+            translate_mode=self.translate_mode) if not notes else notes
         if start_time is not None:
             self.notes.start_time = start_time
         self.instrument = i if isinstance(i, int) else (
@@ -4261,7 +4267,8 @@ class drum:
                   mapping,
                   default_duration=1 / 8,
                   default_interval=1 / 8,
-                  default_volume=100):
+                  default_volume=100,
+                  translate_mode=0):
         rest_symbol = 'x'
         continue_symbol = '-'
         if -1 in mapping.values():
@@ -4331,6 +4338,10 @@ class drum:
                     global_default_volume is None else global_default_volume,
                     global_all_same_duration, global_all_same_interval,
                     global_all_same_volume, global_fix_length)
+                current_part_fix_length_unit = None
+                if current_part_fix_length is not None:
+                    current_part_fix_length_unit = current_part_fix_length / len(
+                        current_part)
                 for each in current_part:
                     if each.startswith('i:'):
                         current_extra_interval = mp.process_settings(
@@ -4355,13 +4366,15 @@ class drum:
                             each, mapping, current_part_default_duration,
                             current_part_default_interval,
                             current_part_default_volume, rest_symbol,
-                            continue_symbol)
+                            continue_symbol, current_part_fix_length_unit,
+                            translate_mode)
                     else:
                         current_append_notes, current_append_durations, current_append_intervals, current_append_volumes = self._translate_normal_notes_parser(
                             each, mapping, current_part_default_duration,
                             current_part_default_interval,
                             current_part_default_volume, rest_symbol,
-                            continue_symbol)
+                            continue_symbol, current_part_fix_length_unit,
+                            translate_mode)
                         current_custom_duration = False
                         current_same_time = True
                     current_notes.append(current_append_notes)
@@ -4385,24 +4398,6 @@ class drum:
                     current_volumes = [[
                         current_part_all_same_volume for k in each_part
                     ] for each_part in current_volumes]
-                if current_part_fix_length is not None:
-                    current_part_fix_length_unit = current_part_fix_length / len(
-                        current_notes)
-                    current_durations = [
-                        [(current_part_fix_length_unit /
-                          len(k) if not current_same_times[ind] else
-                          current_part_fix_length_unit) for each_duration in k]
-                        if not current_custom_durations[ind] else k
-                        for ind, k in enumerate(current_durations)
-                    ]
-                    current_intervals = [
-                        [
-                            current_part_fix_length_unit / len(k)
-                            for each_interval in k
-                        ] if not current_same_times[ind] else k[:-1] +
-                        [current_part_fix_length_unit]
-                        for ind, k in enumerate(current_intervals)
-                    ]
                 current_notes = [j for k in current_notes for j in k]
                 current_durations = [j for k in current_durations for j in k]
                 current_intervals = [j for k in current_intervals for j in k]
@@ -4464,7 +4459,9 @@ class drum:
 
     def _translate_setting_parser(self, each, mapping, default_duration,
                                   default_interval, default_volume,
-                                  rest_symbol, continue_symbol):
+                                  rest_symbol, continue_symbol,
+                                  current_part_fix_length_unit,
+                                  translate_mode):
         left_bracket_inds = [k for k in range(len(each)) if each[k] == '[']
         right_bracket_inds = [k for k in range(len(each)) if each[k] == ']']
         current_brackets = [
@@ -4476,21 +4473,37 @@ class drum:
             current_append_notes = current_append_notes.split(';')
         else:
             current_append_notes = [current_append_notes]
-        current_append_notes = [
-            mp.degree_to_note(mapping[each_note])
-            if each_note not in [rest_symbol, continue_symbol] else each_note
-            for each_note in current_append_notes
-        ]
         current_same_time = True
+        current_chord_same_time = False
         current_repeat_times = 1
         current_fix_length = None
         current_append_durations = [
-            default_duration for k in current_append_notes
+            default_duration for i in current_append_notes
         ]
         current_append_intervals = [
-            default_interval for k in current_append_notes
+            default_interval for i in current_append_notes
         ]
-        current_append_volumes = [default_volume for k in current_append_notes]
+        current_append_volumes = [default_volume for i in current_append_notes]
+        if translate_mode == 0:
+            current_append_notes = [
+                mp.degree_to_note(mapping[each_note]) if each_note
+                not in [rest_symbol, continue_symbol] else each_note
+                for each_note in current_append_notes
+            ]
+        else:
+            new_current_append_notes = []
+            for each_note in current_append_notes:
+                if ':' not in each_note:
+                    current_each_note = mp.N(each_note)
+                    new_current_append_notes.append(current_each_note)
+                else:
+                    current_note, current_chord_type = each_note.split(":")
+                    current_note = mp.N(current_note)
+                    current_each_note = mp.C(
+                        f'{current_note.name}{current_chord_type}',
+                        current_note.num)
+                    new_current_append_notes.append(current_each_note)
+            current_append_notes = new_current_append_notes
         custom_durations = False
         for j in current_brackets:
             num_keywords = j.count(':')
@@ -4505,8 +4518,14 @@ class drum:
                         current_same_time = False
                     elif current_content == 'T':
                         current_same_time = True
+                if current_setting_keyword == 'cs':
+                    if current_content == 'F':
+                        current_chord_same_time = False
+                    elif current_content == 'T':
+                        current_chord_same_time = True
                 elif current_setting_keyword == 'r':
                     current_repeat_times = int(current_content)
+                    current_same_time = False
                 elif current_setting_keyword == 't':
                     current_fix_length = mp.process_settings([current_content
                                                               ])[0]
@@ -4538,46 +4557,118 @@ class drum:
                             current_append_volumes
                             for k in current_append_notes
                         ]
-        if current_same_time:
-            current_append_intervals = [
-                0 for k in range(len(current_append_notes) - 1)
-            ] + [current_append_intervals[-1]]
-        else:
-            if current_fix_length is not None:
-                current_fix_length_unit = current_fix_length / len(
-                    current_append_notes)
-                current_append_intervals = [
-                    current_fix_length_unit for k in current_append_notes
-                ]
-                if not custom_durations:
-                    current_append_durations = [
-                        current_fix_length_unit for k in current_append_notes
-                    ]
         if current_repeat_times > 1:
             current_append_notes *= current_repeat_times
             current_append_intervals *= current_repeat_times
             current_append_durations *= current_repeat_times
             current_append_volumes *= current_repeat_times
+        current_fix_length_unit = None
+        if current_fix_length is not None:
+            current_fix_length_unit = current_fix_length / len(
+                current_append_notes
+            ) if not current_same_time else current_fix_length
+        elif current_part_fix_length_unit is not None:
+            current_fix_length_unit = current_part_fix_length_unit / len(
+                current_append_notes
+            ) if not current_same_time else current_part_fix_length_unit
+        if current_same_time:
+            current_append_intervals = [
+                0 for k in range(len(current_append_notes) - 1)
+            ] + [current_append_intervals[-1]]
+        if current_fix_length_unit is not None:
+            if current_same_time:
+                current_append_intervals = [
+                    0 for k in range(len(current_append_notes) - 1)
+                ] + [current_fix_length_unit]
+            else:
+                current_append_intervals = [
+                    current_fix_length_unit for k in current_append_notes
+                ]
+            if not custom_durations:
+                current_append_durations = [
+                    current_fix_length_unit for k in current_append_notes
+                ]
+
+        if translate_mode == 1:
+            new_current_append_durations = []
+            new_current_append_intervals = []
+            new_current_append_volumes = []
+            new_current_append_notes = []
+            for i, each in enumerate(current_append_notes):
+                if isinstance(each, chord):
+                    if not current_chord_same_time:
+                        current_duration = [
+                            current_append_durations[i] / len(each)
+                            for k in each.notes
+                        ]
+                        current_interval = [
+                            current_append_intervals[i] / len(each)
+                            for k in each.notes
+                        ]
+                    else:
+                        current_duration = [
+                            current_append_intervals[i] for k in each.notes
+                        ]
+                        current_interval = [0 for j in range(len(each) - 1)
+                                            ] + [current_append_intervals[i]]
+                    new_current_append_durations.extend(current_duration)
+                    new_current_append_intervals.extend(current_interval)
+                    new_current_append_volumes.extend(
+                        [current_append_volumes[i] for k in each.notes])
+                    new_current_append_notes.extend(each.notes)
+                else:
+                    new_current_append_durations.append(
+                        current_append_durations[i])
+                    new_current_append_intervals.append(
+                        current_append_intervals[i])
+                    new_current_append_volumes.append(
+                        current_append_volumes[i])
+                    new_current_append_notes.append(each)
+            current_append_durations = new_current_append_durations
+            current_append_intervals = new_current_append_intervals
+            current_append_volumes = new_current_append_volumes
+            current_append_notes = new_current_append_notes
         return current_append_notes, current_append_durations, current_append_intervals, current_append_volumes, custom_durations, current_same_time
 
     def _translate_normal_notes_parser(self, each, mapping, default_duration,
                                        default_interval, default_volume,
-                                       rest_symbol, continue_symbol):
+                                       rest_symbol, continue_symbol,
+                                       current_part_fix_length_unit,
+                                       translate_mode):
         current_append_notes = each
         if ';' in current_append_notes:
             current_append_notes = current_append_notes.split(';')
         else:
             current_append_notes = [current_append_notes]
-        current_append_notes = [
-            mp.degree_to_note(mapping[each_note])
-            if each_note not in [rest_symbol, continue_symbol] else each_note
-            for each_note in current_append_notes
-        ]
+        current_append_notes = [i for i in current_append_notes if i]
+        if translate_mode == 0:
+            current_append_notes = [
+                mp.degree_to_note(mapping[each_note]) if each_note
+                not in [rest_symbol, continue_symbol] else each_note
+                for each_note in current_append_notes
+            ]
+        else:
+            new_current_append_notes = []
+            for each_note in current_append_notes:
+                if ':' not in each_note:
+                    current_each_note = mp.N(each_note)
+                    new_current_append_notes.append(current_each_note)
+                else:
+                    current_note, current_chord_type = each_note.split(":")
+                    current_note = mp.N(current_note)
+                    current_each_note = mp.C(
+                        f'{current_note.name}{current_chord_type}',
+                        current_note.num)
+                    new_current_append_notes.extend(current_each_note.notes)
+            current_append_notes = new_current_append_notes
+
         current_append_durations = [
-            default_duration for k in current_append_notes
+            default_duration if not current_part_fix_length_unit else
+            current_part_fix_length_unit for k in current_append_notes
         ]
         current_append_intervals = [
-            default_interval for k in current_append_notes
+            default_interval if not current_part_fix_length_unit else
+            current_part_fix_length_unit for k in current_append_notes
         ]
         current_append_volumes = [default_volume for k in current_append_notes]
         if len(current_append_notes) > 1:
