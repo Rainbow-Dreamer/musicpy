@@ -32,8 +32,8 @@ def omit_from(a, b, showls=False, alter_notes_show_degree=False):
         b_first_note = b[0].degree
         omitnotes_degree = []
         for j in omitnotes:
-            current = reverse_degree_match[b[b_notes.index(j)].degree -
-                                           b_first_note]
+            current = database.reverse_degree_match[b[b_notes.index(j)].degree
+                                                    - b_first_note]
             if current == 'not found':
                 omitnotes_degree.append(j)
             else:
@@ -83,7 +83,7 @@ def change_from(a,
             b_first_note = b[0].degree
             for i in range(len(changes)):
                 note_name, note_change = changes[i]
-                current_degree = reverse_degree_match[
+                current_degree = database.reverse_degree_match[
                     bnotes[bnames.index(note_name)] - b_first_note]
                 if current_degree == 'not found':
                     current_degree = note_name
@@ -159,7 +159,7 @@ def find_similarity(a,
     result = ''
     types = None
     if b is None:
-        wholeTypes = chordTypes.keynames()
+        wholeTypes = database.chordTypes.keynames()
         selfname = a.names()
         rootnote = a[0]
         possible_chords = [(chd(rootnote, i), i) for i in wholeTypes]
@@ -429,10 +429,10 @@ def interval_check(current_chord):
         (current_chord.notes[1].degree - current_chord.notes[0].degree), 12)
     if times > 0:
         dist = 12 + dist
-    if dist in INTERVAL:
-        interval_name = INTERVAL[dist]
+    if dist in database.INTERVAL:
+        interval_name = database.INTERVAL[dist]
     else:
-        interval_name = INTERVAL[dist % 12]
+        interval_name = database.INTERVAL[dist % 12]
     root_note_name = current_chord[0].name
     if interval_name == 'perfect fifth':
         return f'{root_note_name} with perfect fifth / {root_note_name}5 ({root_note_name} power chord)'
@@ -465,7 +465,7 @@ def detect(current_chord,
     root = current_chord[0].degree
     rootNote = current_chord[0].name
     distance = tuple(i.degree - root for i in current_chord[1:])
-    findTypes = detectTypes[distance]
+    findTypes = database.detectTypes[distance]
     if findTypes != 'not found':
         return [
             rootNote + i for i in findTypes
@@ -496,7 +496,7 @@ def detect(current_chord,
         current = chord(current_chord.inversion(i).names())
         root = current[0].degree
         distance = tuple(i.degree - root for i in current[1:])
-        result1 = detectTypes[distance]
+        result1 = database.detectTypes[distance]
         if result1 != 'not found':
             inversion_result = inversion_way(current_chord, current, inv_num,
                                              result1[0])
@@ -510,7 +510,7 @@ def detect(current_chord,
             current = current.inoctave()
             root = current[0].degree
             distance = tuple(i.degree - root for i in current[1:])
-            result1 = detectTypes[distance]
+            result1 = database.detectTypes[distance]
             if result1 != 'not found':
                 inversion_result = inversion_way(current_chord, current,
                                                  inv_num, result1[0])
@@ -524,7 +524,7 @@ def detect(current_chord,
         current = chord(current_chord.inversion_highest(i).names())
         root = current[0].degree
         distance = tuple(i.degree - root for i in current[1:])
-        result1 = detectTypes[distance]
+        result1 = database.detectTypes[distance]
         if result1 != 'not found':
             inversion_high_result = inversion_way(current_chord, current,
                                                   inv_num, result1[0])
@@ -538,7 +538,7 @@ def detect(current_chord,
             current = current.inoctave()
             root = current[0].degree
             distance = tuple(i.degree - root for i in current[1:])
-            result1 = detectTypes[distance]
+            result1 = database.detectTypes[distance]
             if result1 != 'not found':
                 inversion_high_result = inversion_way(current_chord, current,
                                                       inv_num, result1[0])
@@ -701,7 +701,7 @@ def detect_scale_type(current_scale, mode='scale'):
         interval = tuple(current_scale.interval)
     elif mode == 'interval':
         interval = tuple(current_scale)
-    scales = detectScale[interval]
+    scales = database.detectScale[interval]
     if scales == 'not found':
         if mode == 'scale':
             current_notes = current_scale.getScale()
@@ -736,9 +736,9 @@ def choose_melody(focused, now_focus, focus_ratio, focus_notes, remained_notes,
                 firstmelody = random.choice(pick)
                 # avoid to choose a melody note that appears a diminished fifth interval with the current chord
                 if avoid_dim_5:
-                    while any(
-                        (firstmelody.degree - x.degree) % diminished_fifth == 0
-                            for x in newchord.notes):
+                    while any((firstmelody.degree - x.degree) %
+                              database.diminished_fifth == 0
+                              for x in newchord.notes):
                         firstmelody = random.choice(pick)
             else:
                 # pick up melody notes from chord inner notes
@@ -746,9 +746,9 @@ def choose_melody(focused, now_focus, focus_ratio, focus_notes, remained_notes,
         else:
             firstmelody = random.choice(pick)
             if avoid_dim_5:
-                while any(
-                    (firstmelody.degree - x.degree) % diminished_fifth == 0
-                        for x in newchord.notes):
+                while any((firstmelody.degree - x.degree) %
+                          database.diminished_fifth == 0
+                          for x in newchord.notes):
                     firstmelody = random.choice(pick)
     return firstmelody
 
@@ -768,7 +768,7 @@ def random_composing(mode,
                      right_hand_meter=4,
                      choose_intervals=[1 / 8, 1 / 4, 1 / 2],
                      choose_durations=[1 / 8, 1 / 4, 1 / 2],
-                     melody_interval_tol=perfect_fourth,
+                     melody_interval_tol=database.perfect_fourth,
                      choose_from_chord=False):
     '''
     Composing a piece of music randomly from a given mode (here means scale),
@@ -779,7 +779,7 @@ def random_composing(mode,
         pattern = [int(x) for x in pattern]
     standard = mode.notes[:-1]
     # pick is the sets of notes from the required scales which used to pick up notes for melody
-    pick = [x.up(2 * octave) for x in standard]
+    pick = [x.up(2 * database.octave) for x in standard]
     focused = False
     if focus_notes != None:
         focused = True
@@ -817,7 +817,7 @@ def random_composing(mode,
             for g in range(left_hand_meter - newchord_len):
                 current_choose = random.choice(choose_more)
                 if current_choose.degree < newchord[-1].degree:
-                    current_choose = current_choose.up(octave)
+                    current_choose = current_choose.up(database.octave)
                 newchord += current_choose
         do_inversion = random.randint(0, 1)
         if do_inversion == 1:
@@ -858,7 +858,7 @@ def random_composing(mode,
             distance = [
                 abs(x.degree - y.degree) for x in newmelody for y in newmelody
             ]
-            if diminished_fifth in distance:
+            if database.diminished_fifth in distance:
                 continue
             else:
                 break
@@ -879,7 +879,7 @@ def fugue(mode,
           duration_bass=0.5,
           duration_melody=0.5):
     bassls = mode.notes[:-1]
-    melodyls = [x.up(octave) for x in bassls]
+    melodyls = [x.up(database.octave) for x in bassls]
     bassnotes = [random.choice(bassls) for j in range(length)]
     melodynotes = [random.choice(melodyls) for k in range(length)]
     bass = chord(bassnotes, duration_bass, interval_bass)
@@ -911,8 +911,8 @@ def negative_harmony(key,
         'C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'D#', 'A#', 'F'
     ] * 2
     key_tonic = key[0].name
-    if key_tonic in standard_dict:
-        key_tonic = standard_dict[key_tonic]
+    if key_tonic in database.standard_dict:
+        key_tonic = database.standard_dict[key_tonic]
     inds = notes_dict.index(key_tonic) + 1
     right_half = notes_dict[inds:inds + 6]
     left_half = notes_dict[inds + 6:inds + 12]
@@ -932,8 +932,8 @@ def negative_harmony(key,
             for each in range(len(notes)):
                 current = notes[each]
                 if isinstance(current, note):
-                    if current.name in standard_dict:
-                        current.name = standard_dict[current.name]
+                    if current.name in database.standard_dict:
+                        current.name = database.standard_dict[current.name]
                     current_note = closest_note(current,
                                                 map_dict[current.name])
                     notes[each] = current.reset(name=current_note.name,
@@ -945,18 +945,18 @@ def negative_harmony(key,
             raise ValueError('requires a chord object')
     else:
         temp = copy(key)
-        if temp.notes[-1].degree - temp.notes[0].degree == octave:
+        if temp.notes[-1].degree - temp.notes[0].degree == database.octave:
             temp.notes = temp.notes[:-1]
         notes = temp.notes
         for each in range(len(notes)):
             current = notes[each]
-            if current.name in standard_dict:
-                current.name = standard_dict[current.name]
+            if current.name in database.standard_dict:
+                current.name = database.standard_dict[current.name]
             notes[each] = current.reset(name=map_dict[current.name])
         if keep_root:
             root_note = key[0].name
-            if root_note in standard_dict:
-                root_note = standard_dict[root_note]
+            if root_note in database.standard_dict:
+                root_note = database.standard_dict[root_note]
             root_note_ind = [i.name for i in notes].index(root_note)
             new_notes = [
                 i.name
@@ -1015,10 +1015,10 @@ def find_chords_for_melody(melody,
     if not possible_scales:
         raise ValueError('cannot find a scale suitable for this melody')
     current_scale = possible_scales[0]
-    if current_scale.mode != 'major' and current_scale.mode in diatonic_modes:
+    if current_scale.mode != 'major' and current_scale.mode in database.diatonic_modes:
         current_scale = current_scale.inversion(
-            8 - diatonic_modes.index(current_scale.mode))
-    chordtypes = list(chordTypes.dic.keys())
+            8 - database.diatonic_modes.index(current_scale.mode))
+    database.chordTypes = list(database.chordTypes.dic.keys())
     result = []
     if get_pattern:
         choose_patterns = [
@@ -1039,17 +1039,17 @@ def find_chords_for_melody(melody,
             counter += 1
             if counter >= length:
                 counter = 0
-        current_chord_type = random.choice(chordtypes)[0]
+        current_chord_type = random.choice(database.chordtypes)[0]
         current_chord = chd(current_root, current_chord_type)
         while current_chord not in current_scale or current_chord_type == '5' or current_chord in result or (
                 chord_length is not None
                 and len(current_chord) < chord_length):
-            current_chord_type = random.choice(chordtypes)[0]
+            current_chord_type = random.choice(database.chordtypes)[0]
             current_chord = chd(current_root, current_chord_type)
         result.append(current_chord)
     if chord_length is not None:
         result = [each[:chord_length + 1] for each in result]
-    result = [each - octave * down_octave for each in result]
+    result = [each - database.octave * down_octave for each in result]
     return result
 
 
@@ -1073,13 +1073,14 @@ def detect_in_scale(current_chord,
     whole_notes = current_chord.names()
     note_names = list(set(whole_notes))
     note_names = [
-        standard_dict[i] if i not in standard2 else i for i in note_names
+        database.standard_dict[i] if i not in database.standard2 else i
+        for i in note_names
     ]
     first_note = whole_notes[0]
     results = []
     if find_altered:
         altered_scales = []
-    for each in scaleTypes:
+    for each in database.scaleTypes:
         scale_name = each[0]
         if scale_name != '12':
             current_scale = scale(first_note, scale_name)
@@ -1113,11 +1114,11 @@ def detect_in_scale(current_chord,
                                         current_scale.notes)
                                     if k.degree - test_scale_exist[
                                             inds - 2].degree < 0:
-                                        k = k.up(octave)
+                                        k = k.up(database.octave)
                                     test_scale_exist[inds - 1] = k
                                     if chord(test_scale_exist).intervalof(
                                             cummulative=False
-                                    ) not in scaleTypes.values():
+                                    ) not in database.scaleTypes.values():
                                         altered_msg.append(f'{header}{inds}')
                                         altered_scales.append(
                                             f"{current_scale.start.name} {current_scale.mode} {', '.join(altered_msg)}"
@@ -1173,35 +1174,40 @@ def detect_in_scale(current_chord,
 
 
 def most_appear_notes_detect_scale(current_chord, most_appeared_note):
-    third_degree_major = most_appeared_note.up(major_third).name
-    third_degree_minor = most_appeared_note.up(minor_third).name
+    third_degree_major = most_appeared_note.up(database.major_third).name
+    third_degree_minor = most_appeared_note.up(database.minor_third).name
     if current_chord.count(third_degree_major) > current_chord.count(
             third_degree_minor):
         current_mode = 'major'
-        if current_chord.count(most_appeared_note.up(
-                augmented_fourth).name) > current_chord.count(
-                    most_appeared_note.up(perfect_fourth).name):
+        if current_chord.count(
+                most_appeared_note.up(
+                    database.augmented_fourth).name) > current_chord.count(
+                        most_appeared_note.up(database.perfect_fourth).name):
             current_mode = 'lydian'
         else:
-            if current_chord.count(most_appeared_note.up(
-                    minor_seventh).name) > current_chord.count(
-                        most_appeared_note.up(major_seventh).name):
+            if current_chord.count(
+                    most_appeared_note.up(
+                        database.minor_seventh).name) > current_chord.count(
+                            most_appeared_note.up(
+                                database.major_seventh).name):
                 current_mode = 'mixolydian'
     else:
         current_mode = 'minor'
         if current_chord.count(
-                most_appeared_note.up(major_sixth).name) > current_chord.count(
-                    most_appeared_note.up(minor_sixth).name):
+                most_appeared_note.up(
+                    database.major_sixth).name) > current_chord.count(
+                        most_appeared_note.up(database.minor_sixth).name):
             current_mode = 'dorian'
         else:
-            if current_chord.count(most_appeared_note.up(
-                    minor_second).name) > current_chord.count(
-                        most_appeared_note.up(major_second).name):
+            if current_chord.count(
+                    most_appeared_note.up(
+                        database.minor_second).name) > current_chord.count(
+                            most_appeared_note.up(database.major_second).name):
                 current_mode = 'phrygian'
                 if current_chord.count(
-                        most_appeared_note.up(
-                            diminished_fifth).name) > current_chord.count(
-                                most_appeared_note.up(perfect_fifth).name):
+                        most_appeared_note.up(database.diminished_fifth).name
+                ) > current_chord.count(
+                        most_appeared_note.up(database.perfect_fifth).name):
                     current_mode = 'locrian'
     return scale(most_appeared_note.name, current_mode)
 
@@ -1332,13 +1338,14 @@ def detect_scale2(current_chord,
             if i[0] in [current_scale_names[0], current_scale_names[5]]
         ]
         result_scale = [
-            scale(i[0], diatonic_modes[current_scale_names.index(i[0])])
+            scale(i[0],
+                  database.diatonic_modes[current_scale_names.index(i[0])])
             for i in scale_notes_counts
         ]
     else:
         current_tonic = [i[0] for i in scale_notes_counts[:most_appear_num]]
         current_ind = [current_scale_names.index(i) for i in current_tonic]
-        current_mode = [diatonic_modes[i] for i in current_ind]
+        current_mode = [database.diatonic_modes[i] for i in current_ind]
         result_scale = [
             scale(current_tonic[i], current_mode[i])
             for i in range(len(current_tonic))
@@ -1411,7 +1418,8 @@ def detect_scale3(current_chord,
                 if i[0] in [current_scale_names[0], current_scale_names[5]]
             ]
             current_result_scale = [
-                scale(i[0], diatonic_modes[current_scale_names.index(i[0])])
+                scale(i[0],
+                      database.diatonic_modes[current_scale_names.index(i[0])])
                 for i in scale_notes_counts
             ]
         else:
@@ -1419,7 +1427,7 @@ def detect_scale3(current_chord,
                 i[0] for i in scale_notes_counts[:most_appear_num]
             ]
             current_ind = [current_scale_names.index(i) for i in current_tonic]
-            current_mode = [diatonic_modes[i] for i in current_ind]
+            current_mode = [database.diatonic_modes[i] for i in current_ind]
             current_result_scale = [
                 scale(current_tonic[i], current_mode[i])
                 for i in range(len(current_tonic))
@@ -1458,21 +1466,21 @@ def get_chord_root_note(chord_name,
         chord_name = chord_name[0]
     elif types == note:
         chord_name = str(chord_name)
-    if chord_name in standard:
+    if chord_name in database.standard:
         if get_chord_types:
             return chord_name, ''
         else:
             return chord_name
     if chord_name.startswith('note '):
         result = chord_name.split('note ')[1][:2]
-        if result in standard:
-            if to_standard and result not in standard2:
-                result = standard_dict[result]
+        if result in database.standard:
+            if to_standard and result not in database.standard2:
+                result = database.standard_dict[result]
         else:
             result = result[0]
-            if result in standard:
-                if to_standard and result not in standard2:
-                    result = standard_dict[result]
+            if result in database.standard:
+                if to_standard and result not in database.standard2:
+                    result = database.standard_dict[result]
         if get_chord_types:
             return result, ''
         return result
@@ -1501,14 +1509,14 @@ def get_chord_root_note(chord_name,
             result = lower[1:3]
             if get_chord_types:
                 situation = 3
-    if result in standard:
-        if result not in standard2:
-            result = standard_dict[result]
+    if result in database.standard:
+        if result not in database.standard2:
+            result = database.standard_dict[result]
     else:
         result = result[0]
-        if result in standard:
-            if result not in standard2:
-                result = standard_dict[result]
+        if result in database.standard:
+            if result not in database.standard2:
+                result = database.standard_dict[result]
     if get_chord_types:
         if situation == 0:
             chord_types = part1.split(' ')[0][len(result):]
@@ -1530,16 +1538,16 @@ def get_chord_root_note(chord_name,
 
 
 def get_chord_type_location(current_chord, mode='functions'):
-    if current_chord in chordTypes:
+    if current_chord in database.chordTypes:
         chord_types = [
-            i for i in list(chordTypes.keys()) if current_chord in i
+            i for i in list(database.chordTypes.keys()) if current_chord in i
         ][0]
         if mode == 'functions':
-            for each, value in chord_function_dict.items():
+            for each, value in database.chord_function_dict.items():
                 if each in chord_types:
                     return value
         elif mode == 'notations':
-            for each, value in chord_notation_dict.items():
+            for each, value in database.chord_notation_dict.items():
                 if each in chord_types:
                     return value
 
@@ -1573,27 +1581,29 @@ def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
             if root_note not in note_names:
                 root_note, header = root_note[:-1], root_note[-1]
             scale_degree = note_names.index(root_note)
-            current_function = chord_functions_roman_numerals[scale_degree + 1]
+            current_function = database.chord_functions_roman_numerals[
+                scale_degree + 1]
             if chord_types == '' or chord_types == '5':
                 original_chord = mode(scale_degree)
                 third_type = original_chord[1].degree - original_chord[0].degree
-                if third_type == minor_third:
+                if third_type == database.minor_third:
                     current_function = current_function.lower()
             else:
-                if chord_types in chordTypes:
+                if chord_types in database.chordTypes:
                     current_chord = chd(root_note, chord_types)
                     current_chord_names = current_chord.names()
                 else:
-                    if chord_types[5:] not in NAME_OF_INTERVAL:
+                    if chord_types[5:] not in database.NAME_OF_INTERVAL:
                         current_chord_names = None
                     else:
                         current_chord_names = [
                             root_note_obj.name,
-                            root_note_obj.up(
-                                NAME_OF_INTERVAL[chord_types[5:]]).name
+                            root_note_obj.up(database.NAME_OF_INTERVAL[
+                                chord_types[5:]]).name
                         ]
-                if chord_types in chord_function_dict:
-                    to_lower, function_name = chord_function_dict[chord_types]
+                if chord_types in database.chord_function_dict:
+                    to_lower, function_name = database.chord_function_dict[
+                        chord_types]
                     if to_lower:
                         current_function = current_function.lower()
                     current_function += function_name
@@ -1607,8 +1617,8 @@ def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
                         current_function += function_name
                     else:
                         if current_chord_names:
-                            M3 = root_note_obj.up(major_third).name
-                            m3 = root_note_obj.up(minor_third).name
+                            M3 = root_note_obj.up(database.major_third).name
+                            m3 = root_note_obj.up(database.minor_third).name
                             if m3 in current_chord_names:
                                 current_function = current_function.lower()
                             if len(current_chord_names) >= 3:
@@ -1643,29 +1653,29 @@ def get_chord_notations(chords,
             root_note, chord_types = each
             current_notation = root_note
             root_note_obj = note(root_note, 5)
-            if chord_types in chord_notation_dict:
-                current_notation += chord_notation_dict[chord_types]
+            if chord_types in database.chord_notation_dict:
+                current_notation += database.chord_notation_dict[chord_types]
             else:
                 notation_result = get_chord_type_location(chord_types,
                                                           mode='notations')
                 if notation_result:
                     current_notation += notation_result
                 else:
-                    if chord_types in chordTypes:
+                    if chord_types in database.chordTypes:
                         current_chord = chd(root_note, chord_types)
                         current_chord_names = current_chord.names()
                     else:
-                        if chord_types[5:] not in NAME_OF_INTERVAL:
+                        if chord_types[5:] not in database.NAME_OF_INTERVAL:
                             current_chord_names = None
                         else:
                             current_chord_names = [
                                 root_note_obj.name,
-                                root_note_obj.up(
-                                    NAME_OF_INTERVAL[chord_types[5:]]).name
+                                root_note_obj.up(database.NAME_OF_INTERVAL[
+                                    chord_types[5:]]).name
                             ]
                     if current_chord_names:
-                        M3 = root_note_obj.up(major_third).name
-                        m3 = root_note_obj.up(minor_third).name
+                        M3 = root_note_obj.up(database.major_third).name
+                        m3 = root_note_obj.up(database.minor_third).name
                         if m3 in current_chord_names:
                             current_notation += '-'
                         if len(current_chord_names) >= 3:
@@ -1805,8 +1815,8 @@ def chord_functions_analysis(current_chord,
 
 def split_melody(current_chord,
                  mode='index',
-                 melody_tol=minor_seventh,
-                 chord_tol=major_sixth,
+                 melody_tol=database.minor_seventh,
+                 chord_tol=database.major_sixth,
                  get_off_overlap_notes=True,
                  average_degree_length=8,
                  melody_degree_tol=toNote('B4')):
@@ -1940,8 +1950,8 @@ def split_melody(current_chord,
 
 def split_chord(current_chord,
                 mode='index',
-                melody_tol=minor_seventh,
-                chord_tol=major_sixth,
+                melody_tol=database.minor_seventh,
+                chord_tol=database.major_sixth,
                 get_off_overlap_notes=True,
                 average_degree_length=8,
                 melody_degree_tol=toNote('B4')):
@@ -1967,8 +1977,8 @@ def split_chord(current_chord,
 
 def split_all(current_chord,
               mode='index',
-              melody_tol=minor_seventh,
-              chord_tol=major_sixth,
+              melody_tol=database.minor_seventh,
+              chord_tol=database.major_sixth,
               get_off_overlap_notes=True,
               average_degree_length=8,
               melody_degree_tol=toNote('B4')):
@@ -2004,7 +2014,7 @@ def split_all(current_chord,
 def chord_analysis(chords,
                    mode='chord names',
                    is_chord=False,
-                   new_chord_tol=minor_seventh,
+                   new_chord_tol=database.minor_seventh,
                    get_original_order=False,
                    formated=False,
                    formated_mode=1,

@@ -1072,8 +1072,8 @@ def load_sounds(dic, current_path):
 
 
 def standardize_note(i):
-    if i in standard_dict:
-        i = standard_dict[i]
+    if i in database.standard_dict:
+        i = database.standard_dict[i]
     return i
 
 

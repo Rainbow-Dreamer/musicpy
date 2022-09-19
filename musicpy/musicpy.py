@@ -7,10 +7,10 @@ import midiutil
 import mido
 
 if __name__ == '__main__' or __name__ == 'musicpy':
-    from database import *
+    import database
     from structures import *
 else:
-    from .database import *
+    from . import database
     from .structures import *
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
@@ -49,7 +49,7 @@ def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
 
 
 def degree_to_note(degree, duration=0.25, volume=100, channel=None):
-    name = standard_reverse[degree % 12]
+    name = database.standard_reverse[degree % 12]
     num = (degree // 12) - 1
     return note(name, num, duration, volume, channel)
 
@@ -61,7 +61,7 @@ def degrees_to_chord(ls, *args, **kwargs):
 def note_to_degree(obj):
     if not isinstance(obj, note):
         obj = toNote(obj)
-    return standard[obj.name] + 12 * (obj.num + 1)
+    return database.standard[obj.name] + 12 * (obj.num + 1)
 
 
 def trans_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
@@ -165,11 +165,11 @@ def getchord(start,
     mode = mode.lower().replace(' ', '')
     initial = start.degree
     chordlist = [start]
-    interval_premode = chordTypes(premode, mode=1, index=ind)
+    interval_premode = database.chordTypes(premode, mode=1, index=ind)
     if interval_premode != 'not found':
         interval = interval_premode
     else:
-        interval_mode = chordTypes(mode, mode=1, index=ind)
+        interval_mode = database.chordTypes(mode, mode=1, index=ind)
         if interval_mode != 'not found':
             interval = interval_mode
         else:
@@ -461,7 +461,7 @@ def read(name,
         result_merge_track = all_tracks[0]
         result_piece.tracks = [chord([]) for i in range(len(channels_list))]
         result_piece.instruments = [
-            reverse_instruments[i] for i in instruments
+            database.reverse_instruments[i] for i in instruments
         ]
         result_piece.instruments_numbers = instruments
         result_piece.track_names = tracks_names_list
@@ -812,7 +812,7 @@ def write(current_chord,
     track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
     current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
     instruments_numbers = [
-        i if isinstance(i, int) else INSTRUMENTS[i]
+        i if isinstance(i, int) else database.INSTRUMENTS[i]
         for i in instruments_numbers
     ]
     MyMIDI = midiutil.MidiFile.MIDIFile(track_number,
@@ -982,18 +982,23 @@ def modulation(current_chord, old_scale, new_scale):
 
 def trans(obj, pitch=4, duration=0.25, interval=None):
     obj = obj.replace(' ', '')
+    if ':' in obj:
+        current = obj.split(':')
+        current[0] = toNote(current[0])
+        return trans(f'{current[0].name}{current[1]}', current[0].num,
+                     duration, interval)
     if obj.count('/') > 1:
         current_parts = obj.split('/')
         current_parts = [int(i) if i.isdigit() else i for i in current_parts]
         result = trans(current_parts[0], pitch, duration, interval)
         for each in current_parts[1:]:
-            if each in standard:
-                each = standard_dict.get(each, each)
+            if each in database.standard:
+                each = database.standard_dict.get(each, each)
             elif not isinstance(each, int):
                 each = trans(each, pitch, duration, interval)
             result /= each
         return result
-    if obj in standard:
+    if obj in database.standard:
         return chd(obj,
                    'M',
                    pitch=pitch,
@@ -1009,7 +1014,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
         if N == 2:
             first = obj[0]
             types = obj[1]
-            if first in standard and types in chordTypes:
+            if first in database.standard and types in database.chordTypes:
                 return chd(first,
                            types,
                            pitch=pitch,
@@ -1018,7 +1023,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
-            if first_two in standard and type1 in chordTypes:
+            if first_two in database.standard and type1 in database.chordTypes:
                 return chd(first_two,
                            type1,
                            pitch=pitch,
@@ -1026,7 +1031,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                            intervals=interval)
             first_one = obj[0]
             type2 = obj[1:]
-            if first_one in standard and type2 in chordTypes:
+            if first_one in database.standard and type2 in database.chordTypes:
                 return chd(first_one,
                            type2,
                            pitch=pitch,
@@ -1041,9 +1046,9 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
                 return (first_chord / int(part2)) % (duration, interval)
             elif part2[-1] == '!' and part2[:-1].isdigit():
                 return (first_chord @ int(part2[:-1])) % (duration, interval)
-            elif part2 in standard:
-                if part2 not in standard2:
-                    part2 = standard_dict[part2]
+            elif part2 in database.standard:
+                if part2 not in database.standard2:
+                    part2 = database.standard_dict[part2]
                 first_chord_notenames = first_chord.names()
                 if part2 in first_chord_notenames and part2 != first_chord_notenames[
                         0]:
@@ -1338,7 +1343,7 @@ def relative_note(a, b):
     a_name, b_name, accidental_a, accidental_b = a[0], b[0], a[1:], b[1:]
     if len_a == 1 and len_b > 1 and a_name == b_name:
         return a + '♮'
-    if a in standard:
+    if a in database.standard:
         a = note(a, 5)
     else:
         a = note(a_name, 5)
@@ -1354,7 +1359,7 @@ def relative_note(a, b):
             pass
         else:
             return f'unrecognizable accidentals {accidental_a}'
-    if b in standard:
+    if b in database.standard:
         b = note(b, 5)
     else:
         b = note(b_name, 5)

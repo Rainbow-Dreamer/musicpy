@@ -1,17 +1,17 @@
 from copy import deepcopy as copy
 from fractions import Fraction
 if __name__ == 'musicpy.structures':
-    from .database import *
+    from . import database
 else:
-    from database import *
+    import database
 
 
 class note:
 
     def __init__(self, name, num=4, duration=0.25, volume=100, channel=None):
-        if name not in standard:
+        if name not in database.standard:
             raise ValueError(
-                f"Invalid note name '{name}', accepted note names are {list(standard.keys())}"
+                f"Invalid note name '{name}', accepted note names are {list(database.standard.keys())}"
             )
         self.name = name
         self.num = num
@@ -24,11 +24,11 @@ class note:
 
     @property
     def degree(self):
-        return standard[self.name] + 12 * (self.num + 1)
+        return database.standard[self.name] + 12 * (self.num + 1)
 
     @degree.setter
     def degree(self, value):
-        self.name = standard_reverse[value % 12]
+        self.name = database.standard_reverse[value % 12]
         self.num = (value // 12) - 1
 
     def __repr__(self):
@@ -85,13 +85,13 @@ class note:
 
     def __invert__(self):
         name = self.name
-        if name in standard_dict:
+        if name in database.standard_dict:
             if '#' in name:
-                return self.reset(name=reverse_standard_dict[name])
+                return self.reset(name=database.reverse_standard_dict[name])
             else:
-                return self.reset(name=standard_dict[name])
-        elif name in reverse_standard_dict:
-            return self.reset(name=reverse_standard_dict[name])
+                return self.reset(name=database.standard_dict[name])
+        elif name in database.reverse_standard_dict:
+            return self.reset(name=database.reverse_standard_dict[name])
         else:
             return self.reset(name=name)
 
@@ -201,7 +201,8 @@ class chord:
                 else:
                     if last is not None:
                         current = note(current_note.name, last.num)
-                        if standard[current.name] <= standard[last.name]:
+                        if database.standard[
+                                current.name] <= database.standard[last.name]:
                             current = note(current.name, last.num + 1)
                     else:
                         current = current_note
@@ -415,8 +416,8 @@ class chord:
     def standard_notation(self):
         temp = copy(self)
         for each in temp.notes:
-            if isinstance(each, note) and each.name in standard_dict:
-                each.name = standard_dict[each.name]
+            if isinstance(each, note) and each.name in database.standard_dict:
+                each.name = database.standard_dict[each.name]
         return temp
 
     def most_appear(self, choices=None, mode='name', as_standard=False):
@@ -424,7 +425,8 @@ class chord:
         if as_standard:
             test_obj = self.standard_notation()
         if not choices:
-            return max([i for i in standard2], key=lambda s: test_obj.count(s))
+            return max([i for i in database.standard2],
+                       key=lambda s: test_obj.count(s))
         else:
             choices = [
                 mp.toNote(i) if isinstance(i, str) else i for i in choices
@@ -441,7 +443,8 @@ class chord:
         if as_standard:
             test_obj = self.standard_notation()
         if not choices:
-            choices = copy(standard2) if as_standard else copy(standard)
+            choices = copy(database.standard2) if as_standard else copy(
+                database.standard)
         else:
             choices = [
                 mp.toNote(i).name if isinstance(i, str) else i.name
@@ -557,7 +560,8 @@ class chord:
         intervals = temp.interval
         durations = temp.get_duration()
         names_standard = [
-            standard_dict[i] if i in standard_dict else i for i in notenames
+            database.standard_dict[i] if i in database.standard_dict else i
+            for i in notenames
         ]
         names_offrep = []
         new_duration = []
@@ -631,8 +635,8 @@ class chord:
     def __contains__(self, note1):
         if not isinstance(note1, note):
             note1 = mp.toNote(note1)
-            if note1.name in standard_dict:
-                note1.name = standard_dict[note1.name]
+            if note1.name in database.standard_dict:
+                note1.name = database.standard_dict[note1.name]
         return note1 in self.same_accidentals().notes
 
     def __add__(self, obj):
@@ -717,8 +721,8 @@ class chord:
                 if isinstance(obj, str):
                     obj = mp.trans_note(obj)
                 notenames = self.names()
-                if obj.name not in standard2:
-                    obj.name = standard_dict[obj.name]
+                if obj.name not in database.standard2:
+                    obj.name = database.standard_dict[obj.name]
                 if obj.name in notenames and obj.name != notenames[0]:
                     return self.inversion(notenames.index(obj.name))
             return self.on(obj)
@@ -767,8 +771,8 @@ class chord:
             first = each[0]
             if first in ['#', 'b']:
                 degree = each[1:]
-                if degree in degree_match:
-                    degree_ls = degree_match[degree]
+                if degree in database.degree_match:
+                    degree_ls = database.degree_match[degree]
                     found = False
                     for i in degree_ls:
                         current_note = temp[0].up(i)
@@ -783,12 +787,12 @@ class chord:
                             degree_ls[0]).up() if first == '#' else temp[0].up(
                                 degree_ls[0]).down()
                 else:
-                    if degree in standard:
-                        if degree in standard_dict:
-                            degree = standard_dict[degree]
+                    if degree in database.standard:
+                        if degree in database.standard_dict:
+                            degree = database.standard_dict[degree]
                         self_names = [
-                            i if i not in standard_dict else standard_dict[i]
-                            for i in temp.names()
+                            i if i not in database.standard_dict else
+                            database.standard_dict[i] for i in temp.names()
                         ]
                         if degree in self_names:
                             ind = temp.names().index(degree)
@@ -796,8 +800,8 @@ class chord:
                             ) if first == '#' else temp.notes[ind].down()
             elif each.startswith('omit') or each.startswith('no'):
                 degree = each[4:] if each.startswith('omit') else each[2:]
-                if degree in degree_match:
-                    degree_ls = degree_match[degree]
+                if degree in database.degree_match:
+                    degree_ls = database.degree_match[degree]
                     for i in degree_ls:
                         current_note = temp[0].up(i)
                         if current_note in temp:
@@ -806,12 +810,12 @@ class chord:
                             del temp.interval[ind]
                             break
                 else:
-                    if degree in standard:
-                        if degree in standard_dict:
-                            degree = standard_dict[degree]
+                    if degree in database.standard:
+                        if degree in database.standard_dict:
+                            degree = database.standard_dict[degree]
                         self_names = [
-                            i if i not in standard_dict else standard_dict[i]
-                            for i in temp.names()
+                            i if i not in database.standard_dict else
+                            database.standard_dict[i] for i in temp.names()
                         ]
                         if degree in self_names:
                             temp = temp.omit(degree)
@@ -824,8 +828,8 @@ class chord:
                 temp.notes = temp.sus(num).notes
             elif each.startswith('add'):
                 degree = each[3:]
-                if degree in degree_match:
-                    degree_ls = degree_match[degree]
+                if degree in database.degree_match:
+                    degree_ls = database.degree_match[degree]
                     temp += temp[0].up(degree_ls[0])
         return temp
 
@@ -843,9 +847,9 @@ class chord:
             elif isinstance(each, float):
                 num, pitch = [int(j) for j in str(each).split('.')]
                 if num > 0:
-                    current_note = temp[num - 1] + pitch * octave
+                    current_note = temp[num - 1] + pitch * database.octave
                 else:
-                    current_note = temp[-num - 1] - pitch * octave
+                    current_note = temp[-num - 1] - pitch * database.octave
                 result.append(current_note)
                 result_interval.append(temp.interval[num - 1])
         return chord(result,
@@ -956,7 +960,7 @@ class chord:
             result = [i - root for i in others]
         if not translate:
             return result
-        return [INTERVAL[x % octave] for x in result]
+        return [database.INTERVAL[x % database.octave] for x in result]
 
     def add(self, note1=None, mode='tail', start=0, duration=0.25):
         if len(self) == 0:
@@ -1041,7 +1045,7 @@ class chord:
         else:
             temp = copy(self)
             for i in range(num):
-                temp.notes.append(temp.notes.pop(0) + octave)
+                temp.notes.append(temp.notes.pop(0) + database.octave)
             return temp
 
     def inv(self, num=1):
@@ -1053,7 +1057,7 @@ class chord:
                 'the number of inversion is out of range of the notes in this chord'
             )
         while temp[num].degree >= temp[num - 1].degree:
-            temp[num] = temp[num].down(octave)
+            temp[num] = temp[num].down(database.octave)
         temp.insert(0, temp.pop(num))
         return temp
 
@@ -1085,7 +1089,7 @@ class chord:
             temp = self.copy()
             ind -= 1
             while temp[ind].degree < temp[-1].degree:
-                temp[ind] = temp[ind].up(octave)
+                temp[ind] = temp[ind].up(database.octave)
             temp.notes.append(temp.notes.pop(ind))
             return temp
 
@@ -1093,8 +1097,8 @@ class chord:
         temp = self.copy()
         root = self[0].degree
         for i in range(1, len(temp)):
-            while temp[i].degree - root > octave:
-                temp[i] = temp[i].down(octave)
+            while temp[i].degree - root > database.octave:
+                temp[i] = temp[i].down(database.octave)
         temp.notes.sort(key=lambda x: x.degree)
         return temp
 
@@ -1208,16 +1212,18 @@ class chord:
         if num == 4:
             temp.notes = [
                 i.up() if abs(i.degree - first_note.degree) %
-                octave == major_third else
+                database.octave == database.major_third else
                 i.up(2) if abs(i.degree - first_note.degree) %
-                octave == minor_third else i for i in temp.notes
+                database.octave == database.minor_third else i
+                for i in temp.notes
             ]
         elif num == 2:
             temp.notes = [
                 i.down(2) if abs(i.degree - first_note.degree) %
-                octave == major_third else
+                database.octave == database.major_third else
                 i.down() if abs(i.degree - first_note.degree) %
-                octave == minor_third else i for i in temp.notes
+                database.octave == database.minor_third else i
+                for i in temp.notes
             ]
         return temp
 
@@ -1237,7 +1243,7 @@ class chord:
 
     def index(self, value):
         if isinstance(value, str):
-            if value not in standard:
+            if value not in database.standard:
                 value = mp.toNote(value)
                 if value not in self:
                     return -1
@@ -1314,7 +1320,7 @@ class chord:
 
     def drops(self, ind):
         temp = self.copy()
-        dropnote = temp.notes.pop(-ind).down(octave)
+        dropnote = temp.notes.pop(-ind).down(database.octave)
         dropinterval = temp.interval.pop(-ind)
         temp.notes.insert(0, dropnote)
         temp.interval.insert(0, dropinterval)
@@ -1349,11 +1355,11 @@ class chord:
         # this modulation function only supports modulate from a scale with equal or more notes to another scale
         temp = copy(self)
         old_scale_names = [
-            i if i not in standard_dict else standard_dict[i]
+            i if i not in database.standard_dict else database.standard_dict[i]
             for i in old_scale.names()
         ]
         new_scale_names = [
-            i if i not in standard_dict else standard_dict[i]
+            i if i not in database.standard_dict else database.standard_dict[i]
             for i in new_scale.names()
         ]
         old_scale_names_len = len(old_scale_names)
@@ -1361,7 +1367,7 @@ class chord:
         if new_scale_names_len < old_scale_names_len:
             new_scale_names += new_scale_names[-(old_scale_names_len -
                                                  new_scale_names_len):]
-            new_scale_names.sort(key=lambda s: standard[s])
+            new_scale_names.sort(key=lambda s: database.standard[s])
         number = len(new_scale_names)
         transdict = {
             old_scale_names[i]: new_scale_names[i]
@@ -1370,8 +1376,8 @@ class chord:
         for k in range(len(temp)):
             current = temp.notes[k]
             if isinstance(current, note):
-                if current.name in standard_dict:
-                    current_name = standard_dict[current.name]
+                if current.name in database.standard_dict:
+                    current_name = database.standard_dict[current.name]
                 else:
                     current_name = current.name
                 if current_name in transdict:
@@ -1751,7 +1757,7 @@ class chord:
             if each_standard in chord_types_root:
                 root_note = each
                 break
-            elif each_standard in standard_dict and standard_dict[
+            elif each_standard in database.standard_dict and database.standard_dict[
                     each_standard] in chord_types_root:
                 root_note = each
                 break
@@ -1801,7 +1807,7 @@ class chord:
         if other_msg['altered']:
             chord_types_root = chord_types_root.split(',')[0]
             chord_type = original_chord_type
-        root_note = standard_dict.get(root_note, root_note)
+        root_note = database.standard_dict.get(root_note, root_note)
         if chord_speciality == 'polychord' or (chord_speciality
                                                == 'inverted chord'
                                                and inversion_msg is None):
@@ -1870,10 +1876,10 @@ class chord:
         for each in temp.notes:
             if mode == '#':
                 if len(each.name) > 1 and each.name[-1] == 'b':
-                    each.name = standard_dict[each.name]
+                    each.name = database.standard_dict[each.name]
             elif mode == 'b':
                 if each.name[-1] == '#':
-                    each.name = reverse_standard_dict[each.name]
+                    each.name = database.reverse_standard_dict[each.name]
         return temp
 
     def filter(self, cond, action=None, mode=0, action_mode=0):
@@ -1942,16 +1948,16 @@ class chord:
     def interval_note(self, interval, mode=0):
         if mode == 0:
             interval = str(interval)
-            if interval in degree_match:
+            if interval in database.degree_match:
                 self_notes = self.same_accidentals().notes
-                degrees = degree_match[interval]
+                degrees = database.degree_match[interval]
                 for each in degrees:
                     current_note = self_notes[0] + each
                     if current_note in self_notes:
                         return current_note
-            if interval in precise_degree_match:
+            if interval in database.precise_degree_match:
                 self_notes = self.same_accidentals().notes
-                degrees = precise_degree_match[interval]
+                degrees = database.precise_degree_match[interval]
                 current_note = self_notes[0] + degrees
                 if current_note in self_notes:
                     return current_note
@@ -1971,10 +1977,10 @@ class chord:
         else:
             current_interval = current_note.degree - self[0].degree
         if mode == 0:
-            if current_interval in reverse_precise_degree_match:
-                return reverse_precise_degree_match[current_interval]
+            if current_interval in database.reverse_precise_degree_match:
+                return database.reverse_precise_degree_match[current_interval]
         elif mode == 1:
-            return INTERVAL[current_interval]
+            return database.INTERVAL[current_interval]
 
     def get_voicing(self, voicing):
         notes = [self.interval_note(i).name for i in voicing]
@@ -1999,8 +2005,8 @@ class chord:
         if keep_root:
             root_note = temp.notes[0]
             other_root_note = other.notes[0]
-            root_note_step = standard2[root_note.name] - standard2[
-                other_root_note.name]
+            root_note_step = database.standard2[
+                root_note.name] - database.standard2[other_root_note.name]
             root_note_steps = [abs(root_note_step), 12 - abs(root_note_step)]
             nearest_step = min(root_note_steps)
             if root_lower:
@@ -2019,7 +2025,7 @@ class chord:
             remain_notes = []
             for each in temp.notes[1:]:
                 note_steps = [
-                    standard2[each.name] - standard2[i.name]
+                    database.standard2[each.name] - database.standard2[i.name]
                     for i in other.notes[1:]
                 ]
                 note_steps_path = [
@@ -2028,8 +2034,8 @@ class chord:
                 most_near_note_steps = min(note_steps_path)
                 most_near_note = other.notes[note_steps_path.index(
                     most_near_note_steps)]
-                current_step = standard2[each.name] - standard2[
-                    most_near_note.name]
+                current_step = database.standard2[
+                    each.name] - database.standard2[most_near_note.name]
                 current_steps = [abs(current_step), 12 - abs(current_step)]
                 if most_near_note_steps == current_steps[0]:
                     new_note = most_near_note + current_step
@@ -2044,15 +2050,16 @@ class chord:
             temp = temp.sortchord()
             temp = temp.set(duration=original_duration, volume=original_volume)
             if temp[0].name != root_note.name:
-                temp[0] += octave * (
-                    (12 - (temp[0].degree - root_note.degree)) // octave)
+                temp[0] += database.octave * (
+                    (12 -
+                     (temp[0].degree - root_note.degree)) // database.octave)
                 temp = temp.sortchord()
             return temp
         else:
             remain_notes = []
             for each in temp.notes:
                 note_steps = [
-                    standard2[each.name] - standard2[i.name]
+                    database.standard2[each.name] - database.standard2[i.name]
                     for i in other.notes
                 ]
                 note_steps_path = [
@@ -2061,8 +2068,8 @@ class chord:
                 most_near_note_steps = min(note_steps_path)
                 most_near_note = other.notes[note_steps_path.index(
                     most_near_note_steps)]
-                current_step = standard2[each.name] - standard2[
-                    most_near_note.name]
+                current_step = database.standard2[
+                    each.name] - database.standard2[most_near_note.name]
                 current_steps = [abs(current_step), 12 - abs(current_step)]
                 if most_near_note_steps == current_steps[0]:
                     new_note = most_near_note + current_step
@@ -2079,7 +2086,7 @@ class chord:
 
     def reset_octave(self, num):
         diff = num - self[0].num
-        return self + diff * octave
+        return self + diff * database.octave
 
     def reset_pitch(self, pitch):
         if isinstance(pitch, str):
@@ -2279,11 +2286,14 @@ class scale:
 
     def __contains__(self, note1):
         names = self.names()
-        names = [standard_dict[i] if i in standard_dict else i for i in names]
+        names = [
+            database.standard_dict[i] if i in database.standard_dict else i
+            for i in names
+        ]
         if isinstance(note1, chord):
             chord_names = note1.names()
             chord_names = [
-                standard_dict[i] if i in standard_dict else i
+                database.standard_dict[i] if i in database.standard_dict else i
                 for i in chord_names
             ]
             return all(i in names for i in chord_names)
@@ -2292,8 +2302,8 @@ class scale:
                 note1 = note1.name
             else:
                 note1 = mp.trans_note(note1).name
-            return (standard_dict[note1]
-                    if note1 in standard_dict else note1) in names
+            return (database.standard_dict[note1]
+                    if note1 in database.standard_dict else note1) in names
 
     def __getitem__(self, ind):
         return self.notes[ind]
@@ -2336,7 +2346,7 @@ class scale:
             if self.interval is not None:
                 return self.interval
             mode = self.mode.lower()
-            result = scaleTypes[mode]
+            result = database.scaleTypes[mode]
             if result != 'not found':
                 return result
             else:
@@ -2405,7 +2415,7 @@ class scale:
                             interval=interval,
                             duration=duration).standardize()
         if high:
-            resultchord = resultchord.up(octave)
+            resultchord = resultchord.up(database.octave)
         return resultchord
 
     def pickdegree(self, degree1):
@@ -2474,10 +2484,10 @@ class scale:
         return self[5]
 
     def leading_tone(self):
-        return self[0].up(major_seventh)
+        return self[0].up(database.major_seventh)
 
     def subtonic(self):
-        return self[0].up(minor_seventh)
+        return self[0].up(database.minor_seventh)
 
     def tonic_chord(self):
         return self(0)
@@ -2495,7 +2505,8 @@ class scale:
         return self(4) + self[3].up(12)
 
     def leading7_chord(self):
-        return chord([self[6].down(octave), self[1], self[3], self[5]])
+        return chord(
+            [self[6].down(database.octave), self[1], self[3], self[5]])
 
     def scalefrom(self, degree=5, mode=None, interval=None):
         # default is pick the dominant mode of the scale
@@ -2556,7 +2567,7 @@ class scale:
 
     def get_chord(self, degree, chord_type=None, natural=False):
         if not chord_type:
-            current_keys = list(roman_numerals_dict.keys())
+            current_keys = list(database.roman_numerals_dict.keys())
             current_keys.sort(key=lambda s: len(s[0]), reverse=True)
             found = False
             for each in current_keys:
@@ -2570,7 +2581,7 @@ class scale:
                     break
             if not found:
                 return f'{degree} is not a valid roman numerals chord representation'
-        current_degree = roman_numerals_dict[degree]
+        current_degree = database.roman_numerals_dict[degree]
         if current_degree == 'not found':
             return f'{degree} is not a valid roman numerals chord representation'
         current_note = self[current_degree].name
@@ -2663,13 +2674,14 @@ class scale:
                           volumes=None,
                           chords_interval=None,
                           merge=True):
-        current_keys = list(roman_numerals_dict.keys())
+        current_keys = list(database.roman_numerals_dict.keys())
         current_keys.sort(key=lambda s: len(s[0]), reverse=True)
         for k in range(len(chords)):
             current_chord = chords[k]
             if isinstance(current_chord, (tuple, list)):
                 current_degree_name = current_chord[0]
-                current_degree = roman_numerals_dict[current_degree_name] - 1
+                current_degree = database.roman_numerals_dict[
+                    current_degree_name] - 1
                 if current_degree == 'not found':
                     return f'{current_chord} is not a valid roman numerals chord representation'
                 current_note = self[current_degree].name
@@ -2683,7 +2695,7 @@ class scale:
                     for i in each:
                         if current_chord.startswith(i):
                             found = True
-                            current_degree = roman_numerals_dict[i] - 1
+                            current_degree = database.roman_numerals_dict[i] - 1
                             current_note = self[current_degree].name
                             if i.islower():
                                 current_note += 'm'
@@ -2826,18 +2838,19 @@ class piece:
         self.tracks = tracks
         if instruments is None:
             self.instruments = [
-                reverse_instruments[1] for i in range(len(self.tracks))
+                database.reverse_instruments[1]
+                for i in range(len(self.tracks))
             ]
             self.instruments_numbers = [
-                INSTRUMENTS[j] for j in self.instruments
+                database.INSTRUMENTS[j] for j in self.instruments
             ]
         else:
             self.instruments = [
-                reverse_instruments[i] if isinstance(i, int) else i
+                database.reverse_instruments[i] if isinstance(i, int) else i
                 for i in instruments
             ]
             self.instruments_numbers = [
-                INSTRUMENTS[j] for j in self.instruments
+                database.INSTRUMENTS[j] for j in self.instruments
             ]
         self.bpm = bpm
         self.start_times = start_times
@@ -3708,12 +3721,13 @@ class piece:
             if all(isinstance(i, int) for i in instruments):
                 self.instruments_numbers = copy(instruments)
                 self.instruments = [
-                    reverse_instruments[i] for i in self.instruments_numbers
+                    database.reverse_instruments[i]
+                    for i in self.instruments_numbers
                 ]
             elif all(isinstance(i, str) for i in instruments):
                 self.instruments = copy(instruments)
                 self.instruments_numbers = [
-                    INSTRUMENTS[i] for i in self.instruments
+                    database.INSTRUMENTS[i] for i in self.instruments
                 ]
             elif any(
                     isinstance(i, list) and all(isinstance(j, int) for j in i)
@@ -3722,10 +3736,12 @@ class piece:
         else:
             if isinstance(instruments, int):
                 self.instruments_numbers[ind] = instruments
-                self.instruments[ind] = reverse_instruments[instruments]
+                self.instruments[ind] = database.reverse_instruments[
+                    instruments]
             elif isinstance(instruments, str):
                 self.instruments[ind] = instruments
-                self.instruments_numbers[ind] = INSTRUMENTS[instruments]
+                self.instruments_numbers[ind] = database.INSTRUMENTS[
+                    instruments]
             elif isinstance(instruments, list) and all(
                     isinstance(j, int) for j in instruments):
                 self.instruments_numbers[ind] = copy(instruments)
@@ -3987,9 +4003,9 @@ class track:
                  name=None,
                  sampler_channel=None):
         self.content = content
-        self.instrument = reverse_instruments[instrument] if isinstance(
-            instrument, int) else instrument
-        self.instruments_number = INSTRUMENTS[self.instrument]
+        self.instrument = database.reverse_instruments[
+            instrument] if isinstance(instrument, int) else instrument
+        self.instruments_number = database.INSTRUMENTS[self.instrument]
         self.bpm = bpm
         self.start_time = start_time
         self.track_name = track_name
@@ -4231,7 +4247,7 @@ class drum:
 
     def __init__(self,
                  pattern='',
-                 mapping=drum_mapping,
+                 mapping=database.drum_mapping,
                  name=None,
                  notes=None,
                  i=1,
@@ -4256,8 +4272,9 @@ class drum:
             translate_mode=self.translate_mode) if not notes else notes
         if start_time is not None:
             self.notes.start_time = start_time
-        self.instrument = i if isinstance(i, int) else (
-            drum_set_dict_reverse[i] if i in drum_set_dict_reverse else 1)
+        self.instrument = i if isinstance(
+            i, int) else (database.drum_set_dict_reverse[i]
+                          if i in database.drum_set_dict_reverse else 1)
 
     def __repr__(self):
         return f"[drum] {self.name if self.name else ''}\n{self.notes}"
@@ -4289,7 +4306,8 @@ class drum:
         for units in whole_units:
             current_has_keyword = False
             for each in units:
-                if ':' in each and each[:each.index(':')] in drum_keywords:
+                if ':' in each and each[:each.
+                                        index(':')] in database.drum_keywords:
                     current_keyword.append(each)
                     if not current_has_keyword:
                         current_has_keyword = True
@@ -4797,7 +4815,7 @@ class drum:
         return self % (durations, intervals, volumes)
 
     def info(self):
-        return f"[drum] {self.name if self.name else ''}\ninstrument: {drum_set_dict[self.instrument] if self.instrument in drum_set_dict else 'unknown'}\n{', '.join([drum_types[k.degree] for k in self.notes])} with interval {self.notes.interval}"
+        return f"[drum] {self.name if self.name else ''}\ninstrument: {database.drum_set_dict[self.instrument] if self.instrument in database.drum_set_dict else 'unknown'}\n{', '.join([database.drum_types[k.degree] for k in self.notes])} with interval {self.notes.interval}"
 
     def with_start(self, start_time):
         temp = copy(self)
