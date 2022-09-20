@@ -1785,6 +1785,12 @@ def closest_note_from_chord(note1, chord1):
     return result
 
 
+def note_range(note1, note2):
+    current_range = list(range(note1.degree, note2.degree))
+    result = [degree_to_note(i) for i in current_range]
+    return result
+
+
 C = trans
 N = toNote
 S = toScale
