@@ -2228,3 +2228,106 @@ def add_to_last_index(current_chord, value, start=None, stop=None, step=1):
         elif counter > value:
             break
     return ind
+
+
+def get_note_interval(current_chord, interval_tol=12):
+    degrees = [i.degree for i in current_chord.notes]
+    note_intervals = [
+        degrees[i] - degrees[i - 1] for i in range(1, len(degrees))
+    ]
+    note_intervals = [
+        i % interval_tol if i >= 0 else -(abs(i) % interval_tol)
+        for i in note_intervals
+    ]
+    return note_intervals
+
+
+def get_melody_shape(current_chord,
+                     interval_tol=12,
+                     octave_range=None,
+                     filter_notes=True):
+    note_intervals = get_note_interval(current_chord, interval_tol)
+    result = getchord_by_interval(current_chord[0],
+                                  note_intervals,
+                                  interval=1 / 8,
+                                  cummulative=False)
+    if filter_notes:
+        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
+    if octave_range:
+        octave1, octave2 = octave_range
+        for each in result:
+            if each.num < octave1:
+                each.num = octave1
+            elif each.num > octave2:
+                each.num = octave2
+    return result
+
+
+def get_note_interval_frequency(current_chord, interval_tol=12):
+    note_intervals = get_note_interval(current_chord, interval_tol)
+    note_intervals_list = list(set(note_intervals))
+    length = len(note_intervals)
+    note_intervals_list_appearance = [[
+        i, note_intervals.count(i),
+        note_intervals.count(i) / length
+    ] for i in note_intervals_list]
+    note_intervals_list_appearance.sort(key=lambda s: s[1], reverse=True)
+    return note_intervals_list_appearance
+
+
+def note_range(note1, note2):
+    current_range = list(range(note1.degree, note2.degree))
+    result = [degree_to_note(i) for i in current_range]
+    return result
+
+
+def adjust_to_scale(current_chord, current_scale):
+    temp = copy(current_chord)
+    current_notes = current_scale.getScale()
+    for i, each in enumerate(temp):
+        current_note = mp.closest_note_from_chord(each, current_notes)
+        each.name = current_note.name
+        each.num = current_note.num
+    return temp
+
+
+def generate_melody_from_notes(current_chord,
+                               interval_tol=12,
+                               num=100,
+                               start=None,
+                               octave_range=None,
+                               filter_notes=True,
+                               mode=0,
+                               fix_scale=None):
+    note_intervals_list_appearance = get_note_interval_frequency(
+        current_chord, interval_tol)
+    intervals = [i[0] for i in note_intervals_list_appearance]
+    prob = [i[2] for i in note_intervals_list_appearance]
+    note_intervals = [
+        random.choices(intervals, prob)[0] for i in range(num - 1)
+    ]
+    if not start:
+        start = random.choice(note_range(N('C5'), N('C6')))
+
+    intervals = [random.choice([1 / 16, 1 / 8, 1 / 4]) for i in range(num)]
+    if mode == 0:
+        durations = [random.choice([1 / 16, 1 / 8, 1 / 4]) for i in range(num)]
+    elif mode == 1:
+        durations = intervals
+    result = getchord_by_interval(start,
+                                  note_intervals,
+                                  cummulative=False,
+                                  duration=durations,
+                                  interval=intervals)
+    if filter_notes:
+        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
+    if octave_range:
+        octave1, octave2 = octave_range
+        for each in result:
+            if each.num < octave1:
+                each.num = octave1
+            elif each.num > octave2:
+                each.num = octave2
+    if fix_scale:
+        result = adjust_to_scale(result, fix_scale)
+    return result

@@ -1749,7 +1749,7 @@ def piece_process_normalize_tempo(self, bpm, first_track_start_time):
     self.start_times = new_start_times
 
 
-def closest_note(note1, note2):
+def closest_note(note1, note2, get_distance=False):
     if not isinstance(note1, note):
         note1 = toNote(note1)
     if isinstance(note2, note):
@@ -1759,7 +1759,29 @@ def closest_note(note1, note2):
         note(note2, note1.num - 1),
         note(note2, note1.num + 1)
     ]
-    result = min(current_note, key=lambda s: abs(s.degree - note1.degree))
+    if not get_distance:
+        result = min(current_note, key=lambda s: abs(s.degree - note1.degree))
+        return result
+    else:
+        distances = [[i, abs(i.degree - note1.degree)] for i in current_note]
+        distances.sort(key=lambda s: s[1])
+        result = distances[0]
+        return result
+
+
+def closest_note_from_chord(note1, chord1):
+    if not isinstance(note1, note):
+        note1 = toNote(note1)
+    names = [database.standard_dict.get(i, i) for i in chord1.names()]
+    current_name = database.standard_dict.get(note1.name, note1.name)
+    if current_name in names:
+        result = note1
+    else:
+        distances = [
+            closest_note(note1, i, get_distance=True) for i in chord1.notes
+        ]
+        distances.sort(key=lambda s: s[1])
+        result = distances[0][0]
     return result
 
 
@@ -1775,6 +1797,7 @@ for each in [
 ]:
     each.reset = reset
     each.__hash__ = lambda self: hash(repr(self))
+    each.copy = lambda self: copy(self)
 
 for each in [
         controller_event, copyright_event, key_signature, sysex, text_event,
@@ -1782,7 +1805,9 @@ for each in [
         channel_pressure, program_change, track_name
 ]:
     each.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
+    each.reset = reset
     each.__hash__ = lambda self: hash(repr(self))
+    each.copy = lambda self: copy(self)
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import algorithms as alg

@@ -1227,9 +1227,6 @@ class chord:
             ]
         return temp
 
-    def copy(self):
-        return copy(self)
-
     def __setitem__(self, ind, value):
         if isinstance(value, str):
             value = mp.toNote(value)
@@ -3767,9 +3764,6 @@ class piece:
                 if each.start_time < 0:
                     each.start_time = 0
         return temp
-
-    def copy(self):
-        return copy(self)
 
     def modulation(self, old_scale, new_scale, mode=1, inds='all'):
         temp = copy(self)
