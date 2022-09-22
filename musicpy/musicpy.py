@@ -971,13 +971,13 @@ def add_other_messages(MyMIDI, other_messages, write_type='piece'):
             pass
 
 
-def modulation(current_chord, old_scale, new_scale):
+def modulation(current_chord, old_scale, new_scale, **args):
     '''
     change notes (including both of melody and chords) in the given piece
     of music from a given scale to another given scale, and return
     the new changing piece of music.
     '''
-    return current_chord.modulation(old_scale, new_scale)
+    return current_chord.modulation(old_scale, new_scale, **args)
 
 
 def trans(obj, pitch=4, duration=0.25, interval=None):

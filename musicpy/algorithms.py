@@ -2280,7 +2280,7 @@ def adjust_to_scale(current_chord, current_scale):
     temp = copy(current_chord)
     current_notes = current_scale.getScale()
     for i, each in enumerate(temp):
-        current_note = mp.closest_note_from_chord(each, current_notes)
+        current_note = closest_note_from_chord(each, current_notes)
         each.name = current_note.name
         each.num = current_note.num
     return temp
@@ -2313,7 +2313,7 @@ def generate_melody_from_notes(current_chord,
         random.choices(intervals, prob)[0] for i in range(num - 1)
     ]
     if not start:
-        start = random.choice(mp.note_range(N('C5'), N('C6')))
+        start = random.choice(note_range(N('C5'), N('C6')))
     if choose_time_from_chord:
         current_intervals = current_chord.interval
         intervals_appearance = [[
