@@ -1791,6 +1791,16 @@ def note_range(note1, note2):
     return result
 
 
+def adjust_to_scale(current_chord, current_scale):
+    temp = copy(current_chord)
+    current_notes = current_scale.getScale()
+    for i, each in enumerate(temp):
+        current_note = closest_note_from_chord(each, current_notes)
+        each.name = current_note.name
+        each.num = current_note.num
+    return temp
+
+
 C = trans
 N = toNote
 S = toScale

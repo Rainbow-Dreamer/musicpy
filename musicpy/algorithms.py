@@ -2276,16 +2276,6 @@ def get_note_interval_frequency(current_chord, interval_tol=12):
     return note_intervals_list_appearance
 
 
-def adjust_to_scale(current_chord, current_scale):
-    temp = copy(current_chord)
-    current_notes = current_scale.getScale()
-    for i, each in enumerate(temp):
-        current_note = closest_note_from_chord(each, current_notes)
-        each.name = current_note.name
-        each.num = current_note.num
-    return temp
-
-
 def generate_melody_from_notes(current_chord,
                                interval_tol=12,
                                num=100,
@@ -2300,6 +2290,8 @@ def generate_melody_from_notes(current_chord,
                                drop_same_time=False,
                                is_melody=True,
                                get_off_drums=True):
+    ''' generate a melody based on the note pitch interval and note duration/interval appearance probabilities,
+    currently in development '''
     if isinstance(current_chord, piece):
         current_chord = current_chord.merge(get_off_drums=get_off_drums)[0]
         if not is_melody:
