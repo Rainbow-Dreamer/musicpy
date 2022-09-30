@@ -1384,7 +1384,8 @@ def detect_scale3(current_chord,
         current_part = current_chord.cut(*current_range)
         if not current_part:
             current_key_range[1] = current_range[1]
-            result_scale[-1][0][1] = current_range[1]
+            if result_scale:
+                result_scale[-1][0][1] = current_range[1]
             continue
         counts = current_part.count_appear(sort=True)
         counts_dict = {i[0]: i[1] for i in counts}
@@ -1398,7 +1399,8 @@ def detect_scale3(current_chord,
         most_appeared_note, current_key_rate = note_scale_count[0]
         if current_key_rate < key_accuracy_tol:
             current_key_range[1] = current_range[1]
-            result_scale[-1][0][1] = current_range[1]
+            if result_scale:
+                result_scale[-1][0][1] = current_range[1]
             continue
         current_scale = scale(most_appeared_note, 'major')
         current_scale_names = current_scale.names()
@@ -1442,7 +1444,8 @@ def detect_scale3(current_chord,
             result_scale.append([current_key_range, current_result_scale])
         else:
             current_key_range[1] = current_range[1]
-            result_scale[-1][0][1] = current_range[1]
+            if result_scale:
+                result_scale[-1][0][1] = current_range[1]
     if get_scales:
         return result_scale
     else:
