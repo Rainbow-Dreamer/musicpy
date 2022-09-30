@@ -3081,14 +3081,8 @@ class piece:
     def play(self, *args, **kwargs):
         mp.play(self, *args, **kwargs)
 
-    def __call__(self, num):
-        return [
-            self.tracks[num], self.instruments[num], self.bpm,
-            self.start_times[num],
-            self.channels[num] if self.channels else None,
-            self.track_names[num] if self.track_names else None, self.pan[num],
-            self.volume[num]
-        ]
+    def __call__(self, ind):
+        return self.tracks[ind]
 
     def merge_track(self, n, mode='after', start_time=0, keep_tempo=True):
         temp = copy(self)
