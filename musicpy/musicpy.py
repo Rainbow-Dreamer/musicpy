@@ -183,6 +183,8 @@ chd = getchord
 
 
 def concat(chordlist, mode='+', extra=None, start=None):
+    if not chordlist:
+        return chordlist
     temp = copy(chordlist[0]) if start is None else start
     start_ind = 1 if start is None else 0
     if mode == '+':
@@ -969,6 +971,30 @@ def add_other_messages(MyMIDI, other_messages, write_type='piece'):
                 MyMIDI.addTrackName(curernt_track, each.time, each.name)
         except:
             pass
+
+
+def find_first_tempo(file, is_file=False):
+    if is_file:
+        file.seek(0)
+        try:
+            current_midi = mido.midifiles.MidiFile(file=file, clip=True)
+            file.close()
+        except Exception as OSError:
+            file.seek(0)
+            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(file),
+                                                   clip=True)
+            file.close()
+    else:
+        try:
+            current_midi = mido.midifiles.MidiFile(file, clip=True)
+        except Exception as OSError:
+            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(file),
+                                                   clip=True)
+    for track in current_midi.tracks:
+        for msg in track:
+            if msg.type == 'set_tempo':
+                return mido.midifiles.units.tempo2bpm(msg.tempo)
+    return 120
 
 
 def modulation(current_chord, old_scale, new_scale, **args):
