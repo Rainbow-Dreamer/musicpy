@@ -4531,7 +4531,6 @@ class drum:
                         current_chord_same_time = True
                 elif current_setting_keyword == 'r':
                     current_repeat_times = int(current_content)
-                    current_same_time = False
                 elif current_setting_keyword == 't':
                     current_fix_length = mp.process_settings([current_content
                                                               ])[0]
@@ -4563,11 +4562,6 @@ class drum:
                             current_append_volumes
                             for k in current_append_notes
                         ]
-        if current_repeat_times > 1:
-            current_append_notes *= current_repeat_times
-            current_append_intervals *= current_repeat_times
-            current_append_durations *= current_repeat_times
-            current_append_volumes *= current_repeat_times
         current_fix_length_unit = None
         if current_fix_length is not None:
             current_fix_length_unit = current_fix_length / len(
@@ -4594,6 +4588,11 @@ class drum:
                 current_append_durations = [
                     current_fix_length_unit for k in current_append_notes
                 ]
+        if current_repeat_times > 1:
+            current_append_notes *= current_repeat_times
+            current_append_intervals *= current_repeat_times
+            current_append_durations *= current_repeat_times
+            current_append_volumes *= current_repeat_times
 
         if translate_mode == 1:
             new_current_append_durations = []
