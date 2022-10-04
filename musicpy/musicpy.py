@@ -270,9 +270,9 @@ def play(current_chord,
 def read(name,
          is_file=False,
          get_off_drums=False,
-         split_channels=False,
          clear_empty_notes=False,
-         clear_other_channel_msg=False):
+         clear_other_channel_msg=False,
+         split_channels=None):
     if is_file:
         name.seek(0)
         try:
@@ -283,127 +283,119 @@ def read(name,
             current_midi = mido.midifiles.MidiFile(file=riff_to_midi(name),
                                                    clip=True)
             name.close()
-            split_channels = True
+        whole_bpm = find_first_tempo(name, is_file=is_file)
         name = name.name
-
     else:
         try:
             current_midi = mido.midifiles.MidiFile(name, clip=True)
         except Exception as OSError:
             current_midi = mido.midifiles.MidiFile(file=riff_to_midi(name),
                                                    clip=True)
-            split_channels = True
+        whole_bpm = find_first_tempo(name, is_file=is_file)
     whole_tracks = current_midi.tracks
-    current_track = None
-    find_changes = False
-    whole_bpm = 120
-    changes = []
-    changes_track = [
-        each for each in whole_tracks
-        if all((i.is_meta or i.type == 'sysex') for i in each)
-    ]
-    if not changes_track:
-        changes_track = [
-            each for each in whole_tracks
-            if any(i.type == 'set_tempo' for i in each)
+    if not whole_tracks:
+        raise ValueError(
+            'No tracks found in the MIDI file, please check if the input MIDI file is empty'
+        )
+    current_type = current_midi.type
+    interval_unit = current_midi.ticks_per_beat * 4
+    if split_channels is None:
+        if current_type == 0:
+            split_channels = True
+        elif current_type == 1:
+            split_channels = False
+        elif current_type == 2:
+            raise ValueError('type 2 MIDI files are not supported yet')
+    if not split_channels:
+        changes = []
+        changes_track_ind = [
+            i for i, each in enumerate(whole_tracks)
+            if all((i.is_meta or i.type == 'sysex') for i in each)
         ]
-    else:
-        find_changes = True
-    if changes_track:
-        changes = [
-            midi_to_chord(current_midi,
-                          each,
-                          add_track_num=split_channels,
-                          clear_empty_notes=clear_empty_notes)[0]
-            for each in changes_track
-        ]
-        changes = concat(changes)
-        whole_bpm_list = [i for i in changes if isinstance(i, tempo)]
-        if whole_bpm_list:
-            min_start_time = min([i.start_time for i in whole_bpm_list])
-            whole_bpm_list = [
-                i for i in whole_bpm_list if i.start_time == min_start_time
+        changes_track = [whole_tracks[i] for i in changes_track_ind]
+        if changes_track:
+            changes = [
+                midi_to_chord(each,
+                              interval_unit,
+                              add_track_num=split_channels,
+                              clear_empty_notes=clear_empty_notes)[0]
+                for each in changes_track
             ]
-            whole_bpm = whole_bpm_list[-1].bpm
-    available_tracks = [
-        each for each in whole_tracks
-        if any(not (i.is_meta or i.type == 'sysex') for i in each)
-    ]
-    if get_off_drums:
+            changes = concat(changes)
         available_tracks = [
-            each for each in available_tracks
-            if not any(j.type == 'note_on' and j.channel == 9 for j in each)
+            whole_tracks[i] for i in range(len(whole_tracks))
+            if i not in changes_track_ind
         ]
-    if not available_tracks:
-        if changes:
-            return build([changes],
-                         bpm=whole_bpm,
-                         other_messages=changes.other_messages)
+        all_tracks = [
+            midi_to_chord(available_tracks[j],
+                          interval_unit,
+                          whole_bpm,
+                          add_track_num=split_channels,
+                          clear_empty_notes=clear_empty_notes,
+                          track_ind=j) for j in range(len(available_tracks))
+        ]
+        start_times_list = [j[2] for j in all_tracks]
+        if available_tracks:
+            channels_list = [[
+                i.channel for i in each if hasattr(i, 'channel')
+            ] for each in available_tracks]
+            channels_list = [each[0] if each else -1 for each in channels_list]
+            unassigned_channels = channels_list.count(-1)
+            if unassigned_channels > 0:
+                free_channel_numbers = [
+                    i for i in range(16) if i not in channels_list
+                ]
+                free_channel_numbers_length = len(free_channel_numbers)
+                unassigned_channels_number = []
+                for k in range(unassigned_channels):
+                    if k < free_channel_numbers_length:
+                        unassigned_channels_number.append(
+                            free_channel_numbers[k])
+                    else:
+                        unassigned_channels_number.append(
+                            16 + k - free_channel_numbers_length)
+                channels_list = [
+                    each if each != -1 else unassigned_channels_number.pop(0)
+                    for each in channels_list
+                ]
         else:
-            raise ValueError(
-                'No tracks found in the MIDI file, you can try to set the parameter `split_channels` to True, or check if the input MIDI file is empty'
-            )
-    all_tracks = [
-        midi_to_chord(current_midi,
-                      available_tracks[j],
-                      whole_bpm,
-                      add_track_num=split_channels,
-                      clear_empty_notes=clear_empty_notes,
-                      track_ind=j) for j in range(len(available_tracks))
-    ]
-    start_times_list = [j[2] for j in all_tracks]
-    if available_tracks:
-        channels_list = [[i.channel for i in each if hasattr(i, 'channel')]
-                         for each in available_tracks]
-        channels_list = [each[0] if each else -1 for each in channels_list]
-        unassigned_channels = channels_list.count(-1)
-        if unassigned_channels > 0:
-            free_channel_numbers = [
-                i for i in range(16) if i not in channels_list
-            ]
-            free_channel_numbers_length = len(free_channel_numbers)
-            unassigned_channels_number = []
-            for k in range(unassigned_channels):
-                if k < free_channel_numbers_length:
-                    unassigned_channels_number.append(free_channel_numbers[k])
-                else:
-                    unassigned_channels_number.append(
-                        16 + k - free_channel_numbers_length)
-            channels_list = [
-                each if each != -1 else unassigned_channels_number.pop(0)
-                for each in channels_list
-            ]
-    else:
-        channels_list = None
+            channels_list = None
 
-    instruments = []
-    for each in available_tracks:
-        current_program = [i.program for i in each if hasattr(i, 'program')]
-        if current_program:
-            instruments.append(current_program[0] + 1)
+        instruments = []
+        for each in available_tracks:
+            current_program = [
+                i.program for i in each if hasattr(i, 'program')
+            ]
+            if current_program:
+                instruments.append(current_program[0] + 1)
+            else:
+                instruments.append(1)
+        chords_list = [each[0] for each in all_tracks]
+        pan_list = [k.pan_list for k in chords_list]
+        volume_list = [k.volume_list for k in chords_list]
+        tracks_names_list = [[k.name for k in each if k.type == 'track_name']
+                             for each in available_tracks]
+        if all(j for j in tracks_names_list):
+            tracks_names_list = [j[0] for j in tracks_names_list]
         else:
-            instruments.append(1)
-    chords_list = [each[0] for each in all_tracks]
-    pan_list = [k.pan_list for k in chords_list]
-    volume_list = [k.volume_list for k in chords_list]
-    tracks_names_list = [[k.name for k in each if k.type == 'track_name']
-                         for each in available_tracks]
-    if all(j for j in tracks_names_list):
-        tracks_names_list = [j[0] for j in tracks_names_list]
+            tracks_names_list = None
+        result_piece = piece(tracks=chords_list,
+                             instruments=instruments,
+                             bpm=whole_bpm,
+                             start_times=start_times_list,
+                             track_names=tracks_names_list,
+                             channels=channels_list,
+                             name=os.path.splitext(os.path.basename(name))[0],
+                             pan=pan_list,
+                             volume=volume_list)
+        result_piece.other_messages = concat(
+            [each_track.other_messages for each_track in result_piece.tracks],
+            start=[])
     else:
-        tracks_names_list = None
-    result_piece = piece(chords_list, instruments, whole_bpm, start_times_list,
-                         tracks_names_list, channels_list,
-                         os.path.splitext(os.path.basename(name))[0], pan_list,
-                         volume_list)
-    if split_channels:
-        remain_available_tracks = [
-            each for each in whole_tracks
-            if any(not (j.is_meta or j.type == 'sysex') for j in each)
+        available_tracks = whole_tracks[0]
+        channels_numbers = [
+            i.channel for i in available_tracks if hasattr(i, 'channel')
         ]
-        channels_numbers = concat(
-            [[i.channel for i in each if hasattr(i, 'channel')]
-             for each in remain_available_tracks])
         if not channels_numbers:
             raise ValueError(
                 'Split channels requires the MIDI file contains channel messages for tracks'
@@ -414,43 +406,13 @@ def read(name,
                 channels_list.append(each)
         channels_num = len(channels_list)
         track_channels = channels_list
-        remain_tracks_length = len(remain_available_tracks)
-        remain_all_tracks = [
-            midi_to_chord(current_midi,
-                          remain_available_tracks[j],
-                          whole_bpm,
-                          add_track_num=split_channels,
-                          clear_empty_notes=clear_empty_notes,
-                          track_ind=j,
-                          track_channels=track_channels)
-            for j in range(remain_tracks_length)
-        ]
-        if remain_tracks_length > 1:
-            available_tracks = concat(remain_available_tracks)
-            pitch_bends = concat([
-                i[0].split(pitch_bend, get_time=True)
-                for i in remain_all_tracks
-            ])
-            for each in remain_all_tracks:
-                each[0].clear_pitch_bend('all')
-            start_time_ls = [j[2] for j in remain_all_tracks]
-            first_track_ind = start_time_ls.index(min(start_time_ls))
-            remain_all_tracks.insert(0, remain_all_tracks.pop(first_track_ind))
-            first_track = remain_all_tracks[0]
-            tempos, all_track_notes, first_track_start_time = first_track
-            for i in remain_all_tracks[1:]:
-                all_track_notes &= (i[0], i[2] - first_track_start_time)
-            all_track_notes.other_messages = concat(
-                [each[0].other_messages for each in remain_all_tracks])
-            all_track_notes += pitch_bends
-            all_track_notes.pan_list = concat(
-                [k[0].pan_list for k in remain_all_tracks])
-            all_track_notes.volume_list = concat(
-                [k[0].volume_list for k in remain_all_tracks])
-            all_tracks = [all_track_notes, tempos, first_track_start_time]
-        else:
-            available_tracks = remain_available_tracks[0]
-            all_tracks = remain_all_tracks[0]
+        all_tracks = midi_to_chord(available_tracks,
+                                   interval_unit,
+                                   whole_bpm,
+                                   add_track_num=split_channels,
+                                   clear_empty_notes=clear_empty_notes,
+                                   track_ind=0,
+                                   track_channels=track_channels)
         pan_list = all_tracks[0].pan_list
         volume_list = all_tracks[0].volume_list
         current_instruments_list = [[
@@ -470,16 +432,15 @@ def read(name,
             tracks_names_list = [f'Channel {i+1}' for i in channels_list]
             rename_track_names = True
         result_merge_track = all_tracks[0]
-        result_piece.tracks = [chord([]) for i in range(len(channels_list))]
-        result_piece.instruments = [
-            database.reverse_instruments[i] for i in instruments
-        ]
-        result_piece.instruments_numbers = instruments
-        result_piece.track_names = tracks_names_list
-        result_piece.channels = channels_list
-        result_piece.pan = [[] for i in range(len(channels_list))]
-        result_piece.volume = [[] for i in range(len(channels_list))]
-        result_piece.track_number = len(channels_list)
+        result_piece = piece(
+            tracks=[chord([]) for i in range(len(channels_list))],
+            instruments=[database.reverse_instruments[i] for i in instruments],
+            bpm=whole_bpm,
+            track_names=tracks_names_list,
+            channels=channels_list,
+            name=os.path.splitext(os.path.basename(name))[0],
+            pan=[[] for i in range(len(channels_list))],
+            volume=[[] for i in range(len(channels_list))])
         result_piece.reconstruct(result_merge_track,
                                  all_tracks[2],
                                  include_empty_track=True)
@@ -521,15 +482,7 @@ def read(name,
             for i in range(len(current_track_names)):
                 result_piece.tracks[i].other_messages.append(
                     current_track_names[i])
-        if get_off_drums:
-            while 9 in result_piece.channels:
-                drum_ind = result_piece.channels.index(9)
-                del result_piece[drum_ind]
-    else:
-        result_piece.other_messages = concat(
-            [each_track.other_messages for each_track in result_piece.tracks],
-            start=[])
-    if find_changes and changes:
+    if current_type == 1 and changes:
         result_piece.tracks[0].notes.extend(changes.notes)
         result_piece.tracks[0].interval.extend(changes.interval)
         result_piece.tracks[0].other_messages[0:0] = changes.other_messages
@@ -541,17 +494,18 @@ def read(name,
             if not (hasattr(i, 'channel')
                     and i.channel not in result_piece.channels)
         ]
+    if get_off_drums:
+        result_piece.get_off_drums()
     return result_piece
 
 
-def midi_to_chord(current_midi,
-                  current_track,
+def midi_to_chord(current_track,
+                  interval_unit,
                   bpm=None,
                   add_track_num=False,
                   clear_empty_notes=False,
                   track_ind=0,
                   track_channels=None):
-    interval_unit = current_midi.ticks_per_beat * 4
     intervals = []
     notelist = []
     notes_len = len(current_track)

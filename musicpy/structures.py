@@ -3300,7 +3300,45 @@ class piece:
     def get_off_drums(self):
         if self.channels:
             while 9 in self.channels:
-                del self[self.channels.index(9)]
+                current_ind = self.channels.index(9)
+                del self[current_ind]
+                self.other_messages = [
+                    i for i in self.other_messages if i.track != current_ind
+                ]
+                for each in self.tracks:
+                    each.notes = [
+                        i for i in each.notes
+                        if not (isinstance(i, (tempo, pitch_bend))
+                                and i.track == current_ind)
+                    ]
+                    for i in each.notes:
+                        if isinstance(
+                                i, (tempo, pitch_bend)
+                        ) and i.track is not None and i.track > current_ind:
+                            i.track -= 1
+                    each.other_messages = [
+                        i for i in each.other_messages
+                        if i.track != current_ind
+                    ]
+                    for i in each.other_messages:
+                        if i.track > current_ind:
+                            i.track -= 1
+                if self.pan:
+                    self.pan = [[i for i in each if i.track != current_ind]
+                                for each in self.pan]
+                    for each in self.pan:
+                        for i in each:
+                            if i.track is not None and i.track > current_ind:
+                                i.track -= 1
+                if self.volume:
+                    self.volume = [[i for i in each if i.track != current_ind]
+                                   for each in self.volume]
+                    for each in self.volume:
+                        for i in each:
+                            if i.track is not None and i.track > current_ind:
+                                i.track -= 1
+        for each in self.tracks:
+            each.notes = [i for i in each.notes if i.channel != 9]
 
     def merge(self,
               add_labels=True,
@@ -3308,9 +3346,7 @@ class piece:
               get_off_drums=False):
         temp = copy(self)
         if get_off_drums:
-            if temp.channels:
-                while 9 in temp.channels:
-                    del temp[temp.channels.index(9)]
+            temp.get_off_drums()
         if add_labels:
             temp.add_track_labels()
         tempo_changes = temp.get_tempo_changes()
