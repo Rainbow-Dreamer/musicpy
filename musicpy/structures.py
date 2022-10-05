@@ -2227,6 +2227,29 @@ class chord:
         temp.interval = intervals
         return temp
 
+    def delete_track(self, current_ind):
+        self.notes = [
+            i for i in self.notes if not (
+                isinstance(i, (tempo, pitch_bend)) and i.track == current_ind)
+        ]
+        for i in self.notes:
+            if isinstance(i, (tempo, pitch_bend)
+                          ) and i.track is not None and i.track > current_ind:
+                i.track -= 1
+        self.other_messages = [
+            i for i in self.other_messages if i.track != current_ind
+        ]
+        for i in self.other_messages:
+            if i.track > current_ind:
+                i.track -= 1
+
+    def delete_channel(self, current_ind):
+        self.notes = [i for i in self.notes if i.channel != current_ind]
+        self.other_messages = [
+            i for i in self.other_messages
+            if not (hasattr(i, 'channel') and i.channel == current_ind)
+        ]
+
 
 class scale:
 
@@ -3297,91 +3320,53 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
+    def delete_track(self, current_ind):
+        del self[current_ind]
+        self.other_messages = [
+            i for i in self.other_messages if i.track != current_ind
+        ]
+        for each in self.tracks:
+            each.delete_track(current_ind)
+        if self.pan:
+            self.pan = [[i for i in each if i.track != current_ind]
+                        for each in self.pan]
+            for each in self.pan:
+                for i in each:
+                    if i.track is not None and i.track > current_ind:
+                        i.track -= 1
+        if self.volume:
+            self.volume = [[i for i in each if i.track != current_ind]
+                           for each in self.volume]
+            for each in self.volume:
+                for i in each:
+                    if i.track is not None and i.track > current_ind:
+                        i.track -= 1
+
+    def delete_channel(self, current_ind):
+        for each in self.tracks:
+            each.delete_channel(current_ind)
+        self.other_messages = [
+            i for i in self.other_messages
+            if not (hasattr(i, 'channel') and i.channel == current_ind)
+        ]
+        self.pan = [[i for i in each if i.channel != current_ind]
+                    for each in self.pan]
+        self.volume = [[i for i in each if i.channel != current_ind]
+                       for each in self.volume]
+
     def get_off_drums(self):
         if self.channels:
             while 9 in self.channels:
                 current_ind = self.channels.index(9)
-                del self[current_ind]
-                self.other_messages = [
-                    i for i in self.other_messages if i.track != current_ind
-                ]
-                for each in self.tracks:
-                    each.notes = [
-                        i for i in each.notes
-                        if not (isinstance(i, (tempo, pitch_bend))
-                                and i.track == current_ind)
-                    ]
-                    for i in each.notes:
-                        if isinstance(
-                                i, (tempo, pitch_bend)
-                        ) and i.track is not None and i.track > current_ind:
-                            i.track -= 1
-                    each.other_messages = [
-                        i for i in each.other_messages
-                        if i.track != current_ind
-                    ]
-                    for i in each.other_messages:
-                        if i.track > current_ind:
-                            i.track -= 1
-                if self.pan:
-                    self.pan = [[i for i in each if i.track != current_ind]
-                                for each in self.pan]
-                    for each in self.pan:
-                        for i in each:
-                            if i.track is not None and i.track > current_ind:
-                                i.track -= 1
-                if self.volume:
-                    self.volume = [[i for i in each if i.track != current_ind]
-                                   for each in self.volume]
-                    for each in self.volume:
-                        for i in each:
-                            if i.track is not None and i.track > current_ind:
-                                i.track -= 1
-        for each in self.tracks:
-            each.notes = [i for i in each.notes if i.channel != 9]
+                self.delete_track(current_ind)
+        self.delete_channel(9)
 
-    def only_notes(self):
+    def get_off_not_notes(self):
         j = 0
         while j < len(self):
-            current_track = self[j]
+            current_track = self.tracks[j]
             if all(not isinstance(k, note) for k in current_track):
-                current_ind = j
-                del self[current_ind]
-                self.other_messages = [
-                    i for i in self.other_messages if i.track != current_ind
-                ]
-                for each in self.tracks:
-                    each.notes = [
-                        i for i in each.notes
-                        if not (isinstance(i, (tempo, pitch_bend))
-                                and i.track == current_ind)
-                    ]
-                    for i in each.notes:
-                        if isinstance(
-                                i, (tempo, pitch_bend)
-                        ) and i.track is not None and i.track > current_ind:
-                            i.track -= 1
-                    each.other_messages = [
-                        i for i in each.other_messages
-                        if i.track != current_ind
-                    ]
-                    for i in each.other_messages:
-                        if i.track > current_ind:
-                            i.track -= 1
-                if self.pan:
-                    self.pan = [[i for i in each if i.track != current_ind]
-                                for each in self.pan]
-                    for each in self.pan:
-                        for i in each:
-                            if i.track is not None and i.track > current_ind:
-                                i.track -= 1
-                if self.volume:
-                    self.volume = [[i for i in each if i.track != current_ind]
-                                   for each in self.volume]
-                    for each in self.volume:
-                        for i in each:
-                            if i.track is not None and i.track > current_ind:
-                                i.track -= 1
+                self.delete_track(j)
                 continue
             j += 1
 
@@ -4235,6 +4220,30 @@ class track:
 
     def __len__(self):
         return len(self.content)
+
+    def delete_track(self, current_ind):
+        self.content.delete_track(current_ind)
+        if self.pan:
+            self.pan = [[i for i in each if i.track != current_ind]
+                        for each in self.pan]
+            for each in self.pan:
+                for i in each:
+                    if i.track is not None and i.track > current_ind:
+                        i.track -= 1
+        if self.volume:
+            self.volume = [[i for i in each if i.track != current_ind]
+                           for each in self.volume]
+            for each in self.volume:
+                for i in each:
+                    if i.track is not None and i.track > current_ind:
+                        i.track -= 1
+
+    def delete_channel(self, current_ind):
+        self.content.delete_channel(current_ind)
+        self.pan = [[i for i in each if i.channel != current_ind]
+                    for each in self.pan]
+        self.volume = [[i for i in each if i.channel != current_ind]
+                       for each in self.volume]
 
 
 class pan:
