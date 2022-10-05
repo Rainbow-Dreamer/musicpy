@@ -2006,12 +2006,7 @@ def split_all(current_chord,
     elif mode == 'chord':
         result_chord = current_chord.pick(chord_ind)
         result_melody = current_chord.pick(melody_ind)
-        # shift is the start time that chord part starts after main melody starts,
-        # or the start time that main melody starts after chord part starts,
-        # depends on which starts earlier, if shift >= 0, chord part starts after main melody,
-        # if shift < 0, chord part starts before main melody
-        shift = result_chord.start_time - result_melody.start_time
-        return [result_melody, result_chord, shift]
+        return [result_melody, result_chord]
 
 
 def chord_analysis(chords,
