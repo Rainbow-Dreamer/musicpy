@@ -277,13 +277,14 @@ def read(name,
         name.seek(0)
         try:
             current_midi = mido.midifiles.MidiFile(file=name, clip=True)
+            whole_bpm = find_first_tempo(name, is_file=is_file)
             name.close()
         except Exception as OSError:
             name.seek(0)
             current_midi = mido.midifiles.MidiFile(file=riff_to_midi(name),
                                                    clip=True)
+            whole_bpm = find_first_tempo(name, is_file=is_file)
             name.close()
-        whole_bpm = find_first_tempo(name, is_file=is_file)
         name = name.name
     else:
         try:
@@ -305,7 +306,7 @@ def read(name,
         elif current_type == 1:
             split_channels = False
         elif current_type == 2:
-            raise ValueError('type 2 MIDI files are not supported yet')
+            split_channels = False
     if not split_channels:
         changes = []
         changes_track_ind = [
