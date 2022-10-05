@@ -295,6 +295,7 @@ class chord:
         find_start = False
         if ind1 == 0:
             find_start = True
+        actual_start_time = 0
         for i in range(length):
             current_note = notes[i]
             if isinstance(current_note, note):
@@ -302,6 +303,7 @@ class chord:
                 if (not find_start) and current_bar >= ind1:
                     start_ind = i + 1
                     find_start = True
+                    actual_start_time = current_bar - ind1
                     if ind2 is None:
                         break
                 elif ind2 and current_bar >= ind2:
@@ -316,6 +318,7 @@ class chord:
         result.other_messages = [
             i for i in result.other_messages if ind1 <= i.time / 4 < ind2
         ]
+        result.start_time = actual_start_time
         return result
 
     def cut_time(self,
@@ -345,6 +348,8 @@ class chord:
         find_start = False
         if time1 == 0:
             find_start = True
+        actual_start_time = 0
+        start_length = (time1 / 4) * bpm / 60
         for i in range(length):
             current_note = notes[i]
             if isinstance(current_note, note):
@@ -352,6 +357,7 @@ class chord:
                 if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
                     start_ind = i + 1
                     find_start = True
+                    actual_start_time = current_bar - start_length
                     if time2 is None:
                         break
                 elif time2 and (60 / bpm) * current_bar * 4 >= time2:
@@ -361,7 +367,9 @@ class chord:
             start_ind = to_ind
         if return_inds:
             return start_ind, to_ind
-        return self[start_ind:to_ind]
+        result = self[start_ind:to_ind]
+        result.start_time = actual_start_time
+        return result
 
     def last_note_standardize(self):
         for i in range(len(self.notes) - 1, -1, -1):
