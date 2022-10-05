@@ -3340,6 +3340,51 @@ class piece:
         for each in self.tracks:
             each.notes = [i for i in each.notes if i.channel != 9]
 
+    def only_notes(self):
+        j = 0
+        while j < len(self):
+            current_track = self[j]
+            if all(not isinstance(k, note) for k in current_track):
+                current_ind = j
+                del self[current_ind]
+                self.other_messages = [
+                    i for i in self.other_messages if i.track != current_ind
+                ]
+                for each in self.tracks:
+                    each.notes = [
+                        i for i in each.notes
+                        if not (isinstance(i, (tempo, pitch_bend))
+                                and i.track == current_ind)
+                    ]
+                    for i in each.notes:
+                        if isinstance(
+                                i, (tempo, pitch_bend)
+                        ) and i.track is not None and i.track > current_ind:
+                            i.track -= 1
+                    each.other_messages = [
+                        i for i in each.other_messages
+                        if i.track != current_ind
+                    ]
+                    for i in each.other_messages:
+                        if i.track > current_ind:
+                            i.track -= 1
+                if self.pan:
+                    self.pan = [[i for i in each if i.track != current_ind]
+                                for each in self.pan]
+                    for each in self.pan:
+                        for i in each:
+                            if i.track is not None and i.track > current_ind:
+                                i.track -= 1
+                if self.volume:
+                    self.volume = [[i for i in each if i.track != current_ind]
+                                   for each in self.volume]
+                    for each in self.volume:
+                        for i in each:
+                            if i.track is not None and i.track > current_ind:
+                                i.track -= 1
+                continue
+            j += 1
+
     def merge(self,
               add_labels=True,
               add_pan_volume=False,
