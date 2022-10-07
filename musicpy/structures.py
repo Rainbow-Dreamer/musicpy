@@ -4913,21 +4913,21 @@ class controller_event:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=0,
+                 start_time=0,
                  controller_number=None,
                  parameter=None):
         self.track = track
         self.channel = channel
-        self.time = time * 4
+        self.start_time = start_time
         self.controller_number = controller_number
         self.parameter = parameter
 
 
 class copyright_event:
 
-    def __init__(self, track=0, time=0, notice=None):
+    def __init__(self, track=0, start_time=0, notice=None):
         self.track = track
-        self.time = time * 4
+        self.start_time = start_time
         self.notice = notice[:127] if notice else notice
 
 
@@ -4935,12 +4935,12 @@ class key_signature:
 
     def __init__(self,
                  track=0,
-                 time=0,
+                 start_time=0,
                  accidentals=None,
                  accidental_type=None,
                  mode=None):
         self.track = track
-        self.time = time * 4
+        self.start_time = start_time
         self.accidentals = accidentals
         self.accidental_type = accidental_type
         self.mode = mode
@@ -4948,18 +4948,18 @@ class key_signature:
 
 class sysex:
 
-    def __init__(self, track=0, time=0, manID=None, payload=None):
+    def __init__(self, track=0, start_time=0, manID=None, payload=None):
         self.track = track
-        self.time = time * 4
+        self.start_time = start_time
         self.manID = manID
         self.payload = payload
 
 
 class text_event:
 
-    def __init__(self, track=0, time=0, text=''):
+    def __init__(self, track=0, start_time=0, text=''):
         self.track = track
-        self.time = time * 4
+        self.start_time = start_time
         self.text = text
 
 
@@ -4967,13 +4967,13 @@ class time_signature:
 
     def __init__(self,
                  track=0,
-                 time=0,
+                 start_time=0,
                  numerator=None,
                  denominator=None,
                  clocks_per_tick=None,
                  notes_per_quarter=8):
         self.track = track
-        self.time = time * 4
+        self.start_time = start_time
         self.numerator = numerator
         self.denominator = denominator
         self.clocks_per_tick = clocks_per_tick
@@ -4984,14 +4984,14 @@ class universal_sysex:
 
     def __init__(self,
                  track=0,
-                 time=0,
+                 start_time=0,
                  code=None,
                  subcode=None,
                  payload=None,
                  sysExChannel=127,
                  realTime=False):
         self.track = track
-        self.time = time * 4
+        self.start_time = start_time
         self.code = code
         self.subcode = subcode
         self.payload = payload
@@ -5004,7 +5004,7 @@ class rpn:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=0,
+                 start_time=0,
                  controller_msb=None,
                  controller_lsb=None,
                  data_msb=None,
@@ -5013,7 +5013,7 @@ class rpn:
                  registered=True):
         self.track = track
         self.channel = channel
-        self.time = time * 4
+        self.start_time = start_time
         self.controller_msb = controller_msb
         self.controller_lsb = controller_lsb
         self.data_msb = data_msb
@@ -5027,12 +5027,12 @@ class tuning_bank:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=0,
+                 start_time=0,
                  bank=None,
                  time_order=False):
         self.track = track
         self.channel = channel
-        self.time = time * 4
+        self.start_time = start_time
         self.bank = bank
         self.time_order = time_order
 
@@ -5042,39 +5042,39 @@ class tuning_program:
     def __init__(self,
                  track=0,
                  channel=0,
-                 time=0,
+                 start_time=0,
                  program=None,
                  time_order=False):
         self.track = track
         self.channel = channel
-        self.time = time * 4
+        self.start_time = start_time
         self.program = program
         self.time_order = time_order
 
 
 class channel_pressure:
 
-    def __init__(self, track=0, channel=0, time=0, pressure_value=None):
+    def __init__(self, track=0, channel=0, start_time=0, pressure_value=None):
         self.track = track
         self.channel = channel
-        self.time = time * 4
+        self.start_time = start_time
         self.pressure_value = pressure_value
 
 
 class program_change:
 
-    def __init__(self, track=0, channel=0, time=0, program=0):
+    def __init__(self, track=0, channel=0, start_time=0, program=0):
         self.track = track
         self.channel = channel
-        self.time = time * 4
+        self.start_time = start_time
         self.program = program
 
 
 class track_name:
 
-    def __init__(self, track=0, time=0, name=''):
+    def __init__(self, track=0, start_time=0, name=''):
         self.track = track
-        self.time = time * 4
+        self.start_time = start_time
         self.name = name
 
 

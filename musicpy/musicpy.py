@@ -659,37 +659,37 @@ def read_other_messages(message, other_messages, time, track_ind):
     if current_type == 'control_change':
         current_message = controller_event(track=track_ind,
                                            channel=message.channel,
-                                           time=time,
+                                           start_time=time,
                                            controller_number=message.control,
                                            parameter=message.value)
     elif current_type == 'aftertouch':
         current_message = channel_pressure(track=track_ind,
                                            channel=message.channel,
-                                           time=time,
+                                           start_time=time,
                                            pressure_value=message.value)
     elif current_type == 'program_change':
         current_message = program_change(track=track_ind,
                                          channel=message.channel,
-                                         time=time,
+                                         start_time=time,
                                          program=message.program)
     elif current_type == 'copyright':
         current_message = copyright_event(track=track_ind,
-                                          time=time,
+                                          start_time=time,
                                           notice=message.text)
     elif current_type == 'sysex':
         current_message = sysex(track=track_ind,
-                                time=time,
+                                start_time=time,
                                 payload=struct.pack(f">{len(message.data)-1}B",
                                                     *(message.data[1:])),
                                 manID=message.data[0])
     elif current_type == 'track_name':
         current_message = track_name(track=track_ind,
-                                     time=time,
+                                     start_time=time,
                                      name=message.name)
     elif current_type == 'time_signature':
         current_message = time_signature(
             track=track_ind,
-            time=time,
+            start_time=time,
             numerator=message.numerator,
             denominator=message.denominator,
             clocks_per_tick=message.clocks_per_click,
@@ -707,13 +707,13 @@ def read_other_messages(message, other_messages, time, track_ind):
             [i for i in current_key.names() if i[-1] == '#'])
         current_message = key_signature(
             track=track_ind,
-            time=time,
+            start_time=time,
             accidentals=current_accidentals,
             accidental_type=current_accidental_type,
             mode=current_mode)
     elif current_type == 'text':
         current_message = text_event(track=track_ind,
-                                     time=time,
+                                     start_time=time,
                                      text=message.text)
     else:
         return
@@ -871,58 +871,60 @@ def add_other_messages(MyMIDI, other_messages, write_type='piece'):
     for each in other_messages:
         try:
             current_type = type(each)
+            current_time = each.start_time * 4
             curernt_track = each.track if write_type == 'piece' else 0
             if current_type == controller_event:
                 MyMIDI.addControllerEvent(curernt_track, each.channel,
-                                          each.time, each.controller_number,
+                                          current_time, each.controller_number,
                                           each.parameter)
             elif current_type == copyright_event:
-                MyMIDI.addCopyright(curernt_track, each.time, each.notice)
+                MyMIDI.addCopyright(curernt_track, current_time, each.notice)
             elif current_type == key_signature:
-                MyMIDI.addKeySignature(curernt_track, each.time,
+                MyMIDI.addKeySignature(curernt_track, current_time,
                                        each.accidentals, each.accidental_type,
                                        each.mode)
             elif current_type == sysex:
-                MyMIDI.addSysEx(curernt_track, each.time, each.manID,
+                MyMIDI.addSysEx(curernt_track, current_time, each.manID,
                                 each.payload)
             elif current_type == text_event:
-                MyMIDI.addText(curernt_track, each.time, each.text)
+                MyMIDI.addText(curernt_track, current_time, each.text)
             elif current_type == time_signature:
-                MyMIDI.addTimeSignature(curernt_track, each.time,
+                MyMIDI.addTimeSignature(curernt_track, current_time,
                                         each.numerator,
                                         int(math.log(each.denominator,
                                                      2)), each.clocks_per_tick,
                                         each.notes_per_quarter)
             elif current_type == universal_sysex:
-                MyMIDI.addUniversalSysEx(curernt_track, each.time, each.code,
-                                         each.subcode, each.payload,
+                MyMIDI.addUniversalSysEx(curernt_track, current_time,
+                                         each.code, each.subcode, each.payload,
                                          each.sysExChannel, each.realTime)
             elif current_type == rpn:
                 if each.registered:
-                    MyMIDI.makeRPNCall(curernt_track, each.channel, each.time,
-                                       each.controller_msb,
+                    MyMIDI.makeRPNCall(curernt_track, each.channel,
+                                       current_time, each.controller_msb,
                                        each.controller_lsb, each.data_msb,
                                        each.data_lsb, each.time_order)
                 else:
-                    MyMIDI.makeNRPNCall(curernt_track, each.channel, each.time,
-                                        each.controller_msb,
+                    MyMIDI.makeNRPNCall(curernt_track, each.channel,
+                                        current_time, each.controller_msb,
                                         each.controller_lsb, each.data_msb,
                                         each.data_lsb, each.time_order)
             elif current_type == tuning_bank:
-                MyMIDI.changeTuningBank(curernt_track, each.channel, each.time,
-                                        each.bank, each.time_order)
+                MyMIDI.changeTuningBank(curernt_track, each.channel,
+                                        current_time, each.bank,
+                                        each.time_order)
             elif current_type == tuning_program:
                 MyMIDI.changeTuningProgram(curernt_track, each.channel,
-                                           each.time, each.program,
+                                           current_time, each.program,
                                            each.time_order)
             elif current_type == channel_pressure:
                 MyMIDI.addChannelPressure(curernt_track, each.channel,
-                                          each.time, each.pressure_value)
+                                          current_time, each.pressure_value)
             elif current_type == program_change:
-                MyMIDI.addProgramChange(curernt_track, each.channel, each.time,
-                                        each.program)
+                MyMIDI.addProgramChange(curernt_track, each.channel,
+                                        current_time, each.program)
             elif current_type == track_name:
-                MyMIDI.addTrackName(curernt_track, each.time, each.name)
+                MyMIDI.addTrackName(curernt_track, current_time, each.name)
         except:
             pass
 
