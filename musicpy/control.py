@@ -168,7 +168,8 @@ def start(current_chord,
           start_time=0,
           bpm=120,
           track_num=None,
-          set_instrument=False):
+          set_instrument=False,
+          print_log=False):
     if isinstance(current_chord, note):
         current_chord = chord([current_chord])
     if isinstance(current_chord, chord):
@@ -210,6 +211,8 @@ def start(current_chord,
         past_time = time.time() - start_time
         current_event = event_list[counter]
         if past_time >= current_event.time:
+            if print_log:
+                print(current_event, flush=True)
             mode = current_event.mode
             if track_num:
                 current_track = track_num[current_event.track]

@@ -894,8 +894,6 @@ def add_other_messages(current_midi,
                 current_message = mido.MetaMessage(time=current_time,
                                                    **current_attributes)
         except:
-            import traceback
-            print(traceback.format_exc())
             continue
         current_track = each.track if write_type == 'piece' else 0
         current_midi.tracks[current_track].append(current_message)

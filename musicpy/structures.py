@@ -4860,10 +4860,9 @@ class drum:
 
 class event:
 
-    def __init__(self, type, track=0, channel=0, start_time=0, **kwargs):
+    def __init__(self, type, track=0, start_time=0, **kwargs):
         self.type = type
         self.track = track
-        self.channel = channel
         self.start_time = start_time
         self.__dict__.update(kwargs)
 
