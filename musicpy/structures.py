@@ -2118,8 +2118,7 @@ class chord:
 
     def clear_program_change(self):
         self.other_messages = [
-            i for i in self.other_messages
-            if not isinstance(i, program_change)
+            i for i in self.other_messages if type(i) != 'program_change'
         ]
 
     def clear_other_messages(self, types=None):
@@ -3394,18 +3393,20 @@ class piece:
             whole_pan = mp.concat(temp.pan)
             whole_volume = mp.concat(temp.volume)
             pan_msg = [
-                controller_event(channel=i.channel,
-                                 track=i.track,
-                                 time=i.start_time,
-                                 controller_number=10,
-                                 parameter=i.value) for i in whole_pan
+                event('control_change',
+                      channel=i.channel,
+                      track=i.track,
+                      start_time=i.start_time,
+                      control=10,
+                      value=i.value) for i in whole_pan
             ]
             volume_msg = [
-                controller_event(channel=i.channel,
-                                 track=i.track,
-                                 time=i.start_time,
-                                 controller_number=7,
-                                 parameter=i.value) for i in whole_volume
+                event('control_change',
+                      channel=i.channel,
+                      track=i.track,
+                      start_time=i.start_time,
+                      control=7,
+                      value=i.value) for i in whole_volume
             ]
             first_track.other_messages += pan_msg
             first_track.other_messages += volume_msg
@@ -3751,8 +3752,7 @@ class piece:
             for each in self.tracks:
                 each.clear_program_change()
         self.other_messages = [
-            i for i in self.other_messages
-            if not isinstance(i, program_change)
+            i for i in self.other_messages if type(i) != 'program_change'
         ]
 
     def clear_other_messages(self, types=None, apply_tracks=True):
@@ -4860,9 +4860,10 @@ class drum:
 
 class event:
 
-    def __init__(self, type, track=0, start_time=0, **kwargs):
+    def __init__(self, type, track=0, channel=0, start_time=0, **kwargs):
         self.type = type
         self.track = track
+        self.channel = channel
         self.start_time = start_time
         self.__dict__.update(kwargs)
 
