@@ -316,7 +316,7 @@ class chord:
         result = temp[start_ind:to_ind]
         result += chord(changes)
         result.other_messages = [
-            i for i in result.other_messages if ind1 <= i.time / 4 < ind2
+            i for i in result.other_messages if ind1 <= i.start_time < ind2
         ]
         result.start_time = actual_start_time
         return result
@@ -1583,8 +1583,6 @@ class chord:
         pitch_bend_msg = self.split(pitch_bend, get_time=True)
         self.clear_pitch_bend('all')
         mp.process_normalize_tempo(self, tempo_changes_ranges, bpm)
-        for each in self.other_messages:
-            each.start_time = each.time / 4
         other_types = pitch_bend_msg.notes + self.other_messages
         if pan_msg:
             other_types += pan_msg
@@ -1612,7 +1610,7 @@ class chord:
             if isinstance(each, (pitch_bend, pan, volume)):
                 each.start_time = current_start_time
             else:
-                each.time = current_start_time * 4
+                each.start_time = current_start_time
         del other_types_chord[0]
         for each in other_types_chord.notes:
             if isinstance(each, pitch_bend):
@@ -1653,9 +1651,9 @@ class chord:
                 if each.start_time < 0:
                     each.start_time = 0
         for each in temp.other_messages:
-            each.time += time * 4
-            if each.time < 0:
-                each.time = 0
+            each.start_time += time
+            if each.start_time < 0:
+                each.start_time = 0
         if pan_msg or volume_msg:
             return temp, pan_msg, volume_msg
         else:
@@ -2171,9 +2169,9 @@ class chord:
                         each.start_time = 0
         if msg:
             for each in self.other_messages:
-                each.time += start_time * 4
-                if each.time < 0:
-                    each.time = 0
+                each.start_time += start_time
+                if each.start_time < 0:
+                    each.start_time = 0
 
     def with_start(self, start_time):
         temp = copy(self)
@@ -3597,7 +3595,7 @@ class piece:
             k += 1
         track_inds = [each.track_ind for each in temp.tracks]
         temp.other_messages = [
-            i for i in temp.other_messages if ind1 <= i.time / 4 < ind2
+            i for i in temp.other_messages if ind1 <= i.start_time < ind2
         ]
         temp.other_messages = [
             i for i in temp.other_messages if i.track in track_inds
@@ -3686,9 +3684,9 @@ class piece:
                             each.start_time = 0
             if msg:
                 for each in current_track.other_messages:
-                    each.time += current_start_time * 4
-                    if each.time < 0:
-                        each.time = 0
+                    each.start_time += current_start_time
+                    if each.start_time < 0:
+                        each.start_time = 0
             if pan_volume:
                 current_pan = self.pan[i]
                 current_volume = self.volume[i]

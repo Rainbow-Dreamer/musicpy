@@ -65,14 +65,14 @@ def piece_to_event_list(current_chord, set_instrument=False):
         if isinstance(each, controller_event):
             event_list.append(
                 midi_event(value=each,
-                           time=bar_to_real_time(each.time / 4,
+                           time=bar_to_real_time(each.start_time,
                                                  current_chord.bpm, 1) / 1000,
                            mode=5,
                            track=each.track))
         elif isinstance(each, program_change):
             event_list.append(
                 midi_event(value=each,
-                           time=bar_to_real_time(each.time / 4,
+                           time=bar_to_real_time(each.start_time,
                                                  current_chord.bpm, 1) / 1000,
                            mode=6,
                            track=each.track))
