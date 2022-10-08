@@ -3,7 +3,6 @@ import math
 import struct
 import chunk
 from io import BytesIO
-import midiutil
 import mido
 
 if __name__ == '__main__' or __name__ == 'musicpy':
@@ -234,8 +233,7 @@ def play(current_chord,
          save_as_file=True,
          msg=None,
          nomsg=False,
-         deinterleave=False,
-         remove_duplicates=False,
+         ticks_per_beat=960,
          wait=False,
          **midi_args):
     file = write(current_chord=current_chord,
@@ -248,8 +246,7 @@ def play(current_chord,
                  save_as_file=save_as_file,
                  msg=msg,
                  nomsg=nomsg,
-                 deinterleave=deinterleave,
-                 remove_duplicates=remove_duplicates,
+                 ticks_per_beat=ticks_per_beat,
                  **midi_args)
     if save_as_file:
         result_file = name
@@ -276,22 +273,20 @@ def read(name,
     if is_file:
         name.seek(0)
         try:
-            current_midi = mido.midifiles.MidiFile(file=name, clip=True)
+            current_midi = mido.MidiFile(file=name, clip=True)
             whole_bpm = find_first_tempo(name, is_file=is_file)
             name.close()
         except Exception as OSError:
             name.seek(0)
-            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(name),
-                                                   clip=True)
+            current_midi = mido.MidiFile(file=riff_to_midi(name), clip=True)
             whole_bpm = find_first_tempo(name, is_file=is_file)
             name.close()
         name = name.name
     else:
         try:
-            current_midi = mido.midifiles.MidiFile(name, clip=True)
+            current_midi = mido.MidiFile(name, clip=True)
         except Exception as OSError:
-            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(name),
-                                                   clip=True)
+            current_midi = mido.MidiFile(file=riff_to_midi(name), clip=True)
         whole_bpm = find_first_tempo(name, is_file=is_file)
     whole_tracks = current_midi.tracks
     if not whole_tracks:
@@ -307,8 +302,8 @@ def read(name,
             split_channels = False
         elif current_type == 2:
             split_channels = False
+    changes = []
     if not split_channels:
-        changes = []
         changes_track_ind = [
             i for i, each in enumerate(whole_tracks)
             if all((i.is_meta or i.type == 'sysex') for i in each)
@@ -393,10 +388,10 @@ def read(name,
             [each_track.other_messages for each_track in result_piece.tracks],
             start=[])
     else:
-        available_tracks = whole_tracks[0]
-        channels_numbers = [
-            i.channel for i in available_tracks if hasattr(i, 'channel')
-        ]
+        available_tracks = whole_tracks
+        channels_numbers = concat(
+            [[i.channel for i in j if hasattr(i, 'channel')]
+             for j in available_tracks])
         if not channels_numbers:
             raise ValueError(
                 'Split channels requires the MIDI file contains channel messages for tracks'
@@ -407,13 +402,45 @@ def read(name,
                 channels_list.append(each)
         channels_num = len(channels_list)
         track_channels = channels_list
-        all_tracks = midi_to_chord(available_tracks,
-                                   interval_unit,
-                                   whole_bpm,
-                                   add_track_num=split_channels,
-                                   clear_empty_notes=clear_empty_notes,
-                                   track_ind=0,
-                                   track_channels=track_channels)
+        all_tracks = [
+            midi_to_chord(each,
+                          interval_unit,
+                          whole_bpm,
+                          add_track_num=split_channels,
+                          clear_empty_notes=clear_empty_notes,
+                          track_ind=j,
+                          track_channels=track_channels)
+            for j, each in enumerate(available_tracks)
+        ]
+        if len(available_tracks) > 1:
+            available_tracks = concat(available_tracks)
+            pitch_bends = concat(
+                [i[0].split(pitch_bend, get_time=True) for i in all_tracks])
+            for each in all_tracks:
+                each[0].clear_pitch_bend('all')
+            current_available_tracks = [
+                each for each in all_tracks if any(
+                    isinstance(i, note) for i in each[0])
+            ]
+            start_time_ls = [j[2] for j in all_tracks]
+            available_start_time_ls = [j[2] for j in current_available_tracks]
+            first_track_ind = start_time_ls.index(min(available_start_time_ls))
+            all_tracks.insert(0, all_tracks.pop(first_track_ind))
+            first_track = all_tracks[0]
+            all_track_notes, tempos, first_track_start_time = first_track
+            for i in all_tracks[1:]:
+                all_track_notes &= (i[0], i[2] - first_track_start_time)
+            all_track_notes.other_messages = concat(
+                [each[0].other_messages for each in all_tracks])
+            all_track_notes += pitch_bends
+            all_track_notes.pan_list = concat(
+                [k[0].pan_list for k in all_tracks])
+            all_track_notes.volume_list = concat(
+                [k[0].volume_list for k in all_tracks])
+            all_tracks = [all_track_notes, tempos, first_track_start_time]
+        else:
+            available_tracks = available_tracks[0]
+            all_tracks = all_tracks[0]
         pan_list = all_tracks[0].pan_list
         volume_list = all_tracks[0].volume_list
         current_instruments_list = [[
@@ -578,8 +605,7 @@ def midi_to_chord(current_track,
                     current_append_note.track_num = track_ind
             notelist.append(current_append_note)
         elif current_msg.type == 'set_tempo':
-            current_tempo = tempo(mido.midifiles.units.tempo2bpm(
-                current_msg.tempo),
+            current_tempo = tempo(mido.tempo2bpm(current_msg.tempo),
                                   current_time / interval_unit,
                                   track=track_ind)
             if add_track_num:
@@ -655,69 +681,16 @@ def midi_to_chord(current_track,
 
 
 def read_other_messages(message, other_messages, time, track_ind):
-    current_type = message.type
-    if current_type == 'control_change':
-        current_message = controller_event(track=track_ind,
-                                           channel=message.channel,
-                                           start_time=time,
-                                           controller_number=message.control,
-                                           parameter=message.value)
-    elif current_type == 'aftertouch':
-        current_message = channel_pressure(track=track_ind,
-                                           channel=message.channel,
-                                           start_time=time,
-                                           pressure_value=message.value)
-    elif current_type == 'program_change':
-        current_message = program_change(track=track_ind,
-                                         channel=message.channel,
-                                         start_time=time,
-                                         program=message.program)
-    elif current_type == 'copyright':
-        current_message = copyright_event(track=track_ind,
-                                          start_time=time,
-                                          notice=message.text)
-    elif current_type == 'sysex':
-        current_message = sysex(track=track_ind,
+    if message.type not in ['note_on', 'note_off']:
+        current_attributes = {
+            i: j
+            for i, j in vars(message).items() if i != 'time'
+        }
+        current_message = event(track=track_ind,
                                 start_time=time,
-                                payload=struct.pack(f">{len(message.data)-1}B",
-                                                    *(message.data[1:])),
-                                manID=message.data[0])
-    elif current_type == 'track_name':
-        current_message = track_name(track=track_ind,
-                                     start_time=time,
-                                     name=message.name)
-    elif current_type == 'time_signature':
-        current_message = time_signature(
-            track=track_ind,
-            start_time=time,
-            numerator=message.numerator,
-            denominator=message.denominator,
-            clocks_per_tick=message.clocks_per_click,
-            notes_per_quarter=message.notated_32nd_notes_per_beat)
-    elif current_type == 'key_signature':
-        current_key = message.key
-        if current_key[-1] == 'm':
-            current_mode = midiutil.MidiFile.MINOR
-            current_key = scale(current_key[:-1], 'minor')
-        else:
-            current_mode = midiutil.MidiFile.MAJOR
-            current_key = scale(current_key, 'major')
-        current_accidental_type = midiutil.MidiFile.SHARPS
-        current_accidentals = len(
-            [i for i in current_key.names() if i[-1] == '#'])
-        current_message = key_signature(
-            track=track_ind,
-            start_time=time,
-            accidentals=current_accidentals,
-            accidental_type=current_accidental_type,
-            mode=current_mode)
-    elif current_type == 'text':
-        current_message = text_event(track=track_ind,
-                                     start_time=time,
-                                     text=message.text)
-    else:
-        return
-    other_messages.append(current_message)
+                                **current_attributes)
+        current_message.is_meta = message.is_meta
+        other_messages.append(current_message)
 
 
 def write(current_chord,
@@ -730,8 +703,7 @@ def write(current_chord,
           save_as_file=True,
           msg=None,
           nomsg=False,
-          deinterleave=False,
-          remove_duplicates=False,
+          ticks_per_beat=960,
           **midi_args):
     if i is not None:
         instrument = i
@@ -775,181 +747,179 @@ def write(current_chord,
         i if isinstance(i, int) else database.INSTRUMENTS[i]
         for i in instruments_numbers
     ]
-    MyMIDI = midiutil.MidiFile.MIDIFile(track_number,
-                                        deinterleave=deinterleave,
-                                        removeDuplicates=remove_duplicates,
-                                        **midi_args)
-    MyMIDI.addTempo(0, 0, bpm)
+    current_midi = mido.MidiFile(ticks_per_beat=ticks_per_beat, **midi_args)
+    current_midi.tracks.extend([mido.MidiTrack() for i in range(track_number)])
+    current_midi.tracks[0].append(
+        mido.MetaMessage('set_tempo', tempo=mido.bpm2tempo(bpm), time=0))
     for i in range(track_number):
         if channels:
             current_channel = channels[i]
         else:
             current_channel = i
-        MyMIDI.addProgramChange(i, current_channel, 0,
-                                instruments_numbers[i] - 1)
+        current_midi.tracks[i].append(
+            mido.Message('program_change',
+                         channel=current_channel,
+                         time=0,
+                         program=instruments_numbers[i] - 1))
         if track_names:
-            MyMIDI.addTrackName(i, 0, track_names[i])
+            current_midi.tracks[i].append(
+                mido.MetaMessage('track_name', time=0, name=track_names[i]))
 
         current_pan_msg = pan_msg[i]
         if current_pan_msg:
             for each in current_pan_msg:
                 current_pan_track = i if each.track is None else each.track
                 current_pan_channel = current_channel if each.channel is None else each.channel
-                MyMIDI.addControllerEvent(
-                    current_pan_track if not is_track_type else 0,
-                    current_pan_channel, each.start_time * 4, 10, each.value)
+                current_midi.tracks[
+                    current_pan_track if not is_track_type else 0].append(
+                        mido.Message('control_change',
+                                     channel=current_pan_channel,
+                                     time=int(each.start_time *
+                                              ticks_per_beat * 4),
+                                     control=10,
+                                     value=each.value))
         current_volume_msg = volume_msg[i]
         if current_volume_msg:
             for each in current_volume_msg:
                 current_volume_channel = current_channel if each.channel is None else each.channel
                 current_volume_track = i if each.track is None else each.track
-                MyMIDI.addControllerEvent(
-                    current_volume_track if not is_track_type else 0,
-                    current_volume_channel, each.start_time * 4, 7, each.value)
+                current_midi.tracks[
+                    current_volume_track if not is_track_type else 0].append(
+                        mido.Message('control_change',
+                                     channel=current_volume_channel,
+                                     time=int(each.start_time *
+                                              ticks_per_beat * 4),
+                                     control=7,
+                                     value=each.value))
 
         content = tracks_contents[i]
         content_notes = content.notes
         content_intervals = content.interval
-        current_start_time = start_times[i] * 4
+        current_start_time = int(start_times[i] * ticks_per_beat * 4)
         for j in range(len(content)):
             current_note = content_notes[j]
             current_type = type(current_note)
             if current_type == note:
-                MyMIDI.addNote(
-                    i, current_channel
+                current_note_on_message = mido.Message(
+                    'note_on',
+                    time=current_start_time,
+                    channel=current_channel
                     if current_note.channel is None else current_note.channel,
-                    current_note.degree, current_start_time,
-                    current_note.duration * 4, current_note.volume)
-                current_start_time += content_intervals[j] * 4
+                    note=current_note.degree,
+                    velocity=current_note.volume)
+                current_note_off_message = mido.Message(
+                    'note_off',
+                    time=current_start_time +
+                    int(current_note.duration * ticks_per_beat * 4),
+                    channel=current_channel
+                    if current_note.channel is None else current_note.channel,
+                    note=current_note.degree,
+                    velocity=current_note.volume)
+                current_midi.tracks[i].append(current_note_on_message)
+                current_midi.tracks[i].append(current_note_off_message)
+                current_start_time += int(content_intervals[j] *
+                                          ticks_per_beat * 4)
             elif current_type == tempo:
                 if current_note.start_time is not None:
                     if current_note.start_time < 0:
                         tempo_change_time = 0
                     else:
-                        tempo_change_time = current_note.start_time * 4
+                        tempo_change_time = int(current_note.start_time *
+                                                ticks_per_beat * 4)
                 else:
                     tempo_change_time = current_start_time
-                MyMIDI.addTempo(0, tempo_change_time, current_note.bpm)
+                current_midi.tracks[0].append(
+                    mido.MetaMessage('set_tempo',
+                                     time=tempo_change_time,
+                                     tempo=mido.bpm2tempo(current_note.bpm)))
             elif current_type == pitch_bend:
                 if current_note.start_time is not None:
                     if current_note.start_time < 0:
                         pitch_bend_time = 0
                     else:
-                        pitch_bend_time = current_note.start_time * 4
+                        pitch_bend_time = int(current_note.start_time *
+                                              ticks_per_beat * 4)
                 else:
                     pitch_bend_time = current_start_time
                 pitch_bend_track = i if current_note.track is None else current_note.track
                 pitch_bend_channel = current_channel if current_note.channel is None else current_note.channel
-                MyMIDI.addPitchWheelEvent(
-                    pitch_bend_track if not is_track_type else 0,
-                    pitch_bend_channel, pitch_bend_time, current_note.value)
-            elif current_type == tuning:
-                note_tuning_track = i if current_note.track is None else current_note.track
-                MyMIDI.changeNoteTuning(
-                    note_tuning_track if not is_track_type else 0,
-                    current_note.tunings, current_note.sysExChannel,
-                    current_note.realTime, current_note.tuningProgam)
+                current_midi.tracks[
+                    pitch_bend_track if not is_track_type else 0].append(
+                        mido.Message('pitchwheel',
+                                     time=pitch_bend_time,
+                                     channel=pitch_bend_channel,
+                                     pitch=current_note.value))
 
     if not nomsg:
         if current_chord.other_messages:
-            add_other_messages(MyMIDI, current_chord.other_messages,
-                               'piece' if not is_track_type else 'track')
+            add_other_messages(
+                current_midi=current_midi,
+                other_messages=current_chord.other_messages,
+                write_type='piece' if not is_track_type else 'track',
+                ticks_per_beat=ticks_per_beat)
         elif msg:
-            add_other_messages(MyMIDI, msg,
-                               'piece' if not is_track_type else 'track')
+            add_other_messages(
+                current_midi=current_midi,
+                other_messages=msg,
+                write_type='piece' if not is_track_type else 'track',
+                ticks_per_beat=ticks_per_beat)
+    for i, each in enumerate(current_midi.tracks):
+        each.sort(key=lambda s: s.time)
+        current_midi.tracks[i] = mido.MidiTrack(
+            mido.midifiles.tracks._to_reltime(each))
     if save_as_file:
-        with open(name, "wb") as output_file:
-            MyMIDI.writeFile(output_file)
-        return
+        current_midi.save(name)
     else:
         current_io = BytesIO()
-        MyMIDI.writeFile(current_io)
+        current_midi.save(current_io)
         return current_io
 
 
-def add_other_messages(MyMIDI, other_messages, write_type='piece'):
+def add_other_messages(current_midi,
+                       other_messages,
+                       write_type='piece',
+                       ticks_per_beat=960):
     for each in other_messages:
         try:
-            current_type = type(each)
-            current_time = each.start_time * 4
-            curernt_track = each.track if write_type == 'piece' else 0
-            if current_type == controller_event:
-                MyMIDI.addControllerEvent(curernt_track, each.channel,
-                                          current_time, each.controller_number,
-                                          each.parameter)
-            elif current_type == copyright_event:
-                MyMIDI.addCopyright(curernt_track, current_time, each.notice)
-            elif current_type == key_signature:
-                MyMIDI.addKeySignature(curernt_track, current_time,
-                                       each.accidentals, each.accidental_type,
-                                       each.mode)
-            elif current_type == sysex:
-                MyMIDI.addSysEx(curernt_track, current_time, each.manID,
-                                each.payload)
-            elif current_type == text_event:
-                MyMIDI.addText(curernt_track, current_time, each.text)
-            elif current_type == time_signature:
-                MyMIDI.addTimeSignature(curernt_track, current_time,
-                                        each.numerator,
-                                        int(math.log(each.denominator,
-                                                     2)), each.clocks_per_tick,
-                                        each.notes_per_quarter)
-            elif current_type == universal_sysex:
-                MyMIDI.addUniversalSysEx(curernt_track, current_time,
-                                         each.code, each.subcode, each.payload,
-                                         each.sysExChannel, each.realTime)
-            elif current_type == rpn:
-                if each.registered:
-                    MyMIDI.makeRPNCall(curernt_track, each.channel,
-                                       current_time, each.controller_msb,
-                                       each.controller_lsb, each.data_msb,
-                                       each.data_lsb, each.time_order)
-                else:
-                    MyMIDI.makeNRPNCall(curernt_track, each.channel,
-                                        current_time, each.controller_msb,
-                                        each.controller_lsb, each.data_msb,
-                                        each.data_lsb, each.time_order)
-            elif current_type == tuning_bank:
-                MyMIDI.changeTuningBank(curernt_track, each.channel,
-                                        current_time, each.bank,
-                                        each.time_order)
-            elif current_type == tuning_program:
-                MyMIDI.changeTuningProgram(curernt_track, each.channel,
-                                           current_time, each.program,
-                                           each.time_order)
-            elif current_type == channel_pressure:
-                MyMIDI.addChannelPressure(curernt_track, each.channel,
-                                          current_time, each.pressure_value)
-            elif current_type == program_change:
-                MyMIDI.addProgramChange(curernt_track, each.channel,
-                                        current_time, each.program)
-            elif current_type == track_name:
-                MyMIDI.addTrackName(curernt_track, current_time, each.name)
+            current_time = int(each.start_time * ticks_per_beat * 4)
+            current_attributes = {
+                i: j
+                for i, j in vars(each).items()
+                if i not in ['start_time', 'track', 'is_meta']
+            }
+            if not each.is_meta:
+                current_message = mido.Message(time=current_time,
+                                               **current_attributes)
+            else:
+                current_message = mido.MetaMessage(time=current_time,
+                                                   **current_attributes)
         except:
-            pass
+            import traceback
+            print(traceback.format_exc())
+            continue
+        current_track = each.track if write_type == 'piece' else 0
+        current_midi.tracks[current_track].append(current_message)
 
 
 def find_first_tempo(file, is_file=False):
     if is_file:
         file.seek(0)
         try:
-            current_midi = mido.midifiles.MidiFile(file=file, clip=True)
+            current_midi = mido.MidiFile(file=file, clip=True)
             file.close()
         except Exception as OSError:
             file.seek(0)
-            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(file),
-                                                   clip=True)
+            current_midi = mido.MidiFile(file=riff_to_midi(file), clip=True)
             file.close()
     else:
         try:
-            current_midi = mido.midifiles.MidiFile(file, clip=True)
+            current_midi = mido.MidiFile(file, clip=True)
         except Exception as OSError:
-            current_midi = mido.midifiles.MidiFile(file=riff_to_midi(file),
-                                                   clip=True)
+            current_midi = mido.MidiFile(file=riff_to_midi(file), clip=True)
     for track in current_midi.tracks:
         for msg in track:
             if msg.type == 'set_tempo':
-                return mido.midifiles.units.tempo2bpm(msg.tempo)
+                return mido.tempo2bpm(msg.tempo)
     return 120
 
 
@@ -1384,37 +1354,6 @@ def reset(self, **kwargs):
     return temp
 
 
-def event(mode='controller', *args, **kwargs):
-    if mode == 'controller':
-        return controller_event(*args, **kwargs)
-    elif mode == 'copyright':
-        return copyright_event(*args, **kwargs)
-    elif mode == 'key signature':
-        return key_signature(*args, **kwargs)
-    elif mode == 'sysex':
-        return sysex(*args, **kwargs)
-    elif mode == 'text':
-        return text_event(*args, **kwargs)
-    elif mode == 'time signature':
-        return time_signature(*args, **kwargs)
-    elif mode == 'universal sysex':
-        return universal_sysex(*args, **kwargs)
-    elif mode == 'nrpn':
-        return rpn(*args, **kwargs, registered=False)
-    elif mode == 'rpn':
-        return rpn(*args, **kwargs, registered=True)
-    elif mode == 'tuning bank':
-        return tuning_bank(*args, **kwargs)
-    elif mode == 'tuning program':
-        return tuning_program(*args, **kwargs)
-    elif mode == 'channel pressure':
-        return channel_pressure(*args, **kwargs)
-    elif mode == 'program change':
-        return program_change(*args, **kwargs)
-    elif mode == 'track name':
-        return track_name(*args, **kwargs)
-
-
 def read_notes(note_ls, rootpitch=4):
     intervals = []
     notes_result = []
@@ -1791,21 +1730,13 @@ arp = arpeggio
 
 for each in [
         note, chord, piece, track, scale, drum, rest, tempo, pitch_bend, pan,
-        volume
+        volume, event
 ]:
     each.reset = reset
     each.__hash__ = lambda self: hash(repr(self))
     each.copy = lambda self: copy(self)
 
-for each in [
-        controller_event, copyright_event, key_signature, sysex, text_event,
-        time_signature, universal_sysex, rpn, tuning_bank, tuning_program,
-        channel_pressure, program_change, track_name
-]:
-    each.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
-    each.reset = reset
-    each.__hash__ = lambda self: hash(repr(self))
-    each.copy = lambda self: copy(self)
+event.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import algorithms as alg

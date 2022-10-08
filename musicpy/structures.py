@@ -2782,13 +2782,6 @@ class circle_of_fifths:
                 ind = ind % 12
             return self.inner[ind]
 
-    def draw(self, inner=False):
-        if not inner:
-            return '\n         C \n    F         G\n   Bb          D\n  Eb            A\n   Ab          E  \n    Db        B\n         Gb'
-
-        else:
-            return '\n            C \n        F   Am   G\n     Bb  Dm    Em   D\n        Gm        Bm  \n    Eb Cm        F#m  A\n      Fm        C#m\n   Ab  Bbm   G#m    E  \n      Db   Ebm   B\n           Gb'
-
     def get(self, ind, mode=0):
         if mode == 0:
             return self[ind]
@@ -2839,12 +2832,6 @@ class circle_of_fourths(circle_of_fifths):
 
     def __repr__(self):
         return f'circle of fourths\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
-
-    def draw(self, inner=False):
-        if not inner:
-            return '\n         C \n    G         F\n   D          Bb\n  A            Eb\n   E          Ab  \n    B        Db\n        Gb'
-        else:
-            return '\n            C \n        G   Am   F\n     D   Em    Dm   Bb\n        Bm       Gm  \n    A  F#m        Cm  Eb\n      C#m        Fm\n   E   G#m    Bbm    Ab  \n      B   Ebm   Db\n           Gb'
 
 
 class piece:
@@ -4014,41 +4001,6 @@ class pitch_bend:
         return temp
 
 
-class tuning:
-
-    def __init__(self,
-                 tuning_dict,
-                 track=None,
-                 sysExChannel=127,
-                 realTime=True,
-                 tuningProgam=0,
-                 channel=None):
-        self.tuning_dict = tuning_dict
-        keys = list(self.tuning_dict.keys())
-        values = list(self.tuning_dict.values())
-        keys = [
-            i.degree if isinstance(i, note) else mp.toNote(i).degree
-            for i in keys
-        ]
-        self.tunings = [(keys[i], values[i]) for i in range(len(keys))]
-        self.track = track
-        self.sysExChannel = sysExChannel
-        self.realTime = realTime
-        self.tuningProgam = tuningProgam
-        self.channel = channel
-
-    def __repr__(self):
-        return f'tuning: {self.tuning_dict}'
-
-    def set_channel(self, channel):
-        self.channel = channel
-
-    def with_channel(self, channel):
-        temp = copy(self)
-        temp.channel = channel
-        return temp
-
-
 class track:
 
     def __init__(self,
@@ -4906,174 +4858,13 @@ class drum:
         return temp
 
 
-class controller_event:
+class event:
 
-    def __init__(self,
-                 track=0,
-                 channel=0,
-                 start_time=0,
-                 controller_number=None,
-                 parameter=None):
-        self.track = track
-        self.channel = channel
-        self.start_time = start_time
-        self.controller_number = controller_number
-        self.parameter = parameter
-
-
-class copyright_event:
-
-    def __init__(self, track=0, start_time=0, notice=None):
+    def __init__(self, type, track=0, start_time=0, **kwargs):
+        self.type = type
         self.track = track
         self.start_time = start_time
-        self.notice = notice[:127] if notice else notice
-
-
-class key_signature:
-
-    def __init__(self,
-                 track=0,
-                 start_time=0,
-                 accidentals=None,
-                 accidental_type=None,
-                 mode=None):
-        self.track = track
-        self.start_time = start_time
-        self.accidentals = accidentals
-        self.accidental_type = accidental_type
-        self.mode = mode
-
-
-class sysex:
-
-    def __init__(self, track=0, start_time=0, manID=None, payload=None):
-        self.track = track
-        self.start_time = start_time
-        self.manID = manID
-        self.payload = payload
-
-
-class text_event:
-
-    def __init__(self, track=0, start_time=0, text=''):
-        self.track = track
-        self.start_time = start_time
-        self.text = text
-
-
-class time_signature:
-
-    def __init__(self,
-                 track=0,
-                 start_time=0,
-                 numerator=None,
-                 denominator=None,
-                 clocks_per_tick=None,
-                 notes_per_quarter=8):
-        self.track = track
-        self.start_time = start_time
-        self.numerator = numerator
-        self.denominator = denominator
-        self.clocks_per_tick = clocks_per_tick
-        self.notes_per_quarter = notes_per_quarter
-
-
-class universal_sysex:
-
-    def __init__(self,
-                 track=0,
-                 start_time=0,
-                 code=None,
-                 subcode=None,
-                 payload=None,
-                 sysExChannel=127,
-                 realTime=False):
-        self.track = track
-        self.start_time = start_time
-        self.code = code
-        self.subcode = subcode
-        self.payload = payload
-        self.sysExChannel = sysExChannel
-        self.realTime = realTime
-
-
-class rpn:
-
-    def __init__(self,
-                 track=0,
-                 channel=0,
-                 start_time=0,
-                 controller_msb=None,
-                 controller_lsb=None,
-                 data_msb=None,
-                 data_lsb=None,
-                 time_order=False,
-                 registered=True):
-        self.track = track
-        self.channel = channel
-        self.start_time = start_time
-        self.controller_msb = controller_msb
-        self.controller_lsb = controller_lsb
-        self.data_msb = data_msb
-        self.data_lsb = data_lsb
-        self.time_order = time_order
-        self.registered = registered
-
-
-class tuning_bank:
-
-    def __init__(self,
-                 track=0,
-                 channel=0,
-                 start_time=0,
-                 bank=None,
-                 time_order=False):
-        self.track = track
-        self.channel = channel
-        self.start_time = start_time
-        self.bank = bank
-        self.time_order = time_order
-
-
-class tuning_program:
-
-    def __init__(self,
-                 track=0,
-                 channel=0,
-                 start_time=0,
-                 program=None,
-                 time_order=False):
-        self.track = track
-        self.channel = channel
-        self.start_time = start_time
-        self.program = program
-        self.time_order = time_order
-
-
-class channel_pressure:
-
-    def __init__(self, track=0, channel=0, start_time=0, pressure_value=None):
-        self.track = track
-        self.channel = channel
-        self.start_time = start_time
-        self.pressure_value = pressure_value
-
-
-class program_change:
-
-    def __init__(self, track=0, channel=0, start_time=0, program=0):
-        self.track = track
-        self.channel = channel
-        self.start_time = start_time
-        self.program = program
-
-
-class track_name:
-
-    def __init__(self, track=0, start_time=0, name=''):
-        self.track = track
-        self.start_time = start_time
-        self.name = name
+        self.__dict__.update(kwargs)
 
 
 class rest:
