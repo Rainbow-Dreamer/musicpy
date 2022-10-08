@@ -3530,7 +3530,7 @@ class piece:
                   ind1=None,
                   ind2=None,
                   mode='seconds',
-                  normalize_tempo=False,
+                  normalize_tempo=True,
                   audio_mode=0):
         merged_result, temp_bpm, start_time = self.merge()
         if bpm is not None:
