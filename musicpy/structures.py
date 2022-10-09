@@ -257,7 +257,7 @@ class chord:
         return chord(notes, interval=intervals, start_time=temp.start_time)
 
     def get_msg(self, types):
-        return [i for i in self.other_messages if isinstance(i, types)]
+        return [i for i in self.other_messages if i.type == types]
 
     def cut(self, ind1=0, ind2=None, start_time=0, return_inds=False):
         # get parts of notes between two bars
@@ -2126,7 +2126,7 @@ class chord:
             self.other_messages.clear()
         else:
             self.other_messages = [
-                i for i in self.other_messages if not isinstance(i, types)
+                i for i in self.other_messages if i.type != types
             ]
 
     def dotted(self, ind=-1, num=1, duration=True, interval=False):
@@ -3268,11 +3268,10 @@ class piece:
 
     def get_msg(self, types, ind=None):
         if ind is None:
-            return [i for i in self.other_messages if isinstance(i, types)]
+            return [i for i in self.other_messages if i.type == types]
         else:
             return [
-                i for i in self.tracks[ind].other_messages
-                if isinstance(i, types)
+                i for i in self.tracks[ind].other_messages if i.type == types
             ]
 
     def add_pan(self,
@@ -3763,7 +3762,7 @@ class piece:
             self.other_messages.clear()
         else:
             self.other_messages = [
-                i for i in self.other_messages if not isinstance(i, types)
+                i for i in self.other_messages if i.type != types
             ]
 
     def change_instruments(self, instruments, ind=None):
