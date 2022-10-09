@@ -1431,72 +1431,61 @@ def read_notes(note_ls, rootpitch=4):
     return notes_result, intervals, start_time
 
 
-def process_note(value):
-    length = len(value)
-    if value[0] != '.':
-        num_ind = length - 1
-        for k in range(num_ind, -1, -1):
-            if value[k] != '.':
-                num_ind = k
-                break
-        dotted_notes = value[num_ind + 1:].count('.')
-        value = value[:num_ind + 1]
-        value = eval(value) * sum([(1 / 2)**i
-                                   for i in range(dotted_notes + 1)])
-    elif length > 1:
-        num_ind = 0
-        for k, each in enumerate(value):
-            if each != '.':
-                num_ind = k
-                break
-        if value[-1] != '.':
-            value = 1 / eval(value[num_ind:])
-        else:
-            dotted_notes_start_ind = length - 1
-            for k in range(dotted_notes_start_ind, -1, -1):
+def process_note(value, mode=0, value2=None):
+    if mode == 1 and value == '.':
+        return value2
+    if ';' in value:
+        result = [process_note(i) for i in value.split(';')]
+        if mode == 2:
+            result = [
+                int(i) if isinstance(i, float) and i.is_integer() else i
+                for i in result
+            ]
+        return result
+    elif value == 'n':
+        return None
+    else:
+        length = len(value)
+        if value[0] != '.':
+            num_ind = length - 1
+            for k in range(num_ind, -1, -1):
                 if value[k] != '.':
-                    dotted_notes_start_ind = k + 1
+                    num_ind = k
                     break
-            dotted_notes = length - dotted_notes_start_ind
-            value = (1 / eval(value[num_ind:dotted_notes_start_ind])) * sum(
-                [(1 / 2)**i for i in range(dotted_notes + 1)])
-    return value
+            dotted_notes = value[num_ind + 1:].count('.')
+            value = value[:num_ind + 1]
+            value = eval(value) * sum([(1 / 2)**i
+                                       for i in range(dotted_notes + 1)])
+        elif length > 1:
+            num_ind = 0
+            for k, each in enumerate(value):
+                if each != '.':
+                    num_ind = k
+                    break
+            if value[-1] != '.':
+                value = 1 / eval(value[num_ind:])
+            else:
+                dotted_notes_start_ind = length - 1
+                for k in range(dotted_notes_start_ind, -1, -1):
+                    if value[k] != '.':
+                        dotted_notes_start_ind = k + 1
+                        break
+                dotted_notes = length - dotted_notes_start_ind
+                value = (1 / eval(value[num_ind:dotted_notes_start_ind])
+                         ) * sum([(1 / 2)**i for i in range(dotted_notes + 1)])
+        if mode == 2:
+            if isinstance(value, float) and value.is_integer():
+                value = int(value)
+        return value
 
 
 def process_settings(settings):
-    length = len(settings)
-    if length == 1:
-        settings += ['n', 'n']
-    elif length == 2:
-        settings += ['n']
+    settings += ['n' for i in range(3 - len(settings))]
     duration, interval, volume = settings
-    if ';' in duration:
-        duration = [process_note(i) for i in duration.split(';')]
-    elif duration == 'n':
-        duration = None
-    else:
-        duration = process_note(duration)
-    if interval == '.':
-        interval = duration
-    elif ';' in interval:
-        interval = [process_note(i) for i in interval.split(';')]
-    elif interval == 'n':
-        interval = None
-    else:
-        interval = process_note(interval)
-    if ';' in volume:
-        volume = [process_note(i) for i in volume.split(';')]
-        volume = [
-            int(i) if isinstance(i, float) and i.is_integer() else i
-            for i in volume
-        ]
-    elif volume == 'n':
-        volume = None
-    else:
-        volume = process_note(volume)
-        if isinstance(volume, float) and volume.is_integer():
-            volume = int(volume)
-    return duration, interval, volume
+    duration = process_note(duration)
+    interval = process_note(interval, mode=1, value2=duration)
+    volume = process_note(volume, mode=2)
+    return [duration, interval, volume]
 
 
 def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):

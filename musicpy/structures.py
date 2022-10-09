@@ -4397,8 +4397,7 @@ class drum:
                         current_part)
                 for each in current_part:
                     if each.startswith('i:'):
-                        current_extra_interval = mp.process_settings(
-                            [each[2:]])[0]
+                        current_extra_interval = mp.process_note(each[2:])
                         if current_intervals:
                             current_intervals[-1][-1] += current_extra_interval
                         else:
@@ -4592,22 +4591,20 @@ class drum:
                 elif current_setting_keyword == 'r':
                     current_repeat_times = int(current_content)
                 elif current_setting_keyword == 't':
-                    current_fix_length = mp.process_settings([current_content
-                                                              ])[0]
+                    current_fix_length = mp.process_note(current_content)
                 elif current_setting_keyword == 'i':
                     if current_content == '.':
-                        current_append_intervals = current_append_durations
-                    else:
-                        current_append_intervals = mp.process_settings(
-                            ['n', current_content, 'n'])[1]
+                        current_append_intervals = mp.process_note(
+                            current_content,
+                            mode=1,
+                            value2=current_append_durations)
                     if not isinstance(current_append_intervals, list):
                         current_append_intervals = [
                             current_append_intervals
                             for k in current_append_notes
                         ]
                 elif current_setting_keyword == 'l':
-                    current_append_durations = mp.process_settings(
-                        [current_content, 'n', 'n'])[0]
+                    current_append_durations = mp.process_note(current_content)
                     if not isinstance(current_append_durations, list):
                         current_append_durations = [
                             current_append_durations
@@ -4615,8 +4612,8 @@ class drum:
                         ]
                         custom_durations = True
                 elif current_setting_keyword == 'v':
-                    current_append_volumes = mp.process_settings(
-                        ['n', 'n', current_content])[2]
+                    current_append_volumes = mp.process_note(current_content,
+                                                             mode=2)
                     if not isinstance(current_append_volumes, list):
                         current_append_volumes = [
                             current_append_volumes
@@ -4759,7 +4756,7 @@ class drum:
         for each in current_keyword:
             keyword, content = each.split(':')
             if keyword == 't':
-                current_part_fix_length = mp.process_settings([content])[0]
+                current_part_fix_length = mp.process_note(content)
             elif keyword == 'r':
                 current_part_repeat_times = int(content)
             elif keyword == 'n':
@@ -4771,22 +4768,17 @@ class drum:
                 current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume = mp.process_settings(
                     content.split(';'))
             elif keyword == 'dl':
-                current_part_default_duration = mp.process_settings([content
-                                                                     ])[0]
+                current_part_default_duration = mp.process_note(content)
             elif keyword == 'di':
-                current_part_default_interval = mp.process_settings([content
-                                                                     ])[0]
+                current_part_default_interval = mp.process_note(content)
             elif keyword == 'dv':
-                current_part_default_volume = mp.process_settings([content])[0]
+                current_part_default_volume = mp.process_note(content, mode=2)
             elif keyword == 'al':
-                current_part_all_same_duration = mp.process_settings([content
-                                                                      ])[0]
+                current_part_all_same_duration = mp.process_note(content)
             elif keyword == 'al':
-                current_part_all_same_interval = mp.process_settings([content
-                                                                      ])[0]
+                current_part_all_same_interval = mp.process_note(content)
             elif keyword == 'al':
-                current_part_all_same_volume = mp.process_settings([content
-                                                                    ])[0]
+                current_part_all_same_volume = mp.process_note(content, mode=2)
         return current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name
 
     def _translate_global_keyword_parser(self, global_keywords):
@@ -4801,7 +4793,7 @@ class drum:
         for each in global_keywords:
             keyword, content = each[1:].split(':')
             if keyword == 't':
-                global_fix_length = mp.process_settings([content])[0]
+                global_fix_length = mp.process_note(content)
             elif keyword == 'r':
                 global_repeat_times = int(content)
             elif keyword == 'd':
@@ -4811,17 +4803,17 @@ class drum:
                 global_all_same_duration, global_all_same_interval, global_all_same_volume = mp.process_settings(
                     content.split(';'))
             elif keyword == 'dl':
-                global_default_duration = mp.process_settings([content])[0]
+                global_default_duration = mp.process_note(content)
             elif keyword == 'di':
-                global_default_interval = mp.process_settings([content])[0]
+                global_default_interval = mp.process_note(content)
             elif keyword == 'dv':
-                global_default_volume = mp.process_settings([content])[0]
+                global_default_volume = mp.process_note(content, mode=2)
             elif keyword == 'al':
-                global_all_same_duration = mp.process_settings([content])[0]
+                global_all_same_duration = mp.process_note(content)
             elif keyword == 'al':
-                global_all_same_interval = mp.process_settings([content])[0]
+                global_all_same_interval = mp.process_note(content)
             elif keyword == 'al':
-                global_all_same_volume = mp.process_settings([content])[0]
+                global_all_same_volume = mp.process_note(content, mode=2)
         return global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length
 
     def play(self, *args, **kwargs):
