@@ -1393,23 +1393,7 @@ def read_notes(note_ls, rootpitch=4):
                     info = info[:-1].split(';')
                     info_len = len(info)
                     if info_len == 1:
-                        duration = info[0]
-                        if duration[0] == '.':
-                            if '.' in duration[1:]:
-                                dotted_notes = duration[1:].count('.')
-                                duration = duration.replace('.', '')
-                                duration = (1 / eval(duration)) * sum(
-                                    [(1 / 2)**i for i in range(dotted_notes)])
-                            else:
-                                duration = 1 / eval(duration[1:])
-                        else:
-                            if duration[-1] == '.':
-                                dotted_notes = duration.count('.')
-                                duration = duration.replace('.', '')
-                                duration = eval(duration) * sum(
-                                    [(1 / 2)**i for i in range(dotted_notes)])
-                            else:
-                                duration = eval(duration)
+                        duration = process_note(info[0])
                         if notename != 'r':
                             intervals.append(0)
                     else:
@@ -1418,43 +1402,9 @@ def read_notes(note_ls, rootpitch=4):
                         else:
                             duration, interval, volume = info
                             volume = eval(volume)
-                        if duration[0] == '.':
-                            if '.' in duration[1:]:
-                                dotted_notes = duration[1:].count('.')
-                                duration = duration.replace('.', '')
-                                duration = (1 / eval(duration)) * sum(
-                                    [(1 / 2)**i for i in range(dotted_notes)])
-                            else:
-                                duration = 1 / eval(duration[1:])
-                        else:
-                            if duration[-1] == '.':
-                                dotted_notes = duration.count('.')
-                                duration = duration.replace('.', '')
-                                duration = eval(duration) * sum(
-                                    [(1 / 2)**i for i in range(dotted_notes)])
-                            else:
-                                duration = eval(duration)
-                        if interval[0] == '.':
-                            if len(interval) > 1 and interval[1].isdigit():
-                                if '.' in interval[1:]:
-                                    dotted_notes = interval[1:].count('.')
-                                    interval = interval.replace('.', '')
-                                    interval = (1 / eval(interval)) * sum([
-                                        (1 / 2)**i for i in range(dotted_notes)
-                                    ])
-                                else:
-                                    interval = 1 / eval(interval[1:])
-                            else:
-                                interval = eval(
-                                    interval.replace('.', str(duration)))
-                        else:
-                            if interval[-1] == '.':
-                                dotted_notes = interval.count('.')
-                                interval = interval.replace('.', '')
-                                interval = eval(interval) * sum(
-                                    [(1 / 2)**i for i in range(dotted_notes)])
-                            else:
-                                interval = eval(interval)
+                        duration = process_note(duration)
+                        interval = process_note(
+                            interval) if interval != '.' else duration
                         if notename != 'r':
                             intervals.append(interval)
                     if notename == 'r':
@@ -1481,7 +1431,7 @@ def read_notes(note_ls, rootpitch=4):
     return notes_result, intervals, start_time
 
 
-def process_dotted_note(value):
+def process_note(value):
     length = len(value)
     if value[0] != '.':
         num_ind = length - 1
@@ -1494,10 +1444,22 @@ def process_dotted_note(value):
         value = eval(value) * sum([(1 / 2)**i
                                    for i in range(dotted_notes + 1)])
     elif length > 1:
-        dotted_notes = value[1:].count('.')
-        value = value.replace('.', '')
-        value = (1 / eval(value)) * sum([(1 / 2)**i
-                                         for i in range(dotted_notes + 1)])
+        num_ind = 0
+        for k, each in enumerate(value):
+            if each != '.':
+                num_ind = k
+                break
+        if value[-1] != '.':
+            value = 1 / eval(value[num_ind:])
+        else:
+            dotted_notes_start_ind = length - 1
+            for k in range(dotted_notes_start_ind, -1, -1):
+                if value[k] != '.':
+                    dotted_notes_start_ind = k + 1
+                    break
+            dotted_notes = length - dotted_notes_start_ind
+            value = (1 / eval(value[num_ind:dotted_notes_start_ind])) * sum(
+                [(1 / 2)**i for i in range(dotted_notes + 1)])
     return value
 
 
@@ -1507,45 +1469,34 @@ def process_settings(settings):
         settings += ['n', 'n']
     elif length == 2:
         settings += ['n']
-    if length >= 2 and settings[1] == '.':
-        settings[1] = settings[0]
-    duration = settings[0]
-    interval = settings[1]
-    if duration[-1] == '.':
-        settings[0] = process_dotted_note(duration)
-    elif ';' in duration:
-        duration = duration.split(';')
-        duration = [
-            process_dotted_note(i) if i[-1] == '.' else
-            (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in duration
-        ]
-        settings[0] = duration
-    elif duration[0] == '.':
-        settings[0] = (1 / eval(duration[1:]))
+    duration, interval, volume = settings
+    if ';' in duration:
+        duration = [process_note(i) for i in duration.split(';')]
     elif duration == 'n':
-        settings[0] = None
+        duration = None
     else:
-        settings[0] = eval(duration)
-    if interval[-1] == '.':
-        settings[1] = process_dotted_note(interval)
+        duration = process_note(duration)
+    if interval == '.':
+        interval = duration
     elif ';' in interval:
-        interval = interval.split(';')
-        interval = [
-            process_dotted_note(i) if i[-1] == '.' else
-            (1 / eval(i[1:]) if i[0] == '.' else eval(i)) for i in interval
-        ]
-        settings[1] = interval
-    elif interval[0] == '.':
-        settings[1] = (1 / eval(interval[1:]))
+        interval = [process_note(i) for i in interval.split(';')]
     elif interval == 'n':
-        settings[1] = None
+        interval = None
     else:
-        settings[1] = eval(interval)
-    if settings[2] == 'n':
-        settings[2] = None
+        interval = process_note(interval)
+    if ';' in volume:
+        volume = [process_note(i) for i in volume.split(';')]
+        volume = [
+            int(i) if isinstance(i, float) and i.is_integer() else i
+            for i in volume
+        ]
+    elif volume == 'n':
+        volume = None
     else:
-        settings[2] = list(eval(settings[2].replace(';', ',')))
-    return settings
+        volume = process_note(volume)
+        if isinstance(volume, float) and volume.is_integer():
+            volume = int(volume)
+    return duration, interval, volume
 
 
 def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):
@@ -1581,7 +1532,6 @@ def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):
         if mode == 0:
             current_note.duration = new_note_duration
         obj.interval[k] = new_interval_duration
-
         count_length += current_interval
 
 
