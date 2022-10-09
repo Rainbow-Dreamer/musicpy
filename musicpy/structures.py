@@ -2118,7 +2118,7 @@ class chord:
 
     def clear_program_change(self):
         self.other_messages = [
-            i for i in self.other_messages if type(i) != 'program_change'
+            i for i in self.other_messages if i.type != 'program_change'
         ]
 
     def clear_other_messages(self, types=None):
@@ -3752,7 +3752,7 @@ class piece:
             for each in self.tracks:
                 each.clear_program_change()
         self.other_messages = [
-            i for i in self.other_messages if type(i) != 'program_change'
+            i for i in self.other_messages if i.type != 'program_change'
         ]
 
     def clear_other_messages(self, types=None, apply_tracks=True):
