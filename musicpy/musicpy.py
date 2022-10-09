@@ -544,12 +544,10 @@ def midi_to_chord(current_track,
     volume_list = []
     other_messages = []
 
-    counter = 0
     for i in range(notes_len):
         current_msg = current_track[i]
         current_time += current_msg.time
         if current_msg.type == 'note_on' and current_msg.velocity != 0:
-            counter += 1
             current_msg_velocity = current_msg.velocity
             current_msg_note = current_msg.note
             current_msg_channel = current_msg.channel
