@@ -4861,9 +4861,6 @@ class drum:
     def set(self, durations=None, intervals=None, volumes=None):
         return self % (durations, intervals, volumes)
 
-    def info(self):
-        return f"[drum] {self.name if self.name else ''}\ninstrument: {database.drum_set_dict[self.instrument] if self.instrument in database.drum_set_dict else 'unknown'}\n{', '.join([database.drum_types[k.degree] for k in self.notes])} with interval {self.notes.interval}"
-
     def with_start(self, start_time):
         temp = copy(self)
         temp.notes.start_time = start_time
