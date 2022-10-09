@@ -4321,7 +4321,7 @@ class drum:
                   default_interval=1 / 8,
                   default_volume=100,
                   translate_mode=0):
-        rest_symbol = 'x'
+        rest_symbol = '0'
         continue_symbol = '-'
         if -1 in mapping.values():
             rest_symbol = [i for i, j in mapping.items() if j == -1][0]
@@ -4460,16 +4460,29 @@ class drum:
                     if each_note in [rest_symbol, continue_symbol]
                 ]
                 if symbol_inds:
+                    last_symbol_ind = None
+                    last_symbol_start_ind = None
                     for ind in symbol_inds:
-                        current_symbol = current_notes[ind]
-                        if current_symbol == rest_symbol and ind > 0:
-                            current_intervals[ind -
-                                              1] += current_intervals[ind]
-                        elif current_symbol == continue_symbol and ind > 0:
-                            current_intervals[ind -
-                                              1] += current_intervals[ind]
-                            current_durations[ind -
-                                              1] += current_durations[ind]
+                        if ind > 0:
+                            if last_symbol_ind is None:
+                                last_symbol_ind = ind
+                                last_symbol_start_ind = ind - 1
+                            else:
+                                if ind != last_symbol_ind + 1:
+                                    last_symbol_ind = ind
+                                    last_symbol_start_ind = ind - 1
+                            current_symbol = current_notes[ind]
+                            if current_symbol == rest_symbol:
+                                current_intervals[
+                                    last_symbol_start_ind] += current_intervals[
+                                        ind]
+                            elif current_symbol == continue_symbol:
+                                current_intervals[
+                                    last_symbol_start_ind] += current_intervals[
+                                        ind]
+                                current_durations[
+                                    last_symbol_start_ind] += current_durations[
+                                        ind]
                     current_length = len(current_notes)
                     current_notes = [
                         current_notes[j] for j in range(current_length)
