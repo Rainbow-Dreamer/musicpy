@@ -869,7 +869,7 @@ def write(current_chord,
         current_midi.save(name)
     else:
         current_io = BytesIO()
-        current_midi.save(current_io)
+        current_midi.save(file=current_io)
         return current_io
 
 
