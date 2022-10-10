@@ -35,8 +35,9 @@ class note:
         return f'{self.name}{self.num}'
 
     def __eq__(self, other):
-        return isinstance(
-            other, note) and self.name == other.name and self.num == other.num
+        return type(
+            other
+        ) is note and self.name == other.name and self.num == other.num
 
     def __matmul__(self, other):
         return self.name == other.name
@@ -234,9 +235,9 @@ class chord:
         return [i.name for i in self if isinstance(i, note)]
 
     def __eq__(self, other):
-        return isinstance(
-            other, chord
-        ) and self.notes == other.notes and self.interval == other.interval
+        return type(
+            other
+        ) is chord and self.notes == other.notes and self.interval == other.interval
 
     def split(self, return_type, get_time=False, sort=False):
         temp = copy(self)
@@ -666,6 +667,25 @@ class chord:
             temp.interval += obj.interval
             temp.other_messages += obj.other_messages
         return temp
+
+    def __radd__(self, obj):
+        if isinstance(obj, (rest, float)):
+            temp = copy(self)
+            temp.start_time += (obj
+                                if not isinstance(obj, rest) else obj.duration)
+            return temp
+        elif isinstance(obj, int):
+            return self + obj
+
+    def __ror__(self, obj):
+        if isinstance(obj, (int, float, rest)):
+            temp = copy(self)
+            temp.start_time += (obj
+                                if not isinstance(obj, rest) else obj.duration)
+            return temp
+
+    def __rfloordiv__(self, obj):
+        return obj | self
 
     def __pos__(self):
         return self.up()
@@ -2293,7 +2313,7 @@ class scale:
         return f'scale name: {self.start} {self.mode} scale\nscale intervals: {self.getInterval()}\nscale notes: {self.getScale().notes}'
 
     def __eq__(self, other):
-        return isinstance(other, scale) and self.notes == other.notes
+        return type(other) is scale and self.notes == other.notes
 
     def standard(self):
         if len(self) == 8:
@@ -2896,7 +2916,7 @@ class piece:
         ])
 
     def __eq__(self, other):
-        return isinstance(other, piece) and self.__dict__ == other.__dict__
+        return type(other) is piece and self.__dict__ == other.__dict__
 
     def __iter__(self):
         for i in self.tracks:
@@ -3754,16 +3774,29 @@ class piece:
             i for i in self.other_messages if i.type != 'program_change'
         ]
 
-    def clear_other_messages(self, types=None, apply_tracks=True):
-        if apply_tracks:
-            for each in self.tracks:
-                each.clear_other_messages(types)
-        if types is None:
-            self.other_messages.clear()
+    def clear_other_messages(self, types=None, apply_tracks=True, ind=None):
+        if ind is None:
+            if types is None:
+                self.other_messages.clear()
+            else:
+                self.other_messages = [
+                    i for i in self.other_messages if i.type != types
+                ]
+            if apply_tracks:
+                for each in self.tracks:
+                    each.clear_other_messages(types)
         else:
-            self.other_messages = [
-                i for i in self.other_messages if i.type != types
-            ]
+            if types is None:
+                self.other_messages = [
+                    i for i in self.other_messages if i.track != ind
+                ]
+            else:
+                self.other_messages = [
+                    i for i in self.other_messages
+                    if not (i.track == ind and i.type == types)
+                ]
+            if apply_tracks:
+                self.tracks[ind].clear_other_messages(types)
 
     def change_instruments(self, instruments, ind=None):
         if ind is None:
@@ -4866,6 +4899,9 @@ class event:
         self.track = track
         self.start_time = start_time
         self.__dict__.update(kwargs)
+
+    def __repr__(self):
+        return f'event({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
 
 
 class rest:

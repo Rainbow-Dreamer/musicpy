@@ -22,6 +22,22 @@ except pygame.error:
     has_audio_interface = False
 
 
+class MetaSpec_key_signature(mido.midifiles.meta.MetaSpec_key_signature):
+
+    def decode(self, message, data):
+        try:
+            super().decode(message, data)
+        except mido.midifiles.meta.KeySignatureError:
+            message.key = None
+
+    def check(self, name, value):
+        if value is not None:
+            super().check(name, value)
+
+
+mido.midifiles.meta.add_meta_spec(MetaSpec_key_signature)
+
+
 def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
         split_symbol = '(' if '(' in notename else (
@@ -506,7 +522,7 @@ def read(name,
             current_volume = [i for i in volume_list if i.track == k]
             result_piece.volume[k] = current_volume
         if not rename_track_names:
-            current_track_names = result_piece.get_msg(track_name)
+            current_track_names = result_piece.get_msg('track_name')
             for i in range(len(current_track_names)):
                 result_piece.tracks[i].other_messages.append(
                     current_track_names[i])
@@ -862,9 +878,14 @@ def write(current_chord,
                 write_type='piece' if not is_track_type else 'track',
                 ticks_per_beat=ticks_per_beat)
     for i, each in enumerate(current_midi.tracks):
-        each.sort(key=lambda s: s.time)
-        current_midi.tracks[i] = mido.MidiTrack(
-            mido.midifiles.tracks._to_reltime(each))
+        reset_control_change_list = [120, 121, 123]
+        each.sort(key=lambda s: (s.time, not (s.is_cc() and s.control in
+                                              reset_control_change_list)))
+        current_relative_time = [each[0].time] + [
+            each[j].time - each[j - 1].time for j in range(1, len(each))
+        ]
+        for k, each_msg in enumerate(each):
+            each_msg.time = current_relative_time[k]
     if save_as_file:
         current_midi.save(name)
     else:
@@ -1235,18 +1256,24 @@ def riff_to_midi(riff_name, name='temp.mid', output_file=False):
     if chunk_id == b'MThd':
         raise IOError(f"Already a Standard MIDI format file: {riff_name}")
     elif chunk_id != b'RIFF':
-        raise IOError(f"Not an RIFF file: {riff_name}")
+        chunk_size = root.getsize()
+        chunk_raw = root.read(chunk_size)
+        if b'MThd' in chunk_raw:
+            midi_raw = chunk_raw[chunk_raw.index(b'MThd'):]
+        else:
+            raise ValueError('Cannot find header')
+    else:
+        chunk_size = root.getsize()
+        chunk_raw = root.read(chunk_size)
+        (hdr_id, hdr_data, midi_size) = struct.unpack("<4s4sL",
+                                                      chunk_raw[0:12])
 
-    chunk_size = root.getsize()
-    chunk_raw = root.read(chunk_size)
-    (hdr_id, hdr_data, midi_size) = struct.unpack("<4s4sL", chunk_raw[0:12])
-
-    if hdr_id != b'RMID' or hdr_data != b'data':
-        raise IOError(f"Invalid or unsupported input file: {riff_name}")
-    try:
-        midi_raw = chunk_raw[12:12 + midi_size]
-    except IndexError:
-        raise IOError(f"Broken input file: {riff_name}")
+        if hdr_id != b'RMID' or hdr_data != b'data':
+            raise IOError(f"Invalid or unsupported input file: {riff_name}")
+        try:
+            midi_raw = chunk_raw[12:12 + midi_size]
+        except IndexError:
+            raise IOError(f"Broken input file: {riff_name}")
 
     root.close()
     if isinstance(riff_name, str):
@@ -1670,8 +1697,9 @@ for each in [
     each.reset = reset
     each.__hash__ = lambda self: hash(repr(self))
     each.copy = lambda self: copy(self)
-
-event.__repr__ = lambda self: f'{self.__class__.__name__}({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
+    if each.__eq__ == object.__eq__:
+        each.__eq__ = lambda self, other: type(other) is type(
+            self) and self.__dict__ == other.__dict__
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import algorithms as alg
