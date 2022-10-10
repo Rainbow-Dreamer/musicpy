@@ -527,9 +527,10 @@ def read(name,
                 result_piece.tracks[i].other_messages.append(
                     current_track_names[i])
     if current_type == 1 and changes:
-        result_piece.tracks[0].notes.extend(changes.notes)
-        result_piece.tracks[0].interval.extend(changes.interval)
-        result_piece.tracks[0].other_messages[0:0] = changes.other_messages
+        if result_piece.tracks:
+            result_piece.tracks[0].notes.extend(changes.notes)
+            result_piece.tracks[0].interval.extend(changes.interval)
+            result_piece.tracks[0].other_messages[0:0] = changes.other_messages
         result_piece.other_messages[0:0] = changes.other_messages
 
     if clear_other_channel_msg:
