@@ -4,7 +4,7 @@ setup(
     name='musicpy',
     packages=find_packages(),
     package_data={'musicpy': ['./*']},
-    version='5.52',
+    version='5.53',
     license='LGPLv2.1',
     description=
     'Musicpy is a music programming language in Python designed to write music in very handy syntax through music theory and algorithms.',
@@ -12,12 +12,13 @@ setup(
     author_email='1036889495@qq.com',
     url='https://github.com/Rainbow-Dreamer/musicpy.git',
     download_url=
-    'https://github.com/Rainbow-Dreamer/musicpy/archive/5.52.tar.gz',
+    'https://github.com/Rainbow-Dreamer/musicpy/archive/5.53.tar.gz',
     keywords=[
         'music language', 'use codes to write music', 'music language for AI'
     ],
     install_requires=[
-        'mido @ git+https://github.com/Rainbow-Dreamer/mido.git', 'pygame'
+        'mido @ https://github.com/Rainbow-Dreamer/mido/archive/refs/heads/main.zip',
+        'pygame'
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
