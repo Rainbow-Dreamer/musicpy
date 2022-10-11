@@ -3,7 +3,7 @@ import math
 import struct
 import chunk
 from io import BytesIO
-import mido
+import mido_fix as mido
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import database
