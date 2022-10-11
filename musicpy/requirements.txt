@@ -1,2 +1,2 @@
-git+https://github.com/Rainbow-Dreamer/mido.git
+mido-fix
 pygame
