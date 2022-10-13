@@ -2275,8 +2275,8 @@ class chord:
             if not (hasattr(i, 'channel') and i.channel == current_ind)
         ]
 
-    def to_piece(self, bpm=120, start_time=0):
-        return mp.chord_to_piece(self, bpm, start_time)
+    def to_piece(self, *args, **kwargs):
+        return mp.chord_to_piece(self, *args, **kwargs)
 
 
 class scale:
@@ -2313,7 +2313,7 @@ class scale:
         self.interval = interval
 
     def __repr__(self):
-        return f'scale name: {self.start} {self.mode} scale\nscale intervals: {self.getInterval()}\nscale notes: {self.getScale().notes}'
+        return f'[scale]\nscale name: {self.start} {self.mode} scale\nscale intervals: {self.getInterval()}\nscale notes: {self.getScale().notes}'
 
     def __eq__(self, other):
         return type(other) is scale and self.notes == other.notes
@@ -3388,7 +3388,8 @@ class piece:
     def merge(self,
               add_labels=True,
               add_pan_volume=False,
-              get_off_drums=False):
+              get_off_drums=False,
+              track_names_add_channel=False):
         temp = copy(self)
         if add_labels:
             temp.add_track_labels()
@@ -3396,8 +3397,20 @@ class piece:
             temp.get_off_drums()
         tempo_changes = temp.get_tempo_changes()
         temp.clear_tempo()
+        if track_names_add_channel and temp.channels:
+            for i, each in enumerate(temp.tracks):
+                for j in each.other_messages:
+                    if j.type == 'track_name':
+                        j.channel = temp.channels[i]
         all_tracks = temp.tracks
         length = len(all_tracks)
+        track_map_dict = {}
+        if temp.channels:
+            merge_channels = list(dict.fromkeys(temp.channels))
+            merge_length = len(merge_channels)
+            if merge_length < length:
+                for i in range(merge_length, length):
+                    track_map_dict[i] = temp.channels.index(temp.channels[i])
         start_time_ls = temp.start_times
         pitch_bends = mp.concat(
             [i.split(pitch_bend, get_time=True) for i in temp.tracks])
@@ -3434,6 +3447,21 @@ class piece:
             first_track.other_messages += pan_msg
             first_track.other_messages += volume_msg
         first_track_start_time += first_track.start_time
+        if track_map_dict:
+            for i in first_track.notes:
+                if isinstance(i, (tempo, pitch_bend)):
+                    if i.track in track_map_dict:
+                        current_track = track_map_dict[i.track]
+                        i.track = current_track
+                        if add_labels:
+                            i.track_num = current_track
+                else:
+                    if add_labels:
+                        if i.track_num in track_map_dict:
+                            i.track_num = track_map_dict[i.track_num]
+            for i in first_track.other_messages:
+                if i.track in track_map_dict:
+                    i.track = track_map_dict[i.track]
         return first_track, temp.bpm, first_track_start_time
 
     def add_track_labels(self):
@@ -3448,7 +3476,8 @@ class piece:
                     start_time=0,
                     offset=0,
                     correct=False,
-                    include_empty_track=False):
+                    include_empty_track=False,
+                    get_channels=True):
         no_notes = [i for i in track.notes if not isinstance(i, note)]
         track = track.only_notes()
         first_track, first_track_start_time = track, start_time
@@ -3543,6 +3572,16 @@ class piece:
             ]
         if self.channels:
             self.channels = [self.channels[k] for k in available_tracks_inds]
+        else:
+            if get_channels:
+                from collections import Counter
+                current_channels = [
+                    Counter([i.channel for i in each
+                             if i.channel is not None]).most_common(1)
+                    for each in self.tracks
+                ]
+                if all(i for i in current_channels):
+                    self.channels = [i[0][0] for i in current_channels]
         if self.pan:
             self.pan = [self.pan[k] for k in available_tracks_inds]
         if self.volume:

@@ -959,7 +959,7 @@ def get_ticks_per_beat(file, is_file=False):
     return current_midi.ticks_per_beat
 
 
-def chord_to_piece(current_chord, bpm=120, start_time=0):
+def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
     channels_numbers = [i.channel for i in current_chord] + [
         i.channel
         for i in current_chord.other_messages if hasattr(i, 'channel')
@@ -988,26 +988,40 @@ def chord_to_piece(current_chord, bpm=120, start_time=0):
     instruments = [
         each[0].program + 1 if each else 1 for each in current_instruments_list
     ]
-    tracks_names_list = [[
-        i.name for i in current_chord.other_messages
+    track_names_msg = [[
+        i for i in current_chord.other_messages
         if i.type == 'track_name' and i.track == j
     ] for j in range(len(channels_list))]
-    tracks_names_list = [i[0] for i in tracks_names_list if i]
+    track_names_msg = [i[0] for i in track_names_msg if i]
+    if not track_names_msg:
+        track_names_list = []
+    else:
+        if all(hasattr(i, 'channel') for i in track_names_msg):
+            track_names_channels = [i.channel for i in track_names_msg]
+            current_track_names = [
+                track_names_msg[track_names_channels.index(i)]
+                for i in channels_list
+            ]
+        else:
+            current_track_names = track_names_msg
+        track_names_list = [i.name for i in current_track_names]
     rename_track_names = False
-    if (not tracks_names_list) or (len(tracks_names_list) != channels_num):
-        tracks_names_list = [f'Channel {i+1}' for i in channels_list]
+    if (not track_names_list) or (len(track_names_list) != channels_num):
+        track_names_list = [f'Channel {i+1}' for i in channels_list]
         rename_track_names = True
-    for each in current_chord.notes:
-        each.track_num = channels_list.index(
-            each.channel) if each.channel is not None else 0
-        if isinstance(each, pitch_bend) and each.track != each.track_num:
-            each.track = each.track_num
+    if not has_track_num:
+        for each in current_chord.notes:
+            each.track_num = channels_list.index(
+                each.channel) if each.channel is not None else 0
+            if isinstance(each, pitch_bend) and each.track != each.track_num:
+                each.track = each.track_num
+        for each in current_chord.other_messages:
+            if hasattr(each, 'channel') and each.channel is not None:
+                each.track = channels_list.index(each.channel)
     result_piece = piece(
         tracks=[chord([]) for i in range(channels_num)],
         instruments=[database.reverse_instruments[i] for i in instruments],
         bpm=bpm,
-        track_names=tracks_names_list,
-        channels=channels_list,
         pan=[[] for i in range(channels_num)],
         volume=[[] for i in range(channels_num)])
     result_piece.reconstruct(current_chord,
@@ -1044,12 +1058,10 @@ def chord_to_piece(current_chord, bpm=120, start_time=0):
         result_piece.pan[k] = current_pan
         current_volume = [i for i in volume_list if i.track == k]
         result_piece.volume[k] = current_volume
+    result_piece.track_names = track_names_list
     if not rename_track_names:
-        current_track_names = concat(
-            [i.get_msg('track_name') for i in result_piece.tracks], start=[])
-        for i in range(len(current_track_names)):
-            result_piece.tracks[i].other_messages.append(
-                current_track_names[i])
+        for i, each in enumerate(current_track_names):
+            result_piece.tracks[i].other_messages.append(each)
     result_piece.other_messages = concat(
         [i.other_messages for i in result_piece.tracks], start=[])
     return result_piece
@@ -1797,6 +1809,14 @@ def adjust_to_scale(current_chord, current_scale):
         each.name = current_note.name
         each.num = current_note.num
     return temp
+
+
+def dataclass_repr(s, keywords=None):
+    if not keywords:
+        result = f"{type(s).__name__}({', '.join([f'{i}={j}' for i, j in vars(s).items()])})"
+    else:
+        result = f"{type(s).__name__}({', '.join([f'{i}={vars(s)[i]}' for i in keywords])})"
+    return result
 
 
 C = trans
