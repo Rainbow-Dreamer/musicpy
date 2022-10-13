@@ -416,6 +416,7 @@ def read(name,
         for each in channels_numbers:
             if each not in channels_list:
                 channels_list.append(each)
+        channels_list = [i for i in channels_list if i is not None]
         channels_num = len(channels_list)
         track_channels = channels_list
         all_tracks = [
@@ -471,20 +472,19 @@ def read(name,
             i.name for i in available_tracks if i.type == 'track_name'
         ]
         rename_track_names = False
-        if (not tracks_names_list) or (len(tracks_names_list) !=
-                                       len(channels_list)):
+        if (not tracks_names_list) or (len(tracks_names_list) != channels_num):
             tracks_names_list = [f'Channel {i+1}' for i in channels_list]
             rename_track_names = True
         result_merge_track = all_tracks[0]
         result_piece = piece(
-            tracks=[chord([]) for i in range(len(channels_list))],
+            tracks=[chord([]) for i in range(channels_num)],
             instruments=[database.reverse_instruments[i] for i in instruments],
             bpm=whole_bpm,
             track_names=tracks_names_list,
             channels=channels_list,
             name=os.path.splitext(os.path.basename(name))[0],
-            pan=[[] for i in range(len(channels_list))],
-            volume=[[] for i in range(len(channels_list))])
+            pan=[[] for i in range(channels_num)],
+            volume=[[] for i in range(channels_num)])
         result_piece.reconstruct(result_merge_track,
                                  all_tracks[2],
                                  include_empty_track=True)
@@ -959,8 +959,100 @@ def get_ticks_per_beat(file, is_file=False):
     return current_midi.ticks_per_beat
 
 
-def chord_to_piece(current_chord):
-    pass
+def chord_to_piece(current_chord, bpm=120, start_time=0):
+    channels_numbers = [i.channel for i in current_chord] + [
+        i.channel
+        for i in current_chord.other_messages if hasattr(i, 'channel')
+    ]
+    channels_list = []
+    for each in channels_numbers:
+        if each not in channels_list:
+            channels_list.append(each)
+    channels_list = [i for i in channels_list if i is not None]
+    if not channels_list:
+        channels_list = [0]
+    channels_num = len(channels_list)
+    current_start_time = start_time + current_chord.start_time
+    pan_list = [
+        i for i in current_chord.other_messages
+        if i.type == 'control_change' and i.control == 10
+    ]
+    volume_list = [
+        i for i in current_chord.other_messages
+        if i.type == 'control_change' and i.control == 7
+    ]
+    current_instruments_list = [[
+        i for i in current_chord.other_messages
+        if i.type == 'program_change' and i.channel == k
+    ] for k in channels_list]
+    instruments = [
+        each[0].program + 1 if each else 1 for each in current_instruments_list
+    ]
+    tracks_names_list = [[
+        i.name for i in current_chord.other_messages
+        if i.type == 'track_name' and i.track == j
+    ] for j in range(len(channels_list))]
+    tracks_names_list = [i[0] for i in tracks_names_list if i]
+    rename_track_names = False
+    if (not tracks_names_list) or (len(tracks_names_list) != channels_num):
+        tracks_names_list = [f'Channel {i+1}' for i in channels_list]
+        rename_track_names = True
+    for each in current_chord.notes:
+        each.track_num = channels_list.index(
+            each.channel) if each.channel is not None else 0
+        if isinstance(each, pitch_bend) and each.track != each.track_num:
+            each.track = each.track_num
+    result_piece = piece(
+        tracks=[chord([]) for i in range(channels_num)],
+        instruments=[database.reverse_instruments[i] for i in instruments],
+        bpm=bpm,
+        track_names=tracks_names_list,
+        channels=channels_list,
+        pan=[[] for i in range(channels_num)],
+        volume=[[] for i in range(channels_num)])
+    result_piece.reconstruct(current_chord,
+                             current_start_time,
+                             include_empty_track=True)
+    if len(result_piece.channels) != channels_num:
+        pan_list = [i for i in pan_list if i.channel in result_piece.channels]
+        volume_list = [
+            i for i in volume_list if i.channel in result_piece.channels
+        ]
+        for each in pan_list:
+            each.track = result_piece.channels.index(each.channel)
+        for each in volume_list:
+            each.track = result_piece.channels.index(each.channel)
+        for k in range(len(result_piece.tracks)):
+            for each in result_piece.tracks[k].notes:
+                if isinstance(each, pitch_bend):
+                    each.track = k
+        current_chord.other_messages = [
+            i for i in current_chord.other_messages
+            if not (hasattr(i, 'channel')
+                    and i.channel not in result_piece.channels)
+        ]
+        for each in current_chord.other_messages:
+            if hasattr(each, 'channel'):
+                each.track = result_piece.channels.index(each.channel)
+    result_piece.other_messages = current_chord.other_messages
+    for k in range(len(result_piece)):
+        current_other_messages = [
+            i for i in result_piece.other_messages if i.track == k
+        ]
+        result_piece.tracks[k].other_messages = current_other_messages
+        current_pan = [i for i in pan_list if i.track == k]
+        result_piece.pan[k] = current_pan
+        current_volume = [i for i in volume_list if i.track == k]
+        result_piece.volume[k] = current_volume
+    if not rename_track_names:
+        current_track_names = concat(
+            [i.get_msg('track_name') for i in result_piece.tracks], start=[])
+        for i in range(len(current_track_names)):
+            result_piece.tracks[i].other_messages.append(
+                current_track_names[i])
+    result_piece.other_messages = concat(
+        [i.other_messages for i in result_piece.tracks], start=[])
+    return result_piece
 
 
 def modulation(current_chord, old_scale, new_scale, **args):

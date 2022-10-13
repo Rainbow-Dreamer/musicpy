@@ -2275,8 +2275,8 @@ class chord:
             if not (hasattr(i, 'channel') and i.channel == current_ind)
         ]
 
-    def to_piece(self):
-        return mp.chord_to_piece(self)
+    def to_piece(self, bpm=120, start_time=0):
+        return mp.chord_to_piece(self, bpm, start_time)
 
 
 class scale:
@@ -3548,8 +3548,7 @@ class piece:
         if self.volume:
             self.volume = [self.volume[k] for k in available_tracks_inds]
         self.track_number = len(self.tracks)
-        if len(available_tracks_inds) != length:
-            self.reset_track(list(range(self.track_number)))
+        self.reset_track(list(range(self.track_number)))
 
     def eval_time(self,
                   bpm=None,
