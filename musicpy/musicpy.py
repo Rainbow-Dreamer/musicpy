@@ -974,29 +974,31 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
     channels_num = len(channels_list)
     current_start_time = start_time + current_chord.start_time
     pan_list = [
-        i for i in current_chord.other_messages
+        pan(i.value,
+            mode='value',
+            start_time=i.start_time,
+            channel=i.channel,
+            track=i.track) for i in current_chord.other_messages
         if i.type == 'control_change' and i.control == 10
     ]
     volume_list = [
-        i for i in current_chord.other_messages
+        volume(i.value,
+               mode='value',
+               start_time=i.start_time,
+               channel=i.channel,
+               track=i.track) for i in current_chord.other_messages
         if i.type == 'control_change' and i.control == 7
-    ]
-    current_instruments_list = [[
-        i for i in current_chord.other_messages
-        if i.type == 'program_change' and i.channel == k
-    ] for k in channels_list]
-    instruments = [
-        each[0].program + 1 if each else 1 for each in current_instruments_list
     ]
     track_names_msg = [[
         i for i in current_chord.other_messages
         if i.type == 'track_name' and i.track == j
-    ] for j in range(len(channels_list))]
+    ] for j in range(channels_num)]
     track_names_msg = [i[0] for i in track_names_msg if i]
     if not track_names_msg:
         track_names_list = []
     else:
-        if all(hasattr(i, 'channel') for i in track_names_msg):
+        if not has_track_num and all(
+                hasattr(i, 'channel') for i in track_names_msg):
             track_names_channels = [i.channel for i in track_names_msg]
             current_track_names = [
                 track_names_msg[track_names_channels.index(i)]
@@ -1007,7 +1009,7 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
         track_names_list = [i.name for i in current_track_names]
     rename_track_names = False
     if (not track_names_list) or (len(track_names_list) != channels_num):
-        track_names_list = [f'Channel {i+1}' for i in channels_list]
+        track_names_list = [f'Channel {i+1}' for i in range(channels_num)]
         rename_track_names = True
     if not has_track_num:
         for each in current_chord.notes:
@@ -1018,36 +1020,43 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
         for each in current_chord.other_messages:
             if hasattr(each, 'channel') and each.channel is not None:
                 each.track = channels_list.index(each.channel)
-    result_piece = piece(
-        tracks=[chord([]) for i in range(channels_num)],
-        instruments=[database.reverse_instruments[i] for i in instruments],
-        bpm=bpm,
-        pan=[[] for i in range(channels_num)],
-        volume=[[] for i in range(channels_num)])
+        for each in pan_list:
+            if each.channel is not None:
+                each.track = channels_list.index(each.channel)
+        for each in volume_list:
+            if each.channel is not None:
+                each.track = channels_list.index(each.channel)
+    result_piece = piece(tracks=[chord([]) for i in range(channels_num)],
+                         bpm=bpm,
+                         pan=[[] for i in range(channels_num)],
+                         volume=[[] for i in range(channels_num)])
     result_piece.reconstruct(current_chord,
                              current_start_time,
                              include_empty_track=True)
-    if len(result_piece.channels) != channels_num:
-        pan_list = [i for i in pan_list if i.channel in result_piece.channels]
-        volume_list = [
-            i for i in volume_list if i.channel in result_piece.channels
-        ]
-        for each in pan_list:
-            each.track = result_piece.channels.index(each.channel)
-        for each in volume_list:
-            each.track = result_piece.channels.index(each.channel)
-        for k in range(len(result_piece.tracks)):
-            for each in result_piece.tracks[k].notes:
-                if isinstance(each, pitch_bend):
-                    each.track = k
-        current_chord.other_messages = [
-            i for i in current_chord.other_messages
-            if not (hasattr(i, 'channel')
-                    and i.channel not in result_piece.channels)
-        ]
-        for each in current_chord.other_messages:
-            if hasattr(each, 'channel'):
+    if result_piece.channels:
+        if len(result_piece.channels) != channels_num:
+            pan_list = [
+                i for i in pan_list if i.channel in result_piece.channels
+            ]
+            volume_list = [
+                i for i in volume_list if i.channel in result_piece.channels
+            ]
+            for each in pan_list:
                 each.track = result_piece.channels.index(each.channel)
+            for each in volume_list:
+                each.track = result_piece.channels.index(each.channel)
+            for k in range(len(result_piece.tracks)):
+                for each in result_piece.tracks[k].notes:
+                    if isinstance(each, pitch_bend):
+                        each.track = k
+            current_chord.other_messages = [
+                i for i in current_chord.other_messages
+                if not (hasattr(i, 'channel')
+                        and i.channel not in result_piece.channels)
+            ]
+            for each in current_chord.other_messages:
+                if hasattr(each, 'channel'):
+                    each.track = result_piece.channels.index(each.channel)
     result_piece.other_messages = current_chord.other_messages
     for k in range(len(result_piece)):
         current_other_messages = [
@@ -1059,11 +1068,16 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
         current_volume = [i for i in volume_list if i.track == k]
         result_piece.volume[k] = current_volume
     result_piece.track_names = track_names_list
-    if not rename_track_names:
-        for i, each in enumerate(current_track_names):
-            result_piece.tracks[i].other_messages.append(each)
     result_piece.other_messages = concat(
         [i.other_messages for i in result_piece.tracks], start=[])
+    current_instruments_list = [[
+        i for i in result_piece.other_messages
+        if i.type == 'program_change' and i.track == k
+    ] for k in range(len(result_piece))]
+    instruments = [
+        each[0].program + 1 if each else 1 for each in current_instruments_list
+    ]
+    result_piece.change_instruments(instruments)
     return result_piece
 
 
