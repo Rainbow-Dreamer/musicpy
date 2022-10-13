@@ -941,6 +941,28 @@ def find_first_tempo(file, is_file=False):
     return 120
 
 
+def get_ticks_per_beat(file, is_file=False):
+    if is_file:
+        file.seek(0)
+        try:
+            current_midi = mido.MidiFile(file=file, clip=True)
+            file.close()
+        except Exception as OSError:
+            file.seek(0)
+            current_midi = mido.MidiFile(file=riff_to_midi(file), clip=True)
+            file.close()
+    else:
+        try:
+            current_midi = mido.MidiFile(file, clip=True)
+        except Exception as OSError:
+            current_midi = mido.MidiFile(file=riff_to_midi(file), clip=True)
+    return current_midi.ticks_per_beat
+
+
+def chord_to_piece(current_chord):
+    pass
+
+
 def modulation(current_chord, old_scale, new_scale, **args):
     '''
     change notes (including both of melody and chords) in the given piece

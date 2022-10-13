@@ -2275,6 +2275,9 @@ class chord:
             if not (hasattr(i, 'channel') and i.channel == current_ind)
         ]
 
+    def to_piece(self):
+        return mp.chord_to_piece(self)
+
 
 class scale:
 
@@ -2837,7 +2840,7 @@ class circle_of_fifths:
             note(self[ind, ][:-1], pitch), 'minor')
 
     def __repr__(self):
-        return f'circle of fifths\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
+        return f'[circle of fifths]\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
 
 
 class circle_of_fourths(circle_of_fifths):
@@ -2850,7 +2853,7 @@ class circle_of_fourths(circle_of_fifths):
         pass
 
     def __repr__(self):
-        return f'circle of fourths\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
+        return f'[circle of fourths]\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
 
 
 class piece:
@@ -3331,8 +3334,9 @@ class piece:
         new_channels_numbers = [start + i for i in range(len(self.tracks))]
         self.channels = new_channels_numbers
 
-    def delete_track(self, current_ind):
-        del self[current_ind]
+    def delete_track(self, current_ind, only_clear_msg=False):
+        if not only_clear_msg:
+            del self[current_ind]
         self.other_messages = [
             i for i in self.other_messages if i.track != current_ind
         ]
@@ -3386,10 +3390,10 @@ class piece:
               add_pan_volume=False,
               get_off_drums=False):
         temp = copy(self)
-        if get_off_drums:
-            temp.get_off_drums()
         if add_labels:
             temp.add_track_labels()
+        if get_off_drums:
+            temp.get_off_drums()
         tempo_changes = temp.get_tempo_changes()
         temp.clear_tempo()
         all_tracks = temp.tracks
@@ -3544,6 +3548,8 @@ class piece:
         if self.volume:
             self.volume = [self.volume[k] for k in available_tracks_inds]
         self.track_number = len(self.tracks)
+        if len(available_tracks_inds) != length:
+            self.reset_track(list(range(self.track_number)))
 
     def eval_time(self,
                   bpm=None,
@@ -3961,9 +3967,8 @@ class tempo:
         self.track = track
 
     def __repr__(self):
-        result = f'tempo change to {self.bpm}'
-        if self.start_time is not None:
-            result += f' starts at {self.start_time}'
+        attributes = ['bpm', 'start_time', 'channel', 'track']
+        result = f'tempo({", ".join([f"{i}={j}" for i, j in self.__dict__.items() if i in attributes])})'
         return result
 
     def setvolume(self, vol):
@@ -4013,9 +4018,16 @@ class pitch_bend:
         self.volume = 100
 
     def __repr__(self):
-        result = f'pitch bend {"up" if self.value >= 0 else "down"} by {abs(self.value/40.96)} cents'
-        if self.start_time is not None:
-            result += f' starts at {self.start_time}'
+        attributes = ['value', 'start_time', 'channel', 'track']
+        current_cents = self.value / 40.96
+        if isinstance(current_cents, float) and current_cents.is_integer():
+            current_cents = int(current_cents)
+        current_dict = {
+            i: j
+            for i, j in self.__dict__.items() if i in attributes
+        }
+        current_dict['cents'] = current_cents
+        result = f'pitch_bend({", ".join([f"{i}={j}" for i, j in current_dict.items()])})'
         return result
 
     def setvolume(self, vol):
@@ -4266,9 +4278,15 @@ class pan:
         self.track = track
 
     def __repr__(self):
-        result = f'pan to {round(self.value_percentage, 3)}%'
-        if self.start_time is not None:
-            result += f' starts at {self.start_time}'
+        current_dict = {
+            i: j
+            for i, j in self.__dict__.items()
+            if i in ['value_percentage', 'start_time', 'channel', 'track']
+        }
+        current_dict['percentage'] = round(
+            current_dict.pop('value_percentage'), 3)
+        attributes = ['percentage', 'start_time', 'channel', 'track']
+        result = f'pan({", ".join([f"{i}={current_dict[i]}" for i in attributes])})'
         return result
 
     def get_pan_value(self):
@@ -4305,9 +4323,15 @@ class volume:
         self.track = track
 
     def __repr__(self):
-        result = f'volume set to {round(self.value_percentage, 3)}%'
-        if self.start_time is not None:
-            result += f' starts at {self.start_time}'
+        current_dict = {
+            i: j
+            for i, j in self.__dict__.items()
+            if i in ['value_percentage', 'start_time', 'channel', 'track']
+        }
+        current_dict['percentage'] = round(
+            current_dict.pop('value_percentage'), 3)
+        attributes = ['percentage', 'start_time', 'channel', 'track']
+        result = f'volume({", ".join([f"{i}={current_dict[i]}" for i in attributes])})'
         return result
 
 
@@ -4901,7 +4925,7 @@ class event:
         self.__dict__.update(kwargs)
 
     def __repr__(self):
-        return f'event({", ".join(["=".join([i, str(j)]) for i, j in self.__dict__.items()])})'
+        return f'event({", ".join([f"{i}={j}" for i, j in self.__dict__.items()])})'
 
 
 class rest:
@@ -4913,7 +4937,7 @@ class rest:
                                                  for i in range(dotted)])
 
     def __repr__(self):
-        return f'rest {self.duration}'
+        return f'rest(duration={self.duration})'
 
 
 import musicpy as mp

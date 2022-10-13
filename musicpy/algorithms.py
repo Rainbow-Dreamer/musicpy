@@ -2250,8 +2250,6 @@ def get_melody_shape(current_chord,
                                   duration=current_chord.get_duration(),
                                   interval=current_chord.interval,
                                   cummulative=False)
-    if filter_notes:
-        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
     if octave_range:
         octave1, octave2 = octave_range
         for each in result:
@@ -2259,6 +2257,8 @@ def get_melody_shape(current_chord,
                 each.num = octave1
             elif each.num > octave2:
                 each.num = octave2
+    if filter_notes:
+        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
     return result
 
 
@@ -2349,8 +2349,6 @@ def generate_melody_from_notes(current_chord,
                                   cummulative=False,
                                   duration=durations,
                                   interval=intervals)
-    if filter_notes:
-        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
     if octave_range:
         octave1, octave2 = octave_range
         for each in result:
@@ -2358,6 +2356,8 @@ def generate_melody_from_notes(current_chord,
                 each.num = octave1
             elif each.num > octave2:
                 each.num = octave2
+    if filter_notes:
+        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
     if fix_scale:
         result = adjust_to_scale(result, fix_scale)
     return result
