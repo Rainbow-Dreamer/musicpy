@@ -416,7 +416,6 @@ def read(name,
         for each in channels_numbers:
             if each not in channels_list:
                 channels_list.append(each)
-        channels_list = [i for i in channels_list if i is not None]
         channels_num = len(channels_list)
         track_channels = channels_list
         all_tracks = [
