@@ -4654,15 +4654,19 @@ class drum:
             new_current_append_notes = []
             for each_note in current_append_notes:
                 if ':' not in each_note:
-                    current_each_note = mp.N(each_note)
-                    new_current_append_notes.append(current_each_note)
+                    if each_note not in [rest_symbol, continue_symbol]:
+                        current_each_note = mp.N(each_note)
+                        new_current_append_notes.append(current_each_note)
+                    else:
+                        new_current_append_notes.append(each_note)
                 else:
                     current_note, current_chord_type = each_note.split(":")
-                    current_note = mp.N(current_note)
-                    current_each_note = mp.C(
-                        f'{current_note.name}{current_chord_type}',
-                        current_note.num)
-                    new_current_append_notes.append(current_each_note)
+                    if current_note not in [rest_symbol, continue_symbol]:
+                        current_note = mp.N(current_note)
+                        current_each_note = mp.C(
+                            f'{current_note.name}{current_chord_type}',
+                            current_note.num)
+                        new_current_append_notes.append(current_each_note)
             current_append_notes = new_current_append_notes
         custom_durations = False
         for j in current_brackets:
@@ -4808,15 +4812,20 @@ class drum:
             new_current_append_notes = []
             for each_note in current_append_notes:
                 if ':' not in each_note:
-                    current_each_note = mp.N(each_note)
-                    new_current_append_notes.append(current_each_note)
+                    if each_note not in [rest_symbol, continue_symbol]:
+                        current_each_note = mp.N(each_note)
+                        new_current_append_notes.append(current_each_note)
+                    else:
+                        new_current_append_notes.append(each_note)
                 else:
                     current_note, current_chord_type = each_note.split(":")
-                    current_note = mp.N(current_note)
-                    current_each_note = mp.C(
-                        f'{current_note.name}{current_chord_type}',
-                        current_note.num)
-                    new_current_append_notes.extend(current_each_note.notes)
+                    if current_note not in [rest_symbol, continue_symbol]:
+                        current_note = mp.N(current_note)
+                        current_each_note = mp.C(
+                            f'{current_note.name}{current_chord_type}',
+                            current_note.num)
+                        new_current_append_notes.extend(
+                            current_each_note.notes)
             current_append_notes = new_current_append_notes
 
         current_append_durations = [
