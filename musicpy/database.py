@@ -778,5 +778,6 @@ drum_set_dict = {
 drum_set_dict_reverse = {j: i for i, j in drum_set_dict.items()}
 
 drum_keywords = [
-    'r', 'd', 'a', 't', 'l', 'n', 's', 'v', 'dl', 'di', 'dv', 'al', 'ai', 'av'
+    'r', 'd', 'a', 't', 'l', 'n', 's', 'v', 'dl', 'di', 'dv', 'al', 'ai', 'av',
+    'b'
 ]

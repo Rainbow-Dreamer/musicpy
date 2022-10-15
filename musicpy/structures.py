@@ -4439,7 +4439,7 @@ class drum:
         volumes = []
         name_dict = {}
 
-        global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length = self._translate_global_keyword_parser(
+        global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length, global_fix_beats = self._translate_global_keyword_parser(
             global_keywords)
 
         for i in range(len(whole_parts)):
@@ -4452,7 +4452,7 @@ class drum:
             current_custom_durations = []
             current_same_times = []
             if current_part:
-                current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name = self._translate_keyword_parser(
+                current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name, current_part_fix_beats = self._translate_keyword_parser(
                     current_keyword,
                     default_duration if global_default_duration is None else
                     global_default_duration,
@@ -4460,11 +4460,15 @@ class drum:
                     global_default_interval, default_volume if
                     global_default_volume is None else global_default_volume,
                     global_all_same_duration, global_all_same_interval,
-                    global_all_same_volume, global_fix_length)
+                    global_all_same_volume, global_fix_length,
+                    global_fix_beats)
                 current_part_fix_length_unit = None
                 if current_part_fix_length is not None:
-                    current_part_fix_length_unit = current_part_fix_length / len(
-                        current_part)
+                    if current_part_fix_beats is not None:
+                        current_part_fix_length_unit = current_part_fix_length / current_part_fix_beats
+                    else:
+                        current_part_fix_length_unit = current_part_fix_length / len(
+                            current_part)
                 for each in current_part:
                     if each.startswith('i:'):
                         current_extra_interval = _process_note(each[2:])
@@ -4612,6 +4616,7 @@ class drum:
         current_chord_same_time = False
         current_repeat_times = 1
         current_fix_length = None
+        current_fix_beats = None
         current_append_durations = [
             default_duration for i in current_append_notes
         ]
@@ -4666,6 +4671,8 @@ class drum:
                     current_repeat_times = int(current_content)
                 elif current_setting_keyword == 't':
                     current_fix_length = _process_note(current_content)
+                elif current_setting_keyword == 'b':
+                    current_fix_beats = int(current_content)
                 elif current_setting_keyword == 'i':
                     if current_content == '.':
                         current_append_intervals = _process_note(
@@ -4695,17 +4702,23 @@ class drum:
                         ]
         current_fix_length_unit = None
         if current_fix_length is not None:
-            if current_same_time:
-                current_fix_length_unit = current_fix_length / current_repeat_times
+            if current_fix_beats is not None:
+                current_fix_length_unit = current_fix_length / current_fix_beats
             else:
-                current_fix_length_unit = current_fix_length / (
-                    len(current_append_notes) * current_repeat_times)
+                if current_same_time:
+                    current_fix_length_unit = current_fix_length / current_repeat_times
+                else:
+                    current_fix_length_unit = current_fix_length / (
+                        len(current_append_notes) * current_repeat_times)
         elif current_part_fix_length_unit is not None:
-            if current_same_time:
-                current_fix_length_unit = current_part_fix_length_unit / current_repeat_times
+            if current_fix_beats is not None:
+                current_fix_length_unit = current_part_fix_length_unit / current_fix_beats
             else:
-                current_fix_length_unit = current_part_fix_length_unit / (
-                    len(current_append_notes) * current_repeat_times)
+                if current_same_time:
+                    current_fix_length_unit = current_part_fix_length_unit / current_repeat_times
+                else:
+                    current_fix_length_unit = current_part_fix_length_unit / (
+                        len(current_append_notes) * current_repeat_times)
         if current_same_time:
             current_append_intervals = [
                 0 for k in range(len(current_append_notes) - 1)
@@ -4826,7 +4839,8 @@ class drum:
                                   default_interval, default_volume,
                                   default_all_same_duration,
                                   default_all_same_interval,
-                                  default_all_same_volume, default_fix_length):
+                                  default_all_same_volume, default_fix_length,
+                                  default_fix_beats):
         current_part_default_duration = default_duration
         current_part_default_interval = default_interval
         current_part_default_volume = default_volume
@@ -4835,11 +4849,14 @@ class drum:
         current_part_all_same_interval = default_all_same_interval
         current_part_all_same_volume = default_all_same_volume
         current_part_fix_length = default_fix_length
+        current_part_fix_beats = default_fix_beats
         current_part_name = None
         for each in current_keyword:
             keyword, content = each.split(':')
             if keyword == 't':
                 current_part_fix_length = _process_note(content)
+            elif keyword == 'b':
+                current_part_fix_beats = int(content)
             elif keyword == 'r':
                 current_part_repeat_times = int(content)
             elif keyword == 'n':
@@ -4862,7 +4879,7 @@ class drum:
                 current_part_all_same_interval = _process_note(content)
             elif keyword == 'al':
                 current_part_all_same_volume = _process_note(content, mode=2)
-        return current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name
+        return current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name, current_part_fix_beats
 
     def _translate_global_keyword_parser(self, global_keywords):
         global_default_duration = None
@@ -4873,10 +4890,13 @@ class drum:
         global_all_same_interval = None
         global_all_same_volume = None
         global_fix_length = None
+        global_fix_beats = None
         for each in global_keywords:
             keyword, content = each[1:].split(':')
             if keyword == 't':
                 global_fix_length = _process_note(content)
+            elif keyword == 'b':
+                global_fix_beats = int(content)
             elif keyword == 'r':
                 global_repeat_times = int(content)
             elif keyword == 'd':
@@ -4897,7 +4917,7 @@ class drum:
                 global_all_same_interval = _process_note(content)
             elif keyword == 'al':
                 global_all_same_volume = _process_note(content, mode=2)
-        return global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length
+        return global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length, global_fix_beats
 
     def __mul__(self, n):
         temp = copy(self)
