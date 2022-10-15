@@ -4,6 +4,7 @@ import struct
 import chunk
 from io import BytesIO
 import mido_fix as mido
+import functools
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import database
@@ -38,7 +39,27 @@ class MetaSpec_key_signature(mido.midifiles.meta.MetaSpec_key_signature):
 mido.midifiles.meta.add_meta_spec(MetaSpec_key_signature)
 
 
-def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
+def method_wrapper(cls):
+
+    def method_decorator(func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+            return result
+
+        if not isinstance(cls, list):
+            types = [cls]
+        else:
+            types = cls
+        for each in types:
+            setattr(each, func.__name__, wrapper)
+        return func
+
+    return method_decorator
+
+
+def to_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
         split_symbol = '(' if '(' in notename else (
             '[' if '[' in notename else '{')
@@ -52,7 +73,7 @@ def toNote(notename, duration=0.25, volume=100, pitch=4, channel=None):
             duration = 1 / eval(duration[1:])
         else:
             duration = eval(duration)
-        return toNote(notename, duration, volume)
+        return to_note(notename, duration, volume)
     else:
         num_text = ''.join([x for x in notename if x.isdigit()])
         if not num_text.isdigit():
@@ -75,7 +96,7 @@ def degrees_to_chord(ls, *args, **kwargs):
 
 def note_to_degree(obj):
     if not isinstance(obj, note):
-        obj = toNote(obj)
+        obj = to_note(obj)
     return database.standard[obj.name] + 12 * (obj.num + 1)
 
 
@@ -89,7 +110,7 @@ def trans_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
     return note(name, num, duration, volume, channel)
 
 
-def totuple(obj):
+def to_tuple(obj):
     if isinstance(obj, str):
         return (obj, )
     try:
@@ -100,7 +121,7 @@ def totuple(obj):
 
 def get_freq(y, standard=440):
     if isinstance(y, str):
-        y = toNote(y)
+        y = to_note(y)
     semitones = y.degree - 69
     return standard * 2**(semitones / 12)
 
@@ -116,14 +137,14 @@ def freq_to_note(freq, to_str=False, standard=440):
 
 def secondary_dom(root, mode='major'):
     if isinstance(root, str):
-        root = toNote(root)
+        root = to_note(root)
     newscale = scale(root, mode)
     return newscale.dom_chord()
 
 
 def secondary_dom7(root, mode='major'):
     if isinstance(root, str):
-        root = toNote(root)
+        root = to_note(root)
     newscale = scale(root, mode)
     return newscale.dom7_chord()
 
@@ -136,7 +157,7 @@ def getchord_by_interval(start,
                          start_time=0):
 
     if isinstance(start, str):
-        start = toNote(start)
+        start = to_note(start)
     result = [start]
     if cummulative:
         # in this case all the notes has distance only with the start note
@@ -168,7 +189,7 @@ def getchord(start,
              ind=0,
              start_time=0):
     if not isinstance(start, note):
-        start = toNote(start, pitch=pitch)
+        start = to_note(start, pitch=pitch)
     if interval is not None:
         return getchord_by_interval(start,
                                     interval,
@@ -239,6 +260,7 @@ def multi_voice(*current_chord, method=chord, start_times=None):
     return result
 
 
+@method_wrapper([note, chord, piece, track, drum])
 def play(current_chord,
          bpm=120,
          channel=0,
@@ -327,10 +349,10 @@ def read(name,
         changes_track = [whole_tracks[i] for i in changes_track_ind]
         if changes_track:
             changes = [
-                midi_to_chord(each,
-                              interval_unit,
-                              add_track_num=split_channels,
-                              clear_empty_notes=clear_empty_notes)[0]
+                _midi_to_chord(each,
+                               interval_unit,
+                               add_track_num=split_channels,
+                               clear_empty_notes=clear_empty_notes)[0]
                 for each in changes_track
             ]
             changes = concat(changes)
@@ -339,12 +361,12 @@ def read(name,
             if i not in changes_track_ind
         ]
         all_tracks = [
-            midi_to_chord(available_tracks[j],
-                          interval_unit,
-                          whole_bpm,
-                          add_track_num=split_channels,
-                          clear_empty_notes=clear_empty_notes,
-                          track_ind=j) for j in range(len(available_tracks))
+            _midi_to_chord(available_tracks[j],
+                           interval_unit,
+                           whole_bpm,
+                           add_track_num=split_channels,
+                           clear_empty_notes=clear_empty_notes,
+                           track_ind=j) for j in range(len(available_tracks))
         ]
         start_times_list = [j[2] for j in all_tracks]
         if available_tracks:
@@ -419,13 +441,13 @@ def read(name,
         channels_num = len(channels_list)
         track_channels = channels_list
         all_tracks = [
-            midi_to_chord(each,
-                          interval_unit,
-                          whole_bpm,
-                          add_track_num=split_channels,
-                          clear_empty_notes=clear_empty_notes,
-                          track_ind=j,
-                          track_channels=track_channels)
+            _midi_to_chord(each,
+                           interval_unit,
+                           whole_bpm,
+                           add_track_num=split_channels,
+                           clear_empty_notes=clear_empty_notes,
+                           track_ind=j,
+                           track_channels=track_channels)
             for j, each in enumerate(available_tracks)
         ]
         if len(available_tracks) > 1:
@@ -543,13 +565,13 @@ def read(name,
     return result_piece
 
 
-def midi_to_chord(current_track,
-                  interval_unit,
-                  bpm=None,
-                  add_track_num=False,
-                  clear_empty_notes=False,
-                  track_ind=0,
-                  track_channels=None):
+def _midi_to_chord(current_track,
+                   interval_unit,
+                   bpm=None,
+                   add_track_num=False,
+                   clear_empty_notes=False,
+                   track_ind=0,
+                   track_channels=None):
     intervals = []
     notelist = []
     notes_len = len(current_track)
@@ -662,18 +684,18 @@ def midi_to_chord(current_track,
                                             track=current_track_ind)
                 volume_list.append(current_volume_msg)
             else:
-                read_other_messages(current_msg, other_messages,
-                                    current_time / interval_unit,
-                                    current_track_ind)
+                _read_other_messages(current_msg, other_messages,
+                                     current_time / interval_unit,
+                                     current_track_ind)
         else:
             if track_channels and hasattr(current_msg, 'channel'):
                 current_msg_channel = current_msg.channel
                 current_track_ind = track_channels.index(current_msg_channel)
             else:
                 current_track_ind = track_ind
-            read_other_messages(current_msg, other_messages,
-                                current_time / interval_unit,
-                                current_track_ind)
+            _read_other_messages(current_msg, other_messages,
+                                 current_time / interval_unit,
+                                 current_track_ind)
     result = chord(notelist, interval=intervals)
     if clear_empty_notes:
         result.interval = [
@@ -694,7 +716,7 @@ def midi_to_chord(current_track,
         return [result, start_time]
 
 
-def read_other_messages(message, other_messages, time, track_ind):
+def _read_other_messages(message, other_messages, time, track_ind):
     if message.type not in ['note_on', 'note_off']:
         current_attributes = {
             i: j
@@ -866,13 +888,13 @@ def write(current_chord,
 
     if not nomsg:
         if current_chord.other_messages:
-            add_other_messages(
+            _add_other_messages(
                 current_midi=current_midi,
                 other_messages=current_chord.other_messages,
                 write_type='piece' if not is_track_type else 'track',
                 ticks_per_beat=ticks_per_beat)
         elif msg:
-            add_other_messages(
+            _add_other_messages(
                 current_midi=current_midi,
                 other_messages=msg,
                 write_type='piece' if not is_track_type else 'track',
@@ -894,10 +916,10 @@ def write(current_chord,
         return current_io
 
 
-def add_other_messages(current_midi,
-                       other_messages,
-                       write_type='piece',
-                       ticks_per_beat=960):
+def _add_other_messages(current_midi,
+                        other_messages,
+                        write_type='piece',
+                        ticks_per_beat=960):
     for each in other_messages:
         try:
             current_time = int(each.start_time * ticks_per_beat * 4)
@@ -1093,7 +1115,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
     obj = obj.replace(' ', '')
     if ':' in obj:
         current = obj.split(':')
-        current[0] = toNote(current[0])
+        current[0] = to_note(current[0])
         return trans(f'{current[0].name}{current[1]}', current[0].num,
                      duration, interval)
     if obj.count('/') > 1:
@@ -1179,7 +1201,7 @@ def trans(obj, pitch=4, duration=0.25, interval=None):
         'not a valid chord representation or chord types not in database')
 
 
-def toScale(obj, pitch=None):
+def to_scale(obj, pitch=None):
     tonic, scale_name = obj.strip(' ').split(' ', 1)
     tonic = N(tonic)
     if pitch is not None:
@@ -1517,264 +1539,9 @@ def reset(self, **kwargs):
     return temp
 
 
-def read_notes(note_ls, rootpitch=4):
-    intervals = []
-    notes_result = []
-    start_time = 0
-    for each in note_ls:
-        if each == '':
-            continue
-        if isinstance(each, note):
-            notes_result.append(each)
-        elif isinstance(each, (tempo, pitch_bend)):
-            notes_result.append(each)
-        elif isinstance(each, rest):
-            if not notes_result:
-                start_time += each.duration
-            elif intervals:
-                intervals[-1] += each.duration
-        elif isinstance(each, str):
-            if each.startswith('tempo'):
-                current = [eval(k) for k in each.split(';')[1:]]
-                current_tempo = tempo(*current)
-                notes_result.append(current_tempo)
-                intervals.append(0)
-            elif each.startswith('pitch'):
-                current = each.split(';')[1:]
-                length = len(current)
-                if length > 2:
-                    current = [eval(k) for k in current[:2]] + [current[2]] + [
-                        eval(k) for k in current[3:]
-                    ]
-                else:
-                    current = [eval(k) for k in current]
-                current_pitch_bend = pitch_bend(*current)
-                notes_result.append(current_pitch_bend)
-                intervals.append(0)
-            else:
-                if any(all(i in each for i in j) for j in ['()', '[]', '{}']):
-                    split_symbol = '(' if '(' in each else (
-                        '[' if '[' in each else '{')
-                    notename, info = each.split(split_symbol)
-                    volume = 100
-                    info = info[:-1].split(';')
-                    info_len = len(info)
-                    if info_len == 1:
-                        duration = process_note(info[0])
-                        if notename != 'r':
-                            intervals.append(0)
-                    else:
-                        if info_len == 2:
-                            duration, interval = info
-                        else:
-                            duration, interval, volume = info
-                            volume = eval(volume)
-                        duration = process_note(duration)
-                        interval = process_note(
-                            interval) if interval != '.' else duration
-                        if notename != 'r':
-                            intervals.append(interval)
-                    if notename == 'r':
-                        if not notes_result:
-                            start_time += duration
-                        elif intervals:
-                            intervals[-1] += duration
-                    else:
-                        notes_result.append(
-                            toNote(notename, duration, volume, rootpitch))
-                else:
-                    if each == 'r':
-                        if not notes_result:
-                            start_time += 1 / 4
-                        elif intervals:
-                            intervals[-1] += 1 / 4
-                    else:
-                        intervals.append(0)
-                        notes_result.append(toNote(each, pitch=rootpitch))
-        else:
-            notes_result.append(each)
-    if len(intervals) != len(notes_result):
-        intervals = []
-    return notes_result, intervals, start_time
-
-
-def process_note(value, mode=0, value2=None):
-    if mode == 1 and value == '.':
-        return value2
-    if ';' in value:
-        result = [process_note(i) for i in value.split(';')]
-        if mode == 2:
-            result = [
-                int(i) if isinstance(i, float) and i.is_integer() else i
-                for i in result
-            ]
-        return result
-    elif value == 'n':
-        return None
-    else:
-        length = len(value)
-        if value[0] != '.':
-            num_ind = length - 1
-            for k in range(num_ind, -1, -1):
-                if value[k] != '.':
-                    num_ind = k
-                    break
-            dotted_notes = value[num_ind + 1:].count('.')
-            value = value[:num_ind + 1]
-            value = eval(value) * sum([(1 / 2)**i
-                                       for i in range(dotted_notes + 1)])
-        elif length > 1:
-            num_ind = 0
-            for k, each in enumerate(value):
-                if each != '.':
-                    num_ind = k
-                    break
-            if value[-1] != '.':
-                value = 1 / eval(value[num_ind:])
-            else:
-                dotted_notes_start_ind = length - 1
-                for k in range(dotted_notes_start_ind, -1, -1):
-                    if value[k] != '.':
-                        dotted_notes_start_ind = k + 1
-                        break
-                dotted_notes = length - dotted_notes_start_ind
-                value = (1 / eval(value[num_ind:dotted_notes_start_ind])
-                         ) * sum([(1 / 2)**i for i in range(dotted_notes + 1)])
-        if mode == 2:
-            if isinstance(value, float) and value.is_integer():
-                value = int(value)
-        return value
-
-
-def process_settings(settings):
-    settings += ['n' for i in range(3 - len(settings))]
-    duration, interval, volume = settings
-    duration = process_note(duration)
-    interval = process_note(interval, mode=1, value2=duration)
-    volume = process_note(volume, mode=2)
-    return [duration, interval, volume]
-
-
-def process_normalize_tempo(obj, tempo_changes_ranges, bpm, mode=0):
-    whole_notes = obj.notes
-    intervals = obj.interval
-    count_length = 0
-    for k in range(len(obj)):
-        current_note = whole_notes[k]
-        current_interval = intervals[k]
-        if mode == 0:
-            current_note_left, current_note_right = count_length, count_length + current_note.duration
-            new_note_duration = 0
-        current_interval_left, current_interval_right = count_length, count_length + current_interval
-        new_interval_duration = 0
-        for each in tempo_changes_ranges:
-            each_left, each_right, each_tempo = each
-            if mode == 0:
-                if not (current_note_left >= each_right
-                        or current_note_right <= each_left):
-                    valid_length = min(current_note_right, each_right) - max(
-                        current_note_left, each_left)
-                    current_ratio = each_tempo / bpm
-                    valid_length /= current_ratio
-                    new_note_duration += valid_length
-
-            if not (current_interval_left >= each_right
-                    or current_interval_right <= each_left):
-                valid_length = min(current_interval_right, each_right) - max(
-                    current_interval_left, each_left)
-                current_ratio = each_tempo / bpm
-                valid_length /= current_ratio
-                new_interval_duration += valid_length
-        if mode == 0:
-            current_note.duration = new_note_duration
-        obj.interval[k] = new_interval_duration
-        count_length += current_interval
-
-
-def piece_process_normalize_tempo(self, bpm, first_track_start_time):
-    other_messages = self.other_messages
-    temp = copy(self)
-    start_time_ls = temp.start_times
-    all_tracks = temp.tracks
-    length = len(all_tracks)
-    for k in range(length):
-        for each in all_tracks[k]:
-            each.track_num = k
-
-    first_track_ind = start_time_ls.index(first_track_start_time)
-    start_time_ls.insert(0, start_time_ls.pop(first_track_ind))
-
-    all_tracks.insert(0, all_tracks.pop(first_track_ind))
-    first_track = all_tracks[0]
-
-    for i in range(1, length):
-        first_track &= (all_tracks[i],
-                        start_time_ls[i] - first_track_start_time)
-    first_track.other_messages = other_messages
-    if self.pan:
-        for k in range(len(self.pan)):
-            current_pan = self.pan[k]
-            for each in current_pan:
-                each.track = k
-    if self.volume:
-        for k in range(len(self.volume)):
-            current_volume = self.volume[k]
-            for each in current_volume:
-                each.track = k
-    whole_pan = concat(self.pan) if self.pan else None
-    whole_volume = concat(self.volume) if self.volume else None
-    normalize_result, first_track_start_time = first_track.normalize_tempo(
-        bpm,
-        start_time=first_track_start_time + first_track.start_time,
-        pan_msg=whole_pan,
-        volume_msg=whole_volume)
-    new_other_messages = normalize_result[0]
-    self.other_messages = new_other_messages
-    if whole_pan or whole_volume:
-        whole_pan, whole_volume = normalize_result[1], normalize_result[2]
-        self.pan = [[i for i in whole_pan if i.track == j]
-                    for j in range(len(self.tracks))]
-        self.volume = [[i for i in whole_volume if i.track == j]
-                       for j in range(len(self.tracks))]
-    start_times_inds = [[
-        i for i in range(len(first_track))
-        if first_track.notes[i].track_num == k
-    ] for k in range(length)]
-    start_times_inds = [each[0] if each else -1 for each in start_times_inds]
-    new_start_times = [
-        first_track_start_time + first_track[:k].bars(mode=0) if k != -1 else 0
-        for k in start_times_inds
-    ]
-    new_track_notes = [[] for k in range(length)]
-    new_track_inds = [[] for k in range(length)]
-    new_track_intervals = [[] for k in range(length)]
-    whole_length = len(first_track)
-    for j in range(whole_length):
-        current_note = first_track.notes[j]
-        new_track_notes[current_note.track_num].append(current_note)
-        new_track_inds[current_note.track_num].append(j)
-    whole_interval = first_track.interval
-    new_track_intervals = [[
-        sum(whole_interval[inds[i]:inds[i + 1]]) for i in range(len(inds) - 1)
-    ] for inds in new_track_inds]
-    for i in range(length):
-        if new_track_inds[i]:
-            new_track_intervals[i].append(
-                sum(whole_interval[new_track_inds[i][-1]:]))
-    new_tracks = [
-        chord(new_track_notes[k],
-              interval=new_track_intervals[k],
-              other_messages=[
-                  each for each in new_other_messages if each.track == k
-              ]) for k in range(length)
-    ]
-    self.tracks = new_tracks
-    self.start_times = new_start_times
-
-
 def closest_note(note1, note2, get_distance=False):
     if not isinstance(note1, note):
-        note1 = toNote(note1)
+        note1 = to_note(note1)
     if isinstance(note2, note):
         note2 = note2.name
     current_note = [
@@ -1794,7 +1561,7 @@ def closest_note(note1, note2, get_distance=False):
 
 def closest_note_from_chord(note1, chord1):
     if not isinstance(note1, note):
-        note1 = toNote(note1)
+        note1 = to_note(note1)
     names = [database.standard_dict.get(i, i) for i in chord1.names()]
     current_name = database.standard_dict.get(note1.name, note1.name)
     if current_name in names:
@@ -1833,8 +1600,8 @@ def dataclass_repr(s, keywords=None):
 
 
 C = trans
-N = toNote
-S = toScale
+N = to_note
+S = to_scale
 P = piece
 arp = arpeggio
 

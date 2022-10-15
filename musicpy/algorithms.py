@@ -439,6 +439,7 @@ def interval_check(current_chord):
     return f'{root_note_name} with {interval_name}'
 
 
+@method_wrapper(chord)
 def detect(current_chord,
            inv_num=False,
            change_from_first=True,
@@ -1002,6 +1003,7 @@ def guitar_chord(frets,
     return detect(result.sortchord(), **detect_args)
 
 
+@method_wrapper(chord)
 def find_chords_for_melody(melody,
                            mode=None,
                            num=3,
@@ -1053,6 +1055,7 @@ def find_chords_for_melody(melody,
     return result
 
 
+@method_wrapper(chord)
 def detect_in_scale(current_chord,
                     most_like_num=3,
                     get_scales=False,
@@ -1173,7 +1176,7 @@ def detect_in_scale(current_chord,
         return results
 
 
-def most_appear_notes_detect_scale(current_chord, most_appeared_note):
+def _most_appear_notes_detect_scale(current_chord, most_appeared_note):
     third_degree_major = most_appeared_note.up(database.major_third).name
     third_degree_minor = most_appeared_note.up(database.minor_third).name
     if current_chord.count(third_degree_major) > current_chord.count(
@@ -1212,6 +1215,7 @@ def most_appear_notes_detect_scale(current_chord, most_appeared_note):
     return scale(most_appeared_note.name, current_mode)
 
 
+@method_wrapper(chord)
 def detect_scale(current_chord,
                  get_scales=False,
                  most_appear_num=5,
@@ -1230,7 +1234,7 @@ def detect_scale(current_chord,
     counts = current_chord.count_appear(sort=True)
     most_appeared_note = [N(each[0]) for each in counts[:most_appear_num]]
     result_scales = [
-        most_appear_notes_detect_scale(current_chord, each)
+        _most_appear_notes_detect_scale(current_chord, each)
         for each in most_appeared_note
     ]
     if major_minor_preference:
@@ -1295,6 +1299,7 @@ def detect_scale(current_chord,
         return f'most likely scales: {", ".join([f"{i.start.name} {i.mode}" for i in result_scales])}'
 
 
+@method_wrapper(chord)
 def detect_scale2(current_chord,
                   get_scales=False,
                   most_appear_num=3,
@@ -1356,6 +1361,7 @@ def detect_scale2(current_chord,
         return ', '.join([f"{i.start.name} {i.mode}" for i in result_scale])
 
 
+@method_wrapper(chord)
 def detect_scale3(current_chord,
                   get_scales=False,
                   most_appear_num=3,
@@ -1555,7 +1561,7 @@ def get_chord_type_location(current_chord, mode='functions'):
                     return value
 
 
-def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
+def get_chord_functions(chords, mode, as_list=False, functions_interval=1):
     if not isinstance(chords, list):
         chords = [chords]
     note_names = mode.names()
@@ -1576,7 +1582,7 @@ def get_chord_functions(mode, chords, as_list=False, functions_interval=1):
                 current_function = each[1]
             else:
                 ind = note_names.index(inversion_note) + 1
-                current_function = f'{get_chord_functions(mode, current_note)}/{header}{ind}'
+                current_function = f'{get_chord_functions(current_note, mode)}/{header}{ind}'
         else:
             root_note, chord_types = each
             root_note_obj = note(root_note, 5)
@@ -1692,6 +1698,7 @@ def get_chord_notations(chords,
             ' ' * functions_interval).join(notations)
 
 
+@method_wrapper(chord)
 def chord_functions_analysis(current_chord,
                              functions_interval=1,
                              function_symbol='-',
@@ -1743,8 +1750,8 @@ def chord_functions_analysis(current_chord,
         actual_chords = current_chord
     if chord_mode == 'function':
         chord_progressions = get_chord_functions(
-            mode=scales,
             chords=actual_chords,
+            mode=scales,
             as_list=True,
             functions_interval=functions_interval)
         if full_chord_msg:
@@ -1816,31 +1823,40 @@ def chord_functions_analysis(current_chord,
         return analysis_result
 
 
+@method_wrapper(chord)
 def split_melody(current_chord,
-                 mode='index',
+                 mode='chord',
                  melody_tol=database.minor_seventh,
                  chord_tol=database.major_sixth,
                  get_off_overlap_notes=True,
                  average_degree_length=8,
-                 melody_degree_tol=toNote('B4')):
+                 melody_degree_tol='B4'):
     '''
     if mode == 'notes', return a list of main melody notes
     if mode == 'index', return a list of indexes of main melody notes
     if mode == 'chord', return a chord with main melody notes with original places
     '''
     if not isinstance(melody_degree_tol, note):
-        melody_degree_tol = toNote(melody_degree_tol)
+        melody_degree_tol = to_note(melody_degree_tol)
     if mode == 'notes':
-        result = split_melody(current_chord, 'index', melody_tol, chord_tol,
-                              get_off_overlap_notes, average_degree_length,
-                              melody_degree_tol)
+        result = split_melody(current_chord=current_chord,
+                              mode='index',
+                              melody_tol=melody_tol,
+                              chord_tol=chord_tol,
+                              get_off_overlap_notes=get_off_overlap_notes,
+                              average_degree_length=average_degree_length,
+                              melody_degree_tol=melody_degree_tol)
         current_chord_notes = current_chord.notes
         melody = [current_chord_notes[t] for t in result]
         return melody
     elif mode == 'chord':
-        result = split_melody(current_chord, 'index', melody_tol, chord_tol,
-                              get_off_overlap_notes, average_degree_length,
-                              melody_degree_tol)
+        result = split_melody(current_chord=current_chord,
+                              mode='index',
+                              melody_tol=melody_tol,
+                              chord_tol=chord_tol,
+                              get_off_overlap_notes=get_off_overlap_notes,
+                              average_degree_length=average_degree_length,
+                              melody_degree_tol=melody_degree_tol)
         return current_chord.pick(result)
 
     elif mode == 'index':
@@ -1951,16 +1967,11 @@ def split_melody(current_chord,
         return whole_inds
 
 
-def split_chord(current_chord,
-                mode='index',
-                melody_tol=database.minor_seventh,
-                chord_tol=database.major_sixth,
-                get_off_overlap_notes=True,
-                average_degree_length=8,
-                melody_degree_tol=toNote('B4')):
-    melody_ind = split_melody(current_chord, 'index', melody_tol, chord_tol,
-                              get_off_overlap_notes, average_degree_length,
-                              melody_degree_tol)
+@method_wrapper(chord)
+def split_chord(current_chord, mode='chord', **args):
+    melody_ind = split_melody(current_chord=current_chord,
+                              mode='index',
+                              **args)
     N = len(current_chord)
     whole_notes = current_chord.notes
     other_messages_inds = [
@@ -1978,20 +1989,15 @@ def split_chord(current_chord,
         return current_chord.pick(chord_ind)
 
 
-def split_all(current_chord,
-              mode='index',
-              melody_tol=database.minor_seventh,
-              chord_tol=database.major_sixth,
-              get_off_overlap_notes=True,
-              average_degree_length=8,
-              melody_degree_tol=toNote('B4')):
+@method_wrapper(chord)
+def split_all(current_chord, mode='chord', **args):
     '''
     split the main melody and chords part of a piece of music,
     return both of main melody and chord part
     '''
-    melody_ind = split_melody(current_chord, 'index', melody_tol, chord_tol,
-                              get_off_overlap_notes, average_degree_length,
-                              melody_degree_tol)
+    melody_ind = split_melody(current_chord=current_chord,
+                              mode='index',
+                              **args)
     N = len(current_chord)
     whole_notes = current_chord.notes
     chord_ind = [
@@ -2009,6 +2015,7 @@ def split_all(current_chord,
         return [result_melody, result_chord]
 
 
+@method_wrapper(chord)
 def chord_analysis(chords,
                    mode='chord names',
                    is_chord=False,
@@ -2228,6 +2235,7 @@ def add_to_last_index(current_chord, value, start=None, stop=None, step=1):
     return ind
 
 
+@method_wrapper(chord)
 def get_note_interval(current_chord, interval_tol=12):
     degrees = [i.degree for i in current_chord.notes]
     note_intervals = [
@@ -2240,6 +2248,7 @@ def get_note_interval(current_chord, interval_tol=12):
     return note_intervals
 
 
+@method_wrapper(chord)
 def get_melody_shape(current_chord,
                      interval_tol=12,
                      octave_range=None,
@@ -2262,6 +2271,7 @@ def get_melody_shape(current_chord,
     return result
 
 
+@method_wrapper(chord)
 def get_note_interval_frequency(current_chord, interval_tol=12):
     note_intervals = get_note_interval(current_chord, interval_tol)
     note_intervals_list = list(set(note_intervals))
@@ -2274,6 +2284,7 @@ def get_note_interval_frequency(current_chord, interval_tol=12):
     return note_intervals_list_appearance
 
 
+@method_wrapper(chord)
 def generate_melody_from_notes(current_chord,
                                interval_tol=12,
                                num=100,
