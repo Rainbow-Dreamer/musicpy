@@ -1561,9 +1561,7 @@ class chord:
         # choose a bpm and apply to all of the notes, if there are tempo
         # changes, use relative ratios of the chosen bpms and changes bpms
         # to re-calculate the notes durations and intervals
-        if not any(isinstance(i, tempo) for i in self.notes):
-            return
-        elif all(i.bpm == bpm for i in self.notes if isinstance(i, tempo)):
+        if all(i.bpm == bpm for i in self.notes if isinstance(i, tempo)):
             self.clear_tempo()
             return
         if start_time > 0:
@@ -3232,14 +3230,12 @@ class piece:
             self.tracks[ind].clear_tempo(cond)
 
     def normalize_tempo(self, bpm=None):
-        if not any(isinstance(i, tempo) for each in self.tracks for i in each):
-            return
-        elif all(i.bpm == self.bpm for each in self.tracks for i in each
-                 if isinstance(i, tempo)):
-            self.clear_tempo()
-            return
         if bpm is None:
             bpm = self.bpm
+        if all(i.bpm == bpm for each in self.tracks for i in each
+               if isinstance(i, tempo)):
+            self.clear_tempo()
+            return
         temp = copy(self)
         mp.piece_process_normalize_tempo(temp, bpm, min(temp.start_times))
         self.start_times = temp.start_times
