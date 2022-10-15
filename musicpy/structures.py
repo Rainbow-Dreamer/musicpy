@@ -4695,13 +4695,17 @@ class drum:
                         ]
         current_fix_length_unit = None
         if current_fix_length is not None:
-            current_fix_length_unit = current_fix_length / len(
-                current_append_notes
-            ) if not current_same_time else current_fix_length
+            if current_same_time:
+                current_fix_length_unit = current_fix_length / current_repeat_times
+            else:
+                current_fix_length_unit = current_fix_length / (
+                    len(current_append_notes) * current_repeat_times)
         elif current_part_fix_length_unit is not None:
-            current_fix_length_unit = current_part_fix_length_unit / len(
-                current_append_notes
-            ) if not current_same_time else current_part_fix_length_unit
+            if current_same_time:
+                current_fix_length_unit = current_part_fix_length_unit / current_repeat_times
+            else:
+                current_fix_length_unit = current_part_fix_length_unit / (
+                    len(current_append_notes) * current_repeat_times)
         if current_same_time:
             current_append_intervals = [
                 0 for k in range(len(current_append_notes) - 1)
