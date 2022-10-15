@@ -5166,8 +5166,8 @@ def _piece_process_normalize_tempo(self,
             current_volume = self.volume[k]
             for each in current_volume:
                 each.track = k
-    whole_pan = concat(self.pan) if self.pan else None
-    whole_volume = concat(self.volume) if self.volume else None
+    whole_pan = mp.concat(self.pan) if self.pan else None
+    whole_volume = mp.concat(self.volume) if self.volume else None
     current_start_time = first_track_start_time + first_track.start_time
     normalize_values = first_track.normalize_tempo(
         bpm,
