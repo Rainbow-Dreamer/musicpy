@@ -4541,7 +4541,9 @@ class drum:
                                 last_symbol_ind = ind
                                 last_symbol_start_ind = ind - 1
                             else:
-                                if ind != last_symbol_ind + 1:
+                                if any(j not in [rest_symbol, continue_symbol]
+                                       for j in current_notes[last_symbol_ind +
+                                                              1:ind]):
                                     last_symbol_ind = ind
                                     last_symbol_start_ind = ind - 1
                             current_symbol = current_notes[ind]
