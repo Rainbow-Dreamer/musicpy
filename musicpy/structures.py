@@ -4615,6 +4615,7 @@ class drum:
         current_same_time = True
         current_chord_same_time = False
         current_repeat_times = 1
+        current_after_repeat_times = 1
         current_fix_length = None
         current_fix_beats = None
         current_append_durations = [
@@ -4669,6 +4670,8 @@ class drum:
                         current_chord_same_time = True
                 elif current_setting_keyword == 'r':
                     current_repeat_times = int(current_content)
+                elif current_setting_keyword == 'R':
+                    current_after_repeat_times = int(current_content)
                 elif current_setting_keyword == 't':
                     current_fix_length = _process_note(current_content)
                 elif current_setting_keyword == 'b':
@@ -4741,6 +4744,12 @@ class drum:
             current_append_intervals *= current_repeat_times
             current_append_durations *= current_repeat_times
             current_append_volumes *= current_repeat_times
+
+        if current_after_repeat_times > 1:
+            current_append_notes *= current_after_repeat_times
+            current_append_intervals *= current_after_repeat_times
+            current_append_durations *= current_after_repeat_times
+            current_append_volumes *= current_after_repeat_times
 
         if translate_mode == 1:
             new_current_append_durations = []
