@@ -4528,11 +4528,11 @@ class drum:
                     [
                         current_notes, current_durations, current_intervals,
                         current_volumes
-                    ], rest_symbol, continue_symbol)
+                    ])
 
                 symbol_inds = [
                     j for j, each_note in enumerate(current_notes)
-                    if each_note[0] in [rest_symbol, continue_symbol]
+                    if isinstance(each_note[0], (Rest_symbol, Continue_symbol))
                 ]
                 if symbol_inds:
                     last_symbol_ind = None
@@ -4543,33 +4543,42 @@ class drum:
                                 last_symbol_ind = ind
                                 last_symbol_start_ind = ind - 1
                             else:
-                                if any(j[0] not in
-                                       [rest_symbol, continue_symbol]
+                                if any(not isinstance(j[0], (Rest_symbol,
+                                                             Continue_symbol))
                                        for j in current_notes[last_symbol_ind +
                                                               1:ind]):
                                     last_symbol_ind = ind
                                     last_symbol_start_ind = ind - 1
                             current_symbol = current_notes[ind][0]
-                            if current_symbol == rest_symbol:
+                            if isinstance(current_symbol, Rest_symbol):
                                 last_symbol_interval = current_intervals[
                                     last_symbol_start_ind]
                                 last_symbol_interval[-1] += current_intervals[
                                     ind][0]
-                            elif current_symbol == continue_symbol:
+                            elif isinstance(current_symbol, Continue_symbol):
                                 last_symbol_interval = current_intervals[
                                     last_symbol_start_ind]
                                 last_symbol_duration = current_durations[
                                     last_symbol_start_ind]
                                 last_symbol_interval[-1] += current_intervals[
                                     ind][0]
-                                if all(k == 0
-                                       for k in last_symbol_interval[:-1]):
+                                if current_symbol.mode is None:
+                                    if all(k == 0
+                                           for k in last_symbol_interval[:-1]):
+                                        for j in range(
+                                                len(last_symbol_duration)):
+                                            last_symbol_duration[
+                                                j] += current_durations[ind][0]
+                                    else:
+                                        last_symbol_duration[
+                                            -1] += current_durations[ind][0]
+                                elif current_symbol.mode == 0:
+                                    last_symbol_duration[
+                                        -1] += current_durations[ind][0]
+                                elif current_symbol.mode == 1:
                                     for j in range(len(last_symbol_duration)):
                                         last_symbol_duration[
                                             j] += current_durations[ind][0]
-                                else:
-                                    last_symbol_duration[
-                                        -1] += current_durations[ind][0]
                     current_length = len(current_notes)
                     current_notes = [
                         current_notes[j] for j in range(current_length)
@@ -4614,16 +4623,17 @@ class drum:
         result.start_time = start_time
         return result
 
-    def _split_symbol(self, current_list, rest_symbol, continue_symbol):
+    def _split_symbol(self, current_list):
         current_notes = current_list[0]
         return_list = [[] for i in range(len(current_list))]
         for k, each_note in enumerate(current_notes):
-            if len(each_note) > 1 and any(j in [rest_symbol, continue_symbol]
-                                          for j in each_note):
+            if len(each_note) > 1 and any(
+                    isinstance(j, (Rest_symbol, Continue_symbol))
+                    for j in each_note):
                 current_return_list = [[] for j in range(len(return_list))]
                 current_ind = [
                     k1 for k1, k2 in enumerate(each_note)
-                    if k2 in [rest_symbol, continue_symbol]
+                    if isinstance(k2, (Rest_symbol, Continue_symbol))
                 ]
                 start_part = [
                     each[k][:current_ind[0]] for each in current_list
@@ -4691,8 +4701,10 @@ class drum:
         current_append_volumes = [default_volume for i in current_append_notes]
         if translate_mode == 0:
             current_append_notes = [
-                mp.degree_to_note(mapping[each_note]) if each_note
-                not in [rest_symbol, continue_symbol] else each_note
+                mp.degree_to_note(mapping[each_note]) if each_note not in [
+                    rest_symbol, continue_symbol
+                ] else self._convert_to_symbol(each_note, rest_symbol,
+                                               continue_symbol)
                 for each_note in current_append_notes
             ]
         else:
@@ -4703,7 +4715,9 @@ class drum:
                         current_each_note = mp.N(each_note)
                         new_current_append_notes.append(current_each_note)
                     else:
-                        new_current_append_notes.append(each_note)
+                        new_current_append_notes.append(
+                            self._convert_to_symbol(each_note, rest_symbol,
+                                                    continue_symbol))
                 else:
                     current_note, current_chord_type = each_note.split(":")
                     if current_note not in [rest_symbol, continue_symbol]:
@@ -4767,6 +4781,10 @@ class drum:
                             current_append_volumes
                             for k in current_append_notes
                         ]
+                elif current_setting_keyword == 'cm':
+                    if len(current_append_notes) == 1 and isinstance(
+                            current_append_notes[0], Continue_symbol):
+                        current_append_notes[0].mode = int(current_content)
         current_fix_length_unit = None
         if current_fix_length is not None:
             if current_fix_beats is not None:
@@ -4869,8 +4887,10 @@ class drum:
         current_append_notes = [i for i in current_append_notes if i]
         if translate_mode == 0:
             current_append_notes = [
-                mp.degree_to_note(mapping[each_note]) if each_note
-                not in [rest_symbol, continue_symbol] else each_note
+                mp.degree_to_note(mapping[each_note]) if each_note not in [
+                    rest_symbol, continue_symbol
+                ] else self._convert_to_symbol(each_note, rest_symbol,
+                                               continue_symbol)
                 for each_note in current_append_notes
             ]
         else:
@@ -4881,7 +4901,9 @@ class drum:
                         current_each_note = mp.N(each_note)
                         new_current_append_notes.append(current_each_note)
                     else:
-                        new_current_append_notes.append(each_note)
+                        new_current_append_notes.append(
+                            self._convert_to_symbol(each_note, rest_symbol,
+                                                    continue_symbol))
                 else:
                     current_note, current_chord_type = each_note.split(":")
                     if current_note not in [rest_symbol, continue_symbol]:
@@ -4992,6 +5014,13 @@ class drum:
                 global_all_same_volume = _process_note(content, mode=2)
         return global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length, global_fix_beats
 
+    def _convert_to_symbol(self, text, rest_symbol, continue_symbol):
+        if text == rest_symbol:
+            text = Rest_symbol()
+        elif text == continue_symbol:
+            text = Continue_symbol()
+        return text
+
     def __mul__(self, n):
         temp = copy(self)
         temp.notes %= n
@@ -5030,6 +5059,18 @@ class drum:
         temp = copy(self)
         temp.notes.start_time = start_time
         return temp
+
+
+class Rest_symbol:
+
+    def __init__(self, mode=None):
+        self.mode = mode
+
+
+class Continue_symbol:
+
+    def __init__(self, mode=None):
+        self.mode = mode
 
 
 class event:
