@@ -4753,7 +4753,7 @@ class drum:
                 elif current_setting_keyword == 't':
                     current_fix_length = _process_note(current_content)
                 elif current_setting_keyword == 'b':
-                    current_fix_beats = int(current_content)
+                    current_fix_beats = _process_note(current_content)
                 elif current_setting_keyword == 'i':
                     if current_content == '.':
                         current_append_intervals = _process_note(
@@ -4951,7 +4951,7 @@ class drum:
             if keyword == 't':
                 current_part_fix_length = _process_note(content)
             elif keyword == 'b':
-                current_part_fix_beats = int(content)
+                current_part_fix_beats = _process_note(content)
             elif keyword == 'r':
                 current_part_repeat_times = int(content)
             elif keyword == 'n':
@@ -4991,7 +4991,7 @@ class drum:
             if keyword == 't':
                 global_fix_length = _process_note(content)
             elif keyword == 'b':
-                global_fix_beats = int(content)
+                global_fix_beats = _process_note(content)
             elif keyword == 'r':
                 global_repeat_times = int(content)
             elif keyword == 'd':
