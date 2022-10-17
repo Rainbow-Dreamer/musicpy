@@ -4524,13 +4524,15 @@ class drum:
                     current_volumes = [[
                         current_part_all_same_volume for k in each_part
                     ] for each_part in current_volumes]
-                current_notes = [j for k in current_notes for j in k]
-                current_durations = [j for k in current_durations for j in k]
-                current_intervals = [j for k in current_intervals for j in k]
-                current_volumes = [j for k in current_volumes for j in k]
+                current_notes, current_durations, current_intervals, current_volumes = self._split_symbol(
+                    [
+                        current_notes, current_durations, current_intervals,
+                        current_volumes
+                    ], rest_symbol, continue_symbol)
+
                 symbol_inds = [
                     j for j, each_note in enumerate(current_notes)
-                    if each_note in [rest_symbol, continue_symbol]
+                    if each_note[0] in [rest_symbol, continue_symbol]
                 ]
                 if symbol_inds:
                     last_symbol_ind = None
@@ -4541,23 +4543,33 @@ class drum:
                                 last_symbol_ind = ind
                                 last_symbol_start_ind = ind - 1
                             else:
-                                if any(j not in [rest_symbol, continue_symbol]
+                                if any(j[0] not in
+                                       [rest_symbol, continue_symbol]
                                        for j in current_notes[last_symbol_ind +
                                                               1:ind]):
                                     last_symbol_ind = ind
                                     last_symbol_start_ind = ind - 1
-                            current_symbol = current_notes[ind]
+                            current_symbol = current_notes[ind][0]
                             if current_symbol == rest_symbol:
-                                current_intervals[
-                                    last_symbol_start_ind] += current_intervals[
-                                        ind]
+                                last_symbol_interval = current_intervals[
+                                    last_symbol_start_ind]
+                                last_symbol_interval[-1] += current_intervals[
+                                    ind][0]
                             elif current_symbol == continue_symbol:
-                                current_intervals[
-                                    last_symbol_start_ind] += current_intervals[
-                                        ind]
-                                current_durations[
-                                    last_symbol_start_ind] += current_durations[
-                                        ind]
+                                last_symbol_interval = current_intervals[
+                                    last_symbol_start_ind]
+                                last_symbol_duration = current_durations[
+                                    last_symbol_start_ind]
+                                last_symbol_interval[-1] += current_intervals[
+                                    ind][0]
+                                if all(k == 0
+                                       for k in last_symbol_interval[:-1]):
+                                    for j in range(len(last_symbol_duration)):
+                                        last_symbol_duration[
+                                            j] += current_durations[ind][0]
+                                else:
+                                    last_symbol_duration[
+                                        -1] += current_durations[ind][0]
                     current_length = len(current_notes)
                     current_notes = [
                         current_notes[j] for j in range(current_length)
@@ -4575,6 +4587,10 @@ class drum:
                         current_volumes[j] for j in range(current_length)
                         if j not in symbol_inds
                     ]
+                current_notes = [j for k in current_notes for j in k]
+                current_durations = [j for k in current_durations for j in k]
+                current_intervals = [j for k in current_intervals for j in k]
+                current_volumes = [j for k in current_volumes for j in k]
                 if current_part_repeat_times > 1:
                     current_notes *= current_part_repeat_times
                     current_durations *= current_part_repeat_times
@@ -4597,6 +4613,52 @@ class drum:
         result = chord(notes) % (durations, intervals, volumes)
         result.start_time = start_time
         return result
+
+    def _split_symbol(self, current_list, rest_symbol, continue_symbol):
+        current_notes = current_list[0]
+        return_list = [[] for i in range(len(current_list))]
+        for k, each_note in enumerate(current_notes):
+            if len(each_note) > 1 and any(j in [rest_symbol, continue_symbol]
+                                          for j in each_note):
+                current_return_list = [[] for j in range(len(return_list))]
+                current_ind = [
+                    k1 for k1, k2 in enumerate(each_note)
+                    if k2 in [rest_symbol, continue_symbol]
+                ]
+                start_part = [
+                    each[k][:current_ind[0]] for each in current_list
+                ]
+                if start_part[0]:
+                    for i, each in enumerate(current_return_list):
+                        each.append(start_part[i])
+                for j in range(len(current_ind) - 1):
+                    current_symbol_part = [[each[k][current_ind[j]]]
+                                           for each in current_list]
+                    for i, each in enumerate(current_return_list):
+                        each.append(current_symbol_part[i])
+                    middle_part = [
+                        each[k][current_ind[j] + 1:current_ind[j + 1]]
+                        for each in current_list
+                    ]
+                    if middle_part[0]:
+                        for i, each in enumerate(current_return_list):
+                            each.append(middle_part[i])
+                current_symbol_part = [[each[k][current_ind[-1]]]
+                                       for each in current_list]
+                for i, each in enumerate(current_return_list):
+                    each.append(current_symbol_part[i])
+                end_part = [
+                    each[k][current_ind[-1] + 1:] for each in current_list
+                ]
+                if end_part[0]:
+                    for i, each in enumerate(current_return_list):
+                        each.append(end_part[i])
+                for i, each in enumerate(return_list):
+                    each.extend(current_return_list[i])
+            else:
+                for i, each in enumerate(return_list):
+                    each.append(current_list[i][k])
+        return return_list
 
     def _translate_setting_parser(self, each, mapping, default_duration,
                                   default_interval, default_volume,
