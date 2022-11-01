@@ -242,7 +242,7 @@ def start(current_chord,
                 current_player.pitch_bend(value=current_event.value.value,
                                           channel=current_channel)
             elif mode == 4:
-                current_player.write_short(0xFF, 0x51, current_event.value)
+                current_player.write_short(0xFF, 0x51, int(current_event.value))
             elif mode == 5:
                 current_player.write_short(0xb0 | current_event.value.channel,
                                            current_event.value.control,
