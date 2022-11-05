@@ -5119,9 +5119,8 @@ class rest:
 
 class rest_symbol:
 
-    def __init__(self, duration=1 / 4, mode=None):
+    def __init__(self, duration=1 / 4):
         self.duration = duration
-        self.mode = mode
 
     def __repr__(self):
         current_duration = Fraction(self.duration).limit_denominator()
@@ -5130,9 +5129,8 @@ class rest_symbol:
 
 class continue_symbol:
 
-    def __init__(self, duration=1 / 4, mode=None):
+    def __init__(self, duration=1 / 4):
         self.duration = duration
-        self.mode = mode
 
     def __repr__(self):
         current_duration = Fraction(self.duration).limit_denominator()
@@ -5151,25 +5149,41 @@ class beat:
 
 class rhythm(list):
 
-    def __init__(self, beat_list, total_length=None, separator=' '):
+    def __init__(self,
+                 beat_list,
+                 total_bar_length=None,
+                 unit=None,
+                 time_signature=None,
+                 separator=' '):
         if isinstance(beat_list, str):
             beat_list = self.convert_to_rhythm(beat_list, separator)
         super().__init__(beat_list)
-        self.total_length = total_length
-        if self.total_length is not None:
+        self.total_bar_length = total_bar_length
+        self.unit = unit
+        if time_signature is None:
+            self.time_signature = [4, 4]
+        else:
+            self.time_signature = time_signature
+        if self.total_bar_length is not None:
             if len(self) > 0:
-                current_duration = 1 / len(self)
+                current_time_signature_ratio = self.time_signature[
+                    0] / self.time_signature[1]
+                current_duration = self.total_bar_length * current_time_signature_ratio / len(
+                    self)
                 for each in self:
                     each.duration = current_duration
+        elif self.unit is not None:
+            for each in self:
+                each.duration = self.unit
 
     def __repr__(self):
-        if self.total_length is not None:
-            current_total_length = Fraction(
-                self.total_length).limit_denominator()
+        if self.total_bar_length is not None:
+            current_total_bar_length = Fraction(
+                self.total_bar_length).limit_denominator()
         else:
-            current_total_length = self.total_length
+            current_total_bar_length = self.total_bar_length
         current_rhythm = ', '.join([str(i) for i in self])
-        return f'[rhythm] rhythm: {current_rhythm}  total length: {current_total_length}'
+        return f'[rhythm] rhythm: {current_rhythm}\ntotal bar length: {current_total_bar_length}\ntime signature: {self.time_signature[0]} / {self.time_signature[1]}'
 
     def convert_to_rhythm(self, current_rhythm, separator=' '):
         current_beat_list = current_rhythm.split(separator)
