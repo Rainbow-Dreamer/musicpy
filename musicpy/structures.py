@@ -2252,6 +2252,24 @@ class chord:
     def to_piece(self, *args, **kwargs):
         return mp.chord_to_piece(self, *args, **kwargs)
 
+    def apply_rhythm(self, current_rhythm):
+        temp = copy(self)
+        length = len(temp)
+        counter = -1
+        for i, each in enumerate(current_rhythm):
+            if isinstance(each, beat):
+                counter += 1
+                if counter >= length:
+                    break
+                temp.interval[counter] = each.duration
+                temp.notes[counter].duration = each.duration
+            elif isinstance(each, rest_symbol):
+                temp.interval[counter] += each.duration
+            elif isinstance(each, continue_symbol):
+                temp.interval[counter] += each.duration
+                temp.notes[counter].duration += each.duration
+        return temp
+
 
 class scale:
 
@@ -5107,7 +5125,7 @@ class rest_symbol:
 
     def __repr__(self):
         current_duration = Fraction(self.duration).limit_denominator()
-        return f'rest_symbol(duration={current_duration})'
+        return f'rest({current_duration})'
 
 
 class continue_symbol:
@@ -5118,7 +5136,7 @@ class continue_symbol:
 
     def __repr__(self):
         current_duration = Fraction(self.duration).limit_denominator()
-        return f'continue_symbol(duration={current_duration})'
+        return f'continue({current_duration})'
 
 
 class beat:
@@ -5128,20 +5146,20 @@ class beat:
 
     def __repr__(self):
         current_duration = Fraction(self.duration).limit_denominator()
-        return f'beat(duration={current_duration})'
+        return f'beat({current_duration})'
 
 
-class rhythm:
+class rhythm(list):
 
     def __init__(self, beat_list, total_length=None, separator=' '):
         if isinstance(beat_list, str):
             beat_list = self.convert_to_rhythm(beat_list, separator)
-        self.beat_list = beat_list
+        super().__init__(beat_list)
         self.total_length = total_length
         if self.total_length is not None:
-            if self.beat_list:
-                current_duration = 1 / len(self.beat_list)
-                for each in self.beat_list:
+            if len(self) > 0:
+                current_duration = 1 / len(self)
+                for each in self:
                     each.duration = current_duration
 
     def __repr__(self):
@@ -5150,7 +5168,7 @@ class rhythm:
                 self.total_length).limit_denominator()
         else:
             current_total_length = self.total_length
-        current_rhythm = ', '.join([str(i) for i in self.beat_list])
+        current_rhythm = ', '.join([str(i) for i in self])
         return f'[rhythm] rhythm: {current_rhythm}  total length: {current_total_length}'
 
     def convert_to_rhythm(self, current_rhythm, separator=' '):
@@ -5172,6 +5190,12 @@ class rhythm:
             if current_beat is not None:
                 current_beat_list[i] = current_beat
         return current_beat_list
+
+    def __add__(self, *args, **kwargs):
+        return rhythm(super().__add__(*args, **kwargs))
+
+    def __mul__(self, *args, **kwargs):
+        return rhythm(super().__mul__(*args, **kwargs))
 
 
 def _read_notes(note_ls, rootpitch=4):
