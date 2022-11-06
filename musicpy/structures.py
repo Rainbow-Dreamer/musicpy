@@ -668,8 +668,8 @@ class chord:
     def __radd__(self, obj):
         if isinstance(obj, (rest, float)):
             temp = copy(self)
-            temp.start_time += (obj
-                                if not isinstance(obj, rest) else obj.duration)
+            temp.start_time += (obj if not isinstance(obj, rest) else
+                                obj.get_duration())
             return temp
         elif isinstance(obj, int):
             return self + obj
@@ -677,8 +677,8 @@ class chord:
     def __ror__(self, obj):
         if isinstance(obj, (int, float, rest)):
             temp = copy(self)
-            temp.start_time += (obj
-                                if not isinstance(obj, rest) else obj.duration)
+            temp.start_time += (obj if not isinstance(obj, rest) else
+                                obj.get_duration())
             return temp
 
     def __rfloordiv__(self, obj):
@@ -707,14 +707,14 @@ class chord:
                     temp |= (self, start)
                 return temp
             elif isinstance(first, rest):
-                return self.rest(first.duration,
+                return self.rest(first.get_duration(),
                                  ind=obj[1] if len(obj) == 2 else None)
             else:
                 return self.add(first, start=start, mode='after')
         elif isinstance(obj, list):
             return self.rest(*obj)
         elif isinstance(obj, rest):
-            return self.rest(obj.duration)
+            return self.rest(obj.get_duration())
         return self.add(obj, mode='after')
 
     def __or__(self, other):
@@ -907,6 +907,9 @@ class chord:
         for i in range(num - 1):
             temp += unit
         return temp
+
+    def __rmul__(self, num):
+        return self * num
 
     def reverse(self, start=None, end=None, cut=False, start_time=0):
         temp = copy(self)
@@ -2261,13 +2264,13 @@ class chord:
                 counter += 1
                 if counter >= length:
                     break
-                temp.interval[counter] = each.duration
-                temp.notes[counter].duration = each.duration
+                temp.interval[counter] = each.get_duration()
+                temp.notes[counter].duration = each.get_duration()
             elif isinstance(each, rest_symbol):
-                temp.interval[counter] += each.duration
+                temp.interval[counter] += each.get_duration()
             elif isinstance(each, continue_symbol):
-                temp.interval[counter] += each.duration
-                temp.notes[counter].duration += each.duration
+                temp.interval[counter] += each.get_duration()
+                temp.notes[counter].duration += each.get_duration()
         return temp
 
 
@@ -5105,46 +5108,43 @@ class event:
         return f'event({", ".join([f"{i}={j}" for i, j in self.__dict__.items()])})'
 
 
-class rest:
-
-    def __init__(self, duration=1 / 4, dotted=None):
-        self.duration = duration
-        if dotted is not None:
-            self.duration = self.duration * sum([(1 / 2)**i
-                                                 for i in range(dotted)])
-
-    def __repr__(self):
-        return f'rest(duration={self.duration})'
-
-
-class rest_symbol:
-
-    def __init__(self, duration=1 / 4):
-        self.duration = duration
-
-    def __repr__(self):
-        current_duration = Fraction(self.duration).limit_denominator()
-        return f'rest({current_duration})'
-
-
-class continue_symbol:
-
-    def __init__(self, duration=1 / 4):
-        self.duration = duration
-
-    def __repr__(self):
-        current_duration = Fraction(self.duration).limit_denominator()
-        return f'continue({current_duration})'
-
-
 class beat:
 
-    def __init__(self, duration=1 / 4):
+    def __init__(self, duration=1 / 4, dotted=None):
+        self.rhythm_name = 'beat'
         self.duration = duration
+        self.dotted = dotted
 
     def __repr__(self):
         current_duration = Fraction(self.duration).limit_denominator()
-        return f'beat({current_duration})'
+        dotted_part = "." * (self.dotted if self.dotted is not None else 0)
+        return f'{self.rhythm_name}({current_duration}{dotted_part})'
+
+    def get_duration(self):
+        if self.dotted is not None:
+            duration = self.duration * sum([(1 / 2)**i
+                                            for i in range(self.dotted + 1)])
+        else:
+            duration = self.duration
+        return duration
+
+
+class rest_symbol(beat):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rhythm_name = 'rest'
+
+
+class continue_symbol(beat):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.rhythm_name = 'continue'
+
+
+class rest(rest_symbol):
+    pass
 
 
 class rhythm(list):
@@ -5168,8 +5168,8 @@ class rhythm(list):
             if len(self) > 0:
                 current_time_signature_ratio = self.time_signature[
                     0] / self.time_signature[1]
-                current_duration = self.total_bar_length * current_time_signature_ratio / len(
-                    self)
+                current_duration = self.total_bar_length * current_time_signature_ratio / self.get_length(
+                )
                 for each in self:
                     each.duration = current_duration
         elif self.unit is not None:
@@ -5195,12 +5195,23 @@ class rhythm(list):
             else:
                 current, duration = each, 1 / 4
             current_beat = None
-            if current == 'b':
-                current_beat = beat(duration=duration)
-            elif current == '-':
-                current_beat = continue_symbol(duration=duration)
-            elif current == '0':
-                current_beat = rest_symbol(duration=duration)
+            if current.startswith('b') and all(j == '.' for j in current[1:]):
+                dotted_num = len(current[1:])
+                current_beat = beat(
+                    duration=duration,
+                    dotted=dotted_num if dotted_num != 0 else None)
+            elif current.startswith('-') and all(j == '.'
+                                                 for j in current[1:]):
+                dotted_num = len(current[1:])
+                current_beat = continue_symbol(
+                    duration=duration,
+                    dotted=dotted_num if dotted_num != 0 else None)
+            elif current.startswith('0') and all(j == '.'
+                                                 for j in current[1:]):
+                dotted_num = len(current[1:])
+                current_beat = rest_symbol(
+                    duration=duration,
+                    dotted=dotted_num if dotted_num != 0 else None)
             if current_beat is not None:
                 current_beat_list[i] = current_beat
         return current_beat_list
@@ -5210,6 +5221,10 @@ class rhythm(list):
 
     def __mul__(self, *args, **kwargs):
         return rhythm(super().__mul__(*args, **kwargs))
+
+    def get_length(self):
+        return sum(
+            [1 if i.dotted is None else mp.dotted(1, i.dotted) for i in self])
 
 
 def _read_notes(note_ls, rootpitch=4):
@@ -5225,9 +5240,9 @@ def _read_notes(note_ls, rootpitch=4):
             notes_result.append(each)
         elif isinstance(each, rest):
             if not notes_result:
-                start_time += each.duration
+                start_time += each.get_duration()
             elif intervals:
-                intervals[-1] += each.duration
+                intervals[-1] += each.get_duration()
         elif isinstance(each, str):
             if each.startswith('tempo'):
                 current = [eval(k) for k in each.split(';')[1:]]
