@@ -4490,7 +4490,7 @@ class drum:
                     if current_part_fix_beats is not None:
                         current_part_fix_length_unit = current_part_fix_length / current_part_fix_beats
                     else:
-                        current_part_fix_length_unit = current_part_fix_length / len(
+                        current_part_fix_length_unit = current_part_fix_length / self._get_length(
                             current_part)
                 for each in current_part:
                     if each.startswith('i:'):
@@ -4724,7 +4724,7 @@ class drum:
         current_append_volumes = [default_volume for i in current_append_notes]
         if translate_mode == 0:
             current_append_notes = [
-                mp.degree_to_note(mapping[each_note]) if each_note not in [
+                self._convert_to_note(each_note, mapping) if each_note not in [
                     current_rest_symbol, current_continue_symbol
                 ] else self._convert_to_symbol(each_note, current_rest_symbol,
                                                current_continue_symbol)
@@ -4737,7 +4737,8 @@ class drum:
                     if each_note not in [
                             current_rest_symbol, current_continue_symbol
                     ]:
-                        current_each_note = mp.N(each_note)
+                        current_each_note = self._convert_to_note(each_note,
+                                                                  mode=1)
                         new_current_append_notes.append(current_each_note)
                     else:
                         new_current_append_notes.append(
@@ -4749,7 +4750,8 @@ class drum:
                     if current_note not in [
                             current_rest_symbol, current_continue_symbol
                     ]:
-                        current_note = mp.N(current_note)
+                        current_note = self._convert_to_note(current_note,
+                                                             mode=1)
                         current_each_note = mp.C(
                             f'{current_note.name}{current_chord_type}',
                             current_note.num)
@@ -4788,6 +4790,9 @@ class drum:
                             current_content,
                             mode=1,
                             value2=current_append_durations)
+                    else:
+                        current_append_intervals = _process_note(
+                            current_content)
                     if not isinstance(current_append_intervals, list):
                         current_append_intervals = [
                             current_append_intervals
@@ -4822,7 +4827,8 @@ class drum:
                     current_fix_length_unit = current_fix_length / current_repeat_times
                 else:
                     current_fix_length_unit = current_fix_length / (
-                        len(current_append_notes) * current_repeat_times)
+                        self._get_length(current_append_notes) *
+                        current_repeat_times)
         elif current_part_fix_length_unit is not None:
             if current_fix_beats is not None:
                 current_fix_length_unit = current_part_fix_length_unit / current_fix_beats
@@ -4831,7 +4837,8 @@ class drum:
                     current_fix_length_unit = current_part_fix_length_unit / current_repeat_times
                 else:
                     current_fix_length_unit = current_part_fix_length_unit / (
-                        len(current_append_notes) * current_repeat_times)
+                        self._get_length(current_append_notes) *
+                        current_repeat_times)
         if current_same_time:
             current_append_intervals = [
                 0 for k in range(len(current_append_notes) - 1)
@@ -4840,14 +4847,22 @@ class drum:
             if current_same_time:
                 current_append_intervals = [
                     0 for k in range(len(current_append_notes) - 1)
-                ] + [current_fix_length_unit]
+                ] + [
+                    self._apply_dotted_notes(
+                        current_fix_length_unit,
+                        current_append_notes[-1].dotted_num)
+                ]
             else:
                 current_append_intervals = [
-                    current_fix_length_unit for k in current_append_notes
+                    self._apply_dotted_notes(current_fix_length_unit,
+                                             k.dotted_num)
+                    for k in current_append_notes
                 ]
             if not custom_durations:
                 current_append_durations = [
-                    current_fix_length_unit for k in current_append_notes
+                    self._apply_dotted_notes(current_fix_length_unit,
+                                             k.dotted_num)
+                    for k in current_append_notes
                 ]
         if current_repeat_times > 1:
             current_append_notes *= current_repeat_times
@@ -4916,7 +4931,7 @@ class drum:
         current_append_notes = [i for i in current_append_notes if i]
         if translate_mode == 0:
             current_append_notes = [
-                mp.degree_to_note(mapping[each_note]) if each_note not in [
+                self._convert_to_note(each_note, mapping) if each_note not in [
                     current_rest_symbol, current_continue_symbol
                 ] else self._convert_to_symbol(each_note, current_rest_symbol,
                                                current_continue_symbol)
@@ -4929,7 +4944,8 @@ class drum:
                     if each_note not in [
                             current_rest_symbol, current_continue_symbol
                     ]:
-                        current_each_note = mp.N(each_note)
+                        current_each_note = self._convert_to_note(each_note,
+                                                                  mode=1)
                         new_current_append_notes.append(current_each_note)
                     else:
                         new_current_append_notes.append(
@@ -4941,7 +4957,8 @@ class drum:
                     if current_note not in [
                             current_rest_symbol, current_continue_symbol
                     ]:
-                        current_note = mp.N(current_note)
+                        current_note = self._convert_to_note(current_note,
+                                                             mode=1)
                         current_each_note = mp.C(
                             f'{current_note.name}{current_chord_type}',
                             current_note.num)
@@ -4950,12 +4967,16 @@ class drum:
             current_append_notes = new_current_append_notes
 
         current_append_durations = [
-            default_duration if not current_part_fix_length_unit else
-            current_part_fix_length_unit for k in current_append_notes
+            default_duration
+            if not current_part_fix_length_unit else self._apply_dotted_notes(
+                current_part_fix_length_unit, k.dotted_num)
+            for k in current_append_notes
         ]
         current_append_intervals = [
-            default_interval if not current_part_fix_length_unit else
-            current_part_fix_length_unit for k in current_append_notes
+            default_interval
+            if not current_part_fix_length_unit else self._apply_dotted_notes(
+                current_part_fix_length_unit, k.dotted_num)
+            for k in current_append_notes
         ]
         current_append_volumes = [default_volume for k in current_append_notes]
         if len(current_append_notes) > 1:
@@ -5055,6 +5076,44 @@ class drum:
         elif text == current_continue_symbol:
             text = continue_symbol()
         return text
+
+    def _convert_to_note(self, text, mapping=None, mode=0):
+        dotted_num = 0
+        if '.' in text:
+            text, dotted = text.split('.', 1)
+            dotted_num = len(dotted) + 1
+        if mode == 0:
+            result = mp.degree_to_note(mapping[text])
+        else:
+            result = mp.N(text)
+        result.dotted_num = dotted_num
+        return result
+
+    def _get_dotted(self, text):
+        result = 0
+        if isinstance(text, str):
+            if '.' in text:
+                ind = text.index('.')
+                ind2 = len(text)
+                if '[' in text:
+                    ind2 = text.index('[')
+                if all(i == '.' for i in text[ind:ind2]):
+                    text, dotted = text[:ind2].split('.', 1)
+                    dotted += '.'
+                    result = len(dotted)
+                else:
+                    raise Exception(
+                        'for drum notes group, dotted notes syntax should be placed after the last note'
+                    )
+        else:
+            result = text.dotted_num
+        return result
+
+    def _get_length(self, notes):
+        return sum([mp.dotted(1, self._get_dotted(i)) for i in notes])
+
+    def _apply_dotted_notes(self, current_part_fix_length_unit, dotted_num):
+        return mp.dotted(current_part_fix_length_unit, dotted_num)
 
     def __mul__(self, n):
         temp = copy(self)
