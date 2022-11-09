@@ -118,7 +118,8 @@ def piece_to_event_list(current_chord, set_instrument=False):
         for j, current in enumerate(each.notes):
             if isinstance(current, tempo):
                 if current.start_time is not None:
-                    current_time = current.start_time
+                    current_time = bar_to_real_time(
+                        current.start_time, current_chord.bpm, 1) / 1000
                 else:
                     current_time = bar_to_real_time(
                         current_start_time + sum(each.interval[:j]),
@@ -130,7 +131,8 @@ def piece_to_event_list(current_chord, set_instrument=False):
                                track=i))
             elif isinstance(current, pitch_bend):
                 if current.start_time is not None:
-                    current_time = current.start_time
+                    current_time = bar_to_real_time(
+                        current.start_time, current_chord.bpm, 1) / 1000
                 else:
                     current_time = bar_to_real_time(
                         current_start_time + sum(each.interval[:j]),
@@ -242,7 +244,8 @@ def start(current_chord,
                 current_player.pitch_bend(value=current_event.value.value,
                                           channel=current_channel)
             elif mode == 4:
-                current_player.write_short(0xFF, 0x51, int(current_event.value))
+                current_player.write_short(0xFF, 0x51,
+                                           int(current_event.value))
             elif mode == 5:
                 current_player.write_short(0xb0 | current_event.value.channel,
                                            current_event.value.control,
