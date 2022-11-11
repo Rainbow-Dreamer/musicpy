@@ -1606,7 +1606,12 @@ def dataclass_repr(s, keywords=None):
 
 
 def read_musicxml(file):
-    pass
+    if __name__ == '__main__' or __name__ == 'musicpy':
+        import musicxml_parser
+    else:
+        from . import musicxml_parser
+    result = musicxml_parser.parse_musicxml(file)
+    return result
 
 
 def write_musicxml(current_chord):
