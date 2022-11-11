@@ -1631,8 +1631,6 @@ def read_json(file):
     current['other_messages'] = [event(**k) for k in current['other_messages']]
     current['pan'] = [[pan(**i) for i in j] for j in current['pan']]
     current['volume'] = [[volume(**i) for i in j] for j in current['volume']]
-    del current['instruments_numbers']
-    del current['track_number']
     result = piece(**current)
     return result
 
@@ -1733,6 +1731,8 @@ def write_json(current_chord,
         for j in i:
             j['mode'] = 'value'
             del j['value_percentage']
+    del result['instruments_numbers']
+    del result['track_number']
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(result,
                   f,
