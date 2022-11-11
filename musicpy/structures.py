@@ -164,7 +164,6 @@ class chord:
                  rootpitch=4,
                  other_messages=[],
                  start_time=None):
-        self.other_messages = other_messages
         standardize_msg = False
         if isinstance(notes, str):
             notes = notes.replace(' ', '').split(',')
@@ -179,10 +178,6 @@ class chord:
             standardize_msg = True
         notes_msg = _read_notes(notes, rootpitch)
         notes, current_intervals, current_start_time = notes_msg
-        if start_time is None:
-            self.start_time = current_start_time
-        else:
-            self.start_time = start_time
         if current_intervals and not interval:
             interval = current_intervals
         if standardize_msg and notes:
@@ -218,6 +213,11 @@ class chord:
             else:
                 for k in range(len(duration)):
                     self.notes[k].duration = duration[k]
+        if start_time is None:
+            self.start_time = current_start_time
+        else:
+            self.start_time = start_time
+        self.other_messages = other_messages
 
     def get_duration(self):
         return [i.duration for i in self.notes]

@@ -5,6 +5,7 @@ import chunk
 from io import BytesIO
 import mido_fix as mido
 import functools
+import json
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import database
@@ -562,6 +563,11 @@ def read(name,
         ]
     if get_off_drums:
         result_piece.get_off_drums()
+    for i in result_piece.tracks:
+        if hasattr(i, 'pan_list'):
+            del i.pan_list
+        if hasattr(i, 'volume_list'):
+            del i.volume_list
     return result_piece
 
 
@@ -1597,6 +1603,142 @@ def dataclass_repr(s, keywords=None):
     else:
         result = f"{type(s).__name__}({', '.join([f'{i}={vars(s)[i]}' for i in keywords])})"
     return result
+
+
+def read_musicxml(file):
+    pass
+
+
+def write_musicxml(current_chord):
+    pass
+
+
+def read_json(file):
+    note_list_dict = {'note': note, 'pitch_bend': pitch_bend, 'tempo': tempo}
+    with open(file, encoding='utf-8') as f:
+        current = json.load(f)
+    for j in current['tracks']:
+        j['interval'] = [i['interval'] for i in j['notes']]
+        for i in j['notes']:
+            del i['interval']
+        j['notes'] = [
+            note_list_dict[k['type']](
+                **{i: j
+                   for i, j in k.items() if i != 'type'}) for k in j['notes']
+        ]
+        j['other_messages'] = [event(**k) for k in j['other_messages']]
+    current['tracks'] = [chord(**i) for i in current['tracks']]
+    current['other_messages'] = [event(**k) for k in current['other_messages']]
+    current['pan'] = [[pan(**i) for i in j] for j in current['pan']]
+    current['volume'] = [[volume(**i) for i in j] for j in current['volume']]
+    del current['instruments_numbers']
+    del current['track_number']
+    result = piece(**current)
+    return result
+
+
+def write_json(current_chord,
+               bpm=120,
+               channel=0,
+               start_time=None,
+               name=None,
+               filename='untitled.json',
+               instrument=None,
+               i=None,
+               msg=None,
+               nomsg=False):
+    if i is not None:
+        instrument = i
+    is_track_type = False
+    if isinstance(current_chord, note):
+        current_chord = chord([current_chord])
+    elif isinstance(current_chord, list):
+        current_chord = concat(current_chord, '|')
+    if isinstance(current_chord, chord):
+        is_track_type = True
+        if instrument is None:
+            instrument = 1
+        current_chord = P(
+            [current_chord], [instrument],
+            bpm=bpm,
+            channels=[channel],
+            start_times=[
+                current_chord.start_time if start_time is None else start_time
+            ],
+            other_messages=current_chord.other_messages,
+            name=name)
+    elif isinstance(current_chord, track):
+        is_track_type = True
+        if hasattr(current_chord, 'other_messages'):
+            msg = current_chord.other_messages
+        else:
+            msg = current_chord.content.other_messages
+        current_chord = build(current_chord, bpm=current_chord.bpm, name=name)
+    elif isinstance(current_chord, drum):
+        is_track_type = True
+        if hasattr(current_chord, 'other_messages'):
+            msg = current_chord.other_messages
+        current_chord = P([current_chord.notes], [current_chord.instrument],
+                          bpm, [
+                              current_chord.notes.start_time
+                              if start_time is None else start_time
+                          ],
+                          channels=[9],
+                          name=name)
+    else:
+        current_chord = copy(current_chord)
+    track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
+    current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
+    instruments_numbers = [
+        i if isinstance(i, int) else database.INSTRUMENTS[i]
+        for i in instruments_numbers
+    ]
+    result = current_chord.__dict__
+    result['tracks'] = [i.__dict__ for i in result['tracks']]
+    for j in result['tracks']:
+        for i, each in enumerate(j['notes']):
+            current_dict = {'type': each.__class__.__name__}
+            if isinstance(each, note):
+                current_dict.update({
+                    k1: k2
+                    for k1, k2 in each.__dict__.items()
+                    if k1 not in ['degree']
+                })
+            elif isinstance(each, pitch_bend):
+                current_dict.update({
+                    k1: k2
+                    for k1, k2 in each.__dict__.items()
+                    if k1 not in ['degree', 'volume', 'duration']
+                })
+                current_dict['mode'] = 'value'
+            elif isinstance(each, tempo):
+                current_dict.update({
+                    k1: k2
+                    for k1, k2 in each.__dict__.items()
+                    if k1 not in ['degree', 'volume', 'duration']
+                })
+            j['notes'][i] = current_dict
+        j['other_messages'] = [k.__dict__ for k in j['other_messages']]
+        for i, each in enumerate(j['notes']):
+            each['interval'] = j['interval'][i]
+        del j['interval']
+    result['other_messages'] = [i.__dict__ for i in result['other_messages']]
+    result['pan'] = [[i.__dict__ for i in j] for j in result['pan']]
+    result['volume'] = [[i.__dict__ for i in j] for j in result['volume']]
+    for i in result['pan']:
+        for j in i:
+            j['mode'] = 'value'
+            del j['value_percentage']
+    for i in result['volume']:
+        for j in i:
+            j['mode'] = 'value'
+            del j['value_percentage']
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(result,
+                  f,
+                  indent=4,
+                  separators=(',', ': '),
+                  ensure_ascii=False)
 
 
 C = trans
