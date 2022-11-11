@@ -4724,19 +4724,19 @@ class drum:
         current_append_volumes = [default_volume for i in current_append_notes]
         if translate_mode == 0:
             current_append_notes = [
-                self._convert_to_note(each_note, mapping) if each_note not in [
-                    current_rest_symbol, current_continue_symbol
-                ] else self._convert_to_symbol(each_note, current_rest_symbol,
-                                               current_continue_symbol)
+                self._convert_to_note(each_note, mapping) if all(
+                    not each_note.startswith(j)
+                    for j in [current_rest_symbol, current_continue_symbol])
+                else self._convert_to_symbol(each_note, current_rest_symbol,
+                                             current_continue_symbol)
                 for each_note in current_append_notes
             ]
         else:
             new_current_append_notes = []
             for each_note in current_append_notes:
                 if ':' not in each_note:
-                    if each_note not in [
-                            current_rest_symbol, current_continue_symbol
-                    ]:
+                    if all(not each_note.startswith(j) for j in
+                           [current_rest_symbol, current_continue_symbol]):
                         current_each_note = self._convert_to_note(each_note,
                                                                   mode=1)
                         new_current_append_notes.append(current_each_note)
@@ -4931,19 +4931,19 @@ class drum:
         current_append_notes = [i for i in current_append_notes if i]
         if translate_mode == 0:
             current_append_notes = [
-                self._convert_to_note(each_note, mapping) if each_note not in [
-                    current_rest_symbol, current_continue_symbol
-                ] else self._convert_to_symbol(each_note, current_rest_symbol,
-                                               current_continue_symbol)
+                self._convert_to_note(each_note, mapping) if all(
+                    not each_note.startswith(j)
+                    for j in [current_rest_symbol, current_continue_symbol])
+                else self._convert_to_symbol(each_note, current_rest_symbol,
+                                             current_continue_symbol)
                 for each_note in current_append_notes
             ]
         else:
             new_current_append_notes = []
             for each_note in current_append_notes:
                 if ':' not in each_note:
-                    if each_note not in [
-                            current_rest_symbol, current_continue_symbol
-                    ]:
+                    if all(not each_note.startswith(j) for j in
+                           [current_rest_symbol, current_continue_symbol]):
                         current_each_note = self._convert_to_note(each_note,
                                                                   mode=1)
                         new_current_append_notes.append(current_each_note)
@@ -5071,11 +5071,17 @@ class drum:
 
     def _convert_to_symbol(self, text, current_rest_symbol,
                            current_continue_symbol):
+        dotted_num = 0
+        if '.' in text:
+            text, dotted = text.split('.', 1)
+            dotted_num = len(dotted) + 1
         if text == current_rest_symbol:
-            text = rest_symbol()
+            result = rest_symbol()
         elif text == current_continue_symbol:
-            text = continue_symbol()
-        return text
+            result = continue_symbol()
+        result.dotted_num = dotted_num
+        result.mode = None
+        return result
 
     def _convert_to_note(self, text, mapping=None, mode=0):
         dotted_num = 0
@@ -5097,14 +5103,15 @@ class drum:
                 ind2 = len(text)
                 if '[' in text:
                     ind2 = text.index('[')
-                if all(i == '.' for i in text[ind:ind2]):
-                    text, dotted = text[:ind2].split('.', 1)
-                    dotted += '.'
-                    result = len(dotted)
-                else:
-                    raise Exception(
-                        'for drum notes group, dotted notes syntax should be placed after the last note'
-                    )
+                if ind2 > ind:
+                    if all(i == '.' for i in text[ind:ind2]):
+                        text, dotted = text[:ind2].split('.', 1)
+                        dotted += '.'
+                        result = len(dotted)
+                    else:
+                        raise Exception(
+                            'for drum notes group, dotted notes syntax should be placed after the last note'
+                        )
         else:
             result = text.dotted_num
         return result
