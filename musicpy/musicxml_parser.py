@@ -19,12 +19,38 @@ def parse_musicxml(file):
             headers.append(each[1:-1])
         else:
             if not each.startswith('</'):
-                current_content = [j for j in each[1:-1].split(' ') if j]
-                current_type = current_content[0]
-                current_attributes = [
-                    j.split('=') for j in current_content[1:]
-                ]
-                current_attributes = {j[0]: j[1] for j in current_attributes}
+                close_tag = False
+                if each.endswith('/>'):
+                    close_tag = True
+                if not close_tag:
+                    current_split = each.strip(' ')[1:-1].split(' ', 1)
+                else:
+                    current_split = each.strip(' ')[1:-2].split(' ', 1)
+                current_content = None
+                current_attributes = {}
+                if len(current_split) == 2:
+                    current_type, current_content = current_split
+                else:
+                    current_type = current_split[0]
+                if current_content is not None:
+                    current_content = current_content.split('=')
+                    new_current_content = []
+                    for k in current_content:
+                        current_part = k.strip(' ')
+                        if current_part.rfind(' ') > current_part.rfind('"'):
+                            current_split_ind = current_part.rfind('"')
+                            new_current_content.append(
+                                current_part[:current_split_ind] + '"')
+                            new_current_content.append(
+                                current_part[current_split_ind +
+                                             1:].strip(' '))
+                        else:
+                            new_current_content.append(k)
+                    current_content = new_current_content
+                    current_attributes = {
+                        current_content[j]: current_content[j + 1]
+                        for j in range(len(current_content)) if j % 2 == 0
+                    }
                 current_inner_content = current[bracket_inds[i * 2 + 1] +
                                                 1:bracket_inds[i * 2 + 2]]
                 if current_inner_content.strip('\n ') == '':
@@ -32,8 +58,12 @@ def parse_musicxml(file):
                 current_data = [
                     current_type, current_attributes, current_inner_content
                 ]
+                if close_tag:
+                    body.append(current_data)
+                    body.append([current_type, 'end', None])
+                    continue
             else:
-                current_type = each[2:-1]
+                current_type = each.strip(' ')[2:-1]
                 current_data = [current_type, 'end', None]
             body.append(current_data)
     result_body = parse_inner(body)
@@ -75,11 +105,16 @@ def parse_inner(current_part):
     return result
 
 
-def musicxml_to_json(file, output_path):
+def musicxml_to_json(file, output_path, compressed=False):
     result = parse_musicxml(file)
-    with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(result,
-                  f,
-                  indent=4,
-                  separators=(',', ': '),
-                  ensure_ascii=False)
+    if not compressed:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(result,
+                      f,
+                      indent=4,
+                      separators=(',', ': '),
+                      ensure_ascii=False)
+    else:
+        result = json.dumps(result).encode('utf-8')
+        with open(output_path, 'wb') as f:
+            f.write(result)
