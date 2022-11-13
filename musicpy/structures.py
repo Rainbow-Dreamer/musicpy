@@ -552,11 +552,6 @@ class chord:
     def __mod__(self, alist):
         if isinstance(alist, (list, tuple)):
             return self.set(*alist)
-        elif isinstance(alist, int):
-            temp = copy(self)
-            for i in range(alist - 1):
-                temp //= self
-            return temp
         elif isinstance(alist, (str, note)):
             return self.on(alist)
 
@@ -648,9 +643,9 @@ class chord:
     def __add__(self, obj):
         if isinstance(obj, (int, list)):
             return self.up(obj)
-        if isinstance(obj, tuple):
+        elif isinstance(obj, tuple):
             return self.up(*obj)
-        if isinstance(obj, rest):
+        elif isinstance(obj, rest):
             return self.rest(obj.duration)
         temp = copy(self)
         if isinstance(obj, note):
@@ -659,10 +654,7 @@ class chord:
         elif isinstance(obj, str):
             return temp + mp.to_note(obj)
         elif isinstance(obj, chord):
-            obj = copy(obj)
-            temp.notes += obj.notes
-            temp.interval += obj.interval
-            temp.other_messages += obj.other_messages
+            temp |= obj
         return temp
 
     def __radd__(self, obj):
@@ -693,7 +685,7 @@ class chord:
     def __invert__(self):
         return self.reverse()
 
-    def __floordiv__(self, obj):
+    def __or__(self, obj):
         if isinstance(obj, (int, float)):
             return self.rest(obj)
         elif isinstance(obj, str):
@@ -716,9 +708,6 @@ class chord:
         elif isinstance(obj, rest):
             return self.rest(obj.get_duration())
         return self.add(obj, mode='after')
-
-    def __or__(self, other):
-        return self // other
 
     def __xor__(self, obj):
         if isinstance(obj, int):
@@ -903,9 +892,8 @@ class chord:
 
     def __mul__(self, num):
         temp = copy(self)
-        unit = copy(temp)
         for i in range(num - 1):
-            temp += unit
+            temp |= self
         return temp
 
     def __rmul__(self, num):
@@ -1000,7 +988,11 @@ class chord:
         if len(note1) == 0:
             return temp
         if mode == 'tail':
-            return temp + note1
+            note1 = copy(note1)
+            temp.notes += note1.notes
+            temp.interval += note1.interval
+            temp.other_messages += note1.other_messages
+            return temp
         elif mode == 'head':
             note1 = copy(note1)
             if isinstance(note1, chord):
@@ -1058,9 +1050,11 @@ class chord:
                          note1.other_messages) + not_notes
         elif mode == 'after':
             if self.interval[-1] == 0:
-                return (self.rest(0) | (start + note1.start_time)) + note1
+                return (self.rest(0) | (start + note1.start_time)).add(
+                    note1, mode='tail')
             else:
-                return (self | (start + note1.start_time)) + note1
+                return (self | (start + note1.start_time)).add(note1,
+                                                               mode='tail')
 
     def inversion(self, num=1):
         if not 1 <= num < len(self.notes):
