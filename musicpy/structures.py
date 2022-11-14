@@ -673,9 +673,6 @@ class chord:
                                 obj.get_duration())
             return temp
 
-    def __rfloordiv__(self, obj):
-        return obj | self
-
     def __pos__(self):
         return self.up()
 
