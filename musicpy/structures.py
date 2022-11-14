@@ -5157,10 +5157,11 @@ class drum:
 
 class event:
 
-    def __init__(self, type, track=0, start_time=0, **kwargs):
+    def __init__(self, type, track=0, start_time=0, is_meta=False, **kwargs):
         self.type = type
         self.track = track
         self.start_time = start_time
+        self.is_meta = is_meta
         self.__dict__.update(kwargs)
 
     def __repr__(self):
