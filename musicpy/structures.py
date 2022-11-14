@@ -972,7 +972,7 @@ class chord:
             return result
         return [database.INTERVAL[x % database.octave] for x in result]
 
-    def add(self, note1=None, mode='tail', start=0, duration=0.25):
+    def add(self, note1=None, mode='after', start=0, duration=0.25):
         if len(self) == 0:
             result = copy(note1)
             if start != 0:
@@ -3039,12 +3039,6 @@ class piece:
             temp.tracks[i] *= n
         return temp
 
-    def __mod__(self, n):
-        temp = copy(self)
-        for i in range(temp.track_number):
-            temp.tracks[i] %= n
-        return temp
-
     def __or__(self, n):
         temp = copy(self)
         whole_length = temp.bars()
@@ -4200,11 +4194,6 @@ class track:
         temp.content *= n
         return temp
 
-    def __mod__(self, n):
-        temp = copy(self)
-        temp.content %= n
-        return temp
-
     def __pos__(self):
         return self.up()
 
@@ -5117,7 +5106,7 @@ class drum:
 
     def __mul__(self, n):
         temp = copy(self)
-        temp.notes %= n
+        temp.notes *= n
         return temp
 
     def __add__(self, other):
@@ -5139,11 +5128,6 @@ class drum:
         if isinstance(other, tuple) and isinstance(other[0], drum):
             other = (other[0].notes, ) + other[1:]
         temp.notes |= (other.notes if isinstance(other, drum) else other)
-        return temp
-
-    def __mod__(self, n):
-        temp = copy(self)
-        temp.notes %= n
         return temp
 
     def set(self, durations=None, intervals=None, volumes=None):
