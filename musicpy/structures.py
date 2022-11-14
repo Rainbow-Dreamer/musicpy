@@ -1064,7 +1064,7 @@ class chord:
                 temp.notes.append(temp.notes.pop(0) + database.octave)
             return temp
 
-    def inv(self, num=1):
+    def inv(self, num=1, interval=None):
         temp = self.copy()
         if isinstance(num, str):
             return self @ num
@@ -1074,7 +1074,9 @@ class chord:
             )
         while temp[num].degree >= temp[num - 1].degree:
             temp[num] = temp[num].down(database.octave)
+        current_interval = copy(temp.interval)
         temp.insert(0, temp.pop(num))
+        temp.interval = current_interval
         return temp
 
     def sort(self, indlist, rootpitch=None):
