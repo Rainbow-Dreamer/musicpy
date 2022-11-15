@@ -205,7 +205,7 @@ class chord:
         # interval between each two notes one-by-one
         self.interval = [0 for i in range(len(notes))]
         if interval is not None:
-            self.changeInterval(interval)
+            self.change_interval(interval)
         if duration is not None:
             if isinstance(duration, (int, float)):
                 for t in self.notes:
@@ -619,7 +619,7 @@ class chord:
             result.setvolume(volume, ind)
         return result
 
-    def changeInterval(self, newinterval):
+    def change_interval(self, newinterval):
         if isinstance(newinterval, (int, float)):
             self.interval = [newinterval for i in range(len(self.notes))]
         else:
@@ -2295,10 +2295,10 @@ class scale:
                 self.mode = mode.lower()
             else:
                 self.mode = mode
-            self.notes = self.getScale().notes
+            self.notes = self.get_scale().notes
 
         if interval is None:
-            self.interval = self.getInterval()
+            self.interval = self.get_interval()
         if mode is None:
             current_mode = mp.alg.detect_scale_type(self.interval,
                                                     mode='interval')
@@ -2312,7 +2312,7 @@ class scale:
         self.interval = interval
 
     def __repr__(self):
-        return f'[scale]\nscale name: {self.start} {self.mode} scale\nscale intervals: {self.getInterval()}\nscale notes: {self.getScale().notes}'
+        return f'[scale]\nscale name: {self.start} {self.mode} scale\nscale intervals: {self.get_interval()}\nscale notes: {self.get_scale().notes}'
 
     def __eq__(self, other):
         return type(other) is scale and self.notes == other.notes
@@ -2374,7 +2374,7 @@ class scale:
                     notes[current_ind] = notes[current_ind].down()
             return scale(notes=notes)
 
-    def getInterval(self):
+    def get_interval(self):
         if self.mode is None:
             if self.interval is None:
                 if self.notes is None:
@@ -2407,7 +2407,7 @@ class scale:
                         for i in range(1, len(notes))
                     ]
 
-    def getScale(self, intervals=0.25, durations=None):
+    def get_scale(self, intervals=0.25, durations=None):
         if self.mode == None:
             if self.interval == None:
                 raise ValueError(
@@ -2423,7 +2423,7 @@ class scale:
         else:
             result = [self.start]
             count = self.start.degree
-            interval1 = self.getInterval()
+            interval1 = self.get_interval()
             if isinstance(interval1, str):
                 raise ValueError('cannot find this scale')
             for t in interval1:
@@ -2490,7 +2490,7 @@ class scale:
         if self.mode is not None:
             return scale(self[4], mode=self.mode)
         else:
-            return scale(self[4], interval=self.getInterval())
+            return scale(self[4], interval=self.get_interval())
 
     def fifth(self, step=1, inner=False):
         # move the scale on the circle of fifths by number of steps,
@@ -2498,19 +2498,19 @@ class scale:
         # if the step is < 0, then move counterclockwise,
         # if inner is True: pick the inner scales from the circle of fifths,
         # i.e. those minor scales.
-        return circle_of_fifths().rotate_getScale(self[0].name,
-                                                  step,
-                                                  pitch=self[0].num,
-                                                  inner=inner)
+        return circle_of_fifths().rotate_get_scale(self[0].name,
+                                                   step,
+                                                   pitch=self[0].num,
+                                                   inner=inner)
 
     def fourth(self, step=1, inner=False):
         # same as fifth but instead of circle of fourths
         # Maybe someone would notice that circle of fourths is just
         # the reverse of circle of fifths.
-        return circle_of_fourths().rotate_getScale(self[0].name,
-                                                   step,
-                                                   pitch=self[0].num,
-                                                   inner=inner)
+        return circle_of_fourths().rotate_get_scale(self[0].name,
+                                                    step,
+                                                    pitch=self[0].num,
+                                                    inner=inner)
 
     def tonic(self):
         return self[0]
@@ -2588,7 +2588,7 @@ class scale:
                                      interval=interval,
                                      num=num,
                                      step=step)
-            for i in range(len(self.getInterval()) + 1)
+            for i in range(len(self.get_interval()) + 1)
         ]
 
     def relative_key(self):
@@ -2680,13 +2680,13 @@ class scale:
         return ~self
 
     def move(self, x):
-        notes = copy(self.getScale())
+        notes = copy(self.get_scale())
         return scale(notes=notes.move(x))
 
     def inversion(self, ind, parallel=False, start=None):
         # return the inversion of a scale with the beginning note of a given index
         ind -= 1
-        interval1 = self.getInterval()
+        interval1 = self.get_interval()
         new_interval = interval1[ind:] + interval1[:ind]
         if parallel:
             start1 = self.start
@@ -2694,13 +2694,13 @@ class scale:
             if start is not None:
                 start1 = start
             else:
-                start1 = self.getScale().notes[ind]
+                start1 = self.get_scale().notes[ind]
         result = scale(start=start1, interval=new_interval)
         result.mode = result.detect()
         return result
 
     def play(self, intervals=0.25, durations=None, *args, **kwargs):
-        mp.play(self.getScale(intervals, durations), *args, **kwargs)
+        mp.play(self.get_scale(intervals, durations), *args, **kwargs)
 
     def __add__(self, obj):
         if isinstance(obj, int):
@@ -2781,6 +2781,12 @@ class scale:
             interval = temp.interval
         return scale(start, mode, interval)
 
+    def __truediv__(self, n):
+        if isinstance(n, tuple):
+            return self.inversion(*n)
+        else:
+            return self.inversion(n)
+
 
 class circle_of_fifths:
     outer = ['C', 'G', 'D', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F']
@@ -2820,12 +2826,12 @@ class circle_of_fifths:
             startind = start
         return self[startind + step] if not inner else self[startind + step, ]
 
-    def rotate_getScale(self,
-                        start,
-                        step=1,
-                        direction='cw',
-                        pitch=4,
-                        inner=False):
+    def rotate_get_scale(self,
+                         start,
+                         step=1,
+                         direction='cw',
+                         pitch=4,
+                         inner=False):
         if not inner:
             return scale(note(self.rotate(start, step, direction), pitch),
                          'major')
@@ -2834,7 +2840,7 @@ class circle_of_fifths:
                 note(self.rotate(start, step, direction, True)[:-1], pitch),
                 'minor')
 
-    def getScale(self, ind, pitch, inner=False):
+    def get_scale(self, ind, pitch, inner=False):
         return scale(note(self[ind], pitch), 'major') if not inner else scale(
             note(self[ind, ][:-1], pitch), 'minor')
 
