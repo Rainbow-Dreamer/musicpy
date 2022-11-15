@@ -888,10 +888,13 @@ class chord:
         return temp
 
     def __mul__(self, num):
-        temp = copy(self)
-        for i in range(num - 1):
-            temp |= self
-        return temp
+        if isinstance(num, tuple):
+            return self | num
+        else:
+            temp = copy(self)
+            for i in range(num - 1):
+                temp |= self
+            return temp
 
     def __rmul__(self, num):
         return self * num
