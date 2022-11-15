@@ -3018,6 +3018,34 @@ class piece:
                 self.sampler_channels.append(0)
         self.track_number += 1
 
+    def insert(self, i, new_track):
+        if not isinstance(new_track, track):
+            raise ValueError('must be a track type to be inserted')
+        self.tracks.insert(i, new_track.content)
+        self.instruments.insert(i, new_track.instrument)
+        self.instruments_numbers.insert(i, new_track.instruments_number)
+        self.start_times.insert(i, new_track.start_time)
+        if self.channels:
+            if new_track.channel:
+                self.channels.insert(i, new_track.channel)
+            else:
+                self.channels.insert(i, max(self.channels) + 1)
+        if self.track_names:
+            if new_track.track_name:
+                self.track_names.insert(i, new_track.track_name)
+            else:
+                self.track_names.insert(
+                    i, new_track.name if new_track.name is not None else
+                    f'track {self.track_number+1}')
+        self.pan.insert(i, new_track.pan if new_track.pan else [])
+        self.volume.insert(i, new_track.volume if new_track.volume else [])
+        if self.sampler_channels:
+            if new_track.sampler_channel:
+                self.sampler_channels.insert(i, new_track.sampler_channel)
+            else:
+                self.sampler_channels.insert(i, 0)
+        self.track_number += 1
+
     def up(self, n=1, mode=0):
         temp = copy(self)
         for i in range(temp.track_number):
