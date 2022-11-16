@@ -224,23 +224,28 @@ def concat(chordlist, mode='+', extra=None, start=None):
         return chordlist
     temp = copy(chordlist[0]) if start is None else start
     start_ind = 1 if start is None else 0
+    chordlist = chordlist[start_ind:]
     if mode == '+':
-        for t in chordlist[start_ind:]:
-            temp += t
+        if not extra:
+            for t in chordlist:
+                temp += t
+        else:
+            for t in chordlist:
+                temp += (t, extra)
     elif mode == '|':
         if not extra:
-            for t in chordlist[start_ind:]:
+            for t in chordlist:
                 temp |= t
         else:
-            for t in chordlist[start_ind:]:
+            for t in chordlist:
                 temp |= (t, extra)
     elif mode == '&':
         if not extra:
-            for t in chordlist[start_ind:]:
+            for t in chordlist:
                 temp &= t
         else:
             extra_unit = extra
-            for t in chordlist[start_ind:]:
+            for t in chordlist:
                 temp &= (t, extra)
                 extra += extra_unit
     return temp

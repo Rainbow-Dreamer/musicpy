@@ -644,7 +644,10 @@ class chord:
         if isinstance(obj, (int, list)):
             return self.up(obj)
         elif isinstance(obj, tuple):
-            return self.up(*obj)
+            if isinstance(obj[0], chord):
+                return self | obj
+            else:
+                return self.up(*obj)
         elif isinstance(obj, rest):
             return self.rest(obj.duration)
         temp = copy(self)
