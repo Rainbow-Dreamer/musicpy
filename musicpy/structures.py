@@ -2267,15 +2267,15 @@ class chord:
         length = len(temp)
         counter = -1
         for i, each in enumerate(current_rhythm):
-            if isinstance(each, beat):
+            if type(each) is beat:
                 counter += 1
                 if counter >= length:
                     break
                 temp.interval[counter] = each.get_duration()
                 temp.notes[counter].duration = each.get_duration()
-            elif isinstance(each, rest_symbol):
+            elif type(each) is rest_symbol:
                 temp.interval[counter] += each.get_duration()
-            elif isinstance(each, continue_symbol):
+            elif type(each) is continue_symbol:
                 temp.interval[counter] += each.get_duration()
                 temp.notes[counter].duration += each.get_duration()
         return temp
