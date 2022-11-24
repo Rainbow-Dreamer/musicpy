@@ -4623,10 +4623,14 @@ class drum:
                 current_intervals = [j for k in current_intervals for j in k]
                 current_volumes = [j for k in current_volumes for j in k]
                 if current_part_repeat_times > 1:
-                    current_notes *= current_part_repeat_times
-                    current_durations *= current_part_repeat_times
-                    current_intervals *= current_part_repeat_times
-                    current_volumes *= current_part_repeat_times
+                    current_notes = copy_list(current_notes,
+                                              current_part_repeat_times)
+                    current_durations = copy_list(current_durations,
+                                                  current_part_repeat_times)
+                    current_intervals = copy_list(current_intervals,
+                                                  current_part_repeat_times)
+                    current_volumes = copy_list(current_volumes,
+                                                current_part_repeat_times)
                 if current_part_name:
                     name_dict[current_part_name] = [
                         current_notes, current_durations, current_intervals,
@@ -4637,10 +4641,10 @@ class drum:
             intervals.extend(current_intervals)
             volumes.extend(current_volumes)
         if global_repeat_times > 1:
-            notes *= global_repeat_times
-            durations *= global_repeat_times
-            intervals *= global_repeat_times
-            volumes *= global_repeat_times
+            notes = copy_list(notes, global_repeat_times)
+            durations = copy_list(durations, global_repeat_times)
+            intervals = copy_list(intervals, global_repeat_times)
+            volumes = copy_list(volumes, global_repeat_times)
         result = chord(notes) % (durations, intervals, volumes)
         result.start_time = start_time
         return result
@@ -4862,16 +4866,24 @@ class drum:
                     for k in current_append_notes
                 ]
         if current_repeat_times > 1:
-            current_append_notes *= current_repeat_times
-            current_append_intervals *= current_repeat_times
-            current_append_durations *= current_repeat_times
-            current_append_volumes *= current_repeat_times
+            current_append_notes = copy_list(current_append_notes,
+                                             current_repeat_times)
+            current_append_durations = copy_list(current_append_durations,
+                                                 current_repeat_times)
+            current_append_intervals = copy_list(current_append_intervals,
+                                                 current_repeat_times)
+            current_append_volumes = copy_list(current_append_volumes,
+                                               current_repeat_times)
 
         if current_after_repeat_times > 1:
-            current_append_notes *= current_after_repeat_times
-            current_append_intervals *= current_after_repeat_times
-            current_append_durations *= current_after_repeat_times
-            current_append_volumes *= current_after_repeat_times
+            current_append_notes = copy_list(current_append_notes,
+                                             current_after_repeat_times)
+            current_append_durations = copy_list(current_append_durations,
+                                                 current_after_repeat_times)
+            current_append_intervals = copy_list(current_append_intervals,
+                                                 current_after_repeat_times)
+            current_append_volumes = copy_list(current_append_volumes,
+                                               current_after_repeat_times)
 
         if translate_mode == 1:
             new_current_append_durations = []
@@ -5211,29 +5223,54 @@ class rhythm(list):
     def __init__(self,
                  beat_list,
                  total_bar_length=None,
-                 unit=None,
+                 beats=None,
                  time_signature=None,
-                 separator=' '):
+                 separator=' ',
+                 unit=None):
+        is_str = False
+        settings_list = []
         if isinstance(beat_list, str):
-            beat_list = self.convert_to_rhythm(beat_list, separator)
-        super().__init__(beat_list)
+            is_str = True
+            beat_list, settings_list = self._convert_to_rhythm(
+                beat_list, separator)
         self.total_bar_length = total_bar_length
-        self.unit = unit
         if time_signature is None:
             self.time_signature = [4, 4]
         else:
             self.time_signature = time_signature
+        current_duration = None
         if self.total_bar_length is not None:
-            if len(self) > 0:
+            if len(beat_list) > 0:
                 current_time_signature_ratio = self.time_signature[
                     0] / self.time_signature[1]
-                current_duration = self.total_bar_length * current_time_signature_ratio / self.get_length(
-                )
-                for each in self:
+                current_duration = self.total_bar_length * current_time_signature_ratio / (
+                    self.get_length(beat_list) if beats is None else beats)
+        elif unit is not None:
+            current_duration = unit
+        if not is_str:
+            if current_duration is not None:
+                for each in beat_list:
                     each.duration = current_duration
-        elif self.unit is not None:
-            for each in self:
-                each.duration = self.unit
+        else:
+            new_beat_list = []
+            for i, each in enumerate(beat_list):
+                current_repeat_times, current_beats_num, current_after_repeat_times = settings_list[
+                    i]
+                if current_duration is not None:
+                    current_new_duration = current_duration * current_beats_num / current_repeat_times
+                    current_beat = [
+                        copy(each) for j in range(current_repeat_times)
+                    ]
+                    for k in current_beat:
+                        k.duration = current_new_duration
+                if current_after_repeat_times > 1:
+                    current_unit = copy(current_beat)
+                    for k in range(current_after_repeat_times - 1):
+                        current_beat.extend(copy(current_unit))
+                new_beat_list.extend(current_beat)
+            beat_list = new_beat_list
+
+        super().__init__(beat_list)
 
     def __repr__(self):
         if self.total_bar_length is not None:
@@ -5244,10 +5281,14 @@ class rhythm(list):
         current_rhythm = ', '.join([str(i) for i in self])
         return f'[rhythm]\nrhythm: {current_rhythm}\ntotal bar length: {current_total_bar_length}\ntime signature: {self.time_signature[0]} / {self.time_signature[1]}'
 
-    def convert_to_rhythm(self, current_rhythm, separator=' '):
+    def _convert_to_rhythm(self, current_rhythm, separator=' '):
+        settings_list = []
         current_beat_list = current_rhythm.split(separator)
         current_beat_list = [i.strip() for i in current_beat_list if i]
         for i, each in enumerate(current_beat_list):
+            current_settings = None
+            if '[' in each and ']' in each:
+                each, current_settings = each.split('[')
             if ':' in each:
                 current, duration = each.split(':')
                 duration = _process_note(duration)
@@ -5272,8 +5313,28 @@ class rhythm(list):
                     duration=duration,
                     dotted=dotted_num if dotted_num != 0 else None)
             if current_beat is not None:
+                current_repeat_times = 1
+                current_after_repeat_times = 1
+                current_beats = 1
+                if current_settings is not None:
+                    current_settings = [
+                        j.strip().split(':')
+                        for j in current_settings[:-1].split(';')
+                    ]
+                    for k in current_settings:
+                        current_keyword, current_content = k
+                        if current_keyword == 'r':
+                            current_repeat_times = int(current_content)
+                        elif current_keyword == 'R':
+                            current_after_repeat_times = int(current_content)
+                        if current_keyword == 'b':
+                            current_beats = _process_note(current_content)
                 current_beat_list[i] = current_beat
-        return current_beat_list
+                settings_list.append([
+                    current_repeat_times, current_beats,
+                    current_after_repeat_times
+                ])
+        return current_beat_list, settings_list
 
     def __add__(self, *args, **kwargs):
         return rhythm(super().__add__(*args, **kwargs))
@@ -5281,9 +5342,16 @@ class rhythm(list):
     def __mul__(self, *args, **kwargs):
         return rhythm(super().__mul__(*args, **kwargs))
 
-    def get_length(self):
-        return sum(
-            [1 if i.dotted is None else mp.dotted(1, i.dotted) for i in self])
+    def get_length(self, beat_list=None):
+        if beat_list is not None:
+            return sum([
+                1 if i.dotted is None else mp.dotted(1, i.dotted)
+                for i in beat_list
+            ])
+        else:
+            return sum([
+                1 if i.dotted is None else mp.dotted(1, i.dotted) for i in self
+            ])
 
 
 def _read_notes(note_ls, rootpitch=4):
@@ -5552,6 +5620,14 @@ def _piece_process_normalize_tempo(self,
     ]
     self.tracks = new_tracks
     self.start_times = new_start_times
+
+
+def copy_list(current_list, n):
+    result = []
+    unit = copy(current_list)
+    for i in range(n):
+        result.extend(copy(unit))
+    return result
 
 
 import musicpy as mp
