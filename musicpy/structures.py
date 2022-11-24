@@ -5243,7 +5243,7 @@ class rhythm(list):
         else:
             current_total_bar_length = self.total_bar_length
         current_rhythm = ', '.join([str(i) for i in self])
-        return f'[rhythm] rhythm: {current_rhythm}\ntotal bar length: {current_total_bar_length}\ntime signature: {self.time_signature[0]} / {self.time_signature[1]}'
+        return f'[rhythm]\nrhythm: {current_rhythm}\ntotal bar length: {current_total_bar_length}\ntime signature: {self.time_signature[0]} / {self.time_signature[1]}'
 
     def convert_to_rhythm(self, current_rhythm, separator=' '):
         current_beat_list = current_rhythm.split(separator)
