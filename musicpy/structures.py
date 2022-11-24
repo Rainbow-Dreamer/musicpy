@@ -4819,7 +4819,7 @@ class drum:
         current_fix_length_unit = None
         if current_fix_length is not None:
             if current_fix_beats is not None:
-                current_fix_length_unit = current_fix_length / current_fix_beats
+                current_fix_length_unit = current_fix_length * current_fix_beats
             else:
                 if current_same_time:
                     current_fix_length_unit = current_fix_length / current_repeat_times
@@ -4829,7 +4829,7 @@ class drum:
                         current_repeat_times)
         elif current_part_fix_length_unit is not None:
             if current_fix_beats is not None:
-                current_fix_length_unit = current_part_fix_length_unit / current_fix_beats
+                current_fix_length_unit = current_part_fix_length_unit * current_fix_beats
             else:
                 if current_same_time:
                     current_fix_length_unit = current_part_fix_length_unit / current_repeat_times
