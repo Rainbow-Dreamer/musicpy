@@ -4553,7 +4553,8 @@ class drum:
 
                 symbol_inds = [
                     j for j, each_note in enumerate(current_notes)
-                    if isinstance(each_note[0], (rest_symbol, continue_symbol))
+                    if each_note and isinstance(each_note[0], (
+                        rest_symbol, continue_symbol))
                 ]
                 if symbol_inds:
                     last_symbol_ind = None
