@@ -4818,25 +4818,23 @@ class drum:
                         current_append_notes[0].mode = int(current_content)
         current_fix_length_unit = None
         if current_fix_length is not None:
-            if current_fix_beats is not None:
-                current_fix_length_unit = current_fix_length * current_fix_beats
+            if current_same_time:
+                current_fix_length_unit = current_fix_length / current_repeat_times
             else:
-                if current_same_time:
-                    current_fix_length_unit = current_fix_length / current_repeat_times
-                else:
-                    current_fix_length_unit = current_fix_length / (
-                        self._get_length(current_append_notes) *
-                        current_repeat_times)
+                current_fix_length_unit = current_fix_length / (
+                    self._get_length(current_append_notes) *
+                    current_repeat_times)
+            if current_fix_beats is not None:
+                current_fix_length_unit *= current_fix_beats
         elif current_part_fix_length_unit is not None:
-            if current_fix_beats is not None:
-                current_fix_length_unit = current_part_fix_length_unit * current_fix_beats
+            if current_same_time:
+                current_fix_length_unit = current_part_fix_length_unit / current_repeat_times
             else:
-                if current_same_time:
-                    current_fix_length_unit = current_part_fix_length_unit / current_repeat_times
-                else:
-                    current_fix_length_unit = current_part_fix_length_unit / (
-                        self._get_length(current_append_notes) *
-                        current_repeat_times)
+                current_fix_length_unit = current_part_fix_length_unit / (
+                    self._get_length(current_append_notes) *
+                    current_repeat_times)
+            if current_fix_beats is not None:
+                current_fix_length_unit *= current_fix_beats
         if current_same_time:
             current_append_intervals = [
                 0 for k in range(len(current_append_notes) - 1)
