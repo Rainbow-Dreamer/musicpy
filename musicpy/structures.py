@@ -5240,7 +5240,7 @@ class rhythm(list):
             self.time_signature = time_signature
         current_duration = None
         if self.total_bar_length is not None:
-            if len(beat_list) > 0:
+            if beat_list:
                 current_time_signature_ratio = self.time_signature[
                     0] / self.time_signature[1]
                 current_duration = self.total_bar_length * current_time_signature_ratio / (
