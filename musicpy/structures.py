@@ -5354,9 +5354,15 @@ class rhythm(list):
                 1 if i.dotted is None else mp.dotted(1, i.dotted) for i in self
             ])
 
+    def get_beat_num(self, beat_list=None):
+        if beat_list is not None:
+            return len([i for i in beat_list if type(i) is beat])
+        else:
+            return len([i for i in self if type(i) is beat])
+
     def play(self, *args, notes='C4', **kwargs):
-        result = chord([copy(notes)
-                        for i in range(len(self))]).apply_rhythm(self)
+        result = chord([copy(notes) for i in range(self.get_beat_num())
+                        ]).apply_rhythm(self)
         result.play(*args, **kwargs)
 
 
