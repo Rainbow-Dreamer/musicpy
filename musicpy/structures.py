@@ -4718,6 +4718,7 @@ class drum:
         current_after_repeat_times = 1
         current_fix_length = None
         current_fix_beats = None
+        current_inner_fix_beats = 1
         current_append_durations = [
             default_duration for i in current_append_notes
         ]
@@ -4787,6 +4788,8 @@ class drum:
                     current_fix_length = _process_note(current_content)
                 elif current_setting_keyword == 'b':
                     current_fix_beats = _process_note(current_content)
+                elif current_setting_keyword == 'B':
+                    current_inner_fix_beats = _process_note(current_content)
                 elif current_setting_keyword == 'i':
                     if current_content == '.':
                         current_append_intervals = _process_note(
@@ -4824,11 +4827,12 @@ class drum:
         current_fix_length_unit = None
         if current_fix_length is not None:
             if current_same_time:
-                current_fix_length_unit = current_fix_length / current_repeat_times
+                current_fix_length_unit = current_fix_length / (
+                    current_repeat_times * current_inner_fix_beats)
             else:
                 current_fix_length_unit = current_fix_length / (
                     self._get_length(current_append_notes) *
-                    current_repeat_times)
+                    current_repeat_times * current_inner_fix_beats)
             if current_fix_beats is not None:
                 current_fix_length_unit *= current_fix_beats
         elif current_part_fix_length_unit is not None:
