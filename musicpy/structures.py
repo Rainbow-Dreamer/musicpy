@@ -5254,19 +5254,20 @@ class rhythm(list):
         else:
             new_beat_list = []
             for i, each in enumerate(beat_list):
+                current_beat = [each]
                 current_repeat_times, current_beats_num, current_after_repeat_times = settings_list[
                     i]
-                if current_duration is not None:
-                    current_new_duration = current_duration * current_beats_num / current_repeat_times
+                current_beat_duration = current_duration if current_duration is not None else each.duration
+                current_new_duration = current_beat_duration * current_beats_num / current_repeat_times
+                if current_repeat_times > 1:
                     current_beat = [
                         copy(each) for j in range(current_repeat_times)
                     ]
-                    for k in current_beat:
-                        k.duration = current_new_duration
+                for k in current_beat:
+                    k.duration = current_new_duration
                 if current_after_repeat_times > 1:
-                    current_unit = copy(current_beat)
-                    for k in range(current_after_repeat_times - 1):
-                        current_beat.extend(copy(current_unit))
+                    current_beat = copy_list(current_beat,
+                                             current_after_repeat_times)
                 new_beat_list.extend(current_beat)
             beat_list = new_beat_list
 
@@ -5352,6 +5353,11 @@ class rhythm(list):
             return sum([
                 1 if i.dotted is None else mp.dotted(1, i.dotted) for i in self
             ])
+
+    def play(self, *args, notes='C4', **kwargs):
+        result = chord([copy(notes)
+                        for i in range(len(self))]).apply_rhythm(self)
+        result.play(*args, **kwargs)
 
 
 def _read_notes(note_ls, rootpitch=4):
