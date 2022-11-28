@@ -649,7 +649,7 @@ class chord:
             else:
                 return self.up(*obj)
         elif isinstance(obj, rest):
-            return self.rest(obj.duration)
+            return self.rest(obj.get_duration())
         temp = copy(self)
         if isinstance(obj, note):
             temp.notes.append(copy(obj))
