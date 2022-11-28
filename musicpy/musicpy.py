@@ -1759,7 +1759,7 @@ arp = arpeggio
 
 for each in [
         note, chord, piece, track, scale, drum, rest, tempo, pitch_bend, pan,
-        volume, event
+        volume, event, beat, rest_symbol, continue_symbol, rhythm
 ]:
     each.reset = reset
     each.__hash__ = lambda self: hash(repr(self))
