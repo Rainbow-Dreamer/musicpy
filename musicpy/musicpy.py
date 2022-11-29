@@ -1458,8 +1458,16 @@ def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
     return result
 
 
-def analyze_rhythm(current_chord, include_continue=False):
-    unit = min([i for i in current_chord.interval if i > 0])
+@method_wrapper(chord)
+def analyze_rhythm(current_chord, include_continue=True):
+    current_interval = current_chord.interval + [
+        current_chord.interval[i] - current_chord[i].duration
+        for i in range(len(current_chord))
+    ]
+    current_interval = [i for i in current_interval if i > 0]
+    if not current_interval:
+        return rhythm([beat(0) for i in range(len(current_chord))])
+    unit = min(current_interval)
     beat_list = []
     if current_chord.start_time > 0:
         beat_list.extend([
@@ -1478,7 +1486,24 @@ def analyze_rhythm(current_chord, include_continue=False):
                                   (((extra_beat + unit) / unit) / 2)), 2)) - 1
                 current_beat.dotted = current_dotted_num
             beat_list.append(current_beat)
-            beat_list.extend([rest_symbol(unit) for k in range(int(rest_num))])
+            if not include_continue:
+                beat_list.extend(
+                    [rest_symbol(unit) for k in range(int(rest_num))])
+            else:
+                current_duration = current_chord.notes[i].duration
+                if current_duration >= each:
+                    beat_list.extend(
+                        [continue_symbol(unit) for k in range(int(rest_num))])
+                else:
+                    current_rest_duration = each - current_duration
+                    rest_num = current_rest_duration // unit
+                    current_continue_duration = current_duration - unit
+                    continue_num = current_continue_duration // unit
+                    beat_list.extend([
+                        continue_symbol(unit) for k in range(int(continue_num))
+                    ])
+                    beat_list.extend(
+                        [rest_symbol(unit) for k in range(int(rest_num))])
     result = rhythm(beat_list)
     return result
 

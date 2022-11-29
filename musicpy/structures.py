@@ -5372,16 +5372,32 @@ class rhythm(list):
             if type(i) is beat
         ])
 
-    def get_total_duration(self, beat_list=None):
-        return sum([
+    def get_total_duration(self, beat_list=None, apply_time_signature=False):
+        result = sum([
             i.get_duration()
             for i in (beat_list if beat_list is not None else self)
         ])
+        if apply_time_signature:
+            result /= (self.time_signature[0] / self.time_signature[1])
+        return result
 
     def play(self, *args, notes='C4', **kwargs):
         result = chord([copy(notes) for i in range(self.get_beat_num())
                         ]).apply_rhythm(self)
         result.play(*args, **kwargs)
+
+    def convert_time_signature(self, time_signature, mode=0):
+        temp = copy(self)
+        ratio = (time_signature[0] / time_signature[1]) / (
+            self.time_signature[0] / self.time_signature[1])
+        temp.time_signature = time_signature
+        if mode == 0:
+            if temp.total_bar_length is not None:
+                temp.total_bar_length /= ratio
+        elif mode == 1:
+            for each in temp:
+                each.duration *= ratio
+        return temp
 
 
 def _read_notes(note_ls, rootpitch=4):
