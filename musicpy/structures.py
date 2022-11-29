@@ -5250,17 +5250,16 @@ class rhythm(list):
             is_str = True
             beat_list, settings_list = self._convert_to_rhythm(
                 beat_list, separator)
-        self.total_bar_length = total_bar_length
         if time_signature is None:
             self.time_signature = [4, 4]
         else:
             self.time_signature = time_signature
         current_duration = None
-        if self.total_bar_length is not None:
+        if total_bar_length is not None:
             if beat_list:
                 current_time_signature_ratio = self.time_signature[
                     0] / self.time_signature[1]
-                current_duration = self.total_bar_length * current_time_signature_ratio / (
+                current_duration = total_bar_length * current_time_signature_ratio / (
                     self.get_length(beat_list) if beats is None else beats)
         elif unit is not None:
             current_duration = unit
@@ -5290,12 +5289,13 @@ class rhythm(list):
 
         super().__init__(beat_list)
 
+    @property
+    def total_bar_length(self):
+        return self.get_total_duration(apply_time_signature=True)
+
     def __repr__(self):
-        if self.total_bar_length is not None:
-            current_total_bar_length = Fraction(
-                self.total_bar_length).limit_denominator()
-        else:
-            current_total_bar_length = self.total_bar_length
+        current_total_bar_length = Fraction(
+            self.total_bar_length).limit_denominator()
         current_rhythm = ', '.join([str(i) for i in self])
         return f'[rhythm]\nrhythm: {current_rhythm}\ntotal bar length: {current_total_bar_length}\ntime signature: {self.time_signature[0]} / {self.time_signature[1]}'
 
@@ -5391,10 +5391,7 @@ class rhythm(list):
         ratio = (time_signature[0] / time_signature[1]) / (
             self.time_signature[0] / self.time_signature[1])
         temp.time_signature = time_signature
-        if mode == 0:
-            if temp.total_bar_length is not None:
-                temp.total_bar_length /= ratio
-        elif mode == 1:
+        if mode == 1:
             for each in temp:
                 each.duration *= ratio
         return temp
