@@ -1416,9 +1416,10 @@ def distribute(current_chord,
 def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
     if isinstance(chords, chord):
         chords = [copy(chords) for i in range(current_rhythm.get_beat_num())]
+    else:
+        chords = copy(chords)
     length = len(chords)
     counter = -1
-    result = chord([])
     has_beat = False
     current_start_time = 0
     chord_intervals = [0 for i in range(len(chords))]
@@ -1447,7 +1448,7 @@ def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
                 for k in current_chord:
                     k.duration += current_duration
                 chord_intervals[counter] += current_duration
-    result = copy(chords[0])
+    result = chords[0]
     current_interval = 0
     for i, each in enumerate(chords[1:]):
         current_interval += chord_intervals[i]
