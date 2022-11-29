@@ -2266,18 +2266,29 @@ class chord:
         temp = copy(self)
         length = len(temp)
         counter = -1
+        has_beat = False
+        current_start_time = 0
         for i, each in enumerate(current_rhythm):
+            current_duration = each.get_duration()
             if type(each) is beat:
+                has_beat = True
                 counter += 1
                 if counter >= length:
                     break
-                temp.interval[counter] = each.get_duration()
-                temp.notes[counter].duration = each.get_duration()
+                temp.interval[counter] = current_duration
+                temp.notes[counter].duration = current_duration
             elif type(each) is rest_symbol:
-                temp.interval[counter] += each.get_duration()
+                if not has_beat:
+                    current_start_time += current_duration
+                else:
+                    temp.interval[counter] += current_duration
             elif type(each) is continue_symbol:
-                temp.interval[counter] += each.get_duration()
-                temp.notes[counter].duration += each.get_duration()
+                if not has_beat:
+                    current_start_time += current_duration
+                else:
+                    temp.interval[counter] += current_duration
+                    temp.notes[counter].duration += current_duration
+        temp.start_time = current_start_time
         return temp
 
 

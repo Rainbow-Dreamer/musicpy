@@ -1413,6 +1413,49 @@ def distribute(current_chord,
     return temp
 
 
+def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
+    if isinstance(chords, chord):
+        chords = [copy(chords) for i in range(current_rhythm.get_beat_num())]
+    length = len(chords)
+    counter = -1
+    result = chord([])
+    has_beat = False
+    current_start_time = 0
+    chord_intervals = [0 for i in range(len(chords))]
+    for i, each in enumerate(current_rhythm):
+        current_duration = each.get_duration()
+        if type(each) is beat:
+            counter += 1
+            if counter >= length:
+                break
+            current_chord = chords[counter]
+            if set_duration:
+                for k in current_chord:
+                    k.duration = current_duration
+            chord_intervals[counter] += current_duration
+            has_beat = True
+        elif type(each) is rest_symbol:
+            if not has_beat:
+                current_start_time += current_duration
+            else:
+                chord_intervals[counter] += current_duration
+        elif type(each) is continue_symbol:
+            if not has_beat:
+                current_start_time += current_duration
+            else:
+                current_chord = chords[counter]
+                for k in current_chord:
+                    k.duration += current_duration
+                chord_intervals[counter] += current_duration
+    result = copy(chords[0])
+    current_interval = 0
+    for i, each in enumerate(chords[1:]):
+        current_interval += chord_intervals[i]
+        result = result & (each, current_interval)
+    result.start_time = current_start_time
+    return result
+
+
 def stopall():
     pygame.mixer.stop()
     pygame.mixer.music.stop()
