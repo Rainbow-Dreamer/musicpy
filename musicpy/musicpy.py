@@ -1458,6 +1458,31 @@ def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
     return result
 
 
+def analyze_rhythm(current_chord, include_continue=False):
+    unit = min([i for i in current_chord.interval if i > 0])
+    beat_list = []
+    if current_chord.start_time > 0:
+        beat_list.extend([
+            rest_symbol(unit) for i in range(current_chord.start_time // unit)
+        ])
+    for i, each in enumerate(current_chord.interval):
+        if each == 0:
+            beat_list.append(beat(0))
+        else:
+            current_beat = beat(unit)
+            remain_interval = each - unit
+            rest_num, extra_beat = divmod(remain_interval, unit)
+            if extra_beat > 0:
+                current_dotted_num = int(
+                    math.log(1 / (1 -
+                                  (((extra_beat + unit) / unit) / 2)), 2)) - 1
+                current_beat.dotted = current_dotted_num
+            beat_list.append(current_beat)
+            beat_list.extend([rest_symbol(unit) for k in range(int(rest_num))])
+    result = rhythm(beat_list)
+    return result
+
+
 def stopall():
     pygame.mixer.stop()
     pygame.mixer.music.stop()
