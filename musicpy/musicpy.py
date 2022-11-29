@@ -1431,8 +1431,9 @@ def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
                 break
             current_chord = chords[counter]
             if set_duration:
-                for k in current_chord:
-                    k.duration = current_duration
+                if current_duration != 0:
+                    for k in current_chord:
+                        k.duration = current_duration
             chord_intervals[counter] += current_duration
             has_beat = True
         elif type(each) is rest_symbol:

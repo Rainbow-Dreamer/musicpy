@@ -2262,7 +2262,7 @@ class chord:
     def to_piece(self, *args, **kwargs):
         return mp.chord_to_piece(self, *args, **kwargs)
 
-    def apply_rhythm(self, current_rhythm):
+    def apply_rhythm(self, current_rhythm, set_duration=True):
         temp = copy(self)
         length = len(temp)
         counter = -1
@@ -2276,7 +2276,9 @@ class chord:
                 if counter >= length:
                     break
                 temp.interval[counter] = current_duration
-                temp.notes[counter].duration = current_duration
+                if set_duration:
+                    if current_duration != 0:
+                        temp.notes[counter].duration = current_duration
             elif type(each) is rest_symbol:
                 if not has_beat:
                     current_start_time += current_duration
