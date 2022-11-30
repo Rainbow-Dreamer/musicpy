@@ -1463,7 +1463,10 @@ def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
 
 
 @method_wrapper(chord)
-def analyze_rhythm(current_chord, include_continue=True, total_length=None):
+def analyze_rhythm(current_chord,
+                   include_continue=True,
+                   total_length=None,
+                   remove_empty_beats=False):
     current_interval = current_chord.interval + [
         current_chord.interval[i] - current_chord[i].duration
         for i in range(len(current_chord))
@@ -1520,6 +1523,9 @@ def analyze_rhythm(current_chord, include_continue=True, total_length=None):
                 current_time_signature.denominator
             ]
         result.time_signature = current_time_signature
+    if remove_empty_beats:
+        result = rhythm([i for i in result if i.duration != 0],
+                        time_signature=result.time_signature)
     return result
 
 
