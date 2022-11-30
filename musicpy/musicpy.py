@@ -1414,6 +1414,10 @@ def distribute(current_chord,
 
 
 def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
+    if isinstance(chords, note):
+        chords = chord(
+            [copy(chords) for i in range(current_rhythm.get_beat_num())])
+        return chords.apply_rhythm(current_rhythm, set_duration=set_duration)
     if isinstance(chords, chord):
         chords = [copy(chords) for i in range(current_rhythm.get_beat_num())]
     else:
