@@ -325,7 +325,7 @@ def read(name,
             current_midi = mido.MidiFile(file=riff_to_midi(name), clip=True)
             whole_bpm = find_first_tempo(name, is_file=is_file)
             name.close()
-        name = name.name
+        name = getattr(name, 'name', '')
     else:
         try:
             current_midi = mido.MidiFile(name, clip=True)
@@ -1732,17 +1732,29 @@ def dataclass_repr(s, keywords=None):
     return result
 
 
-def read_musicxml(file):
-    if __name__ == '__main__' or __name__ == 'musicpy':
-        import musicxml_parser
-    else:
-        from . import musicxml_parser
-    result = musicxml_parser.parse_musicxml(file)
+def read_musicxml(file, load_musicxml_args={}, save_midi_args={}):
+    import partitura
+    current_score = partitura.load_musicxml(file, **load_musicxml_args)
+    current_file = BytesIO()
+    partitura.save_score_midi(current_score, current_file, **save_midi_args)
+    result = read(current_file, is_file=True)
+    result.musicxml_info = {
+        i: j
+        for i, j in vars(current_score).items()
+        if i not in ['parts', 'part_structure']
+    }
     return result
 
 
-def write_musicxml(current_chord):
-    pass
+def write_musicxml(current_chord, filename, save_musicxml_args={}):
+    import partitura
+    current_file = BytesIO()
+    current_file = write(current_chord, save_as_file=False)
+    current_file.seek(0)
+    current_file = partitura.io.importmidi.mido.MidiFile(file=current_file,
+                                                         clip=True)
+    current_midi = partitura.load_score_midi(current_file)
+    partitura.save_musicxml(current_midi, filename, **save_musicxml_args)
 
 
 def read_json(file):
