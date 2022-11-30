@@ -1467,14 +1467,17 @@ def analyze_rhythm(current_chord,
                    include_continue=True,
                    total_length=None,
                    remove_empty_beats=False,
-                   unit=None):
+                   unit=None,
+                   find_unit_ignore_duration=False):
     if all(i <= 0 for i in current_chord.interval):
         return rhythm([beat(0) for i in range(len(current_chord))])
     if unit is None:
-        current_interval = current_chord.interval + [
-            current_chord.interval[i] - current_chord[i].duration
-            for i in range(len(current_chord))
-        ]
+        current_interval = copy(current_chord.interval)
+        if not find_unit_ignore_duration:
+            current_interval += [
+                current_chord.interval[i] - current_chord[i].duration
+                for i in range(len(current_chord))
+            ]
         current_interval = [i for i in current_interval if i > 0]
         unit = min(current_interval)
     beat_list = []
