@@ -1466,19 +1466,22 @@ def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
 def analyze_rhythm(current_chord,
                    include_continue=True,
                    total_length=None,
-                   remove_empty_beats=False):
-    current_interval = current_chord.interval + [
-        current_chord.interval[i] - current_chord[i].duration
-        for i in range(len(current_chord))
-    ]
-    current_interval = [i for i in current_interval if i > 0]
-    if not current_interval:
+                   remove_empty_beats=False,
+                   unit=None):
+    if all(i <= 0 for i in current_chord.interval):
         return rhythm([beat(0) for i in range(len(current_chord))])
-    unit = min(current_interval)
+    if unit is None:
+        current_interval = current_chord.interval + [
+            current_chord.interval[i] - current_chord[i].duration
+            for i in range(len(current_chord))
+        ]
+        current_interval = [i for i in current_interval if i > 0]
+        unit = min(current_interval)
     beat_list = []
     if current_chord.start_time > 0:
         beat_list.extend([
-            rest_symbol(unit) for i in range(current_chord.start_time // unit)
+            rest_symbol(unit)
+            for i in range(int(current_chord.start_time // unit))
         ])
     for i, each in enumerate(current_chord.interval):
         if each == 0:
