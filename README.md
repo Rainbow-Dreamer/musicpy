@@ -12,9 +12,9 @@ With musicpy, you can express notes, chords, melodies, rhythms, volumes and othe
 
 Documentation
 -------------
-See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) for complete and detailed tutorials about syntax, data structures and usages of musicpy.  
-This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly.  
-The syntax and abilities of this wiki is synchronized with the latest released version of musicpy.
+See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) or [Read the Docs documentation](https://musicpy.readthedocs.io/en/latest/) for complete and detailed tutorials about syntax, data structures and usages of musicpy.  
+
+This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly. The syntax and abilities of this wiki is synchronized with the latest released version of musicpy.
 
 You can click [here](https://www.jianguoyun.com/p/Dapi5bEQhPG0CBijkqYE) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
 
@@ -36,6 +36,8 @@ I strongly recommend to use this musicpy editor to write musicpy code.
 You can download this musicpy editor at the repository [musicpy_editor](https://github.com/Rainbow-Dreamer/musicpy_editor), the preparation steps are in the README.
 
 Musicpy is all compatible with Windows, macOS and Linux.
+
+Musicpy now also supports reading and writing musicxml files, note that you need to install partitura to use the functionality by `pip install partitura`.
 
 Importing
 -------------

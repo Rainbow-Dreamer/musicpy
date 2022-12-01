@@ -11,9 +11,9 @@ Musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和�
 
 使用说明文档
 -------------
-你可以看[musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki)，这里有完整并且详细的使用教程，你可以了解并且学习musicpy的语法，数据结构与具体使用。  
-这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。  
-wiki里的语法与功能与最新版本的musicpy是同步的。
+你可以看[musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) 或 [Read the Docs documentation](https://musicpy.readthedocs.io/en/latest/)，这里有完整并且详细的使用教程，你可以了解并且学习musicpy的语法，数据结构与具体使用。  
+
+这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。wiki里的语法与功能与最新版本的musicpy是同步的。
 
 我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/Dapi5bEQhPG0CBijkqYE)下载，正在不断地更新中。
 
@@ -35,6 +35,8 @@ pip install musicpy
 你可以在仓库[musicpy_editor](https://github.com/Rainbow-Dreamer/musicpy_editor)下载musicpy editor, 准备步骤在README。
 
 Musicpy对于Windows, macOS和Linux都是兼容的。
+
+Musicpy现在也支持读写musicxml文件，注意你需要通过`pip install partitura`安装partitura来使用这些功能。
 
 import这个库
 -------------
