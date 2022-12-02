@@ -69,11 +69,11 @@ def to_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
         if len(info) == 1:
             duration = info[0]
         else:
-            duration, volume = info[0], eval(info[1])
+            duration, volume = info[0], parse_num(info[1])
         if duration[0] == '.':
-            duration = 1 / eval(duration[1:])
+            duration = 1 / parse_num(duration[1:])
         else:
-            duration = eval(duration)
+            duration = parse_num(duration)
         return to_note(notename, duration, volume)
     else:
         num_text = ''.join([x for x in notename if x.isdigit()])
@@ -1599,6 +1599,43 @@ def load_data(name):
 
 def dotted(duration, num=1):
     return duration * sum([(1 / 2)**i for i in range(num + 1)])
+
+
+def parse_dotted(text, get_fraction=False):
+    length = len(text)
+    dotted_num = 0
+    ind = 0
+    for i in range(length - 1, -1, -1):
+        if text[i] != '.':
+            ind = i
+            break
+        else:
+            dotted_num += 1
+    duration = parse_num(text[:ind + 1], get_fraction=get_fraction)
+    current_duration = mp.beat(duration, dotted_num).get_duration()
+    return current_duration
+
+
+def parse_num(duration, get_fraction=False):
+    if '/' in duration:
+        numerator, denominator = duration.split('/')
+        numerator = int(numerator) if numerator.isdigit() else float(numerator)
+        denominator = int(denominator) if denominator.isdigit() else float(
+            denominator)
+        if get_fraction:
+            if not (isinstance(numerator, int)
+                    and isinstance(denominator, int)):
+                duration = Fraction(numerator /
+                                    denominator).limit_denominator()
+            else:
+                duration = Fraction(numerator, denominator)
+        else:
+            duration = numerator / denominator
+    else:
+        duration = int(duration) if duration.isdigit() else float(duration)
+        if get_fraction:
+            duration = Fraction(duration).limit_denominator()
+    return duration
 
 
 def relative_note(a, b):

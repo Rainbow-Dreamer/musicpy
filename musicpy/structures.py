@@ -5415,7 +5415,7 @@ def _read_notes(note_ls, rootpitch=4):
                 intervals[-1] += each.get_duration()
         elif isinstance(each, str):
             if each.startswith('tempo'):
-                current = [eval(k) for k in each.split(';')[1:]]
+                current = [mp.parse_num(k) for k in each.split(';')[1:]]
                 current_tempo = tempo(*current)
                 notes_result.append(current_tempo)
                 intervals.append(0)
@@ -5423,11 +5423,11 @@ def _read_notes(note_ls, rootpitch=4):
                 current = each.split(';')[1:]
                 length = len(current)
                 if length > 2:
-                    current = [eval(k) for k in current[:2]] + [current[2]] + [
-                        eval(k) for k in current[3:]
-                    ]
+                    current = [mp.parse_num(k) for k in current[:2]] + [
+                        current[2]
+                    ] + [mp.parse_num(k) for k in current[3:]]
                 else:
-                    current = [eval(k) for k in current]
+                    current = [mp.parse_num(k) for k in current]
                 current_pitch_bend = pitch_bend(*current)
                 notes_result.append(current_pitch_bend)
                 intervals.append(0)
@@ -5448,7 +5448,7 @@ def _read_notes(note_ls, rootpitch=4):
                             duration, interval = info
                         else:
                             duration, interval, volume = info
-                            volume = eval(volume)
+                            volume = mp.parse_num(volume)
                         duration = _process_note(duration)
                         interval = _process_note(
                             interval) if interval != '.' else duration
@@ -5501,8 +5501,8 @@ def _process_note(value, mode=0, value2=None):
                     break
             dotted_notes = value[num_ind + 1:].count('.')
             value = value[:num_ind + 1]
-            value = eval(value) * sum([(1 / 2)**i
-                                       for i in range(dotted_notes + 1)])
+            value = mp.parse_num(value) * sum(
+                [(1 / 2)**i for i in range(dotted_notes + 1)])
         elif length > 1:
             num_ind = 0
             for k, each in enumerate(value):
@@ -5510,7 +5510,7 @@ def _process_note(value, mode=0, value2=None):
                     num_ind = k
                     break
             if value[-1] != '.':
-                value = 1 / eval(value[num_ind:])
+                value = 1 / mp.parse_num(value[num_ind:])
             else:
                 dotted_notes_start_ind = length - 1
                 for k in range(dotted_notes_start_ind, -1, -1):
@@ -5518,8 +5518,9 @@ def _process_note(value, mode=0, value2=None):
                         dotted_notes_start_ind = k + 1
                         break
                 dotted_notes = length - dotted_notes_start_ind
-                value = (1 / eval(value[num_ind:dotted_notes_start_ind])
-                         ) * sum([(1 / 2)**i for i in range(dotted_notes + 1)])
+                value = (1 / mp.parse_num(
+                    value[num_ind:dotted_notes_start_ind])) * sum(
+                        [(1 / 2)**i for i in range(dotted_notes + 1)])
         if mode == 2:
             if isinstance(value, float) and value.is_integer():
                 value = int(value)
