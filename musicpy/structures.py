@@ -862,7 +862,7 @@ class chord:
                 else:
                     current_note = temp[-num - 1] - pitch * database.octave
                 result.append(current_note)
-                result_interval.append(temp.interval[num - 1])
+                result_interval.append(temp.interval[abs(num) - 1])
         return chord(result,
                      interval=result_interval,
                      start_time=temp.start_time)
