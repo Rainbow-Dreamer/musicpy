@@ -994,13 +994,39 @@ def guitar_chord(frets,
     at the strings on a guitar, or you can choose to just return the chord
     '''
     tuning = [N(i) for i in tuning]
+    length = len(tuning)
     guitar_notes = [
-        tuning[j].up(frets[j]) for j in range(6) if frets[j] is not None
+        tuning[j].up(frets[j]) for j in range(length) if frets[j] is not None
     ]
     result = chord(guitar_notes, duration, interval)
     if return_chord:
         return result
     return detect(result.sortchord(), **detect_args)
+
+
+def guitar_pattern(frets,
+                   tuning=['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
+                   duration=1 / 8,
+                   interval=1 / 8):
+    tuning = [N(i) for i in tuning]
+    length = len(tuning)
+    current = [i.strip() for i in frets.split(',')]
+    current_notes = []
+    current_string_ind = length - 1
+    for each in current:
+        if ':' in each:
+            current_string, current_fret = each.split(':')
+            current_string = current_string.strip()
+            current_fret = current_fret.strip()
+            current_string_ind = length - int(current_string)
+            current_note = tuning[current_string_ind].up(int(current_fret))
+            current_notes.append(current_note)
+        else:
+            current_fret = each
+            current_note = tuning[current_string_ind].up(int(current_fret))
+            current_notes.append(current_note)
+    result = chord(current_notes, duration, interval)
+    return result
 
 
 @method_wrapper(chord)
