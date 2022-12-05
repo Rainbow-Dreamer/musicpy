@@ -5051,9 +5051,9 @@ class drum:
                 current_part_default_volume = _process_note(content, mode=2)
             elif keyword == 'al':
                 current_part_all_same_duration = _process_note(content)
-            elif keyword == 'al':
+            elif keyword == 'ai':
                 current_part_all_same_interval = _process_note(content)
-            elif keyword == 'al':
+            elif keyword == 'av':
                 current_part_all_same_volume = _process_note(content, mode=2)
         return current_part_default_duration, current_part_default_interval, current_part_default_volume, current_part_repeat_times, current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume, current_part_fix_length, current_part_name, current_part_fix_beats
 
@@ -5089,9 +5089,9 @@ class drum:
                 global_default_volume = _process_note(content, mode=2)
             elif keyword == 'al':
                 global_all_same_duration = _process_note(content)
-            elif keyword == 'al':
+            elif keyword == 'ai':
                 global_all_same_interval = _process_note(content)
-            elif keyword == 'al':
+            elif keyword == 'av':
                 global_all_same_volume = _process_note(content, mode=2)
         return global_default_duration, global_default_interval, global_default_volume, global_repeat_times, global_all_same_duration, global_all_same_interval, global_all_same_volume, global_fix_length, global_fix_beats
 
