@@ -60,7 +60,7 @@ def method_wrapper(cls):
     return method_decorator
 
 
-def to_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
+def to_note(notename, duration=1 / 4, volume=100, pitch=4, channel=None):
     if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
         split_symbol = '(' if '(' in notename else (
             '[' if '[' in notename else '{')
@@ -85,7 +85,7 @@ def to_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
         return note(name, num, duration, volume, channel)
 
 
-def degree_to_note(degree, duration=0.25, volume=100, channel=None):
+def degree_to_note(degree, duration=1 / 4, volume=100, channel=None):
     name = database.standard_reverse[degree % 12]
     num = (degree // 12) - 1
     return note(name, num, duration, volume, channel)
@@ -101,7 +101,7 @@ def note_to_degree(obj):
     return database.standard[obj.name] + 12 * (obj.num + 1)
 
 
-def trans_note(notename, duration=0.25, volume=100, pitch=4, channel=None):
+def trans_note(notename, duration=1 / 4, volume=100, pitch=4, channel=None):
     num = ''.join([x for x in notename if x.isdigit()])
     if not num:
         num = pitch
@@ -152,7 +152,7 @@ def secondary_dom7(root, mode='major'):
 
 def getchord_by_interval(start,
                          interval1,
-                         duration=0.25,
+                         duration=1 / 4,
                          interval=0,
                          cummulative=True,
                          start_time=0):
@@ -182,7 +182,7 @@ def inversion(current_chord, num=1):
 
 def getchord(start,
              mode=None,
-             duration=0.25,
+             duration=1 / 4,
              intervals=None,
              interval=None,
              cummulative=True,
@@ -1122,7 +1122,7 @@ def modulation(current_chord, old_scale, new_scale, **args):
     return current_chord.modulation(old_scale, new_scale, **args)
 
 
-def trans(obj, pitch=4, duration=0.25, interval=None):
+def trans(obj, pitch=4, duration=1 / 4, interval=None):
     obj = obj.replace(' ', '')
     if ':' in obj:
         current = obj.split(':')

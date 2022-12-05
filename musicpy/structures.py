@@ -1,5 +1,6 @@
 from copy import deepcopy as copy
 from fractions import Fraction
+from dataclasses import dataclass
 if __name__ == 'musicpy.structures':
     from . import database
 else:
@@ -8,7 +9,7 @@ else:
 
 class note:
 
-    def __init__(self, name, num=4, duration=0.25, volume=100, channel=None):
+    def __init__(self, name, num=4, duration=1 / 4, volume=100, channel=None):
         if name not in database.standard:
             raise ValueError(
                 f"Invalid note name '{name}', accepted note names are {list(database.standard.keys())}"
@@ -116,7 +117,7 @@ class note:
 
     def getchord_by_interval(start,
                              interval1,
-                             duration=0.25,
+                             duration=1 / 4,
                              interval=0,
                              cummulative=True):
         return mp.getchord_by_interval(start, interval1, duration, interval,
@@ -978,7 +979,7 @@ class chord:
             return result
         return [database.INTERVAL[x % database.octave] for x in result]
 
-    def add(self, note1=None, mode='after', start=0, duration=0.25):
+    def add(self, note1=None, mode='after', start=0, duration=1 / 4):
         if len(self) == 0:
             result = copy(note1)
             if start != 0:
@@ -1130,7 +1131,7 @@ class chord:
         temp.notes.sort(key=lambda x: x.degree)
         return temp
 
-    def on(self, root, duration=0.25, interval=None, each=0):
+    def on(self, root, duration=1 / 4, interval=None, each=0):
         temp = copy(self)
         if each == 0:
             if isinstance(root, chord):
@@ -2379,7 +2380,7 @@ class scale:
         for i in self.notes:
             yield i
 
-    def __call__(self, n, duration=0.25, interval=0, num=3, step=2):
+    def __call__(self, n, duration=1 / 4, interval=0, num=3, step=2):
         if isinstance(n, int):
             return self.pick_chord_by_degree(n, duration, interval, num, step)
         elif isinstance(n, str):
@@ -2427,7 +2428,7 @@ class scale:
                         for i in range(1, len(notes))
                     ]
 
-    def get_scale(self, intervals=0.25, durations=None):
+    def get_scale(self, intervals=1 / 4, durations=None):
         if self.mode == None:
             if self.interval == None:
                 raise ValueError(
@@ -2464,7 +2465,7 @@ class scale:
 
     def pick_chord_by_degree(self,
                              degree1,
-                             duration=0.25,
+                             duration=1 / 4,
                              interval=0,
                              num=3,
                              step=2):
@@ -2485,7 +2486,7 @@ class scale:
             resultchord = resultchord.up(database.octave)
         return resultchord
 
-    def pattern(self, indlist, duration=0.25, interval=0, num=3, step=2):
+    def pattern(self, indlist, duration=1 / 4, interval=0, num=3, step=2):
         if isinstance(indlist, str):
             indlist = [int(i) for i in indlist]
         elif isinstance(indlist, int):
@@ -2726,7 +2727,7 @@ class scale:
         result.mode = result.detect()
         return result
 
-    def play(self, intervals=0.25, durations=None, *args, **kwargs):
+    def play(self, intervals=1 / 4, durations=None, *args, **kwargs):
         mp.play(self.get_scale(intervals, durations), *args, **kwargs)
 
     def __add__(self, obj):
@@ -5406,6 +5407,34 @@ class rhythm(list):
             for each in temp:
                 each.duration *= ratio
         return temp
+
+
+@dataclass
+class chord_type:
+    root: str = None
+    chord_type: str = None
+    chord_speciality: str = 'root position'
+    inversion: int = None
+    omit: list = None
+    altered: list = None
+    non_chord_bass_note: str = None
+    voicing: list = None
+    type: str = 'chord'
+    note_name: str = None
+    interval_name: str = None
+
+    def get_root_position(self):
+        return f'{self.root}{self.chord_type}'
+
+    def to_text(self):
+        if self.type == 'note':
+            return f'note {self.note_name}'
+        elif self.type == 'interval':
+            return f'{self.root} with {self.interval_name}'
+        elif self.type == 'chord':
+            if self.chord_speciality == 'root position':
+                result = f'{self.root}{self.chord_type}'
+            return result
 
 
 def _read_notes(note_ls, rootpitch=4):
