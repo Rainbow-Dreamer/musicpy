@@ -2377,7 +2377,7 @@ class scale:
 
     def __call__(self, n, duration=0.25, interval=0, num=3, step=2):
         if isinstance(n, int):
-            return self.pickchord_by_degree(n, duration, interval, num, step)
+            return self.pick_chord_by_degree(n, duration, interval, num, step)
         elif isinstance(n, str):
             altered_notes = n.replace(' ', '').split(',')
             notes = copy(self.notes)
@@ -2458,12 +2458,14 @@ class scale:
                 result.append(i)
         return result
 
-    def pickchord_by_degree(self,
-                            degree1,
-                            duration=0.25,
-                            interval=0,
-                            num=3,
-                            step=2):
+    def pick_chord_by_degree(self,
+                             degree1,
+                             duration=0.25,
+                             interval=0,
+                             num=3,
+                             step=2):
+        if degree1 > 0:
+            degree1 -= 1
         result = []
         high = False
         if degree1 == 7:
@@ -2480,9 +2482,6 @@ class scale:
         if high:
             resultchord = resultchord.up(database.octave)
         return resultchord
-
-    def pickdegree(self, degree1):
-        return self[degree1]
 
     def pattern(self, indlist, duration=0.25, interval=0, num=3, step=2):
         if isinstance(indlist, str):
@@ -2575,7 +2574,7 @@ class scale:
         # default is pick the dominant mode of the scale
         if mode is None and interval is None:
             mode, interval = self.mode, self.interval
-        return scale(self[degree], mode, interval)
+        return scale(self[degree - 1], mode, interval)
 
     def secondary_dom(self, degree=5):
         newscale = self.scalefrom(degree, self.mode, self.interval)
@@ -2588,22 +2587,22 @@ class scale:
         return self.scalefrom(degree, self.mode,
                               self.interval).leading7_chord()
 
-    def pickchord_by_index(self, indlist):
+    def pick_chord_by_index(self, indlist):
         return chord([self[i] for i in indlist])
 
     def __matmul__(self, indlist):
-        return self.pickchord_by_index(indlist)
+        return self.pick_chord_by_index(indlist)
 
     def detect(self):
         return mp.alg.detect_scale_type(self)
 
     def get_allchord(self, duration=None, interval=0, num=3, step=2):
         return [
-            self.pickchord_by_degree(i,
-                                     duration=duration,
-                                     interval=interval,
-                                     num=num,
-                                     step=step)
+            self.pick_chord_by_degree(i,
+                                      duration=duration,
+                                      interval=interval,
+                                      num=num,
+                                      step=step)
             for i in range(len(self.get_interval()) + 1)
         ]
 
@@ -2625,8 +2624,8 @@ class scale:
             raise ValueError(
                 'this function only applies to major and minor scales')
 
-    def get(self, degree):
-        return self[degree]
+    def get_degree(self, degree):
+        return self[degree - 1]
 
     def get_chord(self, degree, chord_type=None, natural=False):
         if not chord_type:
@@ -2644,7 +2643,7 @@ class scale:
                     break
             if not found:
                 return f'{degree} is not a valid roman numerals chord representation'
-        current_degree = database.roman_numerals_dict[degree]
+        current_degree = database.roman_numerals_dict[degree] - 1
         if current_degree == 'not found':
             return f'{degree} is not a valid roman numerals chord representation'
         current_note = self[current_degree].name
@@ -2653,7 +2652,7 @@ class scale:
             if not isinstance(temp, chord):
                 return f'{chord_type} is not a valid chord type'
             length = len(temp)
-            return self.pickchord_by_degree(current_degree, num=length)
+            return self.pick_chord_by_degree(current_degree, num=length)
         if degree.islower():
             current_note += 'm'
         current_chord_type = current_note + chord_type
