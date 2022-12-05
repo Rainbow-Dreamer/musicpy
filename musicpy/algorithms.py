@@ -797,7 +797,7 @@ def random_composing(mode,
     # the draft of the piece of music would be generated first,
     # and then modify the details of the music (durations, intervals,
     # notes volume, rests and so on)
-    basechord = mode.get_allchord(num=num)
+    basechord = mode.get_all_chord(num=num)
     # count is the counter for the total number of notes in the piece
     count = 0
     patterncount = 0

@@ -1104,18 +1104,22 @@ class chord:
         duration, interval = [i.duration for i in self.notes], self.interval
         notenames = self.names()
         return [
-            chord(x, rootpitch=rootpitch).set(duration, interval)
-            for x in mp.alg.perm(notenames)
+            chord(i,
+                  rootpitch=rootpitch).standardize().set(duration, interval)
+            for i in mp.alg.perm(notenames)
         ]
 
     def inversion_highest(self, ind):
-        if 1 <= ind < len(self):
-            temp = self.copy()
-            ind -= 1
-            while temp[ind].degree < temp[-1].degree:
-                temp[ind] = temp[ind].up(database.octave)
-            temp.notes.append(temp.notes.pop(ind))
-            return temp
+        if not 1 <= ind < len(self):
+            raise ValueError(
+                'the number of inversion is out of range of the notes in this chord'
+            )
+        temp = self.copy()
+        ind -= 1
+        while temp[ind].degree < temp[-1].degree:
+            temp[ind] = temp[ind].up(database.octave)
+        temp.notes.append(temp.notes.pop(ind))
+        return temp
 
     def inoctave(self):
         temp = self.copy()
@@ -2564,26 +2568,31 @@ class scale:
     def dom7_chord(self):
         return self(4) + self[3].up(12)
 
+    def leading_chord(self):
+        return chord([self[6].down(database.octave), self[1], self[3]])
+
     def leading7_chord(self):
         return chord(
             [self[6].down(database.octave), self[1], self[3], self[5]])
 
-    def scalefrom(self, degree=5, mode=None, interval=None):
+    def scale_from(self, degree=4, mode=None, interval=None):
         # default is pick the dominant mode of the scale
         if mode is None and interval is None:
             mode, interval = self.mode, self.interval
-        return scale(self[degree - 1], mode, interval)
+        return scale(self[degree], mode, interval)
 
-    def secondary_dom(self, degree=5):
-        newscale = self.scalefrom(degree, self.mode, self.interval)
+    def secondary_dom(self, degree=4):
+        newscale = self.scale_from(degree, 'major')
         return newscale.dom_chord()
 
-    def secondary_dom7(self, degree=5):
-        return self.scalefrom(degree, self.mode, self.interval).dom7_chord()
+    def secondary_dom7(self, degree=4):
+        return self.scale_from(degree, 'major').dom7_chord()
 
-    def secondary_leading7(self, degree=5):
-        return self.scalefrom(degree, self.mode,
-                              self.interval).leading7_chord()
+    def secondary_leading(self, degree=4):
+        return self.scale_from(degree, 'major').leading_chord()
+
+    def secondary_leading7(self, degree=4):
+        return self.scale_from(degree, 'major').leading7_chord()
 
     def pick_chord_by_index(self, indlist):
         return chord([self[i] for i in indlist])
@@ -2594,7 +2603,7 @@ class scale:
     def detect(self):
         return mp.alg.detect_scale_type(self)
 
-    def get_allchord(self, duration=None, interval=0, num=3, step=2):
+    def get_all_chord(self, duration=None, interval=0, num=3, step=2):
         return [
             self.pick_chord_by_degree(i,
                                       duration=duration,
@@ -2623,7 +2632,10 @@ class scale:
                 'this function only applies to major and minor scales')
 
     def get_degree(self, degree):
-        return self[degree - 1]
+        if degree < 1:
+            raise ValueError('scale degree starts from 1')
+        degree -= 1
+        return self[degree]
 
     def get_chord(self, degree, chord_type=None, natural=False):
         if not chord_type:
@@ -2698,6 +2710,8 @@ class scale:
 
     def inversion(self, ind, parallel=False, start=None):
         # return the inversion of a scale with the beginning note of a given index
+        if ind < 1:
+            raise ValueError('inversion of scale starts from 1')
         ind -= 1
         interval1 = self.get_interval()
         new_interval = interval1[ind:] + interval1[:ind]
