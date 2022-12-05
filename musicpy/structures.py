@@ -2464,8 +2464,6 @@ class scale:
                              interval=0,
                              num=3,
                              step=2):
-        if degree1 > 0:
-            degree1 -= 1
         result = []
         high = False
         if degree1 == 7:
