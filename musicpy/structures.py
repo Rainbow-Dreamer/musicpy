@@ -18,8 +18,6 @@ class note:
         self.num = num
         self.duration = duration
         volume = int(volume)
-        if volume > 127:
-            volume = 127
         self.volume = volume
         self.channel = channel
 
@@ -36,17 +34,15 @@ class note:
         return f'{self.name}{self.num}'
 
     def __eq__(self, other):
-        return type(
-            other
-        ) is note and self.name == other.name and self.num == other.num
+        return type(other) is note and database.standard[
+            self.name] == database.standard[
+                other.name] and self.num == other.num
 
     def __matmul__(self, other):
-        return self.name == other.name
+        return database.standard[self.name] == database.standard[other.name]
 
     def setvolume(self, vol):
         vol = int(vol)
-        if vol > 127:
-            vol = 127
         self.volume = vol
 
     def set(self, duration=None, volume=None, channel=None):
@@ -1972,9 +1968,13 @@ class chord:
         if isinstance(current_note, str):
             if not any(i.isdigit() for i in current_note):
                 current_note = mp.to_note(current_note)
-                current_chord = chord([self[0].name, current_note.name])
-                current_interval = current_chord[1].degree - current_chord[
-                    0].degree
+                if database.standard[self[0].name] == database.standard[
+                        current_note.name]:
+                    current_interval = 0
+                else:
+                    current_chord = chord([self[0].name, current_note.name])
+                    current_interval = current_chord[1].degree - current_chord[
+                        0].degree
             else:
                 current_note = mp.to_note(current_note)
                 current_interval = current_note.degree - self[0].degree
@@ -4045,8 +4045,6 @@ class tempo:
 
     def setvolume(self, vol):
         vol = int(vol)
-        if vol > 127:
-            vol = 127
         self.volume = vol
 
     def set_channel(self, channel):
@@ -4104,8 +4102,6 @@ class pitch_bend:
 
     def setvolume(self, vol):
         vol = int(vol)
-        if vol > 127:
-            vol = 127
         self.volume = vol
 
     def set_channel(self, channel):
@@ -5426,14 +5422,30 @@ class chord_type:
     def get_root_position(self):
         return f'{self.root}{self.chord_type}'
 
-    def to_text(self):
+    def to_text(self, show_degree=True):
         if self.type == 'note':
             return f'note {self.note_name}'
         elif self.type == 'interval':
             return f'{self.root} with {self.interval_name}'
         elif self.type == 'chord':
+            current_chord = mp.C(self.get_root_position())
+            altered_msg = ' ' + ', '.join(self.altered if show_degree else [(
+                i[0] +
+                current_chord.interval_note(i[1:]).name) if i[1:].isdigit(
+                ) else i for i in self.altered]) if self.altered else ''
+            omit_msg = f' omit {", ".join([str(i) for i in self.omit] if show_degree else [current_chord.interval_note(i).name for i in self.omit])}' if self.omit else ''
+            voicing_msg = f' sort as {self.voicing}' if self.voicing else ''
+            non_chord_bass_note_msg = f'/{self.non_chord_bass_note}' if self.non_chord_bass_note else ''
             if self.chord_speciality == 'root position':
                 result = f'{self.root}{self.chord_type}'
+                if non_chord_bass_note_msg:
+                    result += non_chord_bass_note_msg
+                result += ''.join([altered_msg, omit_msg, voicing_msg])
+            elif self.chord_speciality == 'inverted chord':
+                result = f'{self.root}{self.chord_type}/{current_chord[self.inversion].name}'
+                if non_chord_bass_note_msg:
+                    result += non_chord_bass_note_msg
+                result += ''.join([altered_msg, omit_msg, voicing_msg])
             return result
 
 
