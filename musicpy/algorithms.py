@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 import itertools
 
 
-def inversion_from(a, b, num=False, mode=0):
+def inversion_from(a, b, num=False):
     N = len(b)
     for i in range(1, N):
         temp = b.inversion(i)
@@ -87,7 +87,7 @@ def inversion_way(a, b):
     if samenotes(a, b):
         return
     if samenote_set(a, b):
-        inversion_msg = inversion_from(a, b, num=True, mode=1)
+        inversion_msg = inversion_from(a, b, num=True)
         if inversion_msg is not None:
             return inversion_msg
         else:
@@ -179,9 +179,7 @@ def find_similarity(a,
                     current_chord_type.chord_type = chordfrom_type
                 else:
                     if samenote_set(a, chordfrom):
-                        current_inversion_msg = inversion_from(a,
-                                                               chordfrom,
-                                                               mode=1)
+                        current_inversion_msg = inversion_from(a, chordfrom)
                         if current_inversion_msg is None:
                             sort_message = sort_from(a, chordfrom)
                             current_chord_type.chord_speciality = 'chord voicings'
@@ -200,9 +198,7 @@ def find_similarity(a,
             else:
                 chordfrom_type = first[1]
                 if samenote_set(a, chordfrom):
-                    current_inversion_msg = inversion_from(a,
-                                                           chordfrom,
-                                                           mode=1)
+                    current_inversion_msg = inversion_from(a, chordfrom)
                     if current_inversion_msg is None:
                         sort_message = sort_from(a, chordfrom)
                         current_chord_type.chord_speciality = 'chord voicings'
@@ -243,7 +239,7 @@ def find_similarity(a,
             return b_chord_type
         chordfrom = b
         if samenote_set(a, chordfrom):
-            current_inversion_msg = inversion_from(a, chordfrom, mode=1)
+            current_inversion_msg = inversion_from(a, chordfrom)
             if current_inversion_msg is None:
                 sort_message = sort_from(a, chordfrom)
                 current_chord_type.chord_speciality = 'chord voicings'
@@ -451,36 +447,51 @@ def detect(current_chord,
             distance = tuple(i.degree - root for i in current[1:])
             result1 = database.detectTypes[distance]
             if result1 != 'not found':
-                inversion_result = inversion_way(current_chord, current,
-                                                 result1[0])
-                if 'sort' in inversion_result:
+                inversion_result = inversion_way(current_chord, current)
+                if not isinstance(inversion_result, int):
                     continue
                 else:
-                    return inversion_result
+                    current_chord_type.chord_speciality = 'inverted chord'
+                    current_chord_type.inversion = inversion_result
+                    current_chord_type.root = current[0].name
+                    current_chord_type.chord_type = result1[0]
+                    return current_chord_type.to_text(
+                        show_degree=show_degree
+                    ) if not get_chord_type else current_chord_type
     for i in range(1, N):
         current = chord(current_chord.inversion_highest(i).names())
         root = current[0].degree
         distance = tuple(i.degree - root for i in current[1:])
         result1 = database.detectTypes[distance]
         if result1 != 'not found':
-            inversion_high_result = inversion_way(current_chord, current,
-                                                  result1[0])
-            if 'sort' in inversion_high_result:
+            inversion_high_result = inversion_way(current_chord, current)
+            if not isinstance(inversion_high_result, int):
                 continue
             else:
-                return inversion_high_result
+                current_chord_type.chord_speciality = 'inverted chord'
+                current_chord_type.inversion = inversion_high_result
+                current_chord_type.root = current[0].name
+                current_chord_type.chord_type = result1[0]
+                return current_chord_type.to_text(
+                    show_degree=show_degree
+                ) if not get_chord_type else current_chord_type
         else:
             current = current.inoctave()
             root = current[0].degree
             distance = tuple(i.degree - root for i in current[1:])
             result1 = database.detectTypes[distance]
             if result1 != 'not found':
-                inversion_high_result = inversion_way(current_chord, current,
-                                                      result1[0])
-                if 'sort' in inversion_high_result:
+                inversion_high_result = inversion_way(current_chord, current)
+                if not isinstance(inversion_high_result, int):
                     continue
                 else:
-                    return inversion_high_result
+                    current_chord_type.chord_speciality = 'inverted chord'
+                    current_chord_type.inversion = inversion_high_result
+                    current_chord_type.root = current[0].name
+                    current_chord_type.chord_type = result1[0]
+                    return current_chord_type.to_text(
+                        show_degree=show_degree
+                    ) if not get_chord_type else current_chord_type
     if poly_chord_first and N > 3:
         return detect_split(current_chord=current_chord,
                             N=N,
@@ -538,32 +549,46 @@ def detect(current_chord,
             else:
                 return detect_var
     possibles.sort(key=lambda x: x[0].highest_ratio, reverse=True)
-    best = possibles[0]
-    highest_chord_type = best[0]
+    highest_chord_type, current_inversion = possibles[0]
     if current_chord_type.chord_type is not None:
         if current_chord_type.highest_ratio > similarity_ratio and (
                 current_chord_type.highest_ratio >=
                 highest_chord_type.highest_ratio
-                or current_chord_type.voicing is not None):
+                or highest_chord_type.voicing is not None):
             return current_chord_type.to_text(
                 show_degree=show_degree
             ) if not get_chord_type else current_chord_type
     if highest_chord_type.highest_ratio > similarity_ratio:
         if inversion_final:
-            current_invert = current_chord.inversion(possibles[0][1])
+            current_invert = current_chord.inversion(current_inversion)
         else:
-            current_invert = current_chord.inversion_highest(possibles[0][1])
+            current_invert = current_chord.inversion_highest(current_inversion)
         invfrom_current_invert = inversion_way(current_chord, current_invert)
-        highest_chord_type = best[0][1]
-        if highest_chord_type.inversion is not None or highest_chord_type.voicing is not None:
-            retry_msg = find_similarity(a=current_chord,
-                                        b=best[1],
-                                        similarity_ratio=similarity_ratio)
-            invfrom_current_invert = retry_msg
-            final_result = f'{best[2]} {invfrom_current_invert}'
+        if highest_chord_type.voicing is not None and not isinstance(
+                invfrom_current_invert, int):
+            current_root_position = highest_chord_type.get_root_position()
+            current_chord_type = find_similarity(
+                a=current_chord,
+                b=C(current_root_position),
+                b_type=highest_chord_type.chord_type,
+                similarity_ratio=similarity_ratio)
+            current_chord_type.chord_speciality = 'chord voicing'
+            current_chord_type.voicing = invfrom_current_invert
         else:
-            final_result = f'{highest_msg} {invfrom_current_invert}'
-        return final_result
+            current_invert_msg = inversion_way(
+                current_chord,
+                highest_chord_type.to_chord().inversion(current_inversion))
+            current_chord_type = highest_chord_type
+            current_chord_type.inversion = current_inversion
+            if isinstance(current_invert_msg, int):
+                current_chord_type.chord_speciality = 'inverted chord'
+                current_chord_type.inversion = current_invert_msg
+            else:
+                current_chord_type.chord_speciality = 'chord voicings'
+                current_chord_type.voicing = current_invert_msg
+        return current_chord_type.to_text(
+            show_degree=show_degree
+        ) if not get_chord_type else current_chord_type
 
     if not whole_detect:
         return

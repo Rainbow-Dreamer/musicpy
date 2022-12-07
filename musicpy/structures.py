@@ -5422,30 +5422,55 @@ class chord_type:
     def get_root_position(self):
         return f'{self.root}{self.chord_type}'
 
-    def to_text(self, show_degree=True):
+    def to_chord(self):
+        current = mp.C(self.get_root_position())
+        if self.omit:
+            current = current.omit(
+                [database.precise_degree_match[i] for i in self.omit], mode=1)
+        if self.inversion:
+            current = current.inversion(self.inversion)
+        if self.altered:
+            current = current(','.join(self.altered))
+        if self.voicing:
+            current = current @ self.voicing
+        if self.non_chord_bass_note:
+            current = current.on(self.non_chord_bass_note)
+        return current
+
+    def to_text(self, show_degree=True, show_voicing=True):
         if self.type == 'note':
             return f'note {self.note_name}'
         elif self.type == 'interval':
             return f'{self.root} with {self.interval_name}'
         elif self.type == 'chord':
             current_chord = mp.C(self.get_root_position())
-            altered_msg = ' ' + ', '.join(self.altered if show_degree else [(
+            altered_msg = ', '.join(self.altered if show_degree else [(
                 i[0] +
                 current_chord.interval_note(i[1:]).name) if i[1:].isdigit(
                 ) else i for i in self.altered]) if self.altered else ''
             omit_msg = f' omit {", ".join([str(i) for i in self.omit] if show_degree else [current_chord.interval_note(i).name for i in self.omit])}' if self.omit else ''
-            voicing_msg = f' sort as {self.voicing}' if self.voicing else ''
+            voicing_msg = f'sort as {self.voicing}' if self.voicing else ''
             non_chord_bass_note_msg = f'/{self.non_chord_bass_note}' if self.non_chord_bass_note else ''
             if self.chord_speciality == 'root position':
                 result = f'{self.root}{self.chord_type}'
-                if non_chord_bass_note_msg:
-                    result += non_chord_bass_note_msg
-                result += ''.join([altered_msg, omit_msg, voicing_msg])
+                if omit_msg:
+                    result += omit_msg
             elif self.chord_speciality == 'inverted chord':
-                result = f'{self.root}{self.chord_type}/{current_chord[self.inversion].name}'
-                if non_chord_bass_note_msg:
-                    result += non_chord_bass_note_msg
-                result += ''.join([altered_msg, omit_msg, voicing_msg])
+                result = f'{self.root}{self.chord_type}'
+                if omit_msg:
+                    result += omit_msg
+                result += f'/{current_chord.omit([database.precise_degree_match[i] for i in self.omit], mode=1)[self.inversion].name}'
+            elif self.chord_speciality == 'chord voicings':
+                result = f'{self.root}{self.chord_type}'
+                if omit_msg:
+                    result += omit_msg
+            if non_chord_bass_note_msg:
+                result += non_chord_bass_note_msg
+            if not show_voicing:
+                other_msg = [altered_msg]
+            else:
+                other_msg = [altered_msg, voicing_msg]
+            result += ' '.join(other_msg)
             return result
 
 
