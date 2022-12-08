@@ -218,14 +218,16 @@ def find_similarity(a,
                     current_chord_type.chord_type = chordfrom_type
                 elif len(a) == len(chordfrom):
                     current_change_msg = change_from(a, chordfrom)
-                    current_chord_type.chord_speciality = 'root position'
-                    current_chord_type.altered = current_change_msg
-                    current_chord_type.root = chordfrom[0].name
-                    current_chord_type.chord_type = chordfrom_type
+                    if current_change_msg:
+                        current_chord_type.chord_speciality = 'root position'
+                        current_chord_type.altered = current_change_msg
+                        current_chord_type.root = chordfrom[0].name
+                        current_chord_type.chord_type = chordfrom_type
                 if current_chord_type.chord_type is None:
                     return current_chord_type
-                current_chord_type.highest_ratio = highest
-                return current_chord_type
+                else:
+                    current_chord_type.highest_ratio = highest
+                    return current_chord_type
         else:
             return current_chord_type
     else:
@@ -279,21 +281,25 @@ def detect_variation(current_chord,
                              change_from_first=change_from_first,
                              original_first=original_first,
                              same_note_special=same_note_special,
-                             whole_detect=False)
+                             similarity_ratio=similarity_ratio,
+                             whole_detect=False,
+                             get_chord_type=True)
         if each_detect is not None:
-            detect_msg, change_from_chord, chord_name_str = each_detect
             inv_msg = inversion_way(current_chord, each_current)
-            result = f'{detect_msg} {inv_msg}'
-            if any(x in detect_msg
-                   for x in ['sort', '/']) and any(y in inv_msg
-                                                   for y in ['sort', '/']):
+            if each_detect.voicing is not None and not isinstance(
+                    inv_msg, int):
+                change_from_chord = each_detect.to_chord(apply_voicing=False)
                 inv_msg = inversion_way(current_chord, change_from_chord)
                 if inv_msg is None:
-                    inv_msg = find_similarity(
-                        a=current_chord,
-                        b=change_from_chord,
-                        similarity_ratio=similarity_ratio)
-                result = f'{chord_name_str} {inv_msg}'
+                    result = find_similarity(a=current_chord,
+                                             b=change_from_chord,
+                                             similarity_ratio=similarity_ratio)
+                else:
+                    result = each_detect
+                    result.apply_sort_msg(inv_msg)
+            else:
+                result = each_detect
+                result.apply_sort_msg(inv_msg)
             return result
     for each2 in range(1, N):
         each_current = current_chord.inversion_highest(each2)
@@ -301,41 +307,49 @@ def detect_variation(current_chord,
                              change_from_first=change_from_first,
                              original_first=original_first,
                              same_note_special=same_note_special,
-                             whole_detect=False)
+                             similarity_ratio=similarity_ratio,
+                             whole_detect=False,
+                             get_chord_type=True)
         if each_detect is not None:
-            detect_msg, change_from_chord, chord_name_str = each_detect
             inv_msg = inversion_way(current_chord, each_current)
-            result = f'{detect_msg} {inv_msg}'
-            if any(x in detect_msg
-                   for x in ['sort', '/']) and any(y in inv_msg
-                                                   for y in ['sort', '/']):
+            if each_detect.voicing is not None and not isinstance(
+                    inv_msg, int):
+                change_from_chord = each_detect.to_chord(apply_voicing=False)
                 inv_msg = inversion_way(current_chord, change_from_chord)
                 if inv_msg is None:
-                    inv_msg = find_similarity(
-                        a=current_chord,
-                        b=change_from_chord,
-                        similarity_ratio=similarity_ratio)
-                result = f'{chord_name_str} {inv_msg}'
+                    result = find_similarity(a=current_chord,
+                                             b=change_from_chord,
+                                             similarity_ratio=similarity_ratio)
+                else:
+                    result = each_detect
+                    result.apply_sort_msg(inv_msg)
+            else:
+                result = each_detect
+                result.apply_sort_msg(inv_msg)
             return result
 
 
 def detect_split(current_chord, N=None, **detect_args):
+    if N is None:
+        N = len(current_chord)
+    result = chord_type(chord_speciality='polychord')
     if N < 6:
         splitind = 1
-        lower = current_chord.notes[0].name
-        upper = detect(current_chord.notes[splitind:], **detect_args)
-        if isinstance(upper, list):
-            upper = upper[0]
-        return f'[{upper}]/{lower}'
+        lower = chord_type(note_name=current_chord.notes[0].name, type='note')
+        upper = detect(current_chord.notes[splitind:],
+                       get_chord_type=True,
+                       **detect_args)
+        result.polychords = [lower, upper]
     else:
         splitind = N // 2
-        lower = detect(current_chord.notes[:splitind], **detect_args)
-        upper = detect(current_chord.notes[splitind:], **detect_args)
-        if isinstance(lower, list):
-            lower = lower[0]
-        if isinstance(upper, list):
-            upper = upper[0]
-        return f'[{upper}]/[{lower}]'
+        lower = detect(current_chord.notes[:splitind],
+                       get_chord_type=True,
+                       **detect_args)
+        upper = detect(current_chord.notes[splitind:],
+                       get_chord_type=True,
+                       **detect_args)
+        result.polychords = [lower, upper]
+    return result
 
 
 def interval_check(current_chord):
@@ -434,6 +448,7 @@ def detect(current_chord,
             if not isinstance(inversion_result, int):
                 continue
             else:
+                current_chord_type.clear()
                 current_chord_type.chord_speciality = 'inverted chord'
                 current_chord_type.inversion = inversion_result
                 current_chord_type.root = current[0].name
@@ -451,6 +466,7 @@ def detect(current_chord,
                 if not isinstance(inversion_result, int):
                     continue
                 else:
+                    current_chord_type.clear()
                     current_chord_type.chord_speciality = 'inverted chord'
                     current_chord_type.inversion = inversion_result
                     current_chord_type.root = current[0].name
@@ -468,6 +484,7 @@ def detect(current_chord,
             if not isinstance(inversion_high_result, int):
                 continue
             else:
+                current_chord_type.clear()
                 current_chord_type.chord_speciality = 'inverted chord'
                 current_chord_type.inversion = inversion_high_result
                 current_chord_type.root = current[0].name
@@ -485,6 +502,7 @@ def detect(current_chord,
                 if not isinstance(inversion_high_result, int):
                     continue
                 else:
+                    current_chord_type.clear()
                     current_chord_type.chord_speciality = 'inverted chord'
                     current_chord_type.inversion = inversion_high_result
                     current_chord_type.root = current[0].name
@@ -493,14 +511,17 @@ def detect(current_chord,
                         show_degree=show_degree
                     ) if not get_chord_type else current_chord_type
     if poly_chord_first and N > 3:
-        return detect_split(current_chord=current_chord,
-                            N=N,
-                            change_from_first=change_from_first,
-                            original_first=original_first,
-                            same_note_special=same_note_special,
-                            whole_detect=whole_detect,
-                            poly_chord_first=poly_chord_first,
-                            show_degree=show_degree)
+        current_chord_type = detect_split(current_chord=current_chord,
+                                          N=N,
+                                          change_from_first=change_from_first,
+                                          original_first=original_first,
+                                          same_note_special=same_note_special,
+                                          whole_detect=whole_detect,
+                                          poly_chord_first=poly_chord_first,
+                                          show_degree=show_degree)
+        return current_chord_type.to_text(
+            show_degree=show_degree
+        ) if not get_chord_type else current_chord_type
     inversion_final = True
     possibles = [(find_similarity(a=current_chord.inversion(j),
                                   change_from_first=change_from_first,
@@ -517,8 +538,10 @@ def detect(current_chord,
         possibles = [x for x in possibles if x[0].chord_type is not None]
         inversion_final = False
     if len(possibles) == 0:
-        if original_detect.chord_type is not None:
-            return original_msg
+        if current_chord_type.chord_type is not None:
+            return current_chord_type.to_text(
+                show_degree=show_degree
+            ) if not get_chord_type else current_chord_type
         if not whole_detect:
             return
         else:
@@ -534,16 +557,21 @@ def detect(current_chord,
                                        original_first=original_first,
                                        same_note_special=same_note_special,
                                        whole_detect=False,
-                                       show_degree=show_degree)
+                                       show_degree=show_degree,
+                                       get_chord_type=get_chord_type)
                 if result_change is None:
-                    return detect_split(current_chord=current_chord,
-                                        N=N,
-                                        change_from_first=change_from_first,
-                                        original_first=original_first,
-                                        same_note_special=same_note_special,
-                                        whole_detect=whole_detect,
-                                        poly_chord_first=poly_chord_first,
-                                        show_degree=show_degree)
+                    current_chord_type = detect_split(
+                        current_chord=current_chord,
+                        N=N,
+                        change_from_first=change_from_first,
+                        original_first=original_first,
+                        same_note_special=same_note_special,
+                        whole_detect=whole_detect,
+                        poly_chord_first=poly_chord_first,
+                        show_degree=show_degree)
+                    return current_chord_type.to_text(
+                        show_degree=show_degree
+                    ) if not get_chord_type else current_chord_type
                 else:
                     return result_change
             else:
@@ -572,20 +600,14 @@ def detect(current_chord,
                 b=C(current_root_position),
                 b_type=highest_chord_type.chord_type,
                 similarity_ratio=similarity_ratio)
-            current_chord_type.chord_speciality = 'chord voicing'
+            current_chord_type.chord_speciality = 'chord voicings'
             current_chord_type.voicing = invfrom_current_invert
         else:
             current_invert_msg = inversion_way(
                 current_chord,
-                highest_chord_type.to_chord().inversion(current_inversion))
+                highest_chord_type.to_chord(apply_voicing=False))
             current_chord_type = highest_chord_type
-            current_chord_type.inversion = current_inversion
-            if isinstance(current_invert_msg, int):
-                current_chord_type.chord_speciality = 'inverted chord'
-                current_chord_type.inversion = current_invert_msg
-            else:
-                current_chord_type.chord_speciality = 'chord voicings'
-                current_chord_type.voicing = current_invert_msg
+            current_chord_type.apply_sort_msg(current_invert_msg)
         return current_chord_type.to_text(
             show_degree=show_degree
         ) if not get_chord_type else current_chord_type
@@ -605,16 +627,21 @@ def detect(current_chord,
                                    original_first=original_first,
                                    same_note_special=same_note_special,
                                    whole_detect=False,
-                                   show_degree=show_degree)
+                                   show_degree=show_degree,
+                                   get_chord_type=get_chord_type)
             if result_change is None:
-                return detect_split(current_chord=current_chord,
-                                    N=N,
-                                    change_from_first=change_from_first,
-                                    original_first=original_first,
-                                    same_note_special=same_note_special,
-                                    whole_detect=whole_detect,
-                                    poly_chord_first=poly_chord_first,
-                                    show_degree=show_degree)
+                current_chord_type = detect_split(
+                    current_chord=current_chord,
+                    N=N,
+                    change_from_first=change_from_first,
+                    original_first=original_first,
+                    same_note_special=same_note_special,
+                    whole_detect=whole_detect,
+                    poly_chord_first=poly_chord_first,
+                    show_degree=show_degree)
+                return current_chord_type.to_text(
+                    show_degree=show_degree
+                ) if not get_chord_type else current_chord_type
             else:
                 return result_change
         else:
