@@ -1222,29 +1222,29 @@ def detect_scale(current_chord,
                 mode='chords') if is_chord else original_chord
             if current_chord_analysis:
                 first_chord = current_chord_analysis[0]
-                first_chord_info = first_chord.info(get_dict=True)
-                if first_chord_info['type'] == 'chord':
-                    if first_chord_info['chord type'].startswith('maj'):
+                first_chord_info = first_chord.info()
+                if first_chord_info.type == 'chord':
+                    if first_chord_info.chord_type.startswith('maj'):
                         major_scales = [result_scales[i] for i in major_inds]
                         major_scales = [
                             i for i in major_scales
-                            if i.start.name == first_chord_info['root']
+                            if i.start.name == first_chord_info.root
                         ] + [
                             i for i in major_scales
-                            if i.start.name != first_chord_info['root']
+                            if i.start.name != first_chord_info.root
                         ]
                         result_scales = major_scales + [
                             result_scales[j] for j in range(len(result_scales))
                             if j not in major_inds
                         ]
-                    elif first_chord_info['chord type'].startswith('m'):
+                    elif first_chord_info.chord_type.startswith('m'):
                         minor_scales = [result_scales[i] for i in minor_inds]
                         minor_scales = [
                             i for i in minor_scales
-                            if i.start.name == first_chord_info['root']
+                            if i.start.name == first_chord_info.root
                         ] + [
                             i for i in minor_scales
-                            if i.start.name != first_chord_info['root']
+                            if i.start.name != first_chord_info.root
                         ]
                         result_scales = minor_scales + [
                             result_scales[j] for j in range(len(result_scales))

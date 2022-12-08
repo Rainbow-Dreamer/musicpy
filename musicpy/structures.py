@@ -1663,35 +1663,6 @@ class chord:
                                  **detect_args)
         return chord_type
 
-    def get_chord_speciality(self, mode=0, **kwargs):
-        info = self.info(get_dict=True, **kwargs)
-        if mode == 0:
-            return info['chord speciality']
-        elif mode == 1:
-            return info['chord speciality'], info['other']
-
-    def get_chord_root(self, **kwargs):
-        return self.info(get_dict=True, **kwargs)['root']
-
-    def _get_chord_speciality_helper(self, chord_type):
-        if '/' in chord_type:
-            has_split = True
-            if chord_type[0] == '[':
-                chord_speciality = 'polychord'
-            elif 'top' in chord_type:
-                chord_speciality = 'chord voicings'
-            else:
-                chord_speciality = 'inverted chord'
-        elif 'sort as' in chord_type:
-            chord_speciality = 'chord voicings'
-        else:
-            alter_notes = chord_type.split(' ')
-            if len(alter_notes) > 1 and alter_notes[1][0] in ['#', 'b']:
-                chord_speciality = 'altered chord'
-            else:
-                chord_speciality = 'root position'
-        return chord_speciality
-
     def same_accidentals(self, mode='#'):
         temp = copy(self)
         for each in temp.notes:
