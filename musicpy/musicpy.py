@@ -188,7 +188,8 @@ def getchord(start,
              cummulative=True,
              pitch=4,
              ind=0,
-             start_time=0):
+             start_time=0,
+             custom_mapping=None):
     if not isinstance(start, note):
         start = to_note(start, pitch=pitch)
     if interval is not None:
@@ -202,11 +203,12 @@ def getchord(start,
     mode = mode.lower().replace(' ', '')
     initial = start.degree
     chordlist = [start]
-    interval_premode = database.chordTypes(premode, mode=1, index=ind)
+    current_chord_types = database.chordTypes if custom_mapping is None else custom_mapping
+    interval_premode = current_chord_types(premode, mode=1, index=ind)
     if interval_premode != 'not found':
         interval = interval_premode
     else:
-        interval_mode = database.chordTypes(mode, mode=1, index=ind)
+        interval_mode = current_chord_types(mode, mode=1, index=ind)
         if interval_mode != 'not found':
             interval = interval_mode
         else:
@@ -1122,7 +1124,7 @@ def modulation(current_chord, old_scale, new_scale, **args):
     return current_chord.modulation(old_scale, new_scale, **args)
 
 
-def trans(obj, pitch=4, duration=1 / 4, interval=None):
+def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
     obj = obj.replace(' ', '')
     if ':' in obj:
         current = obj.split(':')
@@ -1145,40 +1147,45 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None):
                    'M',
                    pitch=pitch,
                    duration=duration,
-                   intervals=interval)
+                   intervals=interval,
+                   custom_mapping=custom_mapping)
     if '/' not in obj:
         check_structure = obj.split(',')
         check_structure_len = len(check_structure)
         if check_structure_len > 1:
             return trans(check_structure[0], pitch)(','.join(
                 check_structure[1:])) % (duration, interval)
+        current_chord_types = database.chordTypes if custom_mapping is None else custom_mapping
         N = len(obj)
         if N == 2:
             first = obj[0]
             types = obj[1]
-            if first in database.standard and types in database.chordTypes:
+            if first in database.standard and types in current_chord_types:
                 return chd(first,
                            types,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval)
+                           intervals=interval,
+                           custom_mapping=custom_mapping)
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
-            if first_two in database.standard and type1 in database.chordTypes:
+            if first_two in database.standard and type1 in current_chord_types:
                 return chd(first_two,
                            type1,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval)
+                           intervals=interval,
+                           custom_mapping=custom_mapping)
             first_one = obj[0]
             type2 = obj[1:]
-            if first_one in database.standard and type2 in database.chordTypes:
+            if first_one in database.standard and type2 in current_chord_types:
                 return chd(first_one,
                            type2,
                            pitch=pitch,
                            duration=duration,
-                           intervals=interval)
+                           intervals=interval,
+                           custom_mapping=custom_mapping)
     else:
         parts = obj.split('/')
         part1, part2 = parts[0], '/'.join(parts[1:])

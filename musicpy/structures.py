@@ -1754,6 +1754,8 @@ class chord:
                 if current_note in self_notes:
                     return current_note
         elif mode == 1:
+            if interval in database.precise_degree_match:
+                interval = database.precise_degree_match[interval]
             return self[0] + interval
 
     def note_interval(self, current_note, mode=0):
@@ -5221,7 +5223,8 @@ class chord_type:
                  apply_omit=True,
                  apply_altered=True,
                  apply_non_chord_bass_note=True,
-                 apply_inversion=True):
+                 apply_inversion=True,
+                 custom_mapping=None):
         if self.type == 'note':
             return chord([self.note_name])
         elif self.type == 'interval':
@@ -5244,7 +5247,8 @@ class chord_type:
                 ]
                 current = functools.reduce(chord.on, current_chords)
             else:
-                current = mp.C(self.get_root_position())
+                current = mp.C(self.get_root_position(),
+                               custom_mapping=custom_mapping)
                 if not root_position:
                     if apply_omit and self.omit:
                         current = current.omit([
@@ -5261,7 +5265,10 @@ class chord_type:
                         current = current.on(self.non_chord_bass_note)
             return current
 
-    def to_text(self, show_degree=True, show_voicing=True):
+    def to_text(self,
+                show_degree=True,
+                show_voicing=True,
+                custom_mapping=None):
         if self.type == 'note':
             return f'note {self.note_name}'
         elif self.type == 'interval':
@@ -5269,11 +5276,12 @@ class chord_type:
         elif self.type == 'chord':
             if self.chord_speciality == 'polychord':
                 return '/'.join([
-                    f'[{i.to_text(show_degree=show_degree, show_voicing=show_voicing)}]'
+                    f'[{i.to_text(show_degree=show_degree, show_voicing=show_voicing, custom_mapping=custom_mapping)}]'
                     for i in self.polychords[::-1]
                 ])
             else:
-                current_chord = mp.C(self.get_root_position())
+                current_chord = mp.C(self.get_root_position(),
+                                     custom_mapping=custom_mapping)
                 if self.altered:
                     if show_degree:
                         altered_msg = ', '.join(self.altered)
@@ -5291,7 +5299,24 @@ class chord_type:
                         altered_msg = ', '.join(current_alter)
                 else:
                     altered_msg = ''
-                omit_msg = f' omit {", ".join([str(i) for i in self.omit] if show_degree else [current_chord.interval_note(i).name for i in self.omit])}' if self.omit else ''
+                if self.omit:
+                    if show_degree:
+                        omit_msg = f' omit {", ".join([str(i) for i in self.omit])}'
+                    else:
+                        current_omit = []
+                        for i in self.omit:
+                            if '/' in i:
+                                i = i.split('/')[0]
+                            if i in database.precise_degree_match:
+                                current_degree = current_chord.interval_note(
+                                    i, mode=1)
+                                if current_degree is not None:
+                                    current_omit.append(current_degree.name)
+                            else:
+                                current_omit.append(i)
+                        omit_msg = f' omit {", ".join(current_omit)}'
+                else:
+                    omit_msg = ''
                 voicing_msg = f'sort as {self.voicing}' if self.voicing else ''
                 non_chord_bass_note_msg = f'/{self.non_chord_bass_note}' if self.non_chord_bass_note else ''
                 if self.chord_speciality == 'root position':
