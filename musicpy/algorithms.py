@@ -361,8 +361,6 @@ def interval_check(current_chord):
     else:
         interval_name = database.INTERVAL[dist % 12]
     root_note_name = current_chord[0].name
-    if interval_name == 'perfect fifth':
-        return f'{root_note_name} with perfect fifth / {root_note_name}5 ({root_note_name} power chord)'
     return root_note_name, interval_name
 
 
