@@ -5376,20 +5376,22 @@ class chord_type:
             self.voicing = msg
 
     def show(self):
+        current_vars = vars(self)
         if self.type == 'note':
             current = '\n'.join([
-                f'{i}: {j}' for i, j in vars(self).items()
-                if i in ['type', 'note_name']
+                f'{i.replace("_", " ")}: {current_vars[i]}'
+                for i in ['type', 'note_name']
             ])
         elif self.type == 'interval':
             current = '\n'.join([
-                f'{i}: {j}' for i, j in vars(self).items()
-                if i in ['type', 'root', 'interval_name']
+                f'{i.replace("_", " ")}: {current_vars[i]}'
+                for i in ['type', 'root', 'interval_name']
             ])
         elif self.type == 'chord':
-            current = '\n'.join([
-                f'{i}: {j}' for i, j in vars(self).items()
-                if i not in ['note_name', 'interval_name', 'highest_ratio']
+            current = '\n'.join([f'type: {self.type}'] + [
+                f'{i.replace("_", " ")}: {j}'
+                for i, j in vars(self).items() if i not in
+                ['type', 'note_name', 'interval_name', 'highest_ratio']
             ])
         return current
 
