@@ -883,7 +883,7 @@ def negative_harmony(key,
 
 def guitar_chord(frets,
                  return_chord=True,
-                 tuning=['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
+                 tuning=database.guitar_standard_tuning,
                  duration=1 / 4,
                  interval=0,
                  **detect_args):
@@ -913,7 +913,7 @@ def guitar_chord(frets,
 
 
 def guitar_pattern(frets,
-                   tuning=['E2', 'A2', 'D3', 'G3', 'B3', 'E4'],
+                   tuning=database.guitar_standard_tuning,
                    duration=1 / 8,
                    interval=1 / 8):
     tuning = [N(i) for i in tuning]

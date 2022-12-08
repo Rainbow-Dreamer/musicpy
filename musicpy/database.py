@@ -781,3 +781,5 @@ drum_keywords = [
     'r', 'd', 'a', 't', 'l', 'n', 's', 'v', 'dl', 'di', 'dv', 'al', 'ai', 'av',
     'b'
 ]
+
+guitar_standard_tuning = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4']
