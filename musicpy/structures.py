@@ -5310,7 +5310,7 @@ class chord_type:
                     else:
                         current_omit_chord = current_chord
                     result += f'/{current_omit_chord[self.inversion].name}'
-                elif self.chord_speciality == 'chord voicings':
+                elif self.chord_speciality == 'chord voicings' or self.chord_speciality == 'altered chord':
                     result = f'{self.root}{self.chord_type}'
                     if omit_msg:
                         result += omit_msg
@@ -5346,7 +5346,7 @@ class chord_type:
             self.chord_speciality = 'chord voicings'
             self.voicing = msg
 
-    def show(self):
+    def show(self, **to_text_args):
         current_vars = vars(self)
         if self.type == 'note':
             current = '\n'.join([
@@ -5359,11 +5359,18 @@ class chord_type:
                 for i in ['type', 'root', 'interval_name']
             ])
         elif self.type == 'chord':
-            current = '\n'.join([f'type: {self.type}'] + [
+            current = [f'type: {self.type}'] + [
                 f'{i.replace("_", " ")}: {j}'
-                for i, j in vars(self).items() if i not in
+                for i, j in current_vars.items() if i not in
                 ['type', 'note_name', 'interval_name', 'highest_ratio']
-            ])
+            ]
+            if self.chord_speciality == 'polychord':
+                for i, each in enumerate(current):
+                    if each.startswith('polychords:'):
+                        current[
+                            i] = f'polychords: {[i.to_text(**to_text_args) for i in self.polychords]}'
+                        break
+            current = '\n'.join(current)
         return current
 
 

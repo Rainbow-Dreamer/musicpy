@@ -219,7 +219,7 @@ def find_similarity(a,
                 elif len(a) == len(chordfrom):
                     current_change_msg = change_from(a, chordfrom)
                     if current_change_msg:
-                        current_chord_type.chord_speciality = 'root position'
+                        current_chord_type.chord_speciality = 'altered chord'
                         current_chord_type.altered = current_change_msg
                         current_chord_type.root = chordfrom[0].name
                         current_chord_type.chord_type = chordfrom_type
@@ -261,7 +261,7 @@ def find_similarity(a,
         elif len(a) == len(chordfrom):
             current_change_msg = change_from(a, chordfrom)
             if current_change_msg:
-                current_chord_type.chord_speciality = 'root position'
+                current_chord_type.chord_speciality = 'altered chord'
                 current_chord_type.altered = current_change_msg
                 current_chord_type.root = chordfrom[0].name
                 current_chord_type.chord_type = chordfrom_type
