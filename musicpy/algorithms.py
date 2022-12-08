@@ -236,7 +236,6 @@ def find_similarity(a,
             b_chord_type = detect(current_chord=b,
                                   change_from_first=change_from_first,
                                   same_note_special=same_note_special,
-                                  show_degree=show_degree,
                                   get_chord_type=True)
             return b_chord_type
         chordfrom = b
