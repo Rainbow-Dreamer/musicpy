@@ -5252,7 +5252,8 @@ class chord_type:
                 if not root_position:
                     if apply_omit and self.omit:
                         current = current.omit([
-                            database.precise_degree_match[i] for i in self.omit
+                            database.precise_degree_match.get(
+                                i.split('/')[0], i) for i in self.omit
                         ],
                                                mode=1)
                     if apply_inversion and self.inversion:
@@ -5305,8 +5306,7 @@ class chord_type:
                     else:
                         current_omit = []
                         for i in self.omit:
-                            if '/' in i:
-                                i = i.split('/')[0]
+                            i = i.split('/')[0]
                             if i in database.precise_degree_match:
                                 current_degree = current_chord.interval_note(
                                     i, mode=1)
@@ -5329,7 +5329,8 @@ class chord_type:
                         result += omit_msg
                     if self.omit is not None:
                         current_omit_chord = current_chord.omit([
-                            database.precise_degree_match[i] for i in self.omit
+                            database.precise_degree_match.get(
+                                i.split('/')[0], i) for i in self.omit
                         ],
                                                                 mode=1)
                     else:
