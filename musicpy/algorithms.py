@@ -1273,7 +1273,7 @@ def detect_scale(current_chord,
             if current_chord_analysis:
                 first_chord = current_chord_analysis[0]
                 first_chord_info = first_chord.info()
-                if first_chord_info.type == 'chord':
+                if first_chord_info.type == 'chord' and first_chord_info.chord_type:
                     if first_chord_info.chord_type.startswith('maj'):
                         major_scales = [result_scales[i] for i in major_inds]
                         major_scales = [
