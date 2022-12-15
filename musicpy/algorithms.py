@@ -406,7 +406,7 @@ def detect(current_chord,
         current_chord_type.type = 'note'
         current_chord_type.note_name = str(current_chord.notes[0])
         return current_chord_type.to_text(
-            show_degree=show_degree, custom_mapping=current_custom_chord_types
+            show_degree=show_degree
         ) if not get_chord_type else current_chord_type
     if N == 2:
         current_root_note_name, current_interval_name = interval_check(
@@ -415,7 +415,7 @@ def detect(current_chord,
         current_chord_type.root = current_root_note_name
         current_chord_type.interval_name = current_interval_name
         return current_chord_type.to_text(
-            show_degree=show_degree, custom_mapping=current_custom_chord_types
+            show_degree=show_degree
         ) if not get_chord_type else current_chord_type
     current_chord = current_chord.standardize()
     N = len(current_chord)
@@ -423,7 +423,7 @@ def detect(current_chord,
         current_chord_type.type = 'note'
         current_chord_type.note_name = str(current_chord.notes[0])
         return current_chord_type.to_text(
-            show_degree=show_degree, custom_mapping=current_custom_chord_types
+            show_degree=show_degree
         ) if not get_chord_type else current_chord_type
     if N == 2:
         current_root_note_name, current_interval_name = interval_check(
@@ -432,7 +432,7 @@ def detect(current_chord,
         current_chord_type.root = current_root_note_name
         current_chord_type.interval_name = current_interval_name
         return current_chord_type.to_text(
-            show_degree=show_degree, custom_mapping=current_custom_chord_types
+            show_degree=show_degree
         ) if not get_chord_type else current_chord_type
     root = current_chord[0].degree
     rootNote = current_chord[0].name
