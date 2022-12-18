@@ -5346,7 +5346,7 @@ class chord_type:
                                     current_omit.append(current_degree.name)
                             else:
                                 current_omit.append(i)
-                        omit_msg = f' omit {", ".join(current_omit)}'
+                        omit_msg = f'omit {", ".join(current_omit)}'
                 else:
                     omit_msg = ''
                 voicing_msg = f'sort as {self.voicing}' if self.voicing else ''
@@ -5374,7 +5374,9 @@ class chord_type:
                 other_msg = [other_msg[i] for i in current_order]
                 other_msg = [i for i in other_msg if i]
                 if other_msg:
-                    result += ' ' + ' '.join(other_msg)
+                    if other_msg[0] != inversion_msg:
+                        result += ' '
+                    result += ' '.join(other_msg)
                 return result
 
     def clear(self):
