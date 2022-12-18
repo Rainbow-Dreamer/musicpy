@@ -1230,7 +1230,7 @@ def to_scale(obj, pitch=None):
 
 def intervalof(current_chord, cummulative=True, translate=False):
     if isinstance(current_chord, scale):
-        current_chord = current_chord.getScale()
+        current_chord = current_chord.get_scale()
     if not isinstance(current_chord, chord):
         current_chord = chord(current_chord)
     return current_chord.intervalof(cummulative, translate)
@@ -1760,7 +1760,7 @@ def note_range(note1, note2):
 
 def adjust_to_scale(current_chord, current_scale):
     temp = copy(current_chord)
-    current_notes = current_scale.getScale()
+    current_notes = current_scale.get_scale()
     for i, each in enumerate(temp):
         current_note = closest_note_from_chord(each, current_notes)
         each.name = current_note.name
