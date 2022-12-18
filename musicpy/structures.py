@@ -5256,10 +5256,10 @@ class chord_type:
                                 i.split('/')[0], i) for i in self.omit
                         ],
                                                mode=1)
-                    if apply_inversion and self.inversion:
-                        current = current.inversion(self.inversion)
                     if apply_altered and self.altered:
                         current = current(','.join(self.altered))
+                    if apply_inversion and self.inversion:
+                        current = current.inversion(self.inversion)
                     if apply_voicing and self.voicing:
                         current = current @ self.voicing
                     if apply_non_chord_bass_note and self.non_chord_bass_note:
@@ -5319,6 +5319,20 @@ class chord_type:
                     omit_msg = ''
                 voicing_msg = f'sort as {self.voicing}' if self.voicing else ''
                 non_chord_bass_note_msg = f'/{self.non_chord_bass_note}' if self.non_chord_bass_note else ''
+                if self.inversion:
+                    if self.omit is not None:
+                        current_new_chord = current_chord.omit([
+                            database.precise_degree_match.get(
+                                i.split('/')[0], i) for i in self.omit
+                        ],
+                                                               mode=1)
+                    else:
+                        current_new_chord = current_chord
+                    if self.altered is not None:
+                        current_new_chord = current_new_chord(altered_msg)
+                    inversion_msg = f'/{current_new_chord[self.inversion].name}'
+                else:
+                    inversion_msg = ''
                 if self.chord_speciality == 'root position':
                     result = f'{self.root}{self.chord_type}'
                     if omit_msg:
@@ -5328,14 +5342,16 @@ class chord_type:
                     if omit_msg:
                         result += omit_msg
                     if self.omit is not None:
-                        current_omit_chord = current_chord.omit([
+                        current_new_chord = current_chord.omit([
                             database.precise_degree_match.get(
                                 i.split('/')[0], i) for i in self.omit
                         ],
-                                                                mode=1)
+                                                               mode=1)
                     else:
-                        current_omit_chord = current_chord
-                    result += f'/{current_omit_chord[self.inversion].name}'
+                        current_new_chord = current_chord
+                    if self.altered is not None:
+                        current_new_chord = current_new_chord(altered_msg)
+                    result += f'/{current_new_chord[self.inversion].name}'
                 elif self.chord_speciality == 'chord voicings' or self.chord_speciality == 'altered chord':
                     result = f'{self.root}{self.chord_type}'
                     if omit_msg:
@@ -5343,9 +5359,10 @@ class chord_type:
                 if non_chord_bass_note_msg:
                     result += non_chord_bass_note_msg
                 if not show_voicing:
-                    other_msg = [altered_msg]
-                else:
-                    other_msg = [altered_msg, voicing_msg]
+                    voicing_msg = ''
+                if self.chord_speciality == 'inverted chord':
+                    inversion_msg = ''
+                other_msg = [altered_msg, inversion_msg, voicing_msg]
                 other_msg = [i for i in other_msg if i]
                 if other_msg:
                     result += ' ' + ' '.join(other_msg)
