@@ -150,12 +150,12 @@ def secondary_dom7(root, mode='major'):
     return newscale.dom7_chord()
 
 
-def getchord_by_interval(start,
-                         interval1,
-                         duration=1 / 4,
-                         interval=0,
-                         cummulative=True,
-                         start_time=0):
+def get_chord_by_interval(start,
+                          interval1,
+                          duration=1 / 4,
+                          interval=0,
+                          cummulative=True,
+                          start_time=0):
 
     if isinstance(start, str):
         start = to_note(start)
@@ -180,25 +180,25 @@ def inversion(current_chord, num=1):
     return current_chord.inversion(num)
 
 
-def getchord(start,
-             mode=None,
-             duration=1 / 4,
-             intervals=None,
-             interval=None,
-             cummulative=True,
-             pitch=4,
-             ind=0,
-             start_time=0,
-             custom_mapping=None):
+def get_chord(start,
+              mode=None,
+              duration=1 / 4,
+              intervals=None,
+              interval=None,
+              cummulative=True,
+              pitch=4,
+              ind=0,
+              start_time=0,
+              custom_mapping=None):
     if not isinstance(start, note):
         start = to_note(start, pitch=pitch)
     if interval is not None:
-        return getchord_by_interval(start,
-                                    interval,
-                                    duration,
-                                    intervals,
-                                    cummulative,
-                                    start_time=start_time)
+        return get_chord_by_interval(start,
+                                     interval,
+                                     duration,
+                                     intervals,
+                                     cummulative,
+                                     start_time=start_time)
     premode = mode
     mode = mode.lower().replace(' ', '')
     initial = start.degree
@@ -218,7 +218,7 @@ def getchord(start,
     return chord(chordlist, duration, intervals, start_time=start_time)
 
 
-chd = getchord
+chd = get_chord
 
 
 def concat(chordlist, mode='+', extra=None, start=None):

@@ -112,13 +112,13 @@ class note:
         result = chord([copy(self), self + interval])
         return result
 
-    def getchord_by_interval(start,
-                             interval1,
-                             duration=1 / 4,
-                             interval=0,
-                             cummulative=True):
-        return mp.getchord_by_interval(start, interval1, duration, interval,
-                                       cummulative)
+    def get_chord_by_interval(start,
+                              interval1,
+                              duration=1 / 4,
+                              interval=0,
+                              cummulative=True):
+        return mp.get_chord_by_interval(start, interval1, duration, interval,
+                                        cummulative)
 
     def dotted(self, num=1):
         temp = copy(self)
@@ -1503,10 +1503,10 @@ class chord:
             temp.normalize_tempo(tempo_changes[0].bpm)
         volumes = temp.get_volume()
         pitch_intervals = temp.intervalof(cummulative=False)
-        result = mp.getchord_by_interval(temp[0],
-                                         [-i for i in pitch_intervals],
-                                         temp.get_duration(), temp.interval,
-                                         False)
+        result = mp.get_chord_by_interval(temp[0],
+                                          [-i for i in pitch_intervals],
+                                          temp.get_duration(), temp.interval,
+                                          False)
         result.setvolume(volumes)
         result += pitch_bend_changes
         return result

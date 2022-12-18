@@ -760,9 +760,9 @@ def detect_scale_type(current_scale, mode='scale'):
         if mode == 'scale':
             current_notes = current_scale.get_scale()
         elif mode == 'interval':
-            current_notes = getchord_by_interval('C',
-                                                 current_scale,
-                                                 cummulative=False)
+            current_notes = get_chord_by_interval('C',
+                                                  current_scale,
+                                                  cummulative=False)
         result = detect_in_scale(current_notes,
                                  get_scales=True,
                                  match_len=True)
@@ -2317,11 +2317,11 @@ def get_melody_shape(current_chord,
                      octave_range=None,
                      filter_notes=True):
     note_intervals = get_note_interval(current_chord, interval_tol)
-    result = getchord_by_interval(current_chord[0],
-                                  note_intervals,
-                                  duration=current_chord.get_duration(),
-                                  interval=current_chord.interval,
-                                  cummulative=False)
+    result = get_chord_by_interval(current_chord[0],
+                                   note_intervals,
+                                   duration=current_chord.get_duration(),
+                                   interval=current_chord.interval,
+                                   cummulative=False)
     if octave_range:
         octave1, octave2 = octave_range
         for each in result:
@@ -2418,11 +2418,11 @@ def generate_melody_from_notes(current_chord,
             durations = [random.choice(choose_durations) for i in range(num)]
         else:
             durations = intervals
-    result = getchord_by_interval(start,
-                                  note_intervals,
-                                  cummulative=False,
-                                  duration=durations,
-                                  interval=intervals)
+    result = get_chord_by_interval(start,
+                                   note_intervals,
+                                   cummulative=False,
+                                   duration=durations,
+                                   interval=intervals)
     if octave_range:
         octave1, octave2 = octave_range
         for each in result:
