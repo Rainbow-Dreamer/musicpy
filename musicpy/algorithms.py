@@ -120,9 +120,9 @@ def find_similarity(a,
         wholeTypes = current_chord_types.keynames()
         selfname = a.names()
         rootnote = a[0]
-        possible_chords = [(chd(rootnote,
-                                i,
-                                custom_mapping=current_chord_types), i)
+        possible_chords = [(get_chord(rootnote,
+                                      i,
+                                      custom_mapping=current_chord_types), i)
                            for i in wholeTypes]
         lengths = len(possible_chords)
         if same_note_special:
@@ -1105,12 +1105,12 @@ def find_chords_for_melody(melody,
             if counter >= length:
                 counter = 0
         current_chord_type = random.choice(database.chordtypes)[0]
-        current_chord = chd(current_root, current_chord_type)
+        current_chord = get_chord(current_root, current_chord_type)
         while current_chord not in current_scale or current_chord_type == '5' or current_chord in result or (
                 chord_length is not None
                 and len(current_chord) < chord_length):
             current_chord_type = random.choice(database.chordtypes)[0]
-            current_chord = chd(current_root, current_chord_type)
+            current_chord = get_chord(current_root, current_chord_type)
         result.append(current_chord)
     if chord_length is not None:
         result = [each[:chord_length + 1] for each in result]
@@ -1662,7 +1662,7 @@ def get_chord_functions(chords, mode, as_list=False, functions_interval=1):
                     current_function = current_function.lower()
             else:
                 if chord_types in database.chordTypes:
-                    current_chord = chd(root_note, chord_types)
+                    current_chord = get_chord(root_note, chord_types)
                     current_chord_names = current_chord.names()
                 else:
                     if chord_types[5:] not in database.NAME_OF_INTERVAL:
@@ -1734,7 +1734,7 @@ def get_chord_notations(chords,
                     current_notation += notation_result
                 else:
                     if chord_types in database.chordTypes:
-                        current_chord = chd(root_note, chord_types)
+                        current_chord = get_chord(root_note, chord_types)
                         current_chord_names = current_chord.names()
                     else:
                         if chord_types[5:] not in database.NAME_OF_INTERVAL:

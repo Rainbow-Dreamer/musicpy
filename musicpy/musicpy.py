@@ -218,9 +218,6 @@ def get_chord(start,
     return chord(chordlist, duration, intervals, start_time=start_time)
 
 
-chd = get_chord
-
-
 def concat(chordlist, mode='+', extra=None, start=None):
     if not chordlist:
         return chordlist
@@ -1143,12 +1140,12 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
             result /= each
         return result
     if obj in database.standard:
-        return chd(obj,
-                   'M',
-                   pitch=pitch,
-                   duration=duration,
-                   intervals=interval,
-                   custom_mapping=custom_mapping)
+        return get_chord(obj,
+                         'M',
+                         pitch=pitch,
+                         duration=duration,
+                         intervals=interval,
+                         custom_mapping=custom_mapping)
     if '/' not in obj:
         check_structure = obj.split(',')
         check_structure_len = len(check_structure)
@@ -1161,31 +1158,31 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
             first = obj[0]
             types = obj[1]
             if first in database.standard and types in current_chord_types:
-                return chd(first,
-                           types,
-                           pitch=pitch,
-                           duration=duration,
-                           intervals=interval,
-                           custom_mapping=custom_mapping)
+                return get_chord(first,
+                                 types,
+                                 pitch=pitch,
+                                 duration=duration,
+                                 intervals=interval,
+                                 custom_mapping=custom_mapping)
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
             if first_two in database.standard and type1 in current_chord_types:
-                return chd(first_two,
-                           type1,
-                           pitch=pitch,
-                           duration=duration,
-                           intervals=interval,
-                           custom_mapping=custom_mapping)
+                return get_chord(first_two,
+                                 type1,
+                                 pitch=pitch,
+                                 duration=duration,
+                                 intervals=interval,
+                                 custom_mapping=custom_mapping)
             first_one = obj[0]
             type2 = obj[1:]
             if first_one in database.standard and type2 in current_chord_types:
-                return chd(first_one,
-                           type2,
-                           pitch=pitch,
-                           duration=duration,
-                           intervals=interval,
-                           custom_mapping=custom_mapping)
+                return get_chord(first_one,
+                                 type2,
+                                 pitch=pitch,
+                                 duration=duration,
+                                 intervals=interval,
+                                 custom_mapping=custom_mapping)
     else:
         parts = obj.split('/')
         part1, part2 = parts[0], '/'.join(parts[1:])
