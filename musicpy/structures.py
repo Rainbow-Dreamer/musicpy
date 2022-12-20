@@ -4374,48 +4374,66 @@ class drum:
                 if symbol_inds:
                     last_symbol_ind = None
                     last_symbol_start_ind = None
-                    for ind in symbol_inds:
-                        if ind > 0:
-                            if last_symbol_ind is None:
-                                last_symbol_ind = ind
-                                last_symbol_start_ind = ind - 1
-                            else:
-                                if any(not isinstance(j[0], (rest_symbol,
-                                                             continue_symbol))
-                                       for j in current_notes[last_symbol_ind +
-                                                              1:ind]):
-                                    last_symbol_ind = ind
-                                    last_symbol_start_ind = ind - 1
+                    if symbol_inds[0] == 0:
+                        for k in range(1, len(symbol_inds)):
+                            if symbol_inds[k] - symbol_inds[k - 1] != 1:
+                                available_symbol_ind = k
+                                break
+                        for ind in symbol_inds[:available_symbol_ind]:
                             current_symbol = current_notes[ind][0]
                             if isinstance(current_symbol, rest_symbol):
-                                last_symbol_interval = current_intervals[
-                                    last_symbol_start_ind]
-                                last_symbol_interval[-1] += current_intervals[
+                                current_symbol_interval = current_intervals[
                                     ind][0]
-                            elif isinstance(current_symbol, continue_symbol):
-                                last_symbol_interval = current_intervals[
-                                    last_symbol_start_ind]
-                                last_symbol_duration = current_durations[
-                                    last_symbol_start_ind]
-                                last_symbol_interval[-1] += current_intervals[
-                                    ind][0]
-                                if current_symbol.mode is None:
-                                    if all(k == 0
-                                           for k in last_symbol_interval[:-1]):
-                                        for j in range(
-                                                len(last_symbol_duration)):
-                                            last_symbol_duration[
-                                                j] += current_durations[ind][0]
+                                if i == 0:
+                                    start_time += current_symbol_interval
+                                else:
+                                    if intervals:
+                                        intervals[
+                                            -1] += current_symbol_interval
                                     else:
-                                        last_symbol_duration[
-                                            -1] += current_durations[ind][0]
-                                elif current_symbol.mode == 0:
-                                    last_symbol_duration[
-                                        -1] += current_durations[ind][0]
-                                elif current_symbol.mode == 1:
+                                        start_time += current_symbol_interval
+                    else:
+                        available_symbol_ind = 0
+                    for ind in symbol_inds[available_symbol_ind:]:
+                        if last_symbol_ind is None:
+                            last_symbol_ind = ind
+                            last_symbol_start_ind = ind - 1
+                        else:
+                            if any(not isinstance(j[0], (rest_symbol,
+                                                         continue_symbol))
+                                   for j in current_notes[last_symbol_ind +
+                                                          1:ind]):
+                                last_symbol_ind = ind
+                                last_symbol_start_ind = ind - 1
+                        current_symbol = current_notes[ind][0]
+                        current_symbol_interval = current_intervals[ind][0]
+                        current_symbol_duration = current_durations[ind][0]
+                        if isinstance(current_symbol, rest_symbol):
+                            last_symbol_interval = current_intervals[
+                                last_symbol_start_ind]
+                            last_symbol_interval[-1] += current_symbol_interval
+                        elif isinstance(current_symbol, continue_symbol):
+                            last_symbol_interval = current_intervals[
+                                last_symbol_start_ind]
+                            last_symbol_duration = current_durations[
+                                last_symbol_start_ind]
+                            last_symbol_interval[-1] += current_symbol_interval
+                            if current_symbol.mode is None:
+                                if all(k == 0
+                                       for k in last_symbol_interval[:-1]):
                                     for j in range(len(last_symbol_duration)):
                                         last_symbol_duration[
-                                            j] += current_durations[ind][0]
+                                            j] += current_symbol_duration
+                                else:
+                                    last_symbol_duration[
+                                        -1] += current_symbol_duration
+                            elif current_symbol.mode == 0:
+                                last_symbol_duration[
+                                    -1] += current_symbol_duration
+                            elif current_symbol.mode == 1:
+                                for j in range(len(last_symbol_duration)):
+                                    last_symbol_duration[
+                                        j] += current_symbol_duration
                     current_length = len(current_notes)
                     current_notes = [
                         current_notes[j] for j in range(current_length)
@@ -4945,7 +4963,10 @@ class drum:
         return result
 
     def _get_length(self, notes):
-        return sum([mp.dotted(1, self._get_dotted(i)) for i in notes])
+        return sum([
+            mp.dotted(1, self._get_dotted(i)) for i in notes
+            if not i.startswith('i:')
+        ])
 
     def _apply_dotted_notes(self, current_part_fix_length_unit, dotted_num):
         return mp.dotted(current_part_fix_length_unit, dotted_num)
