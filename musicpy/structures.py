@@ -4388,6 +4388,7 @@ class drum:
                     if each_note and isinstance(each_note[0], (
                         rest_symbol, continue_symbol))
                 ]
+                current_part_start_time = 0
                 if symbol_inds:
                     last_symbol_ind = None
                     last_symbol_start_ind = None
@@ -4401,6 +4402,7 @@ class drum:
                             if isinstance(current_symbol, rest_symbol):
                                 current_symbol_interval = current_intervals[
                                     ind][0]
+                                current_part_start_time += current_symbol_interval
                                 if i == 0:
                                     start_time += current_symbol_interval
                                 else:
@@ -4477,8 +4479,10 @@ class drum:
                                               current_part_repeat_times)
                     current_durations = copy_list(current_durations,
                                                   current_part_repeat_times)
-                    current_intervals = copy_list(current_intervals,
-                                                  current_part_repeat_times)
+                    current_intervals = copy_list(
+                        current_intervals,
+                        current_part_repeat_times,
+                        start_time=current_part_start_time)
                     current_volumes = copy_list(current_volumes,
                                                 current_part_repeat_times)
                 if current_part_name:
@@ -4493,7 +4497,9 @@ class drum:
         if global_repeat_times > 1:
             notes = copy_list(notes, global_repeat_times)
             durations = copy_list(durations, global_repeat_times)
-            intervals = copy_list(intervals, global_repeat_times)
+            intervals = copy_list(intervals,
+                                  global_repeat_times,
+                                  start_time=start_time)
             volumes = copy_list(volumes, global_repeat_times)
         result = chord(notes) % (durations, intervals, volumes)
         result.start_time = start_time
@@ -4982,7 +4988,7 @@ class drum:
     def _get_length(self, notes):
         return sum([
             mp.dotted(1, self._get_dotted(i)) for i in notes
-            if not i.startswith('i:')
+            if not (isinstance(i, str) and i.startswith('i:'))
         ])
 
     def _apply_dotted_notes(self, current_part_fix_length_unit, dotted_num):
@@ -5764,11 +5770,14 @@ def _piece_process_normalize_tempo(self,
     self.start_times = new_start_times
 
 
-def copy_list(current_list, n):
+def copy_list(current_list, n, start_time=0):
     result = []
     unit = copy(current_list)
     for i in range(n):
-        result.extend(copy(unit))
+        current = copy(unit)
+        if start_time != 0 and i != n - 1:
+            current[-1] += start_time
+        result.extend(current)
     return result
 
 
