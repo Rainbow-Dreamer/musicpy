@@ -2435,3 +2435,110 @@ def generate_melody_from_notes(current_chord,
     if fix_scale:
         result = adjust_to_scale(result, fix_scale)
     return result
+
+
+def humanize(current_chord,
+             timing_range=[-1 / 128, 1 / 128],
+             velocity_range=[-10, 10]):
+    temp = copy(current_chord)
+    if isinstance(temp, piece):
+        temp.tracks = [
+            humanize(each, timing_range, velocity_range)
+            for each in temp.tracks
+        ]
+        return temp
+    elif isinstance(temp, chord):
+        if velocity_range:
+            for each in temp.notes:
+                each.volume += random.uniform(*velocity_range)
+                if each.volume < 0:
+                    each.volume = 0
+                elif each.volume > 127:
+                    each.volume = 127
+                each.volume = int(each.volume)
+        if timing_range:
+            places = [0] + [
+                sum(temp.interval[:i]) for i in range(1,
+                                                      len(temp.notes) + 1)
+            ]
+            places = [places[0]] + [
+                each + random.choices([random.uniform(*timing_range), 0])[0]
+                for each in places[1:]
+            ]
+            temp.interval = [
+                abs(places[i] - places[i - 1]) for i in range(1, len(places))
+            ]
+        return temp
+
+
+def write_pop(scale_type,
+              length,
+              melody_ins=1,
+              chord_ins=1,
+              bpm=80,
+              scale_type2=None,
+              choose_chord_notes_num=[4],
+              default_chord_durations=1 / 2,
+              inversion_highest_num=2,
+              choose_chord_intervals=[1 / 8],
+              choose_melody_durations=[1 / 8, 1 / 16],
+              choose_start_times=[0],
+              choose_chord_progressions=None,
+              current_choose_chord_progressions_list=None,
+              melody_chord_octave_diff=2,
+              choose_melody_rhythms=None):
+    melody_octave = scale_type[0].num + melody_chord_octave_diff
+    if 'minor' in scale_type.mode:
+        scale_type = scale_type.relative_key()
+
+    if choose_chord_progressions is None:
+        choose_chord_progressions = random.choice(
+            database.choose_chord_progressions_list
+            if current_choose_chord_progressions_list is None else
+            current_choose_chord_progressions_list)
+    choose_chords = scale_type % (choose_chord_progressions,
+                                  default_chord_durations, 0,
+                                  random.choice(choose_chord_notes_num))
+    for i in range(len(choose_chords)):
+        each = choose_chords[i]
+        if each[0] == scale_type[4]:
+            each = C(f'{scale_type[4].name}',
+                     each[0].num,
+                     duration=default_chord_durations) @ [1, 2, 3, 1.1]
+            choose_chords[i] = each
+
+    if inversion_highest_num is not None:
+        choose_chords = [i ^ inversion_highest_num for i in choose_chords]
+    chord_num = len(choose_chords)
+    length_count = 0
+    chord_ind = 0
+    melody = chord([])
+    chords_part = None
+    while length_count < length:
+        current_chord = choose_chords[chord_ind]
+        current_chord = current_chord.set(
+            interval=random.choice(choose_chord_intervals))
+        chord_ind += 1
+        if chord_ind >= chord_num:
+            chord_ind = 0
+        if chords_part is None:
+            chords_part = current_chord
+        else:
+            chords_part |= current_chord
+        length_count = chords_part.bars()
+        while melody.bars() < length_count:
+            if scale_type2:
+                current_melody = copy(random.choice(scale_type2.notes))
+            else:
+                current_melody = copy(
+                    random.choice(current_chord.notes + scale_type.notes))
+                current_melody.num = melody_octave
+            current_melody.duration = random.choice(choose_melody_durations)
+            melody.notes.append(current_melody)
+            melody.interval.append(copy(current_melody.duration))
+    chords_part.setvolume(70)
+    result = piece([melody, chords_part], [melody_ins, chord_ins],
+                   bpm, [random.choice(choose_start_times), 0],
+                   track_names=['melody', 'chords'])
+    result.choose_chord_progressions = choose_chord_progressions
+    return result

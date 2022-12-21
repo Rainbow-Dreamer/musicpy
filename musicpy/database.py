@@ -783,3 +783,8 @@ drum_keywords = [
 ]
 
 guitar_standard_tuning = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4']
+
+choose_chord_progressions_list = [
+    '6451', '3456', '4536', '14561451', '1564', '4156', '4565', '4563', '6341',
+    '6345', '6415', '15634145'
+]
