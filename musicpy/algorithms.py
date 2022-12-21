@@ -2314,7 +2314,7 @@ def get_note_interval(current_chord, interval_tol=12):
 @method_wrapper(chord)
 def get_melody_shape(current_chord,
                      interval_tol=12,
-                     octave_range=[3, 5],
+                     octave_range=[4, 5],
                      filter_notes=True):
     note_intervals = get_note_interval(current_chord, interval_tol)
     result = get_chord_by_interval(current_chord[0],
@@ -2352,7 +2352,7 @@ def generate_melody_from_notes(current_chord,
                                interval_tol=12,
                                num=100,
                                start=None,
-                               octave_range=[3, 5],
+                               octave_range=[4, 5],
                                filter_notes=True,
                                fix_scale=None,
                                choose_durations=[1 / 16, 1 / 8, 1 / 4],
