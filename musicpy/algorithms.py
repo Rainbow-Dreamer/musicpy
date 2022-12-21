@@ -25,11 +25,11 @@ def omit_from(a, b):
     a_notes = a.names()
     b_notes = b.names()
     omitnotes = list(set(b_notes) - set(a_notes))
-    b_first_note = b[0].degree
+    b_first_note = b[0]
     omitnotes_degree = []
     for j in omitnotes:
         current = database.reverse_precise_degree_match[
-            b[b_notes.index(j)].degree - b_first_note]
+            b[b_notes.index(j)].degree - b_first_note.degree]
         if current == 'not found':
             omitnotes_degree.append(j)
         else:
