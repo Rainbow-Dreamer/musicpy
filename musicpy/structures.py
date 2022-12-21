@@ -758,12 +758,15 @@ class chord:
             return self.add(obj, mode='head')
 
     def __matmul__(self, obj):
-        if isinstance(obj, list):
+        if type(obj) is list:
             return self.get(obj)
         elif isinstance(obj, int):
             return self.inv(obj)
         elif isinstance(obj, str):
-            return self.inv(self.names().index(obj))
+            return self.inv(self.names().index(
+                database.standard_dict.get(obj, obj)))
+        elif isinstance(obj, rhythm):
+            return self.from_rhythm(obj)
         else:
             if isinstance(obj, tuple):
                 return mp.alg.negative_harmony(obj[0], self, *obj[1:])
@@ -2091,6 +2094,11 @@ class chord:
                     temp.notes[counter].duration += current_duration
         temp.start_time = current_start_time
         return temp
+
+    def from_rhythm(self, current_rhythm, set_duration=True):
+        return mp.get_chords_from_rhythm(chords=self,
+                                         current_rhythm=current_rhythm,
+                                         set_duration=set_duration)
 
 
 class scale:
