@@ -5394,6 +5394,8 @@ class chord_type:
                     current_order = [0, 1, 2, 3, 4]
                 else:
                     current_order = self.order
+                if not show_voicing and 3 in current_order:
+                    current_order.remove(3)
                 other_msg = [other_msg[i] for i in current_order]
                 other_msg = [i for i in other_msg if i]
                 if other_msg:
