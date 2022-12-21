@@ -5355,7 +5355,7 @@ class chord_type:
                     altered_msg = ''
                 if self.omit:
                     if show_degree:
-                        omit_msg = f'omit {", ".join([i if not (i.startswith("b") or i.startswith("#")) else i[1:] for i in self.omit])}'
+                        omit_msg = f'omit {", ".join([i if not ("/" not in i and (i.startswith("b") or i.startswith("#"))) else i[1:] for i in self.omit])}'
                     else:
                         current_omit = []
                         for i in self.omit:
