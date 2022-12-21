@@ -24,7 +24,7 @@ def sort_from(a, b):
 def omit_from(a, b):
     a_notes = a.names()
     b_notes = b.names()
-    omitnotes = list(set(b_notes) - set(a_notes))
+    omitnotes = [i for i in b_notes if i not in a_notes]
     b_first_note = b[0]
     omitnotes_degree = []
     for j in omitnotes:
@@ -2314,7 +2314,7 @@ def get_note_interval(current_chord, interval_tol=12):
 @method_wrapper(chord)
 def get_melody_shape(current_chord,
                      interval_tol=12,
-                     octave_range=None,
+                     octave_range=[3, 5],
                      filter_notes=True):
     note_intervals = get_note_interval(current_chord, interval_tol)
     result = get_chord_by_interval(current_chord[0],
@@ -2330,7 +2330,7 @@ def get_melody_shape(current_chord,
             elif each.num > octave2:
                 each.num = octave2
     if filter_notes:
-        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
+        result = result.filter(lambda s: 0 <= s.degree <= 127)[0]
     return result
 
 
@@ -2352,7 +2352,7 @@ def generate_melody_from_notes(current_chord,
                                interval_tol=12,
                                num=100,
                                start=None,
-                               octave_range=None,
+                               octave_range=[3, 5],
                                filter_notes=True,
                                fix_scale=None,
                                choose_durations=[1 / 16, 1 / 8, 1 / 4],
@@ -2431,7 +2431,7 @@ def generate_melody_from_notes(current_chord,
             elif each.num > octave2:
                 each.num = octave2
     if filter_notes:
-        result = result.filter(lambda s: 0 <= s.degree <= 255)[0]
+        result = result.filter(lambda s: 0 <= s.degree <= 127)[0]
     if fix_scale:
         result = adjust_to_scale(result, fix_scale)
     return result
