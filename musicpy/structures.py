@@ -39,8 +39,12 @@ class note:
             self.name] == database.standard[
                 other.name] and self.num == other.num
 
-    def __matmul__(self, other):
+    def same_note_name(self, other):
         return database.standard[self.name] == database.standard[other.name]
+
+    def __matmul__(self, other):
+        if isinstance(other, rhythm):
+            return self.from_rhythm(other)
 
     def setvolume(self, vol):
         vol = int(vol)
@@ -150,6 +154,11 @@ class note:
         temp = copy(self)
         temp.channel = channel
         return temp
+
+    def from_rhythm(self, current_rhythm, set_duration=True):
+        return mp.get_chords_from_rhythm(chords=self,
+                                         current_rhythm=current_rhythm,
+                                         set_duration=set_duration)
 
 
 class chord:
