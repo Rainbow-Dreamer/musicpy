@@ -1462,6 +1462,8 @@ def get_chords_from_rhythm(chords, current_rhythm, set_duration=True):
     for i, each in enumerate(chords[1:]):
         current_interval += chord_intervals[i]
         result = result & (each, current_interval)
+    extra_interval = chord_intervals[len(chords) - 1]
+    result.interval[-1] = extra_interval
     result.start_time = current_start_time
     return result
 
