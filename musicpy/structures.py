@@ -46,7 +46,7 @@ class note:
         if isinstance(other, rhythm):
             return self.from_rhythm(other)
 
-    def setvolume(self, vol):
+    def set_volume(self, vol):
         vol = int(vol)
         self.volume = vol
 
@@ -1440,7 +1440,7 @@ class chord:
     def __len__(self):
         return len(self.notes)
 
-    def setvolume(self, vol, ind='all'):
+    def set_volume(self, vol, ind='all'):
         if isinstance(ind, int):
             each = self.notes[ind]
             each.setvolume(vol)
@@ -3854,7 +3854,7 @@ class tempo:
         result = f'tempo({", ".join([f"{i}={j}" for i, j in self.__dict__.items() if i in attributes])})'
         return result
 
-    def setvolume(self, vol):
+    def set_volume(self, vol):
         vol = int(vol)
         self.volume = vol
 
@@ -3911,7 +3911,7 @@ class pitch_bend:
         result = f'pitch_bend({", ".join([f"{i}={j}" for i, j in current_dict.items()])})'
         return result
 
-    def setvolume(self, vol):
+    def set_volume(self, vol):
         vol = int(vol)
         self.volume = vol
 
