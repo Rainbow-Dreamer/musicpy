@@ -2536,7 +2536,7 @@ def write_pop(scale_type,
             current_melody.duration = random.choice(choose_melody_durations)
             melody.notes.append(current_melody)
             melody.interval.append(copy(current_melody.duration))
-    chords_part.setvolume(70)
+    chords_part.set_volume(70)
     result = piece([melody, chords_part], [melody_ins, chord_ins],
                    bpm, [random.choice(choose_start_times), 0],
                    track_names=['melody', 'chords'])

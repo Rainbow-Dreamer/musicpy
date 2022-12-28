@@ -602,7 +602,7 @@ class chord:
                        interval,
                        start_time=copy(self.start_time))
         if volume is not None:
-            result.setvolume(volume, ind)
+            result.set_volume(volume, ind)
         return result
 
     def special_set(self,
@@ -621,9 +621,9 @@ class chord:
             and self.notes[i].keep_same_time else result.interval[i]
             for i in range(len(self))
         ]
-        result.setvolume(volume)
+        result.set_volume(volume)
         if volume is not None:
-            result.setvolume(volume, ind)
+            result.set_volume(volume, ind)
         return result
 
     def change_interval(self, newinterval):
@@ -1443,28 +1443,28 @@ class chord:
     def set_volume(self, vol, ind='all'):
         if isinstance(ind, int):
             each = self.notes[ind]
-            each.setvolume(vol)
+            each.set_volume(vol)
         elif isinstance(ind, list):
             if isinstance(vol, list):
                 for i in range(len(ind)):
                     current = ind[i]
                     each = self.notes[current]
-                    each.setvolume(vol[i])
+                    each.set_volume(vol[i])
             elif isinstance(vol, (int, float)):
                 vol = int(vol)
                 for i in range(len(ind)):
                     current = ind[i]
                     each = self.notes[current]
-                    each.setvolume(vol)
+                    each.set_volume(vol)
         elif ind == 'all':
             if isinstance(vol, list):
                 for i in range(len(vol)):
                     current = self.notes[i]
-                    current.setvolume(vol[i])
+                    current.set_volume(vol[i])
             elif isinstance(vol, (int, float)):
                 vol = int(vol)
                 for each in self.notes:
-                    each.setvolume(vol)
+                    each.set_volume(vol)
 
     def move(self, x):
         # x could be a dict or list of (index, move_steps)
@@ -1519,7 +1519,7 @@ class chord:
                                           [-i for i in pitch_intervals],
                                           temp.get_duration(), temp.interval,
                                           False)
-        result.setvolume(volumes)
+        result.set_volume(volumes)
         result += pitch_bend_changes
         return result
 
@@ -2816,18 +2816,18 @@ class piece:
             self.muted_msg = [each.get_volume() for each in self.tracks]
         if i is None:
             for k in range(len(self.tracks)):
-                self.tracks[k].setvolume(0)
+                self.tracks[k].set_volume(0)
         else:
-            self.tracks[i].setvolume(0)
+            self.tracks[i].set_volume(0)
 
     def unmute(self, i=None):
         if not hasattr(self, 'muted_msg'):
             return
         if i is None:
             for k in range(len(self.tracks)):
-                self.tracks[k].setvolume(self.muted_msg[k])
+                self.tracks[k].set_volume(self.muted_msg[k])
         else:
-            self.tracks[i].setvolume(self.muted_msg[i])
+            self.tracks[i].set_volume(self.muted_msg[i])
 
     def append(self, new_track):
         if not isinstance(new_track, track):
