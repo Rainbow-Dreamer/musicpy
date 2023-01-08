@@ -62,6 +62,15 @@ class note:
     def __mod__(self, obj):
         return self.set(*obj)
 
+    def accidental(self):
+        result = ''
+        if self.name in database.standard:
+            if '#' in self.name:
+                result = '#'
+            elif 'b' in self.name:
+                result = 'b'
+        return result
+
     def join(self, other, ind, interval):
         if isinstance(other, str):
             other = mp.to_note(other)
@@ -97,6 +106,9 @@ class note:
             return self.reset(name=database.reverse_standard_dict[name])
         else:
             return self.reset(name=name)
+
+    def flip_accidental(self):
+        return ~self
 
     def __add__(self, obj):
         if isinstance(obj, int):

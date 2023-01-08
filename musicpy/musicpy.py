@@ -1671,7 +1671,7 @@ def relative_note(a, b):
         elif accidental_a == '♮':
             pass
         else:
-            return f'unrecognizable accidentals {accidental_a}'
+            raise ValueError(f'unrecognizable accidentals {accidental_a}')
     if b in database.standard:
         b = note(b, 5)
     else:
@@ -1687,7 +1687,7 @@ def relative_note(a, b):
         elif accidental_b == '♮':
             pass
         else:
-            return f'unrecognizable accidentals {accidental_b}'
+            raise ValueError(f'unrecognizable accidentals {accidental_b}')
     degree1, degree2 = a.degree, b.degree
     diff1, diff2 = degree1 - degree2, (degree1 - degree2 -
                                        12 if degree1 >= degree2 else degree1 +
@@ -1706,6 +1706,47 @@ def relative_note(a, b):
         return b.name + 'b'
     if diff == -2:
         return b.name + 'bb'
+
+
+def standardize_note(a):
+    if a in database.standard2:
+        return a
+    elif a in database.standard_dict:
+        return database.standard_dict[a]
+    else:
+        if a.endswith('bb'):
+            current_name = a[:-2]
+            result = (N(standardize_note(current_name)) - 2).name
+        elif a.endswith('x'):
+            current_name = a[:-1]
+            result = (N(standardize_note(current_name)) + 2).name
+        elif a.endswith('♮'):
+            result = a[:-1]
+        elif a.endswith('#'):
+            current_name = a[:-1]
+            result = (N(standardize_note(current_name)) + 1).name
+        elif a.endswith('b'):
+            current_name = a[:-1]
+            result = (N(standardize_note(current_name)) - 1).name
+        else:
+            raise ValueError('Invalid note name or accidental')
+        return result
+
+
+def get_accidental(a):
+    if a.endswith('bb'):
+        result = 'bb'
+    elif a.endswith('x'):
+        result = 'x'
+    elif a.endswith('♮'):
+        result = '♮'
+    elif a.endswith('#'):
+        result = '#'
+    elif a.endswith('b'):
+        result = 'b'
+    else:
+        result = ''
+    return result
 
 
 def reset(self, **kwargs):

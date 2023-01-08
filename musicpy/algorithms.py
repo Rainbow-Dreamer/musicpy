@@ -1525,88 +1525,26 @@ def detect_scale3(current_chord,
         ])
 
 
-def get_chord_root_note(chord_name,
+def get_chord_root_note(current_chord,
                         get_chord_types=False,
-                        to_standard=False,
-                        **detect_args):
-    types = type(chord_name)
-    if types == chord:
-        chord_name = detect(chord_name, **detect_args)
-        if isinstance(chord_name, list):
-            chord_name = chord_name[0]
-    elif types == list:
-        chord_name = chord_name[0]
-    elif types == note:
-        chord_name = str(chord_name)
-    if chord_name in database.standard:
-        if get_chord_types:
-            return chord_name, ''
+                        to_standard=False):
+    if current_chord.type == 'note':
+        result = N(current_chord.note_name).name
+    else:
+        if current_chord.chord_speciality == 'polychord':
+            result = get_chord_root_note(current_chord.polychords[0],
+                                         to_standard=to_standard)
         else:
-            return chord_name
-    if chord_name.startswith('note '):
-        result = chord_name.split('note ')[1][:2]
-        if result in database.standard:
-            if to_standard and result not in database.standard2:
-                result = database.standard_dict[result]
-        else:
-            result = result[0]
-            if result in database.standard:
-                if to_standard and result not in database.standard2:
-                    result = database.standard_dict[result]
-        if get_chord_types:
-            return result, ''
+            result = current_chord.root
+    current_chord_type = current_chord.chord_type
+    if current_chord_type is None:
+        current_chord_type = ''
+    if to_standard:
+        result = database.standard_dict.get(result, result)
+    if get_chord_types:
+        return result, current_chord_type
+    else:
         return result
-    if get_chord_types:
-        situation = 0
-    if chord_name[0] != '[':
-        result = chord_name[:2]
-        if get_chord_types:
-            if '/' in chord_name:
-                situation = 0
-                part1, part2 = chord_name.split('/')
-            else:
-                situation = 1
-
-    else:
-        if chord_name[-1] == ']':
-            inds = chord_name.rfind('[') - 1
-        else:
-            inds = chord_name.index('/')
-        upper, lower = chord_name[:inds], chord_name[inds + 1:]
-        if lower[0] != '[':
-            result = upper[1:3]
-            if get_chord_types:
-                situation = 2
-        else:
-            result = lower[1:3]
-            if get_chord_types:
-                situation = 3
-    if result in database.standard:
-        if result not in database.standard2:
-            result = database.standard_dict[result]
-    else:
-        result = result[0]
-        if result in database.standard:
-            if result not in database.standard2:
-                result = database.standard_dict[result]
-    if get_chord_types:
-        if situation == 0:
-            chord_types = part1.split(' ')[0][len(result):]
-        elif situation == 1:
-            chord_types = chord_name.split(' ')[0][len(result):]
-        elif situation == 2:
-            upper = upper[1:-1].split(' ')[0]
-            chord_types = upper[len(result):]
-        elif situation == 3:
-            lower = lower[1:-1].split(' ')[0]
-            chord_types = lower[len(result):]
-        if chord_types == '':
-            if 'with ' in chord_name:
-                chord_types = 'with ' + chord_name.split('with ')[1]
-            else:
-                chord_types = 'major'
-        return result, chord_types
-    return result
 
 
 def get_chord_type_location(current_chord, mode='functions'):
@@ -1624,35 +1562,50 @@ def get_chord_type_location(current_chord, mode='functions'):
                     return value
 
 
+def get_note_degree_in_scale(root_note, mode):
+    header = ''
+    note_names = mode.names()
+    if root_note not in note_names:
+        current_mode_standard = mode.standard()
+        root_note = database.standard_dict.get(root_note, root_note)
+        if any(get_accidental(i) == 'b' for i in current_mode_standard):
+            root_note = N(root_note).flip_accidental().name
+        scale_degree = [i[0] for i in current_mode_standard].index(root_note)
+        scale_degree_diff = N(root_note).degree - N(
+            standardize_note(current_mode_standard[scale_degree])).degree
+        if scale_degree_diff == -1:
+            header = 'b'
+        elif scale_degree_diff == 1:
+            header = '#'
+    else:
+        scale_degree = note_names.index(root_note)
+    return scale_degree, header
+
+
 def get_chord_functions(chords, mode, as_list=False, functions_interval=1):
     if not isinstance(chords, list):
         chords = [chords]
     note_names = mode.names()
     root_note_list = [
-        get_chord_root_note(i, True)
-        if '/' not in i else [get_chord_root_note(i.split('/', 1), True), i]
-        for i in chords
+        get_chord_root_note(i, get_chord_types=True) for i in chords
+        if i.type == 'chord'
     ]
     functions = []
-    for each in root_note_list:
-        if isinstance(each[0], tuple):
-            current_note, inversion_note = each[1].split('/', 1)
-            header = ''
-            if inversion_note not in note_names:
-                inversion_note, header = inversion_note[:-1], inversion_note[
-                    -1]
-            if inversion_note not in note_names:
-                current_function = each[1]
-            else:
-                ind = note_names.index(inversion_note) + 1
-                current_function = f'{get_chord_functions(current_note, mode)}/{header}{ind}'
+    for i, each in enumerate(root_note_list):
+        current_chord_type = chords[i]
+        if current_chord_type.inversion is not None or current_chord_type.non_chord_bass_note is not None:
+            current_note = current_chord_type.root
+            current_chord_type.order = [2, 4]
+            inversion_note = current_chord_type.to_text().rsplit('/', 1)[1]
+            current_chord_type.inversion = None
+            current_chord_type.non_chord_bass_note = None
+            current_inversion_note_degree, current_inversion_note_header = get_note_degree_in_scale(
+                inversion_note, mode)
+            current_function = f'{get_chord_functions(current_chord_type, mode)}/{current_inversion_note_header}{current_inversion_note_degree+1}'
         else:
             root_note, chord_types = each
             root_note_obj = note(root_note, 5)
-            header = ''
-            if root_note not in note_names:
-                root_note, header = root_note[:-1], root_note[-1]
-            scale_degree = note_names.index(root_note)
+            scale_degree, header = get_note_degree_in_scale(root_note, mode)
             current_function = database.chord_functions_roman_numerals[
                 scale_degree + 1]
             if chord_types == '' or chord_types == '5':
@@ -1712,15 +1665,19 @@ def get_chord_notations(chords,
     if not isinstance(chords, list):
         chords = [chords]
     root_note_list = [
-        get_chord_root_note(i, True)
-        if '/' not in i else [get_chord_root_note(i.split('/', 1), True), i]
-        for i in chords
+        get_chord_root_note(i, get_chord_types=True) for i in chords
+        if i.type == 'chord'
     ]
     notations = []
-    for each in root_note_list:
-        if isinstance(each[0], tuple):
-            current_note, inversion_note = each[1].split('/', 1)
-            current_notation = f'{get_chord_notations(current_note)}/{inversion_note}'
+    for i, each in enumerate(root_note_list):
+        current_chord_type = chords[i]
+        if current_chord_type.inversion is not None or current_chord_type.non_chord_bass_note is not None:
+            current_note = current_chord_type.root
+            current_chord_type.order = [2, 4]
+            inversion_note = current_chord_type.to_text().rsplit('/', 1)[1]
+            current_chord_type.inversion = None
+            current_chord_type.non_chord_bass_note = None
+            current_notation = f'{get_chord_notations(current_chord_type)}/{inversion_note}'
         else:
             root_note, chord_types = each
             current_notation = root_note
@@ -1791,12 +1748,8 @@ def chord_functions_analysis(current_chord,
         scales = detect_scale_function(
             current_chord,
             major_minor_preference=major_minor_preference,
-            get_scales=True
-        )[0] if is_chord_analysis else detect_scale_function(
-            current_chord,
-            major_minor_preference=major_minor_preference,
             get_scales=True,
-            is_chord=False)[0]
+            is_chord=is_chord_analysis)[0]
     if is_chord_analysis:
         result = chord_analysis(current_chord,
                                 mode='chords',
@@ -1805,9 +1758,8 @@ def chord_functions_analysis(current_chord,
     else:
         result = current_chord
     if is_detect:
-        actual_chords = [detect(i, **detect_args) for i in result]
         actual_chords = [
-            i[0] if isinstance(i, list) else i for i in actual_chords
+            detect(i, get_chord_type=True, **detect_args) for i in result
         ]
     else:
         actual_chords = current_chord
@@ -1819,7 +1771,7 @@ def chord_functions_analysis(current_chord,
             functions_interval=functions_interval)
         if full_chord_msg:
             chord_progressions = [
-                f'{actual_chords[i]} {chord_progressions[i]}'
+                f'{actual_chords[i].to_text()} {chord_progressions[i]}'
                 for i in range(len(chord_progressions))
             ]
         if return_scale_degrees:
@@ -1843,10 +1795,11 @@ def chord_functions_analysis(current_chord,
             num = (len(actual_chords) // each_line_chords_number) + 1
             delimiter = ' ' * functions_interval + split_symbol + ' ' * functions_interval
             chord_progressions = [
-                delimiter.join(actual_chords[each_line_chords_number *
-                                             i:each_line_chords_number *
-                                             (i + 1)]) + delimiter
-                for i in range(num)
+                delimiter.join([
+                    j.to_text()
+                    for j in actual_chords[each_line_chords_number *
+                                           i:each_line_chords_number * (i + 1)]
+                ]) + delimiter for i in range(num)
             ]
             chord_progressions[-1] = chord_progressions[-1][:-len(delimiter)]
             chord_progressions = ('\n' * space_lines).join(chord_progressions)
