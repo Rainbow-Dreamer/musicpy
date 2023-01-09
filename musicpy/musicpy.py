@@ -136,17 +136,17 @@ def freq_to_note(freq, to_str=False, standard=440):
     return result
 
 
-def secondary_dom(root, mode='major'):
+def secondary_dom(root, current_scale='major'):
     if isinstance(root, str):
         root = to_note(root)
-    newscale = scale(root, mode)
+    newscale = scale(root, current_scale)
     return newscale.dom_chord()
 
 
-def secondary_dom7(root, mode='major'):
+def secondary_dom7(root, current_scale='major'):
     if isinstance(root, str):
         root = to_note(root)
-    newscale = scale(root, mode)
+    newscale = scale(root, current_scale)
     return newscale.dom7_chord()
 
 
@@ -181,7 +181,7 @@ def inversion(current_chord, num=1):
 
 
 def get_chord(start,
-              mode=None,
+              current_chord_type=None,
               duration=1 / 4,
               intervals=None,
               interval=None,
@@ -199,18 +199,22 @@ def get_chord(start,
                                      intervals,
                                      cummulative,
                                      start_time=start_time)
-    premode = mode
-    mode = mode.lower().replace(' ', '')
+    pre_chord_type = current_chord_type
+    current_chord_type = current_chord_type.lower().replace(' ', '')
     initial = start.degree
     chordlist = [start]
     current_chord_types = database.chordTypes if custom_mapping is None else custom_mapping
-    interval_premode = current_chord_types(premode, mode=1, index=ind)
-    if interval_premode != 'not found':
-        interval = interval_premode
+    interval_pre_chord_type = current_chord_types(pre_chord_type,
+                                                  mode=1,
+                                                  index=ind)
+    if interval_pre_chord_type != 'not found':
+        interval = interval_pre_chord_type
     else:
-        interval_mode = current_chord_types(mode, mode=1, index=ind)
-        if interval_mode != 'not found':
-            interval = interval_mode
+        interval_current_chord_type = current_chord_types(current_chord_type,
+                                                          mode=1,
+                                                          index=ind)
+        if interval_current_chord_type != 'not found':
+            interval = interval_current_chord_type
         else:
             raise ValueError('could not detect the chord types')
     for i in range(len(interval)):

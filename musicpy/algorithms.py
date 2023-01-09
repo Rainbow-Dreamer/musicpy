@@ -807,10 +807,8 @@ def choose_melody(focused, now_focus, focus_ratio, focus_notes, remained_notes,
     return firstmelody
 
 
-def random_composing(mode,
+def random_composing(current_scale,
                      length,
-                     difficulty='easy',
-                     init_notes=None,
                      pattern=None,
                      focus_notes=None,
                      focus_ratio=0.7,
@@ -819,19 +817,18 @@ def random_composing(mode,
                      left_hand_velocity=70,
                      right_hand_velocity=80,
                      left_hand_meter=4,
-                     right_hand_meter=4,
                      choose_intervals=[1 / 8, 1 / 4, 1 / 2],
                      choose_durations=[1 / 8, 1 / 4, 1 / 2],
                      melody_interval_tol=database.perfect_fourth,
                      choose_from_chord=False):
     '''
-    Composing a piece of music randomly from a given mode (here means scale),
+    Composing a piece of music randomly from a given scale,
     difficulty, number of start notes (or given notes) and an approximate length.
     length is the total approximate total number of notes you want the music to be.
     '''
     if pattern is not None:
         pattern = [int(x) for x in pattern]
-    standard = mode.notes[:-1]
+    standard = current_scale.notes[:-1]
     # pick is the sets of notes from the required scales which used to pick up notes for melody
     pick = [x.up(2 * database.octave) for x in standard]
     focused = False
@@ -849,7 +846,7 @@ def random_composing(mode,
     # the draft of the piece of music would be generated first,
     # and then modify the details of the music (durations, intervals,
     # notes volume, rests and so on)
-    basechord = mode.get_all_chord(num=num)
+    basechord = current_scale.get_all_chord(num=num)
     # count is the counter for the total number of notes in the piece
     count = 0
     patterncount = 0
@@ -867,7 +864,7 @@ def random_composing(mode,
         newchord = newchordnotes.set(newduration, newinterval)
         newchord_len = len(newchord)
         if newchord_len < left_hand_meter:
-            choose_more = [x for x in mode if x not in newchord]
+            choose_more = [x for x in current_scale if x not in newchord]
             for g in range(left_hand_meter - newchord_len):
                 current_choose = random.choice(choose_more)
                 if current_choose.degree < newchord[-1].degree:
@@ -1562,17 +1559,17 @@ def get_chord_type_location(current_chord, mode='functions'):
                     return value
 
 
-def get_note_degree_in_scale(root_note, mode):
+def get_note_degree_in_scale(root_note, current_scale):
     header = ''
-    note_names = mode.names()
+    note_names = current_scale.names()
     if root_note not in note_names:
-        current_mode_standard = mode.standard()
+        current_scale_standard = current_scale.standard()
         root_note = database.standard_dict.get(root_note, root_note)
-        if any(get_accidental(i) == 'b' for i in current_mode_standard):
+        if any(get_accidental(i) == 'b' for i in current_scale_standard):
             root_note = N(root_note).flip_accidental().name
-        scale_degree = [i[0] for i in current_mode_standard].index(root_note)
+        scale_degree = [i[0] for i in current_scale_standard].index(root_note)
         scale_degree_diff = N(root_note).degree - N(
-            standardize_note(current_mode_standard[scale_degree])).degree
+            standardize_note(current_scale_standard[scale_degree])).degree
         if scale_degree_diff == -1:
             header = 'b'
         elif scale_degree_diff == 1:
@@ -1582,10 +1579,13 @@ def get_note_degree_in_scale(root_note, mode):
     return scale_degree, header
 
 
-def get_chord_functions(chords, mode, as_list=False, functions_interval=1):
+def get_chord_functions(chords,
+                        current_scale,
+                        as_list=False,
+                        functions_interval=1):
     if not isinstance(chords, list):
         chords = [chords]
-    note_names = mode.names()
+    note_names = current_scale.names()
     root_note_list = [
         get_chord_root_note(i, get_chord_types=True) for i in chords
         if i.type == 'chord'
@@ -1600,16 +1600,17 @@ def get_chord_functions(chords, mode, as_list=False, functions_interval=1):
             current_chord_type.inversion = None
             current_chord_type.non_chord_bass_note = None
             current_inversion_note_degree, current_inversion_note_header = get_note_degree_in_scale(
-                inversion_note, mode)
-            current_function = f'{get_chord_functions(current_chord_type, mode)}/{current_inversion_note_header}{current_inversion_note_degree+1}'
+                inversion_note, current_scale)
+            current_function = f'{get_chord_functions(current_chord_type, current_scale)}/{current_inversion_note_header}{current_inversion_note_degree+1}'
         else:
             root_note, chord_types = each
             root_note_obj = note(root_note, 5)
-            scale_degree, header = get_note_degree_in_scale(root_note, mode)
+            scale_degree, header = get_note_degree_in_scale(
+                root_note, current_scale)
             current_function = database.chord_functions_roman_numerals[
                 scale_degree + 1]
             if chord_types == '' or chord_types == '5':
-                original_chord = mode(scale_degree)
+                original_chord = current_scale(scale_degree)
                 third_type = original_chord[1].degree - original_chord[0].degree
                 if third_type == database.minor_third:
                     current_function = current_function.lower()
@@ -1766,7 +1767,7 @@ def chord_functions_analysis(current_chord,
     if chord_mode == 'function':
         chord_progressions = get_chord_functions(
             chords=actual_chords,
-            mode=scales,
+            current_scale=scales,
             as_list=True,
             functions_interval=functions_interval)
         if full_chord_msg:
@@ -1828,6 +1829,8 @@ def chord_functions_analysis(current_chord,
             ]
             chord_progressions[-1] = chord_progressions[-1][:-len(delimiter)]
             chord_progressions = ('\n' * space_lines).join(chord_progressions)
+    else:
+        raise ValueError("chord mode must be 'function' or 'notation'")
     spaces = '\n' * space_lines
     analysis_result = f'key: {scales[0].name} {scales.mode}{spaces}{chord_progressions}'
     if write_to_file:
