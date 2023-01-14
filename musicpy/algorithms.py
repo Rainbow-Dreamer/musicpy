@@ -822,9 +822,7 @@ def random_composing(current_scale,
                      melody_interval_tol=database.perfect_fourth,
                      choose_from_chord=False):
     '''
-    Composing a piece of music randomly from a given scale,
-    difficulty, number of start notes (or given notes) and an approximate length.
-    length is the total approximate total number of notes you want the music to be.
+    compose a piece of music randomly from a given scale with custom preferences to some degrees in the scale
     '''
     if pattern is not None:
         pattern = [int(x) for x in pattern]
@@ -1738,6 +1736,9 @@ def chord_functions_analysis(current_chord,
                              is_detect=True,
                              detect_args={},
                              chord_analysis_args={}):
+    '''
+    analysis the chord functions of a chord instance
+    '''
     if is_chord_analysis:
         current_chord = current_chord.only_notes()
     else:
@@ -1851,6 +1852,7 @@ def split_melody(current_chord,
                  average_degree_length=8,
                  melody_degree_tol='B4'):
     '''
+    split the melody part of a chord instance
     if mode == 'notes', return a list of main melody notes
     if mode == 'index', return a list of indexes of main melody notes
     if mode == 'chord', return a chord with main melody notes with original places
@@ -1988,6 +1990,9 @@ def split_melody(current_chord,
 
 @method_wrapper(chord)
 def split_chord(current_chord, mode='chord', **args):
+    '''
+    split the chord part of a chord instance
+    '''
     melody_ind = split_melody(current_chord=current_chord,
                               mode='index',
                               **args)
@@ -2318,8 +2323,10 @@ def generate_melody_from_notes(current_chord,
                                drop_same_time=False,
                                is_melody=True,
                                get_off_drums=True):
-    ''' generate a melody based on the note pitch interval and note duration/interval appearance probabilities,
-    currently in development '''
+    '''
+    generate a melody based on the note pitch interval and note duration/interval appearance probabilities,
+    currently in development
+    '''
     if isinstance(current_chord, piece):
         current_chord = current_chord.merge(get_off_drums=get_off_drums)[0]
         if not is_melody:
@@ -2396,6 +2403,9 @@ def generate_melody_from_notes(current_chord,
 def humanize(current_chord,
              timing_range=[-1 / 128, 1 / 128],
              velocity_range=[-10, 10]):
+    '''
+    add random dynamic changes in given ranges to timing and velocity of notes to a piece
+    '''
     temp = copy(current_chord)
     if isinstance(temp, piece):
         temp.tracks = [
@@ -2427,22 +2437,42 @@ def humanize(current_chord,
         return temp
 
 
-def write_pop(scale_type,
-              length,
-              melody_ins=1,
-              chord_ins=1,
-              bpm=80,
-              scale_type2=None,
-              choose_chord_notes_num=[4],
-              default_chord_durations=1 / 2,
-              inversion_highest_num=2,
-              choose_chord_intervals=[1 / 8],
-              choose_melody_durations=[1 / 8, 1 / 16],
-              choose_start_times=[0],
-              choose_chord_progressions=None,
-              current_choose_chord_progressions_list=None,
-              melody_chord_octave_diff=2,
-              choose_melody_rhythms=None):
+def write_pop(
+        scale_type,
+        length=[10, 20],
+        melody_ins=1,
+        chord_ins=1,
+        bpm=120,
+        scale_type2=None,
+        choose_chord_notes_num=[4],
+        default_chord_durations=1 / 2,
+        inversion_highest_num=2,
+        choose_chord_intervals=[1 / 8],
+        choose_melody_durations=[1 / 8, 1 / 16, beat(1 / 8, 1)],
+        choose_start_times=[0],
+        choose_chord_progressions=None,
+        current_choose_chord_progressions_list=None,
+        melody_chord_octave_diff=2,
+        choose_melody_rhythms=None,
+        with_drum_beats=True,
+        drum_ins=1,
+        with_bass=True,
+        bass_octave=2,
+        choose_bass_rhythm=database.default_choose_bass_rhythm,
+        choose_bass_techniques=database.default_choose_bass_playing_techniques
+):
+    '''
+    write a pop/dance song with melody, chords, bass and drum in a given key,
+    currently in development
+    '''
+    if isinstance(length, list):
+        length = random.randint(*length)
+    if isinstance(bpm, list):
+        bpm = random.randint(*bpm)
+    if isinstance(melody_ins, list):
+        melody_ins = random.choice(melody_ins)
+    if isinstance(chord_ins, list):
+        chord_ins = random.choice(chord_ins)
     melody_octave = scale_type[0].num + melody_chord_octave_diff
     if 'minor' in scale_type.mode:
         scale_type = scale_type.relative_key()
@@ -2469,32 +2499,82 @@ def write_pop(scale_type,
     length_count = 0
     chord_ind = 0
     melody = chord([])
-    chords_part = None
+    chords_part = chord([])
+    if with_bass:
+        bass_part = chord([])
+        current_bass_techniques = None
+        if choose_bass_techniques is not None:
+            current_bass_techniques = random.choice(choose_bass_techniques)
     while length_count < length:
         current_chord = choose_chords[chord_ind]
-        current_chord = current_chord.set(
-            interval=random.choice(choose_chord_intervals))
-        chord_ind += 1
-        if chord_ind >= chord_num:
-            chord_ind = 0
-        if chords_part is None:
-            chords_part = current_chord
-        else:
-            chords_part |= current_chord
-        length_count = chords_part.bars()
-        while melody.bars() < length_count:
+        current_chord_interval = random.choice(choose_chord_intervals)
+        if isinstance(current_chord_interval, beat):
+            current_chord_interval = current_chord_interval.get_duration()
+        current_chord = current_chord.set(interval=current_chord_interval)
+        current_chord_length = current_chord.bars(mode=0)
+        chords_part |= current_chord
+        length_count = chords_part.bars(mode=0)
+        if with_bass:
+            current_chord_tonic = note(
+                scale_type[int(choose_chord_progressions[chord_ind]) - 1].name,
+                bass_octave)
+            if choose_bass_rhythm is None:
+                current_bass_part = chord([current_chord_tonic]) % (
+                    current_chord_length, current_chord_length)
+            else:
+                current_bass_part = get_chords_from_rhythm(
+                    chord([current_chord_tonic]),
+                    rhythm(*random.choice(choose_bass_rhythm)))
+                if current_bass_techniques:
+                    if current_bass_techniques == 'octaves':
+                        if len(current_bass_part) > 1:
+                            for i in range(len(current_bass_part)):
+                                if i % 2 != 0:
+                                    current_bass_part[i] += 12
+            bass_part |= current_bass_part
+        while melody.bars(mode=0) < length_count:
             if scale_type2:
                 current_melody = copy(random.choice(scale_type2.notes))
             else:
                 current_melody = copy(
                     random.choice(current_chord.notes + scale_type.notes))
                 current_melody.num = melody_octave
-            current_melody.duration = random.choice(choose_melody_durations)
+            current_chord_duration = random.choice(choose_melody_durations)
+            if isinstance(current_chord_duration, beat):
+                current_chord_duration = current_chord_duration.get_duration()
+            current_melody.duration = current_chord_duration
             melody.notes.append(current_melody)
             melody.interval.append(copy(current_melody.duration))
+        chord_ind += 1
+        if chord_ind >= chord_num:
+            chord_ind = 0
     chords_part.set_volume(70)
-    result = piece([melody, chords_part], [melody_ins, chord_ins],
-                   bpm, [random.choice(choose_start_times), 0],
-                   track_names=['melody', 'chords'])
+    result = piece(tracks=[melody, chords_part],
+                   instruments=[melody_ins, chord_ins],
+                   bpm=bpm,
+                   start_times=[0, random.choice(choose_start_times)],
+                   track_names=['melody', 'chords'],
+                   channels=[0, 1])
     result.choose_chord_progressions = choose_chord_progressions
+    if with_drum_beats:
+        current_drum_beats = drum(
+            random.choice(database.default_choose_drum_beats))
+        current_drum_beat_repeat_num = math.ceil(
+            length / current_drum_beats.notes.bars())
+        current_drum_beats *= current_drum_beat_repeat_num
+        current_drum_beats.notes.set_volume(70)
+        result.append(
+            track(content=current_drum_beats.notes,
+                  instrument=drum_ins,
+                  start_time=result.start_times[1],
+                  track_name='drum',
+                  channel=9))
+    if with_bass:
+        bass_part.set_volume(80)
+        result.append(
+            track(content=bass_part,
+                  instrument=34,
+                  start_time=result.start_times[1],
+                  track_name='bass',
+                  channel=2))
     return result

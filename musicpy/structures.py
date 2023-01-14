@@ -2126,6 +2126,7 @@ class scale:
 
     def __init__(self, start=None, mode=None, interval=None, notes=None):
         self.interval = interval
+        self.notes = None
         if notes is not None:
             notes = [mp.to_note(i) if isinstance(i, str) else i for i in notes]
             self.notes = notes
@@ -2242,7 +2243,7 @@ class scale:
                 return result
             else:
                 if self.notes is None:
-                    raise ValueError('could not find this scale')
+                    raise ValueError(f'could not find scale {self.mode}')
                 else:
                     notes = self.notes
                     rootdegree = notes[0].degree
@@ -2269,7 +2270,7 @@ class scale:
             count = self.start.degree
             interval1 = self.get_interval()
             if isinstance(interval1, str):
-                raise ValueError('cannot find this scale')
+                raise ValueError(f'cannot find scale {interval1}')
             for t in interval1:
                 count += t
                 result.append(mp.degree_to_note(count))

@@ -788,3 +788,14 @@ choose_chord_progressions_list = [
     '6451', '3456', '4536', '14561451', '1564', '4156', '4565', '4563', '6341',
     '6345', '6415', '15634145'
 ]
+
+default_choose_melody_rhythms = [('b b b 0 b b b b', 1)]
+
+default_choose_drum_beats = [
+    'K, H, S, H, K, H, S, H, K, H, S, H, K, K, S, H, t:2',
+    'K;H, 0, OH, 0, K;S;H, 0, OH, 0, K;H, 0, OH, 0, K;S;H, 0, OH, S, t:1'
+]
+
+default_choose_bass_rhythm = [('b b b b', 1 / 2)]
+
+default_choose_bass_playing_techniques = ['octaves', 'root']
