@@ -1849,6 +1849,7 @@ def split_melody(current_chord,
                  melody_tol=database.minor_seventh,
                  chord_tol=database.major_sixth,
                  get_off_overlap_notes=True,
+                 get_off_same_time=True,
                  average_degree_length=8,
                  melody_degree_tol='B4'):
     '''
@@ -1857,7 +1858,8 @@ def split_melody(current_chord,
     if mode == 'index', return a list of indexes of main melody notes
     if mode == 'chord', return a chord with main melody notes with original places
     '''
-    if not isinstance(melody_degree_tol, note):
+    if melody_degree_tol is not None and not isinstance(
+            melody_degree_tol, note):
         melody_degree_tol = to_note(melody_degree_tol)
     if mode == 'notes':
         result = split_melody(current_chord=current_chord,
@@ -1924,14 +1926,16 @@ def split_melody(current_chord,
                         del whole_notes[k + 1]
                         del whole_interval[k]
                 k += 1
-
-        play_together = find_all_continuous(whole_interval, 0)
-        for each in play_together:
-            max_ind = max(each, key=lambda t: whole_notes[t].degree)
-            get_off = set(each) - {max_ind}
-            for each_ind in get_off:
-                whole_notes[each_ind] = None
-        whole_notes = [x for x in whole_notes if x is not None]
+        if get_off_same_time:
+            play_together = find_all_continuous(whole_interval, 0)
+            for each in play_together:
+                max_ind = max(each, key=lambda t: whole_notes[t].degree)
+                get_off = set(each) - {max_ind}
+                for each_ind in get_off:
+                    whole_notes[each_ind] = None
+                    whole_interval[each_ind] = None
+            whole_notes = [x for x in whole_notes if x is not None]
+            whole_interval = [x for x in whole_interval if x is not None]
         N = len(whole_notes) - 1
         start = 0
         if whole_notes[1].degree - whole_notes[0].degree >= chord_tol:
@@ -1939,12 +1943,13 @@ def split_melody(current_chord,
         i = start + 1
         melody = [whole_notes[start]]
         notes_num = 1
-        melody_duration = [melody[0].duration]
+        melody_interval = [whole_interval[start]]
         while i < N:
             current_note = whole_notes[i]
             next_note = whole_notes[i + 1]
+            current_note_interval = whole_interval[i]
             next_degree_diff = next_note.degree - current_note.degree
-            recent_notes = add_to_index(melody_duration, average_degree_length,
+            recent_notes = add_to_index(melody_interval, average_degree_length,
                                         notes_num - 1, -1, -1)
             if recent_notes:
                 current_average_degree = sum(
@@ -1955,14 +1960,15 @@ def split_melody(current_chord,
                     if melody[-1].degree - current_note.degree < chord_tol:
                         melody.append(current_note)
                         notes_num += 1
-                        melody_duration.append(current_note.duration)
+                        melody_interval.append(current_note_interval)
                     else:
-                        if abs(
-                                next_degree_diff
-                        ) < chord_tol and current_note.degree >= melody_degree_tol.degree:
+                        if abs(next_degree_diff) < chord_tol and not (
+                                melody_degree_tol is not None
+                                and current_note.degree <
+                                melody_degree_tol.degree):
                             melody.append(current_note)
                             notes_num += 1
-                            melody_duration.append(current_note.duration)
+                            melody_interval.append(current_note_interval)
                 else:
 
                     if (melody[-1].degree - current_note.degree < chord_tol
@@ -1971,16 +1977,17 @@ def split_melody(current_chord,
                                     for k in melody[-2:])):
                         melody.append(current_note)
                         notes_num += 1
-                        melody_duration.append(current_note.duration)
+                        melody_interval.append(current_note_interval)
                     else:
-                        if (abs(next_degree_diff) < chord_tol and
-                                current_note.degree >= melody_degree_tol.degree
-                                and all(
-                                    k.degree - current_note.degree < chord_tol
+                        if (abs(next_degree_diff) < chord_tol
+                                and not (melody_degree_tol is not None
+                                         and current_note.degree <
+                                         melody_degree_tol.degree) and
+                                all(k.degree - current_note.degree < chord_tol
                                     for k in melody[-2:])):
                             melody.append(current_note)
                             notes_num += 1
-                            melody_duration.append(current_note.duration)
+                            melody_interval.append(current_note_interval)
             i += 1
         melody_inds = [each.number for each in melody]
         whole_inds = melody_inds + other_messages_inds
