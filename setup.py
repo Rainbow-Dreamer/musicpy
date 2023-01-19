@@ -16,7 +16,7 @@ setup(
     keywords=[
         'music language', 'use codes to write music', 'music language for AI'
     ],
-    install_requires=['mido-fix', 'pygame'],
+    install_requires=['mido-fix', 'pygame','dataclasses'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
