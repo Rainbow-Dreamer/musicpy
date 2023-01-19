@@ -458,8 +458,6 @@ class sampler:
                          extra_length=None):
         if len(self.channel_sound_modules) <= current_channel_num:
             return
-        if not self.channel_sound_modules[current_channel_num]:
-            return
 
         apply_fadeout_obj = self.apply_fadeout(current_chord, current_bpm)
         if length:
