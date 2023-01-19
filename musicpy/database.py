@@ -1,39 +1,38 @@
 class match:
 
-    def __init__(self, keys, values=None):
+    def __init__(self, current_dict):
         # keys and values should both be a list/tuple/set of data,
         # and they should have the same counts
         # if the key itself is given as a dict, then just use it
-        if isinstance(keys, dict):
-            self.dic = keys
+        if isinstance(current_dict, dict):
+            self.dic = current_dict
         else:
             raise ValueError('a dictionary is required')
 
-    def __call__(self, *key, mode=0, index=None):
+    def __call__(self, key, mode=0, index=None):
         # unlike __getitem__, this treat key as a whole to match(mode == 0)
         # when mode == 1, the same as __getitem__,
         # and you can set which index to return in the finding results,
         # if the index is set to None (as default), then return whole results.
         if mode == 0:
-            try:
-                result = self.dic[key]
-                if index is None:
-                    return result
+            result = self.dic[key]
+            if index is None:
+                return result
+            else:
                 return result[index]
-            except:
-                return 'not found'
         elif mode == 1:
             result = self[key[0]]
-            if result == 'not found' or index is None:
+            if index is None:
                 return result
-            return result[index]
+            else:
+                return result[index]
 
     def __getitem__(self, key):
         dic = self.dic
         for i in dic:
             if key in i:
                 return dic[i]
-        return 'not found'
+        raise KeyError(key)
 
     def __contains__(self, obj):
         return any(obj in i for i in self.dic)
@@ -137,30 +136,14 @@ INTERVAL = {
     12: 'perfect octave',
     13: 'minor ninth',
     14: 'major ninth',
+    15: 'minor third / augmented ninth',
     17: 'perfect eleventh',
+    18: 'augmented eleventh',
     20: 'minor thirteenth',
     21: 'major thirteenth'
 }
-NAME_OF_INTERVAL = {
-    'perfect unison': 0,
-    'minor second': 1,
-    'major second': 2,
-    'minor third': 3,
-    'major third': 4,
-    'perfect fourth': 5,
-    'diminished fifth': 6,
-    'perfect fifth': 7,
-    'minor sixth': 8,
-    'major sixth': 9,
-    'minor seventh': 10,
-    'major seventh': 11,
-    'perfect octave': 12,
-    'minor ninth': 13,
-    'major ninth': 14,
-    'perfect eleventh': 17,
-    'minor thirteenth': 20,
-    'major thirteenth': 21
-}
+NAME_OF_INTERVAL = {j: i for i, j in INTERVAL.items()}
+
 standard = {
     'C': 0,
     'C#': 1,
@@ -292,6 +275,13 @@ chordTypes = match({
     ('9sus4', '9sus'): ((5, 7, 10, 14), ),
     ('9sus2', ): ((2, 7, 10, 14), ),
     ('maj9sus4', 'maj9sus', 'M9sus', 'M9sus4'): ((5, 7, 11, 14), ),
+    ('11', 'dominant11', 'dominant 11'): ((4, 7, 10, 14, 17), ),
+    ('maj11', 'M11', 'eleventh', 'major 11', 'major eleventh'):
+    ((4, 7, 11, 14, 17), ),
+    ('m11', 'minor eleventh', 'minor 11'): ((3, 7, 10, 14, 17), ),
+    ('13', 'dominant13', 'dominant 13'): ((4, 7, 10, 14, 17, 21), ),
+    ('maj13', 'major 13', 'M13'): ((4, 7, 11, 14, 17, 21), ),
+    ('m13', 'minor 13'): ((3, 7, 10, 14, 17, 21), ),
     ('13sus4', '13sus'): ((5, 7, 10, 14, 21), (7, 10, 14, 17, 21)),
     ('13sus2', ): ((2, 7, 10, 17, 21), ),
     ('maj13sus4', 'maj13sus', 'M13sus', 'M13sus4'):
@@ -308,13 +298,6 @@ chordTypes = match({
     ('6sus2', ): ((2, 7, 9), ),
     ('5', 'power chord'): ((7, ), ),
     ('5(+octave)', 'power chord(with octave)'): ((7, 12), ),
-    ('maj11', 'M11', 'eleventh', 'major 11', 'major eleventh'):
-    ((4, 7, 11, 14, 17), ),
-    ('m11', 'minor eleventh', 'minor 11'): ((3, 7, 10, 14, 17), ),
-    ('11', 'dominant11', 'dominant 11'): ((4, 7, 10, 14, 17), ),
-    ('13', 'dominant13', 'dominant 13'): ((4, 7, 10, 14, 17, 21), ),
-    ('maj13', 'major 13', 'M13'): ((4, 7, 11, 14, 17, 21), ),
-    ('m13', 'minor 13'): ((3, 7, 10, 14, 17, 21), ),
     ('maj13#11', 'M13#11'): ((4, 7, 11, 14, 18, 21), ),
     ('13#11', ): ((4, 7, 10, 14, 18, 21), ),
     ('fifth_9th', ): ((7, 14), ),
@@ -799,3 +782,5 @@ default_choose_drum_beats = [
 default_choose_bass_rhythm = [('b b b b', 1 / 2)]
 
 default_choose_bass_playing_techniques = ['octaves', 'root']
+
+non_standard_intervals = [major_sixth, minor_sixth, minor_second]

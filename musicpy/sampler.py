@@ -255,7 +255,8 @@ class sampler:
                 current_channel_num]
             if show_msg:
                 print(f'rendering track 1/1 channel {current_channel_num+1}')
-            if isinstance(current_sound_modules, rs.sf2_loader):
+            if not all_has_audio(current_chord) and isinstance(
+                    current_sound_modules, rs.sf2_loader):
                 silent_audio = current_sound_modules.export_chord(
                     current_chord,
                     bpm=current_bpm,
@@ -350,7 +351,8 @@ class sampler:
                 current_sound_modules = self.channel_sound_modules[
                     current_channel_number]
                 current_track = current_tracks[i]
-                if isinstance(current_sound_modules, rs.sf2_loader):
+                if not all_has_audio(current_track) and isinstance(
+                        current_sound_modules, rs.sf2_loader):
                     current_instrument = current_chord.instruments_numbers[i]
                     current_channel = current_chord.channels[
                         i] if current_chord.channels else current_sound_modules.current_channel
@@ -1107,6 +1109,13 @@ def has_audio(sound):
         return any(isinstance(i, AudioSegment) for i in sound.notes)
     elif isinstance(sound, piece):
         return any(has_audio(i) for i in sound.tracks)
+
+
+def all_has_audio(sound):
+    if isinstance(sound, chord):
+        return all(isinstance(i, AudioSegment) for i in sound.notes)
+    elif isinstance(sound, piece):
+        return all(all_has_audio(i) for i in sound.tracks)
 
 
 def check_special(sound):
