@@ -400,11 +400,18 @@ class chord:
                 self.interval[i] = current.duration
                 break
 
-    def bars(self, start_time=0, mode=1, audio_mode=0):
+    def bars(self, start_time=0, mode=1, audio_mode=0, bpm=None):
         if mode == 0:
             max_length = sum(self.interval)
         elif mode == 1:
+            if audio_mode == 1:
+                from pydub import AudioSegment
             temp = self.only_notes(audio_mode=audio_mode)
+            if audio_mode == 1:
+                temp = temp.set(duration=[
+                    mp.real_time_to_bar(len(i), bpm) if isinstance(
+                        i, AudioSegment) else i.duration for i in temp.notes
+                ])
             current_durations = temp.get_duration()
             if not current_durations:
                 return 0
@@ -504,10 +511,10 @@ class chord:
                                   mode=mode,
                                   audio_mode=audio_mode)
         if ind1 is None:
-            whole_bars = self.bars(start_time, audio_mode=audio_mode)
+            whole_bars = self.bars(start_time, audio_mode=audio_mode, bpm=bpm)
         else:
             if ind2 is None:
-                ind2 = self.bars(start_time, audio_mode=audio_mode)
+                ind2 = self.bars(start_time, audio_mode=audio_mode, bpm=bpm)
             whole_bars = ind2 - ind1
         result = (60 / bpm) * whole_bars * 4
         if mode == 'seconds':
@@ -527,7 +534,7 @@ class chord:
     def count_bars(self, ind1, ind2, bars_range=True):
         bars_length = self[ind1:ind2].bars()
         if bars_range:
-            start = self[:ind1].bars()
+            start = self[:ind1].bars(mode=0)
             return [start, start + bars_length]
         else:
             return bars_length
@@ -1446,8 +1453,8 @@ class chord:
                 else:
                     current_name = current.name
                 if current_name in transdict:
-                    current_note = mp.closest_note(current,
-                                                   transdict[current_name])
+                    current_note = mp.closest_note(transdict[current_name],
+                                                   current)
                     temp.notes[k] = current.reset(name=current_note.name,
                                                   num=current_note.num)
         return temp
@@ -1833,8 +1840,23 @@ class chord:
     def near_voicing(self,
                      other,
                      keep_root=True,
-                     root_lower=False,
-                     standardize=True):
+                     standardize=True,
+                     choose_nearest=False,
+                     get_distance=False):
+        if choose_nearest:
+            result1, distance1 = self.near_voicing(other,
+                                                   keep_root=True,
+                                                   standardize=standardize,
+                                                   choose_nearest=False,
+                                                   get_distance=True)
+            result2, distance2 = self.near_voicing(other,
+                                                   keep_root=False,
+                                                   standardize=standardize,
+                                                   choose_nearest=False,
+                                                   get_distance=True)
+            result = result2 if distance2 < distance1 else result1
+            return result if not get_distance else (result,
+                                                    min(distance1, distance2))
         if standardize:
             temp = self.standardize()
             other = other.standardize()
@@ -1845,84 +1867,34 @@ class chord:
         if keep_root:
             root_note = temp.notes[0]
             other_root_note = other.notes[0]
-            root_note_step = database.standard2[
-                root_note.name] - database.standard2[other_root_note.name]
-            root_note_steps = [abs(root_note_step), 12 - abs(root_note_step)]
-            nearest_step = min(root_note_steps)
-            if root_lower:
-                if root_note_step < 0:
-                    root_note = other_root_note + root_note_step
-                else:
-                    root_note = other_root_note - root_note_steps[1]
-            else:
-                if nearest_step == root_note_steps[0]:
-                    root_note = other_root_note + root_note_step
-                else:
-                    if root_note_step < 0:
-                        root_note = other_root_note + root_note_steps[1]
-                    else:
-                        root_note = other_root_note - root_note_steps[1]
+            new_root_note, current_distance = mp.closest_note(
+                root_note, other_root_note, get_distance=True)
             remain_notes = []
+            current_other_notes = other.notes[1:]
+            total_distance = current_distance
             for each in temp.notes[1:]:
-                note_steps = [
-                    database.standard2[each.name] - database.standard2[i.name]
-                    for i in other.notes[1:]
-                ]
-                note_steps_path = [
-                    min([abs(i), 12 - abs(i)]) for i in note_steps
-                ]
-                most_near_note_steps = min(note_steps_path)
-                most_near_note = other.notes[note_steps_path.index(
-                    most_near_note_steps)]
-                current_step = database.standard2[
-                    each.name] - database.standard2[most_near_note.name]
-                current_steps = [abs(current_step), 12 - abs(current_step)]
-                if most_near_note_steps == current_steps[0]:
-                    new_note = most_near_note + current_step
-                else:
-                    if current_step < 0:
-                        new_note = most_near_note + current_steps[1]
-                    else:
-                        new_note = most_near_note - current_steps[1]
+                current_closest_note, current_distance = mp.closest_note_from_chord(
+                    each, current_other_notes, get_distance=True)
+                total_distance += current_distance
+                current_other_notes.remove(current_closest_note)
+                new_note = mp.closest_note(each, current_closest_note)
                 remain_notes.append(new_note)
-            remain_notes.insert(0, root_note)
-            temp.notes = remain_notes
-            temp = temp.sortchord()
-            temp = temp.set(duration=original_duration, volume=original_volume)
-            if temp[0].name != root_note.name:
-                temp[0] += database.octave * (
-                    (12 -
-                     (temp[0].degree - root_note.degree)) // database.octave)
-                temp = temp.sortchord()
-            return temp
+            remain_notes.insert(0, new_root_note)
         else:
             remain_notes = []
+            current_other_notes = other.notes
+            total_distance = 0
             for each in temp.notes:
-                note_steps = [
-                    database.standard2[each.name] - database.standard2[i.name]
-                    for i in other.notes
-                ]
-                note_steps_path = [
-                    min([abs(i), 12 - abs(i)]) for i in note_steps
-                ]
-                most_near_note_steps = min(note_steps_path)
-                most_near_note = other.notes[note_steps_path.index(
-                    most_near_note_steps)]
-                current_step = database.standard2[
-                    each.name] - database.standard2[most_near_note.name]
-                current_steps = [abs(current_step), 12 - abs(current_step)]
-                if most_near_note_steps == current_steps[0]:
-                    new_note = most_near_note + current_step
-                else:
-                    if current_step < 0:
-                        new_note = most_near_note + current_steps[1]
-                    else:
-                        new_note = most_near_note - current_steps[1]
+                current_closest_note, current_distance = mp.closest_note_from_chord(
+                    each, current_other_notes, get_distance=True)
+                total_distance += current_distance
+                current_other_notes.remove(current_closest_note)
+                new_note = mp.closest_note(each, current_closest_note)
                 remain_notes.append(new_note)
-            temp.notes = remain_notes
-            temp = temp.sortchord()
-            temp = temp.set(duration=original_duration, volume=original_volume)
-            return temp
+        temp.notes = remain_notes
+        temp = temp.sortchord()
+        temp = temp.set(duration=original_duration, volume=original_volume)
+        return temp if not get_distance else (temp, total_distance)
 
     def reset_octave(self, num):
         diff = num - self[0].num
@@ -2758,7 +2730,7 @@ class piece:
                  pan=None,
                  volume=None,
                  other_messages=[],
-                 sampler_channels=None):
+                 daw_channels=None):
         self.tracks = tracks
         if instruments is None:
             self.instruments = [
@@ -2791,7 +2763,7 @@ class piece:
         if not self.volume:
             self.volume = [[] for i in range(self.track_number)]
         self.other_messages = other_messages
-        self.sampler_channels = sampler_channels
+        self.daw_channels = daw_channels
 
     def __repr__(self):
         return (
@@ -2819,8 +2791,7 @@ class piece:
             volume=self.volume[i],
             bpm=self.bpm,
             name=self.name,
-            sampler_channel=self.sampler_channels[i]
-            if self.sampler_channels else None)
+            daw_channel=self.daw_channels[i] if self.daw_channels else None)
 
     def __delitem__(self, i):
         del self.tracks[i]
@@ -2833,8 +2804,8 @@ class piece:
             del self.channels[i]
         del self.pan[i]
         del self.volume[i]
-        if self.sampler_channels:
-            del self.sampler_channels[i]
+        if self.daw_channels:
+            del self.daw_channels[i]
         self.track_number -= 1
 
     def __setitem__(self, i, new_track):
@@ -2850,8 +2821,8 @@ class piece:
             self.pan[i] = new_track.pan
         if new_track.volume:
             self.volume[i] = new_track.volume
-        if self.sampler_channels and new_track.sampler_channel is not None:
-            self.sampler_channels[i] = new_track.sampler_channel
+        if self.daw_channels and new_track.daw_channel is not None:
+            self.daw_channels[i] = new_track.daw_channel
 
     def __len__(self):
         return len(self.tracks)
@@ -2895,11 +2866,11 @@ class piece:
                     name is not None else f'track {self.track_number+1}')
         self.pan.append(new_track.pan if new_track.pan else [])
         self.volume.append(new_track.volume if new_track.volume else [])
-        if self.sampler_channels:
-            if new_track.sampler_channel:
-                self.sampler_channels.append(new_track.sampler_channel)
+        if self.daw_channels:
+            if new_track.daw_channel:
+                self.daw_channels.append(new_track.daw_channel)
             else:
-                self.sampler_channels.append(0)
+                self.daw_channels.append(0)
         self.track_number += 1
 
     def insert(self, i, new_track):
@@ -2923,11 +2894,11 @@ class piece:
                     f'track {self.track_number+1}')
         self.pan.insert(i, new_track.pan if new_track.pan else [])
         self.volume.insert(i, new_track.volume if new_track.volume else [])
-        if self.sampler_channels:
-            if new_track.sampler_channel:
-                self.sampler_channels.insert(i, new_track.sampler_channel)
+        if self.daw_channels:
+            if new_track.daw_channel:
+                self.daw_channels.insert(i, new_track.daw_channel)
             else:
-                self.sampler_channels.insert(i, 0)
+                self.daw_channels.insert(i, 0)
         self.track_number += 1
 
     def up(self, n=1, mode=0):
@@ -2961,8 +2932,8 @@ class piece:
             current_start_time = temp.start_times[i]
             current.interval[counter] += (whole_length - current.bars() -
                                           current_start_time)
+            unit = copy(current)
             for k in range(n - 1):
-                unit = copy(current)
                 if current_start_time:
                     for j in range(len(current) - 1, -1, -1):
                         current_note = current.notes[j]
@@ -3568,12 +3539,12 @@ class piece:
         start_time = min(self.start_times)
         return self.cut(start_time, n + start_time)
 
-    def bars(self, mode=1, audio_mode=0):
+    def bars(self, mode=1, audio_mode=0, bpm=None):
         return max([
             self.tracks[i].bars(start_time=self.start_times[i],
                                 mode=mode,
-                                audio_mode=audio_mode)
-            for i in range(len(self.tracks))
+                                audio_mode=audio_mode,
+                                bpm=bpm) for i in range(len(self.tracks))
         ])
 
     def total(self, mode='all'):
@@ -3987,7 +3958,7 @@ class track:
                  volume=None,
                  bpm=120,
                  name=None,
-                 sampler_channel=None):
+                 daw_channel=None):
         self.content = content
         self.instrument = database.reverse_instruments[
             instrument] if isinstance(instrument, int) else instrument
@@ -3999,7 +3970,7 @@ class track:
         self.name = name
         self.pan = pan
         self.volume = volume
-        self.sampler_channel = sampler_channel
+        self.daw_channel = daw_channel
         if self.pan:
             if not isinstance(self.pan, list):
                 self.pan = [self.pan]
@@ -4446,6 +4417,7 @@ class drum:
                 if symbol_inds:
                     last_symbol_ind = None
                     last_symbol_start_ind = None
+                    available_symbol_ind = len(symbol_inds)
                     if symbol_inds[0] == 0:
                         for k in range(1, len(symbol_inds)):
                             if symbol_inds[k] - symbol_inds[k - 1] != 1:

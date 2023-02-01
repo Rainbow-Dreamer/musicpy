@@ -756,16 +756,19 @@ def write(current_chord,
     if i is not None:
         instrument = i
     is_track_type = False
+    is_piece_like_type = True
     if isinstance(current_chord, note):
         current_chord = chord([current_chord])
     elif isinstance(current_chord, list):
         current_chord = concat(current_chord, '|')
     if isinstance(current_chord, chord):
         is_track_type = True
+        is_piece_like_type = False
         if instrument is None:
             instrument = 1
         current_chord = P(
-            [current_chord], [instrument],
+            tracks=[current_chord],
+            instruments=[instrument],
             bpm=bpm,
             channels=[channel],
             start_times=[
@@ -781,10 +784,13 @@ def write(current_chord,
         current_chord = build(current_chord, bpm=current_chord.bpm)
     elif isinstance(current_chord, drum):
         is_track_type = True
+        is_piece_like_type = False
         if hasattr(current_chord, 'other_messages'):
             msg = current_chord.other_messages
-        current_chord = P([current_chord.notes], [current_chord.instrument],
-                          bpm, [
+        current_chord = P(tracks=[current_chord.notes],
+                          instruments=[current_chord.instrument],
+                          bpm=bpm,
+                          start_times=[
                               current_chord.notes.start_time
                               if start_time is None else start_time
                           ],
@@ -843,7 +849,10 @@ def write(current_chord,
         content = tracks_contents[i]
         content_notes = content.notes
         content_intervals = content.interval
-        current_start_time = int(start_times[i] * ticks_per_beat * 4)
+        current_start_time = start_times[i]
+        if is_piece_like_type:
+            current_start_time += content.start_time
+        current_start_time = int(current_start_time * ticks_per_beat * 4)
         for j in range(len(content)):
             current_note = content_notes[j]
             current_type = type(current_note)
@@ -1260,7 +1269,7 @@ def build(*tracks_list, **kwargs):
     track_names = []
     pan_msg = []
     volume_msg = []
-    sampler_channels = []
+    daw_channels = []
     remain_list = [1, 0, None, None, [], [], None]
     for each in tracks_list:
         if isinstance(each, track):
@@ -1271,7 +1280,7 @@ def build(*tracks_list, **kwargs):
             track_names.append(each.track_name)
             pan_msg.append(each.pan if each.pan else [])
             volume_msg.append(each.volume if each.volume else [])
-            sampler_channels.append(each.sampler_channel)
+            daw_channels.append(each.daw_channel)
         else:
             new_each = each + remain_list[len(each) - 1:]
             tracks.append(new_each[0])
@@ -1281,15 +1290,15 @@ def build(*tracks_list, **kwargs):
             track_names.append(new_each[4])
             pan_msg.append(new_each[5])
             volume_msg.append(new_each[6])
-            sampler_channels.append(new_each[7])
+            daw_channels.append(new_each[7])
     if any(i is None for i in channels):
         channels = None
     if all(i is None for i in track_names):
         track_names = None
     else:
         track_names = [i if i else '' for i in track_names]
-    if any(i is None for i in sampler_channels):
-        sampler_channels = None
+    if any(i is None for i in daw_channels):
+        daw_channels = None
     result = P(tracks=tracks,
                instruments=instruments,
                start_times=start_times,
@@ -1297,7 +1306,7 @@ def build(*tracks_list, **kwargs):
                channels=channels,
                pan=pan_msg,
                volume=volume_msg,
-               sampler_channels=sampler_channels)
+               daw_channels=daw_channels)
     for key, value in kwargs.items():
         setattr(result, key, value)
     return result
@@ -1477,7 +1486,8 @@ def analyze_rhythm(current_chord,
                    total_length=None,
                    remove_empty_beats=False,
                    unit=None,
-                   find_unit_ignore_duration=False):
+                   find_unit_ignore_duration=False,
+                   merge_continue=True):
     if all(i <= 0 for i in current_chord.interval):
         return rhythm([beat(0) for i in range(len(current_chord))])
     if unit is None:
@@ -1514,16 +1524,24 @@ def analyze_rhythm(current_chord,
             else:
                 current_duration = current_chord.notes[i].duration
                 if current_duration >= each:
-                    beat_list.extend(
-                        [continue_symbol(unit) for k in range(int(rest_num))])
+                    if not merge_continue:
+                        beat_list.extend([
+                            continue_symbol(unit) for k in range(int(rest_num))
+                        ])
+                    else:
+                        beat_list[-1].duration += unit * int(rest_num)
                 else:
                     current_rest_duration = each - current_duration
                     rest_num = current_rest_duration // unit
                     current_continue_duration = current_duration - unit
                     continue_num = current_continue_duration // unit
-                    beat_list.extend([
-                        continue_symbol(unit) for k in range(int(continue_num))
-                    ])
+                    if not merge_continue:
+                        beat_list.extend([
+                            continue_symbol(unit)
+                            for k in range(int(continue_num))
+                        ])
+                    else:
+                        beat_list[-1].duration += unit * int(continue_num)
                     beat_list.extend(
                         [rest_symbol(unit) for k in range(int(rest_num))])
     result = rhythm(beat_list)
@@ -1760,38 +1778,39 @@ def reset(self, **kwargs):
 
 
 def closest_note(note1, note2, get_distance=False):
-    if not isinstance(note1, note):
-        note1 = to_note(note1)
-    if isinstance(note2, note):
-        note2 = note2.name
+    if isinstance(note1, note):
+        note1 = note1.name
+    if not isinstance(note2, note):
+        note2 = to_note(note2)
     current_note = [
-        note(note2, note1.num),
-        note(note2, note1.num - 1),
-        note(note2, note1.num + 1)
+        note(note1, note2.num),
+        note(note1, note2.num - 1),
+        note(note1, note2.num + 1)
     ]
     if not get_distance:
-        result = min(current_note, key=lambda s: abs(s.degree - note1.degree))
+        result = min(current_note, key=lambda s: abs(s.degree - note2.degree))
         return result
     else:
-        distances = [[i, abs(i.degree - note1.degree)] for i in current_note]
+        distances = [[i, abs(i.degree - note2.degree)] for i in current_note]
         distances.sort(key=lambda s: s[1])
         result = distances[0]
         return result
 
 
-def closest_note_from_chord(note1, chord1):
+def closest_note_from_chord(note1, chord1, mode=0, get_distance=False):
     if not isinstance(note1, note):
         note1 = to_note(note1)
-    names = [database.standard_dict.get(i, i) for i in chord1.names()]
+    if isinstance(chord1, chord):
+        chord1 = chord1.notes
     current_name = database.standard_dict.get(note1.name, note1.name)
-    if current_name in names:
-        result = note1
-    else:
-        distances = [
-            closest_note(note1, i, get_distance=True) for i in chord1.notes
-        ]
-        distances.sort(key=lambda s: s[1])
-        result = distances[0][0]
+    distances = [(closest_note(note1, each, get_distance=True), i)
+                 for i, each in enumerate(chord1)]
+    distances.sort(key=lambda s: s[0][1])
+    result = chord1[distances[0][1]]
+    if mode == 1:
+        result = distances[0][0][0]
+    if get_distance:
+        result = (result, distances[0][0][1])
     return result
 
 
@@ -1804,7 +1823,7 @@ def note_range(note1, note2):
 def adjust_to_scale(current_chord, current_scale):
     temp = copy(current_chord)
     current_notes = current_scale.get_scale()
-    for i, each in enumerate(temp):
+    for each in temp:
         current_note = closest_note_from_chord(each, current_notes)
         each.name = current_note.name
         each.num = current_note.num
@@ -1870,7 +1889,6 @@ def write_json(current_chord,
                bpm=120,
                channel=0,
                start_time=None,
-               name=None,
                filename='untitled.json',
                instrument=None,
                i=None,
@@ -1888,32 +1906,33 @@ def write_json(current_chord,
         if instrument is None:
             instrument = 1
         current_chord = P(
-            [current_chord], [instrument],
+            tracks=[current_chord],
+            instruments=[instrument],
             bpm=bpm,
             channels=[channel],
             start_times=[
                 current_chord.start_time if start_time is None else start_time
             ],
-            other_messages=current_chord.other_messages,
-            name=name)
+            other_messages=current_chord.other_messages)
     elif isinstance(current_chord, track):
         is_track_type = True
         if hasattr(current_chord, 'other_messages'):
             msg = current_chord.other_messages
         else:
             msg = current_chord.content.other_messages
-        current_chord = build(current_chord, bpm=current_chord.bpm, name=name)
+        current_chord = build(current_chord, bpm=current_chord.bpm)
     elif isinstance(current_chord, drum):
         is_track_type = True
         if hasattr(current_chord, 'other_messages'):
             msg = current_chord.other_messages
-        current_chord = P([current_chord.notes], [current_chord.instrument],
-                          bpm, [
+        current_chord = P(tracks=[current_chord.notes],
+                          instruments=[current_chord.instrument],
+                          bpm=bpm,
+                          start_times=[
                               current_chord.notes.start_time
                               if start_time is None else start_time
                           ],
-                          channels=[9],
-                          name=name)
+                          channels=[9])
     else:
         current_chord = copy(current_chord)
     track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
@@ -1970,6 +1989,17 @@ def write_json(current_chord,
                   indent=4,
                   separators=(',', ': '),
                   ensure_ascii=False)
+
+
+def bar_to_real_time(bar, bpm, mode=0):
+    # convert bar to time in ms
+    return int(
+        (60000 / bpm) * (bar * 4)) if mode == 0 else (60000 / bpm) * (bar * 4)
+
+
+def real_time_to_bar(time, bpm):
+    # convert time in ms to bar
+    return (time / (60000 / bpm)) / 4
 
 
 C = trans
