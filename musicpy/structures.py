@@ -4909,6 +4909,12 @@ class drum:
             elif keyword == 'd':
                 current_part_default_duration, current_part_default_interval, current_part_default_volume = _process_settings(
                     content.split(';'))
+                if current_part_default_duration is None:
+                    current_part_default_duration = self.default_duration
+                if current_part_default_interval is None:
+                    current_part_default_interval = self.default_interval
+                if current_part_default_volume is None:
+                    current_part_default_volume = self.default_volume
             elif keyword == 'a':
                 current_part_all_same_duration, current_part_all_same_interval, current_part_all_same_volume = _process_settings(
                     content.split(';'))

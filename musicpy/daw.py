@@ -7,6 +7,7 @@ from pydub import AudioSegment
 from pydub.generators import Sine, Triangle, Sawtooth, Square, WhiteNoise, Pulse
 import sf2_loader as rs
 import pickle
+from pydoc import importfile
 
 abs_path = os.path.abspath(os.path.dirname(__file__))
 
@@ -89,16 +90,39 @@ class effect_chain:
             [str(i) for i in self.effects])
 
 
+class Synth:
+
+    def __init__(self):
+        self.name = 'untitled'
+        self.author = ''
+        self.description = ''
+        self.instrument_parameters = {}
+        self.effect_parameters = {}
+        self.enabled = True
+
+    def generate_sound(self, current_note, bpm=None) -> AudioSegment:
+        pass
+
+    def apply_effect(self, data: AudioSegment) -> AudioSegment:
+        pass
+
+    def __repr__(self):
+        return f'[Synth]\nname: {self.name}\nauthor: {self.author}\ndescription: {self.description}'
+
+
 class daw:
 
     def __init__(self, num=1, name=None, bpm=120):
         self.channel_num = num
-        self.channel_names = []
-        self.channel_sound_modules_name = []
-        self.channel_sound_modules = []
-        self.channel_dict = []
         self.name = name
         self.bpm = bpm
+        self.channel_names = []
+        self.channel_instrument_names = []
+        self.channel_instruments = []
+        self.channel_dict = []
+        self.channel_effects = []
+        self.master_effects = []
+        self.channel_enabled = []
         self.current_playing = []
         self.piece_playing = []
         self.export_audio_fadeout_time_ratio = 0.5
@@ -110,53 +134,62 @@ class daw:
         for i in range(self.channel_num):
             current_channel_name = f'Channel {i+1}'
             self.channel_names.append(current_channel_name)
-            self.channel_sound_modules_name.append('not loaded')
-            self.channel_sound_modules.append(None)
+            self.channel_instrument_names.append('not loaded')
+            self.channel_instruments.append(None)
             self.channel_dict.append(copy(default_notedict))
+            self.channel_effects.append([])
+            self.channel_enabled.append(True)
 
     def add_new_channel(self, name=None):
         current_channel_name = f'Channel {self.channel_num+1}' if name is None else name
         self.channel_names.append(current_channel_name)
-        self.channel_sound_modules_name.append('not loaded')
-        self.channel_sound_modules.append(None)
+        self.channel_instrument_names.append('not loaded')
+        self.channel_instruments.append(None)
         self.channel_dict.append(copy(default_notedict))
+        self.channel_effects.append([])
+        self.channel_enabled.append(True)
         self.channel_num += 1
 
     def delete_channel(self, i):
         del self.channel_names[i]
-        del self.channel_sound_modules_name[i]
-        del self.channel_sound_modules[i]
+        del self.channel_instrument_names[i]
+        del self.channel_instruments[i]
         del self.channel_dict[i]
+        del self.channel_enabled[i]
+        del self.channel_effects[i]
         self.channel_num -= 1
 
     def clear_channel(self, i):
-        current_ind = i
-        if current_ind < self.channel_num:
-            self.channel_names[current_ind] = f'Channel {current_ind+1}'
-            self.channel_sound_modules_name[current_ind] = 'not loaded'
-            self.channel_sound_modules[current_ind] = None
-            self.channel_dict[current_ind] = copy(default_notedict)
+        if i < self.channel_num:
+            self.channel_names[i] = f'Channel {i+1}'
+            self.channel_instrument_names[i] = 'not loaded'
+            self.channel_instruments[i] = None
+            self.channel_dict[i] = copy(default_notedict)
+            self.channel_enabled[i] = True
+            self.channel_effects[i].clear()
 
     def clear_all_channels(self):
         self.stop_playing()
         self.channel_names.clear()
-        self.channel_sound_modules_name = [
+        self.channel_instrument_names = [
             'not loaded' for i in range(self.channel_num)
         ]
-        self.channel_sound_modules.clear()
+        self.channel_instruments.clear()
         self.channel_dict.clear()
         self.channel_num = 0
+        self.channel_effects.clear()
+        self.master_effects.clear()
+        self.channel_enabled.clear()
 
     def set_channel_name(self, i, name):
         self.channel_names[i] = name
 
     def unload(self, i, keep_notedict=False):
-        current_ind = i
-        if current_ind < self.channel_num:
-            self.channel_sound_modules_name[current_ind] = 'not loaded'
-            self.channel_sound_modules[current_ind] = None
+        if i < self.channel_num:
+            self.channel_instrument_names[i] = 'not loaded'
+            self.channel_instruments[i] = None
             if not keep_notedict:
-                self.channel_dict[current_ind] = copy(default_notedict)
+                self.channel_dict[i] = copy(default_notedict)
 
     def __call__(self, obj, channel_num=0, bpm=None):
         return audio(obj, self, channel_num, bpm)
@@ -165,34 +198,38 @@ class daw:
         return len(self.channel_names)
 
     def __repr__(self):
-        return '[daw]' + (' ' + self.name if self.name is not None else
-                          '') + '\n' + '\n'.join([
-                              ' | '.join([
-                                  self.channel_names[i],
-                                  self.channel_sound_modules_name[i]
-                              ]) for i in range(self.channel_num)
-                          ])
+        return '[daw]' + (
+            ' ' +
+            self.name if self.name is not None else '') + '\n' + '\n'.join([
+                ' | '.join(
+                    [self.channel_names[i], self.channel_instrument_names[i]])
+                for i in range(self.channel_num)
+            ])
 
     def __getitem__(self, i):
         return ' | '.join(
-            [self.channel_names[i], self.channel_sound_modules_name[i]])
+            [self.channel_names[i], self.channel_instrument_names[i]])
 
     def __delitem__(self, i):
         self.delete_channel(i)
 
-    def load(self, current_ind, path=None, mdi=None):
-        if mdi is not None:
-            self.load_mdi_file(current_ind, mdi)
-            return
+    def load(self, i, path=None):
         sound_path = path
         if os.path.isdir(sound_path):
-            notedict = self.channel_dict[current_ind]
-            self.channel_sound_modules[current_ind] = load_audiosegments(
+            notedict = self.channel_dict[i]
+            self.channel_instruments[i] = load_audiosegments(
                 notedict, sound_path)
-            self.channel_sound_modules_name[current_ind] = sound_path
+            self.channel_instrument_names[i] = sound_path
         elif os.path.isfile(sound_path):
-            self.channel_sound_modules[current_ind] = rs.sf2_loader(sound_path)
-            self.channel_sound_modules_name[current_ind] = sound_path
+            current_extension = os.path.splitext(sound_path)[1][1:].lower()
+            if current_extension == 'mdi':
+                self.import_mdi_file(channel_num=i, file_path=sound_path)
+            elif current_extension in ['sf2', 'sf3', 'dls']:
+                self.channel_instruments[i] = rs.sf2_loader(sound_path)
+                self.channel_instrument_names[i] = sound_path
+            elif current_extension == 'py':
+                self.import_python_instrument(channel_num=i,
+                                              sound_path=sound_path)
         else:
             raise ValueError(f'cannot find the path {sound_path}')
 
@@ -210,19 +247,19 @@ class daw:
                export_args={},
                show_msg=False,
                soundfont_args=None):
-        if not self.channel_sound_modules:
+        if not self.channel_instruments:
             if action == 'export':
                 print(
-                    'You need at least 1 channel with loaded sound modules to export audio files'
+                    'You need at least 1 channel with loaded instruments to export audio files'
                 )
                 return
             elif action == 'play':
                 print(
-                    'You need at least 1 channel with loaded sound modules to play'
+                    'You need at least 1 channel with loaded instruments to play'
                 )
                 return
             elif action == 'get':
-                print('You need at least 1 channel with loaded sound modules')
+                print('You need at least 1 channel with loaded instruments')
                 return
         if action == 'get':
             result = obj
@@ -251,13 +288,15 @@ class daw:
                     each.duration = real_time_to_bar(len(each), current_bpm)
                     each.volume = 127
 
-            current_sound_modules = self.channel_sound_modules[
-                current_channel_num]
+            current_instruments = self.channel_instruments[current_channel_num]
+            if not self.channel_enabled[current_channel_num]:
+                for each_note in current_chord:
+                    each_note.volume = 0
             if show_msg:
                 print(f'rendering track 1/1 channel {current_channel_num+1}')
             if not all_has_audio(current_chord) and isinstance(
-                    current_sound_modules, rs.sf2_loader):
-                silent_audio = current_sound_modules.export_chord(
+                    current_instruments, rs.sf2_loader):
+                silent_audio = current_instruments.export_chord(
                     current_chord,
                     bpm=current_bpm,
                     start_time=current_chord.start_time,
@@ -267,28 +306,31 @@ class daw:
                     length=length,
                     extra_length=extra_length,
                     **soundfont_args)
+                current_effects = self.channel_effects[current_channel_num]
+                for each_effect in current_effects:
+                    if each_effect.enabled:
+                        silent_audio = each_effect.apply_effect(silent_audio)
             else:
-                apply_fadeout_obj = self.apply_fadeout(current_chord,
-                                                       current_bpm)
-                if length:
-                    whole_duration = length * 1000
-                else:
-                    whole_duration = apply_fadeout_obj.eval_time(
-                        current_bpm,
-                        mode='number',
-                        audio_mode=1,
-                        start_time=current_chord.start_time) * 1000
-                    if extra_length:
-                        whole_duration += extra_length * 1000
-                silent_audio = AudioSegment.silent(duration=whole_duration)
-                silent_audio = self.channel_to_audio(
+                current_silent_audio = self.channel_to_audio(
                     current_chord,
-                    current_channel_num,
-                    silent_audio,
-                    current_bpm,
+                    current_channel_num=current_channel_num,
+                    current_bpm=current_bpm,
                     length=length,
-                    extra_length=extra_length,
-                    current_start_time=current_chord.start_time)
+                    extra_length=extra_length)
+                current_effects = self.channel_effects[current_channel_num]
+                for each_effect in current_effects:
+                    if each_effect.enabled:
+                        current_silent_audio = each_effect.apply_effect(
+                            current_silent_audio)
+                current_start_time = bar_to_real_time(current_chord.start_time,
+                                                      current_bpm, 1)
+                silent_audio = AudioSegment.silent(
+                    duration=len(current_silent_audio) + current_start_time)
+                silent_audio = silent_audio.overlay(
+                    current_silent_audio, position=current_start_time)
+            for each_effect in self.master_effects:
+                if each_effect.enabled:
+                    silent_audio = each_effect.apply_effect(silent_audio)
             if show_msg:
                 print('rendering finished')
             try:
@@ -326,20 +368,12 @@ class daw:
                             len(each), current_bpm)
                         each.volume = 127
                 current_chord.tracks[i] = each_channel
-            apply_fadeout_obj = self.apply_fadeout(current_chord, current_bpm)
-            if length:
-                whole_duration = length * 1000
-            else:
-                whole_duration = apply_fadeout_obj.eval_time(
-                    current_bpm, mode='number', audio_mode=1) * 1000
-                if extra_length:
-                    whole_duration += extra_length * 1000
-            silent_audio = AudioSegment.silent(duration=whole_duration)
-            sound_modules_num = len(self.channel_sound_modules)
+            instruments_num = len(self.channel_instruments)
             track_number = len(current_chord)
+            silent_audio = None
             for i in range(track_number):
                 current_channel_number = current_channels[i]
-                if current_channel_number >= sound_modules_num:
+                if current_channel_number >= instruments_num:
                     print(
                         f'track {i+1} : cannot find channel {current_channel_number+1}'
                     )
@@ -348,21 +382,23 @@ class daw:
                     print(
                         f'rendering track {i+1}/{track_number} channel {current_channel_number+1}'
                     )
-                current_sound_modules = self.channel_sound_modules[
+                current_instruments = self.channel_instruments[
                     current_channel_number]
                 current_track = current_tracks[i]
+                if not self.channel_enabled[current_channel_number]:
+                    for each_note in current_track:
+                        each_note.volume = 0
                 if not all_has_audio(current_track) and isinstance(
-                        current_sound_modules, rs.sf2_loader):
+                        current_instruments, rs.sf2_loader):
                     current_instrument = current_chord.instruments_numbers[i]
                     current_channel = current_chord.channels[
-                        i] if current_chord.channels else current_sound_modules.current_channel
-                    current_sfid, current_bank, current_preset = current_sound_modules.channel_info(
+                        i] if current_chord.channels else current_instruments.current_channel
+                    current_sfid, current_bank, current_preset = current_instruments.channel_info(
                         current_channel)
                     if current_sfid == 0:
-                        current_sound_modules.change_sfid(
-                            current_sound_modules.sfid_list[0],
-                            current_channel)
-                        current_sfid, current_bank, current_preset = current_sound_modules.channel_info(
+                        current_instruments.change_sfid(
+                            current_instruments.sfid_list[0], current_channel)
+                        current_sfid, current_bank, current_preset = current_instruments.channel_info(
                             current_channel)
                     if isinstance(current_instrument, int):
                         current_instrument = [
@@ -371,52 +407,74 @@ class daw:
                     else:
                         current_instrument = [current_instrument[0] - 1
                                               ] + current_instrument[1:]
-                    current_sound_modules.change(
+                    current_instruments.change(
                         channel=current_channel,
                         sfid=(current_instrument[2]
                               if len(current_instrument) > 2 else None),
                         bank=current_instrument[1],
                         preset=current_instrument[0],
                         mode=1)
-                    silent_audio = silent_audio.overlay(
-                        current_sound_modules.export_chord(
-                            current_track,
-                            bpm=current_bpm,
-                            get_audio=True,
-                            channel=current_channel,
-                            effects=current_track.effects
-                            if check_effect(current_track) else None,
-                            pan=current_pan[i],
-                            volume=current_volume[i],
-                            length=None
-                            if not track_lengths else track_lengths[i],
-                            extra_length=None if not track_extra_lengths else
-                            track_extra_lengths[i],
-                            **soundfont_args),
-                        position=bar_to_real_time(
-                            current_start_times[i] + current_track.start_time,
-                            current_bpm, 1))
-                    current_sound_modules.change(current_channel,
-                                                 current_sfid,
-                                                 current_bank,
-                                                 current_preset,
-                                                 mode=1)
-                else:
-                    silent_audio = self.channel_to_audio(
-                        current_tracks[i],
+                    current_silent_audio = current_instruments.export_chord(
                         current_track,
-                        silent_audio,
-                        current_bpm,
-                        current_pan[i],
-                        current_volume[i],
-                        current_start_times[i] + current_track.start_time,
+                        bpm=current_bpm,
+                        get_audio=True,
+                        channel=current_channel,
+                        effects=current_track.effects
+                        if check_effect(current_track) else None,
+                        pan=current_pan[i],
+                        volume=current_volume[i],
+                        length=None if not track_lengths else track_lengths[i],
+                        extra_length=None
+                        if not track_extra_lengths else track_extra_lengths[i],
+                        **soundfont_args)
+                    current_instruments.change(current_channel,
+                                               current_sfid,
+                                               current_bank,
+                                               current_preset,
+                                               mode=1)
+                else:
+                    current_silent_audio = self.channel_to_audio(
+                        current_track,
+                        current_channel_num=current_channel_number,
+                        current_bpm=current_bpm,
+                        current_pan=current_pan[i],
+                        current_volume=current_volume[i],
                         length=None if not track_lengths else track_lengths[i],
                         extra_length=None
                         if not track_extra_lengths else track_extra_lengths[i])
+                current_effects = self.channel_effects[current_channel_number]
+                for each_effect in current_effects:
+                    if each_effect.enabled:
+                        current_silent_audio = each_effect.apply_effect(
+                            current_silent_audio)
+                current_start_time = bar_to_real_time(
+                    current_start_times[i] + current_track.start_time,
+                    current_bpm, 1)
+                current_audio_duration = current_start_time + len(
+                    current_silent_audio)
+                if silent_audio is None:
+                    new_whole_duration = current_audio_duration
+                    silent_audio = AudioSegment.silent(
+                        duration=new_whole_duration)
+                    silent_audio = silent_audio.overlay(
+                        current_silent_audio, position=current_start_time)
+                else:
+                    silent_audio_duration = len(silent_audio)
+                    new_whole_duration = max(current_audio_duration,
+                                             silent_audio_duration)
+                    new_silent_audio = AudioSegment.silent(
+                        duration=new_whole_duration)
+                    new_silent_audio = new_silent_audio.overlay(silent_audio)
+                    new_silent_audio = new_silent_audio.overlay(
+                        current_silent_audio, position=current_start_time)
+                    silent_audio = new_silent_audio
             if check_effect(current_chord):
                 silent_audio = process_effect(silent_audio,
                                               current_chord.effects,
                                               bpm=current_bpm)
+            for each_effect in self.master_effects:
+                if each_effect.enabled:
+                    silent_audio = each_effect.apply_effect(silent_audio)
             if show_msg:
                 print('rendering finished')
             try:
@@ -452,14 +510,12 @@ class daw:
     def channel_to_audio(self,
                          current_chord,
                          current_channel_num=0,
-                         silent_audio=None,
                          current_bpm=None,
                          current_pan=None,
                          current_volume=None,
-                         current_start_time=0,
                          length=None,
                          extra_length=None):
-        if len(self.channel_sound_modules) <= current_channel_num:
+        if len(self.channel_instruments) <= current_channel_num:
             return
 
         apply_fadeout_obj = self.apply_fadeout(current_chord, current_bpm)
@@ -475,11 +531,8 @@ class daw:
         current_durations = current_chord.get_duration()
         current_volumes = current_chord.get_volume()
         current_dict = self.channel_dict[current_channel_num]
-        current_sounds = self.channel_sound_modules[current_channel_num]
-        current_sound_path = self.channel_sound_modules_name[
-            current_channel_num]
-        current_start_time = bar_to_real_time(current_start_time, current_bpm,
-                                              1)
+        current_instrument = self.channel_instruments[current_channel_num]
+        current_sound_path = self.channel_instrument_names[current_channel_num]
         current_position = 0
         whole_length = len(current_chord)
         for i in range(whole_length):
@@ -498,16 +551,20 @@ class daw:
                 if isinstance(each, AudioSegment):
                     current_sound = each[:duration]
                 else:
-                    each_name = str(each)
-                    if each_name not in current_sounds:
-                        each_name = str(~each)
-                    if each_name not in current_sounds:
-                        current_position += interval
-                        continue
-                    current_sound = current_sounds[each_name]
-                    if current_sound is None:
-                        current_position += interval
-                        continue
+                    if current_instrument.__class__.__name__ == 'Synth':
+                        current_sound = current_instrument.generate_sound(
+                            each, current_bpm)
+                    else:
+                        each_name = str(each)
+                        if each_name not in current_instrument:
+                            each_name = str(~each)
+                        if each_name not in current_instrument:
+                            current_position += interval
+                            continue
+                        current_sound = current_instrument[each_name]
+                        if current_sound is None:
+                            current_position += interval
+                            continue
                     current_max_time = min(len(current_sound),
                                            duration + current_fadeout_time)
                     current_max_fadeout_time = min(len(current_sound),
@@ -569,9 +626,7 @@ class daw:
             current_silent_audio = process_effect(current_silent_audio,
                                                   current_chord.effects,
                                                   bpm=current_bpm)
-        silent_audio = silent_audio.overlay(current_silent_audio,
-                                            position=current_start_time)
-        return silent_audio
+        return current_silent_audio
 
     def export_midi_file(self, obj, filename, channel_num=0, write_args={}):
         result = self.get_current_musicpy_chords(obj, channel_num)
@@ -616,7 +671,7 @@ class daw:
                 each.cancel()
             self.piece_playing.clear()
 
-    def load_channel_settings(self, channel_num=0, text=None, path=None):
+    def import_channel_settings(self, channel_num=0, text=None, path=None):
         if text is None:
             with open(path, encoding='utf-8') as f:
                 data = f.read()
@@ -631,7 +686,7 @@ class daw:
         if text is None:
             self.reload_channel_sounds(channel_num)
 
-    def load_mdi_file(self, channel_num, file_path):
+    def import_mdi_file(self, channel_num, file_path):
         abs_path = os.getcwd()
         with open(file_path, 'rb') as file:
             current_mdi = pickle.load(file)
@@ -646,31 +701,38 @@ class daw:
         ]
         self.channel_dict[channel_num] = copy(default_notedict)
         if channel_settings is not None:
-            self.load_channel_settings(channel_num, channel_settings)
+            self.import_channel_settings(channel_num, channel_settings)
         current_dict = self.channel_dict[channel_num]
         filenames = [os.path.splitext(i)[0] for i in filenames]
         result_audio = {
             filenames[i]: sound_files_audio[i]
             for i in range(len(filenames))
         }
-        self.channel_sound_modules[channel_num] = {
+        self.channel_instruments[channel_num] = {
             i: (result_audio[current_dict[i]]
                 if current_dict[i] in result_audio else None)
             for i in current_dict
         }
-        self.channel_sound_modules_name[channel_num] = file_path
+        self.channel_instrument_names[channel_num] = file_path
 
-    def reload_channel_sounds(self, current_ind):
+    def import_python_instrument(self, channel_num, sound_path):
+        current_instrument = importfile(sound_path).Synth()
+        self.channel_instrument_names[channel_num] = sound_path
+        self.channel_instruments[channel_num] = current_instrument
+
+    def reload_channel_sounds(self, i):
         try:
-            sound_path = self.channel_sound_modules_name[current_ind]
-            notedict = self.channel_dict[current_ind]
-            self.channel_sound_modules[current_ind] = load_audiosegments(
+            sound_path = self.channel_instrument_names[i]
+            notedict = self.channel_dict[i]
+            self.channel_instruments[i] = load_audiosegments(
                 notedict, sound_path)
         except Exception as e:
             print(str(e))
 
     def play_note_func(self, name, duration, volume, channel=0):
-        note_sounds = self.channel_sound_modules[channel]
+        if not self.channel_enabled[channel]:
+            return
+        note_sounds = self.channel_instruments[channel]
         if name in note_sounds:
             current_sound = note_sounds[name]
             if current_sound:
@@ -700,7 +762,7 @@ class daw:
              track_extra_lengths=None,
              soundfont_args=None,
              wait=False):
-        if not self.channel_sound_modules:
+        if not self.channel_instruments:
             return
         self.stop_playing()
         current_channel_num = channel_num
@@ -728,9 +790,11 @@ class daw:
                 isinstance(i, chord) for i in current_chord):
             current_chord = concat(current_chord, mode='|')
         if isinstance(current_chord, chord):
+            current_instrument = self.channel_instruments[current_channel_num]
             if check_special(current_chord) or isinstance(
-                    self.channel_sound_modules[current_channel_num],
-                    rs.sf2_loader):
+                    current_instrument, rs.sf2_loader
+            ) or current_instrument.__class__.__name__ == 'Synth' or self.channel_effects[
+                    current_channel_num] or self.master_effects:
                 self.export(current_chord,
                             action='play',
                             channel_num=current_channel_num,
@@ -764,8 +828,11 @@ class daw:
                 i for i in range(len(current_chord))
             ]
             if check_special(current_chord) or any(
-                    isinstance(self.channel_sound_modules[i], rs.sf2_loader)
-                    for i in current_channel_nums):
+                    isinstance(self.channel_instruments[i], rs.sf2_loader) or
+                    self.channel_instruments[i].__class__.__name__ == 'Synth'
+                    for i in current_channel_nums) or any(
+                        self.channel_effects[i]
+                        for i in current_channel_nums) or self.master_effects:
                 self.export(current_chord,
                             action='play',
                             bpm=bpm,
@@ -793,7 +860,7 @@ class daw:
                      current_channel_num=0,
                      bpm=None,
                      start_time=0):
-        if not self.channel_sound_modules[current_channel_num]:
+        if not self.channel_instruments[current_channel_num]:
             return
         current_intervals = current_chord.interval
         current_durations = current_chord.get_duration()
@@ -813,11 +880,19 @@ class daw:
                 current_id.start()
                 current_time += bar_to_real_time(current_intervals[i], bpm, 1)
 
-    def modules(self, ind):
-        return self.channel_sound_modules[ind]
+    def instruments(self, ind):
+        return self.channel_instruments[ind]
 
-    def module_names(self, ind):
-        return self.channel_sound_modules_name[ind]
+    def instrument_names(self, ind):
+        return self.channel_instrument_names[ind]
+
+    def load_effect(self, channel_num, file_path):
+        current_effect = importfile(file_path).Synth()
+        current_effect.file_path = file_path
+        if channel_num == 'master':
+            self.master_effects.append(current_effect)
+        else:
+            self.channel_effects[channel_num].append(current_effect)
 
 
 class pitch:
@@ -1058,20 +1133,6 @@ def load_audiosegments(current_dict, current_sound_path):
         else:
             current_sounds[i] = None
     return current_sounds
-
-
-def load_sounds(dic, current_path):
-    files = os.listdir(current_path)
-    current_sound_filenames = [i[:i.rfind('.')] for i in files]
-    filenames_only = [i[:i.rfind('.')] for i in files]
-    current_path += '/'
-    wavedict = {}
-    for i in dic:
-        try:
-            wavedict[i] = current_path + files[filenames_only.index(dic[i])]
-        except:
-            wavedict[i] = None
-    return wavedict
 
 
 def standardize_note(i):
@@ -1330,6 +1391,12 @@ def load_mdi(file_path, convert=True):
             for i in current_samples
         }
     return current_mdi
+
+
+def load_effect(file_path):
+    current_effect = importfile(file_path).Synth()
+    current_effect.file_path = file_path
+    return current_effect
 
 
 default_notedict = {
