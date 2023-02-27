@@ -1,1 +1,4 @@
 sf2_loader
+pedalboard
+scipy
+numpy
