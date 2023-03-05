@@ -61,28 +61,13 @@ def method_wrapper(cls):
 
 
 def to_note(notename, duration=1 / 4, volume=100, pitch=4, channel=None):
-    if any(all(i in notename for i in j) for j in ['()', '[]', '{}']):
-        split_symbol = '(' if '(' in notename else (
-            '[' if '[' in notename else '{')
-        notename, info = notename.split(split_symbol)
-        info = info[:-1].split(';')
-        if len(info) == 1:
-            duration = info[0]
-        else:
-            duration, volume = info[0], parse_num(info[1])
-        if duration[0] == '.':
-            duration = 1 / parse_num(duration[1:])
-        else:
-            duration = parse_num(duration)
-        return to_note(notename, duration, volume)
+    num_text = ''.join([x for x in notename if x.isdigit()])
+    if not num_text.isdigit():
+        num = pitch
     else:
-        num_text = ''.join([x for x in notename if x.isdigit()])
-        if not num_text.isdigit():
-            num = pitch
-        else:
-            num = int(num_text)
-        name = ''.join([x for x in notename if not x.isdigit()])
-        return note(name, num, duration, volume, channel)
+        num = int(num_text)
+    name = ''.join([x for x in notename if not x.isdigit()])
+    return note(name, num, duration, volume, channel)
 
 
 def degree_to_note(degree, duration=1 / 4, volume=100, channel=None):
