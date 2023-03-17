@@ -143,9 +143,9 @@ class note:
                               interval1,
                               duration=1 / 4,
                               interval=0,
-                              cummulative=True):
+                              cumulative=True):
         return mp.get_chord_by_interval(start, interval1, duration, interval,
-                                        cummulative)
+                                        cumulative)
 
     def dotted(self, num=1):
         temp = copy(self)
@@ -1034,9 +1034,9 @@ class chord:
                 i.start_time = bar_length - i.start_time
         return temp
 
-    def intervalof(self, cummulative=True, translate=False):
+    def intervalof(self, cumulative=True, translate=False):
         degrees = self.get_degree()
-        if not cummulative:
+        if not cumulative:
             N = len(degrees)
             result = [degrees[i] - degrees[i - 1] for i in range(1, N)]
         else:
@@ -1577,7 +1577,7 @@ class chord:
         if tempo_changes:
             temp.normalize_tempo(tempo_changes[0].bpm)
         volumes = temp.get_volume()
-        pitch_intervals = temp.intervalof(cummulative=False)
+        pitch_intervals = temp.intervalof(cumulative=False)
         result = mp.get_chord_by_interval(temp[0],
                                           [-i for i in pitch_intervals],
                                           temp.get_duration(), temp.interval,

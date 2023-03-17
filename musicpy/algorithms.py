@@ -747,7 +747,7 @@ def detect_scale_type(current_scale, mode='scale'):
         elif mode == 'interval':
             current_notes = get_chord_by_interval('C',
                                                   current_scale,
-                                                  cummulative=False)
+                                                  cumulative=False)
         result = detect_in_scale(current_notes,
                                  get_scales=True,
                                  match_len=True)
@@ -828,7 +828,7 @@ def random_composing(current_scale,
         remained_notes = None
         now_focus = 0
     # the chord part and melody part will be written separately,
-    # but still with some relevations. (for example, avoiding dissonant intervals)
+    # but still with some revelations. (for example, avoiding dissonant intervals)
     # the draft of the piece of music would be generated first,
     # and then modify the details of the music (durations, intervals,
     # notes volume, rests and so on)
@@ -1164,7 +1164,7 @@ def detect_in_scale(current_chord,
                                         k = k.up(database.octave)
                                     test_scale_exist[inds - 1] = k
                                     if chord(test_scale_exist).intervalof(
-                                            cummulative=False
+                                            cumulative=False
                                     ) not in database.scaleTypes.values():
                                         altered_msg.append(f'{header}{inds}')
                                         altered_scales.append(
@@ -2041,8 +2041,8 @@ def chord_analysis(chords,
                    is_chord=False,
                    new_chord_tol=database.minor_seventh,
                    get_original_order=False,
-                   formated=False,
-                   formated_mode=1,
+                   formatted=False,
+                   formatted_mode=1,
                    output_as_file=False,
                    each_line_chords_number=5,
                    functions_interval=1,
@@ -2058,7 +2058,7 @@ def chord_analysis(chords,
         chord_notes = split_chord(chords, 'chord', **split_chord_args)
     else:
         chord_notes = chords
-    if formated or (mode in ['inds', 'bars', 'bars start']):
+    if formatted or (mode in ['inds', 'bars', 'bars start']):
         get_original_order = True
     whole_notes = chord_notes.notes
     chord_ls = []
@@ -2121,7 +2121,7 @@ def chord_analysis(chords,
     if get_original_order:
         chord_inds.append([N + 1 - len(current_chord), N + 1])
     current_chord = []
-    if formated:
+    if formatted:
         result = [detect(each, **detect_args) for each in chord_ls]
         result = [i if not isinstance(i, list) else i[0] for i in result]
         result_notes = [chord_notes[k[0]:k[1]] for k in chord_inds]
@@ -2130,26 +2130,26 @@ def chord_analysis(chords,
                                     for j in each.interval[:-1]) else each
             for each in result_notes
         ]
-        if formated_mode == 0:
-            chords_formated = '\n\n'.join([
+        if formatted_mode == 0:
+            chords_formatted = '\n\n'.join([
                 f'chord {i+1}: {result[i]}    notes: {result_notes[i]}'
                 for i in range(len(result))
             ])
-        elif formated_mode == 1:
+        elif formatted_mode == 1:
             num = (len(result) // each_line_chords_number) + 1
             delimiter = ' ' * functions_interval + split_symbol + ' ' * functions_interval
-            chords_formated = [
+            chords_formatted = [
                 delimiter.join(result[each_line_chords_number *
                                       i:each_line_chords_number * (i + 1)]) +
                 delimiter for i in range(num)
             ]
-            chords_formated[-1] = chords_formated[-1][:-len(delimiter)]
-            chords_formated = ('\n' * space_lines).join(chords_formated)
+            chords_formatted[-1] = chords_formatted[-1][:-len(delimiter)]
+            chords_formatted = ('\n' * space_lines).join(chords_formatted)
         if output_as_file:
             with open('chord analysis result.txt', 'w', encoding='utf-8') as f:
-                f.write(chords_formated)
-            chords_formated += "\n\nSuccessfully write the chord analysis result as a text file, please see 'chord analysis result.txt'."
-        return chords_formated
+                f.write(chords_formatted)
+            chords_formatted += "\n\nSuccessfully write the chord analysis result as a text file, please see 'chord analysis result.txt'."
+        return chords_formatted
     if mode == 'chords':
         if get_original_order:
             return [chord_notes[k[0]:k[1]] for k in chord_inds]

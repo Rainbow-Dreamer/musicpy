@@ -139,13 +139,13 @@ def get_chord_by_interval(start,
                           interval1,
                           duration=1 / 4,
                           interval=0,
-                          cummulative=True,
+                          cumulative=True,
                           start_time=0):
 
     if isinstance(start, str):
         start = to_note(start)
     result = [start]
-    if cummulative:
+    if cumulative:
         # in this case all the notes has distance only with the start note
         startind = start.degree
         result += [
@@ -170,7 +170,7 @@ def get_chord(start,
               duration=1 / 4,
               intervals=None,
               interval=None,
-              cummulative=True,
+              cumulative=True,
               pitch=4,
               ind=0,
               start_time=0,
@@ -182,7 +182,7 @@ def get_chord(start,
                                      interval,
                                      duration,
                                      intervals,
-                                     cummulative,
+                                     cumulative,
                                      start_time=start_time)
     pre_chord_type = current_chord_type
     current_chord_type = current_chord_type.lower().replace(' ', '')
@@ -1222,12 +1222,12 @@ def to_scale(obj, pitch=None):
     return scale(tonic, scale_name)
 
 
-def intervalof(current_chord, cummulative=True, translate=False):
+def intervalof(current_chord, cumulative=True, translate=False):
     if isinstance(current_chord, scale):
         current_chord = current_chord.get_scale()
     if not isinstance(current_chord, chord):
         current_chord = chord(current_chord)
-    return current_chord.intervalof(cummulative, translate)
+    return current_chord.intervalof(cumulative, translate)
 
 
 def sums(*chordls):
