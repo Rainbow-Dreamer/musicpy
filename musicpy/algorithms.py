@@ -1011,7 +1011,7 @@ def guitar_chord(frets,
     this function will return the chord types that form by the frets pressing
     at the strings on a guitar, or you can choose to just return the chord
     '''
-    tuning = [N(i) for i in tuning]
+    tuning = [N(i) if isinstance(i, str) else i for i in tuning]
     length = len(tuning)
     guitar_notes = [
         tuning[j].up(frets[j]) for j in range(length) if frets[j] is not None
@@ -1024,27 +1024,130 @@ def guitar_chord(frets,
 
 def guitar_pattern(frets,
                    tuning=database.guitar_standard_tuning,
-                   duration=1 / 8,
-                   interval=1 / 8):
-    tuning = [N(i) for i in tuning]
+                   default_duration=1 / 8,
+                   default_interval=1 / 8,
+                   default_volume=100):
+    tuning = [N(i) if isinstance(i, str) else i for i in tuning]
     length = len(tuning)
     current = [i.strip() for i in frets.split(',')]
-    current_notes = []
+    notes_result = []
+    intervals = []
+    start_time = 0
     current_string_ind = length - 1
+
     for each in current:
+        if each == '':
+            continue
+        if each.startswith('s'):
+            current_string_ind = length - int(each.split('s', 1)[1])
+        else:
+            has_settings = False
+            duration = default_duration
+            interval = default_interval
+            volume = default_volume
+            if '[' in each and ']' in each:
+                has_settings = True
+                each, current_settings = each.split('[', 1)
+                current_settings = current_settings[:-1].split(';')
+                current_settings_len = len(current_settings)
+                if current_settings_len == 1:
+                    duration = process_note(current_settings[0])
+                else:
+                    if current_settings_len == 2:
+                        duration, interval = current_settings
+                    else:
+                        duration, interval, volume = current_settings
+                        volume = mp.parse_num(volume)
+                    duration = process_note(duration)
+                    interval = process_note(
+                        interval) if interval != '.' else duration
+            current_notes = each.split(';')
+            current_length = len(current_notes)
+            for i, each_note in enumerate(current_notes):
+                has_same_time = True
+                if i == current_length - 1:
+                    has_same_time = False
+                notes_result, intervals, start_time = _read_single_guitar_note(
+                    each_note,
+                    tuning,
+                    length,
+                    current_string_ind,
+                    duration,
+                    interval,
+                    volume,
+                    notes_result,
+                    intervals,
+                    start_time,
+                    has_settings=has_settings,
+                    has_same_time=has_same_time)
+    current_chord = chord(notes_result,
+                          interval=intervals,
+                          start_time=start_time)
+    return current_chord
+
+
+def _read_single_guitar_note(each,
+                             tuning,
+                             length,
+                             current_string_ind,
+                             duration,
+                             interval,
+                             volume,
+                             notes_result,
+                             intervals,
+                             start_time,
+                             has_settings=False,
+                             has_same_time=False):
+    dotted_num = 0
+    if each.endswith('.'):
+        for k in range(len(each) - 1, -1, -1):
+            if each[k] != '.':
+                each = each[:k + 1]
+                break
+            else:
+                dotted_num += 1
+    if each == 'r':
+        current_interval = duration if has_settings else (
+            mp.dotted(interval, dotted_num) if interval != 0 else 1 / 4)
+        if not notes_result:
+            start_time += current_interval
+        elif intervals:
+            intervals[-1] += current_interval
+    elif each == '-':
+        current_interval = duration if has_settings else (
+            mp.dotted(interval, dotted_num) if interval != 0 else 1 / 4)
+        if notes_result:
+            notes_result[-1].duration += current_interval
+        if intervals:
+            intervals[-1] += current_interval
+    else:
         if ':' in each:
             current_string, current_fret = each.split(':')
             current_string = current_string.strip()
             current_fret = current_fret.strip()
-            current_string_ind = length - int(current_string)
-            current_note = tuning[current_string_ind].up(int(current_fret))
-            current_notes.append(current_note)
+            current_note_string_ind = length - int(current_string)
+            current_note = tuning[current_note_string_ind].up(
+                int(current_fret))
         else:
             current_fret = each
             current_note = tuning[current_string_ind].up(int(current_fret))
-            current_notes.append(current_note)
-    result = chord(current_notes, duration, interval)
-    return result
+        current_note.duration = duration
+        current_note.volume = volume
+        if has_same_time:
+            current_interval = 0
+            if not has_settings:
+                current_note.duration = mp.dotted(current_note.duration,
+                                                  dotted_num)
+        else:
+            if has_settings:
+                current_interval = interval
+            else:
+                current_interval = mp.dotted(interval, dotted_num)
+                current_note.duration = mp.dotted(current_note.duration,
+                                                  dotted_num)
+        notes_result.append(current_note)
+        intervals.append(current_interval)
+    return notes_result, intervals, start_time
 
 
 @method_wrapper(chord)

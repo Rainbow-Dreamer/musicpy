@@ -6221,4 +6221,6 @@ def copy_list(current_list, n, start_time=0):
     return result
 
 
+process_note = _process_note
+
 import musicpy as mp
