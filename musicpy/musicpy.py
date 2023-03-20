@@ -1714,41 +1714,53 @@ def relative_note(a, b):
         return b.name + 'bb'
 
 
-def standardize_note(a):
-    if a in database.standard2:
-        return a
-    elif a in database.standard_dict:
-        return database.standard_dict[a]
+def get_note_name(current_note):
+    if any(i.isdigit() for i in current_note):
+        current_note = ''.join([i for i in current_note if not i.isdigit()])
+    return current_note
+
+
+def get_note_num(current_note):
+    result = ''.join([i for i in current_note if i.isdigit()])
+    return int(result) if result else None
+
+
+def standardize_note(current_note):
+    current_note = get_note_name(current_note)
+    if current_note in database.standard2:
+        return current_note
+    elif current_note in database.standard_dict:
+        return database.standard_dict[current_note]
     else:
-        if a.endswith('bb'):
-            current_name = a[:-2]
+        if current_note.endswith('bb'):
+            current_name = current_note[:-2]
             result = (N(standardize_note(current_name)) - 2).name
-        elif a.endswith('x'):
-            current_name = a[:-1]
+        elif current_note.endswith('x'):
+            current_name = current_note[:-1]
             result = (N(standardize_note(current_name)) + 2).name
-        elif a.endswith('♮'):
-            result = a[:-1]
-        elif a.endswith('#'):
-            current_name = a[:-1]
+        elif current_note.endswith('♮'):
+            result = current_note[:-1]
+        elif current_note.endswith('#'):
+            current_name = current_note[:-1]
             result = (N(standardize_note(current_name)) + 1).name
-        elif a.endswith('b'):
-            current_name = a[:-1]
+        elif current_note.endswith('b'):
+            current_name = current_note[:-1]
             result = (N(standardize_note(current_name)) - 1).name
         else:
-            raise ValueError(f'Invalid note name or accidental {a}')
+            raise ValueError(f'Invalid note name or accidental {current_note}')
         return result
 
 
-def get_accidental(a):
-    if a.endswith('bb'):
+def get_accidental(current_note):
+    if current_note.endswith('bb'):
         result = 'bb'
-    elif a.endswith('x'):
+    elif current_note.endswith('x'):
         result = 'x'
-    elif a.endswith('♮'):
+    elif current_note.endswith('♮'):
         result = '♮'
-    elif a.endswith('#'):
+    elif current_note.endswith('#'):
         result = '#'
-    elif a.endswith('b'):
+    elif current_note.endswith('b'):
         result = 'b'
     else:
         result = ''

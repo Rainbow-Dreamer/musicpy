@@ -2179,8 +2179,8 @@ class scale:
     def __eq__(self, other):
         return type(other) is scale and self.notes == other.notes
 
-    def get_scale_name(self):
-        return f'{self.start} {self.mode} scale'
+    def get_scale_name(self, with_octave=True):
+        return f'{self.start if with_octave else self.start.name} {self.mode} scale'
 
     def standard(self):
         if len(self) == 8:
@@ -2283,6 +2283,8 @@ class scale:
                 for t in self.interval:
                     count += t
                     result.append(mp.degree_to_note(count))
+                if (result[-1].degree - result[0].degree) % 12 == 0:
+                    result[-1].name = result[0].name
                 return chord(result, duration=durations, interval=intervals)
         else:
             result = [self.start]
@@ -2293,6 +2295,8 @@ class scale:
             for t in interval1:
                 count += t
                 result.append(mp.degree_to_note(count))
+            if (result[-1].degree - result[0].degree) % 12 == 0:
+                result[-1].name = result[0].name
             return chord(result, duration=durations, interval=intervals)
 
     def __len__(self):
@@ -2441,9 +2445,6 @@ class scale:
     def pick_chord_by_index(self, indlist):
         return chord([self[i] for i in indlist])
 
-    def __matmul__(self, indlist):
-        return self.pick_chord_by_index(indlist)
-
     def detect(self):
         return mp.alg.detect_scale_type(self)
 
@@ -2475,11 +2476,15 @@ class scale:
             raise ValueError(
                 'this function only applies to major and minor scales')
 
-    def get_degree(self, degree):
+    def get_note_from_degree(self, degree, pitch=None):
         if degree < 1:
             raise ValueError('scale degree starts from 1')
-        degree -= 1
-        return self[degree]
+        extra_num, current_degree = divmod(degree - 1, 7)
+        result = self[current_degree]
+        if pitch is not None:
+            result = result.reset_octave(pitch)
+        result += extra_num * database.octave
+        return result
 
     def get_chord(self, degree, chord_type=None, natural=False):
         if not chord_type:
@@ -2662,14 +2667,17 @@ class scale:
         octaves = None
         if '.' in text:
             text, octaves = text.split('.', 1)
-        current_notes = copy(self.notes)
         if text.endswith('#'):
-            result = current_notes[int(text[:-1]) - 1] + 1
+            current_degree = int(text[:-1])
+            result = self.get_note_from_degree(current_degree,
+                                               pitch=rootpitch) + 1
         elif text.endswith('b'):
-            result = current_notes[int(text[:-1]) - 1] - 1
+            current_degree = int(text[:-1])
+            result = self.get_note_from_degree(current_degree,
+                                               pitch=rootpitch) - 1
         else:
-            result = current_notes[int(text) - 1]
-        result.num = rootpitch
+            current_degree = int(text)
+            result = self.get_note_from_degree(current_degree, pitch=rootpitch)
         if octaves:
             octaves = int(octaves) * database.octave
             result += octaves
@@ -2680,6 +2688,8 @@ class scale:
             default_duration=1 / 8,
             default_interval=1 / 8,
             default_volume=100):
+        if isinstance(current_ind, list):
+            current_ind = ','.join([str(i) for i in current_ind])
         current = current_ind.replace(' ', '').split(',')
         notes_result = []
         intervals = []
@@ -2785,6 +2795,44 @@ class scale:
             notes_result.append(current_note)
             intervals.append(current_interval)
         return notes_result, intervals, start_time
+
+    def index(self, current_note):
+        if isinstance(current_note, note):
+            current_note = current_note.name
+        else:
+            current_note = mp.N(mp.standardize_note(current_note)).name
+        current_note = mp.standardize_note(current_note)
+        current_names = [mp.standardize_note(i) for i in self.names()]
+        if current_note not in current_names:
+            raise ValueError(
+                f'{current_note} is not in {self.get_scale_name(with_octave=False)}'
+            )
+        result = current_names.index(current_note)
+        return result
+
+    def get_scale_degree(self, current_note):
+        return self.index(current_note) + 1
+
+    def get_note_with_interval(self, current_note, interval, standard=False):
+        current_scale_degree = self.get_scale_degree(current_note)
+        current_num = current_note.num if isinstance(
+            current_note, note) else mp.get_note_num(current_note)
+        if not current_num:
+            current_num = 4
+        current_scale_degree += (interval - 1)
+        result = self.get_note_from_degree(current_scale_degree,
+                                           pitch=current_num)
+        if standard:
+            current_name = self.standard()[(current_scale_degree - 1) % 7]
+            if current_name not in database.standard:
+                current_name = mp.standardize_note(current_name)
+            result.name = current_name
+        return result
+
+    def get_standard_notation(self, current_note):
+        current_scale_degree = self.get_scale_degree(current_note)
+        result = self.standard()[current_scale_degree - 1]
+        return result
 
 
 class circle_of_fifths:
