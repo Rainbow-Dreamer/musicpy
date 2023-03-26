@@ -2819,11 +2819,23 @@ class scale:
             current_note, note) else mp.get_note_num(current_note)
         if not current_num:
             current_num = 4
-        current_scale_degree += (interval - 1)
-        result = self.get_note_from_degree(current_scale_degree,
-                                           pitch=current_num)
+        if interval < 0:
+            start_note = self.get_note_from_degree(current_scale_degree,
+                                                   pitch=current_num)
+            current_degree = current_scale_degree
+            for i in range(abs(interval) - 1):
+                current_degree -= 1
+                if current_degree < 1:
+                    current_degree = 7
+                start_note -= self.interval[current_degree - 1]
+            result = start_note
+        else:
+            current_scale_degree += (interval - 1)
+            result = self.get_note_from_degree(current_scale_degree,
+                                               pitch=current_num)
         if standard:
-            current_name = self.standard()[(current_scale_degree - 1) % 7]
+            result_scale_degree = self.get_scale_degree(result.name) - 1
+            current_name = self.standard()[result_scale_degree]
             if current_name not in database.standard:
                 current_name = mp.standardize_note(current_name)
             result.name = current_name
