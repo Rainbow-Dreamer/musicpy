@@ -263,7 +263,10 @@ def play(current_chord,
          save_as_file=True,
          msg=None,
          nomsg=False,
-         ticks_per_beat=960,
+         ticks_per_beat=None,
+         ignore_instrument=False,
+         ignore_bpm=False,
+         ignore_track_names=False,
          wait=False,
          **midi_args):
     file = write(current_chord=current_chord,
@@ -277,6 +280,9 @@ def play(current_chord,
                  msg=msg,
                  nomsg=nomsg,
                  ticks_per_beat=ticks_per_beat,
+                 ignore_instrument=ignore_instrument,
+                 ignore_bpm=ignore_bpm,
+                 ignore_track_names=ignore_track_names,
                  **midi_args)
     if save_as_file:
         result_file = name
@@ -324,7 +330,8 @@ def read(name,
             'No tracks found in the MIDI file, please check if the input MIDI file is empty'
         )
     current_type = current_midi.type
-    interval_unit = current_midi.ticks_per_beat * 4
+    current_ticks_per_beat = current_midi.ticks_per_beat
+    interval_unit = current_ticks_per_beat * 4
     if split_channels is None:
         if current_type == 0:
             split_channels = True
@@ -388,12 +395,19 @@ def read(name,
             channels_list = None
 
         instruments = []
-        for each in available_tracks:
-            current_program = [
-                i.program for i in each if hasattr(i, 'program')
+        program_change_events = concat(
+            [[i for i in each if i.type == 'program_change']
+             for each in available_tracks])
+        program_change_events.sort(key=lambda s: s.time)
+        for i, each in enumerate(available_tracks):
+            current_channel = channels_list[i]
+            current_program_change = [
+                j for j in program_change_events
+                if j.channel == current_channel
             ]
-            if current_program:
-                instruments.append(current_program[0] + 1)
+            if current_program_change:
+                current_program = current_program_change[0].program + 1
+                instruments.append(current_program)
             else:
                 instruments.append(1)
         chords_list = [each[0] for each in all_tracks]
@@ -426,10 +440,8 @@ def read(name,
             raise ValueError(
                 'Split channels requires the MIDI file contains channel messages for tracks'
             )
-        channels_list = []
-        for each in channels_numbers:
-            if each not in channels_list:
-                channels_list.append(each)
+        channels_list = list(set(channels_numbers))
+        channels_list.sort()
         channels_num = len(channels_list)
         track_channels = channels_list
         all_tracks = [
@@ -444,17 +456,8 @@ def read(name,
         ]
         if len(available_tracks) > 1:
             available_tracks = concat(available_tracks)
-            pitch_bends = concat(
-                [i[0].split(pitch_bend, get_time=True) for i in all_tracks])
-            for each in all_tracks:
-                each[0].clear_pitch_bend('all')
-            current_available_tracks = [
-                each for each in all_tracks if any(
-                    isinstance(i, note) for i in each[0])
-            ]
             start_time_ls = [j[2] for j in all_tracks]
-            available_start_time_ls = [j[2] for j in current_available_tracks]
-            first_track_ind = start_time_ls.index(min(available_start_time_ls))
+            first_track_ind = start_time_ls.index(min(start_time_ls))
             all_tracks.insert(0, all_tracks.pop(first_track_ind))
             first_track = all_tracks[0]
             all_track_notes, tempos, first_track_start_time = first_track
@@ -462,7 +465,6 @@ def read(name,
                 all_track_notes &= (i[0], i[2] - first_track_start_time)
             all_track_notes.other_messages = concat(
                 [each[0].other_messages for each in all_tracks])
-            all_track_notes += pitch_bends
             all_track_notes.pan_list = concat(
                 [k[0].pan_list for k in all_tracks])
             all_track_notes.volume_list = concat(
@@ -473,14 +475,19 @@ def read(name,
             all_tracks = all_tracks[0]
         pan_list = all_tracks[0].pan_list
         volume_list = all_tracks[0].volume_list
-        current_instruments_list = [[
-            i for i in available_tracks
-            if i.type == 'program_change' and i.channel == k
-        ] for k in channels_list]
-        instruments = [
-            each[0].program + 1 if each else 1
-            for each in current_instruments_list
+        instruments = []
+        program_change_events = [
+            i for i in available_tracks if i.type == 'program_change'
         ]
+        for i, each in enumerate(channels_list):
+            current_program = None
+            for j in program_change_events:
+                if j.channel == each:
+                    current_program = j.program
+                    instruments.append(current_program + 1)
+                    break
+            if current_program is None:
+                instruments.append(1)
         tracks_names_list = [
             i.name for i in available_tracks if i.type == 'track_name'
         ]
@@ -489,17 +496,16 @@ def read(name,
             tracks_names_list = [f'Channel {i+1}' for i in channels_list]
             rename_track_names = True
         result_merge_track = all_tracks[0]
-        result_piece = piece(
-            tracks=[chord([]) for i in range(channels_num)],
-            instruments=[database.reverse_instruments[i] for i in instruments],
-            bpm=whole_bpm,
-            track_names=tracks_names_list,
-            channels=channels_list,
-            name=os.path.splitext(os.path.basename(name))[0],
-            pan=[[] for i in range(channels_num)],
-            volume=[[] for i in range(channels_num)])
-        result_piece.reconstruct(result_merge_track,
-                                 all_tracks[2],
+        result_piece = piece(tracks=[chord([]) for i in range(channels_num)],
+                             instruments=instruments,
+                             bpm=whole_bpm,
+                             track_names=tracks_names_list,
+                             channels=channels_list,
+                             name=os.path.splitext(os.path.basename(name))[0],
+                             pan=[[] for i in range(channels_num)],
+                             volume=[[] for i in range(channels_num)])
+        result_piece.reconstruct(track=result_merge_track,
+                                 start_time=result_merge_track.start_time,
                                  include_empty_track=True)
         if len(result_piece.channels) != channels_num:
             pan_list = [
@@ -559,6 +565,7 @@ def read(name,
             del i.pan_list
         if hasattr(i, 'volume_list'):
             del i.volume_list
+    result_piece.ticks_per_beat = current_ticks_per_beat
     return result_piece
 
 
@@ -736,7 +743,10 @@ def write(current_chord,
           save_as_file=True,
           msg=None,
           nomsg=False,
-          ticks_per_beat=960,
+          ticks_per_beat=None,
+          ignore_instrument=False,
+          ignore_bpm=False,
+          ignore_track_names=False,
           **midi_args):
     if i is not None:
         instrument = i
@@ -780,27 +790,36 @@ def write(current_chord,
                               if start_time is None else start_time
                           ],
                           channels=[9])
-    track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
-    current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
-    instruments_numbers = [
+    track_number, start_times, instruments, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
+    current_chord.track_number, current_chord.start_times, current_chord.instruments, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
+    instruments = [
         i if isinstance(i, int) else database.INSTRUMENTS[i]
-        for i in instruments_numbers
+        for i in instruments
     ]
+    if ticks_per_beat is None:
+        if current_chord.ticks_per_beat is not None:
+            ticks_per_beat = current_chord.ticks_per_beat
+        else:
+            ticks_per_beat = 960
     current_midi = mido.MidiFile(ticks_per_beat=ticks_per_beat, **midi_args)
     current_midi.tracks.extend([mido.MidiTrack() for i in range(track_number)])
-    current_midi.tracks[0].append(
-        mido.MetaMessage('set_tempo', tempo=mido.bpm2tempo(bpm), time=0))
+    if not ignore_bpm:
+        current_midi.tracks[0].append(
+            mido.MetaMessage('set_tempo', tempo=mido.bpm2tempo(bpm), time=0))
+    interval_unit = ticks_per_beat * 4
     for i in range(track_number):
         if channels:
             current_channel = channels[i]
         else:
             current_channel = i
-        current_midi.tracks[i].append(
-            mido.Message('program_change',
-                         channel=current_channel,
-                         time=0,
-                         program=instruments_numbers[i] - 1))
-        if track_names:
+        if not ignore_instrument:
+            current_program_change_event = mido.Message(
+                'program_change',
+                channel=current_channel,
+                time=0,
+                program=instruments[i] - 1)
+            current_midi.tracks[i].append(current_program_change_event)
+        if not ignore_track_names and track_names:
             current_midi.tracks[i].append(
                 mido.MetaMessage('track_name', time=0, name=track_names[i]))
 
@@ -813,8 +832,7 @@ def write(current_chord,
                     current_pan_track if not is_track_type else 0].append(
                         mido.Message('control_change',
                                      channel=current_pan_channel,
-                                     time=int(each.start_time *
-                                              ticks_per_beat * 4),
+                                     time=int(each.start_time * interval_unit),
                                      control=10,
                                      value=each.value))
         current_volume_msg = volume_msg[i]
@@ -826,8 +844,7 @@ def write(current_chord,
                     current_volume_track if not is_track_type else 0].append(
                         mido.Message('control_change',
                                      channel=current_volume_channel,
-                                     time=int(each.start_time *
-                                              ticks_per_beat * 4),
+                                     time=int(each.start_time * interval_unit),
                                      control=7,
                                      value=each.value))
 
@@ -837,50 +854,47 @@ def write(current_chord,
         current_start_time = start_times[i]
         if is_piece_like_type:
             current_start_time += content.start_time
-        current_start_time = int(current_start_time * ticks_per_beat * 4)
+        current_start_time = current_start_time * interval_unit
         for j in range(len(content)):
             current_note = content_notes[j]
             current_type = type(current_note)
             if current_type == note:
                 current_note_on_message = mido.Message(
                     'note_on',
-                    time=current_start_time,
+                    time=int(current_start_time),
                     channel=current_channel
                     if current_note.channel is None else current_note.channel,
                     note=current_note.degree,
                     velocity=current_note.volume)
                 current_note_off_message = mido.Message(
                     'note_off',
-                    time=current_start_time +
-                    int(current_note.duration * ticks_per_beat * 4),
+                    time=int(current_start_time +
+                             current_note.duration * interval_unit),
                     channel=current_channel
                     if current_note.channel is None else current_note.channel,
                     note=current_note.degree,
                     velocity=current_note.volume)
                 current_midi.tracks[i].append(current_note_on_message)
                 current_midi.tracks[i].append(current_note_off_message)
-                current_start_time += int(content_intervals[j] *
-                                          ticks_per_beat * 4)
+                current_start_time += content_intervals[j] * interval_unit
             elif current_type == tempo:
                 if current_note.start_time is not None:
                     if current_note.start_time < 0:
                         tempo_change_time = 0
                     else:
-                        tempo_change_time = int(current_note.start_time *
-                                                ticks_per_beat * 4)
+                        tempo_change_time = current_note.start_time * interval_unit
                 else:
                     tempo_change_time = current_start_time
                 current_midi.tracks[0].append(
                     mido.MetaMessage('set_tempo',
-                                     time=tempo_change_time,
+                                     time=int(tempo_change_time),
                                      tempo=mido.bpm2tempo(current_note.bpm)))
             elif current_type == pitch_bend:
                 if current_note.start_time is not None:
                     if current_note.start_time < 0:
                         pitch_bend_time = 0
                     else:
-                        pitch_bend_time = int(current_note.start_time *
-                                              ticks_per_beat * 4)
+                        pitch_bend_time = current_note.start_time * interval_unit
                 else:
                     pitch_bend_time = current_start_time
                 pitch_bend_track = i if current_note.track is None else current_note.track
@@ -888,7 +902,7 @@ def write(current_chord,
                 current_midi.tracks[
                     pitch_bend_track if not is_track_type else 0].append(
                         mido.Message('pitchwheel',
-                                     time=pitch_bend_time,
+                                     time=int(pitch_bend_time),
                                      channel=pitch_bend_channel,
                                      pitch=current_note.value))
 
@@ -898,13 +912,13 @@ def write(current_chord,
                 current_midi=current_midi,
                 other_messages=current_chord.other_messages,
                 write_type='piece' if not is_track_type else 'track',
-                ticks_per_beat=ticks_per_beat)
+                interval_unit=interval_unit)
         elif msg:
             _add_other_messages(
                 current_midi=current_midi,
                 other_messages=msg,
                 write_type='piece' if not is_track_type else 'track',
-                ticks_per_beat=ticks_per_beat)
+                interval_unit=interval_unit)
     for i, each in enumerate(current_midi.tracks):
         reset_control_change_list = [120, 121, 123]
         each.sort(key=lambda s: (s.time, not (s.is_cc() and s.control in
@@ -925,10 +939,10 @@ def write(current_chord,
 def _add_other_messages(current_midi,
                         other_messages,
                         write_type='piece',
-                        ticks_per_beat=960):
+                        interval_unit=None):
     for each in other_messages:
         try:
-            current_time = int(each.start_time * ticks_per_beat * 4)
+            current_time = int(each.start_time * interval_unit)
             current_attributes = {
                 i: j
                 for i, j in vars(each).items()
@@ -943,7 +957,8 @@ def _add_other_messages(current_midi,
         except:
             continue
         current_track = each.track if write_type == 'piece' else 0
-        current_midi.tracks[current_track].append(current_message)
+        if current_track < len(current_midi.tracks):
+            current_midi.tracks[current_track].append(current_message)
 
 
 def find_first_tempo(file, is_file=False):
@@ -991,11 +1006,9 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
         i.channel
         for i in current_chord.other_messages if hasattr(i, 'channel')
     ]
-    channels_list = []
-    for each in channels_numbers:
-        if each not in channels_list:
-            channels_list.append(each)
+    channels_list = list(set(channels_numbers))
     channels_list = [i for i in channels_list if i is not None]
+    channels_list.sort()
     if not channels_list:
         channels_list = [0]
     channels_num = len(channels_list)
@@ -1097,13 +1110,19 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
     result_piece.track_names = track_names_list
     result_piece.other_messages = concat(
         [i.other_messages for i in result_piece.tracks], start=[])
-    current_instruments_list = [[
-        i for i in result_piece.other_messages
-        if i.type == 'program_change' and i.track == k
-    ] for k in range(len(result_piece))]
-    instruments = [
-        each[0].program + 1 if each else 1 for each in current_instruments_list
+    instruments = []
+    program_change_events = [
+        i for i in result_piece.other_messages if i.type == 'program_change'
     ]
+    for i, each in enumerate(result_piece.channels):
+        current_program = None
+        for j in program_change_events:
+            if j.channel == each:
+                current_program = j.program
+                instruments.append(current_program + 1)
+                break
+        if current_program is None:
+            instruments.append(1)
     result_piece.change_instruments(instruments)
     return result_piece
 
@@ -1932,11 +1951,11 @@ def write_json(current_chord,
                           channels=[9])
     else:
         current_chord = copy(current_chord)
-    track_number, start_times, instruments_numbers, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
-    current_chord.track_number, current_chord.start_times, current_chord.instruments_numbers, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
-    instruments_numbers = [
+    track_number, start_times, instruments, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
+    current_chord.track_number, current_chord.start_times, current_chord.instruments, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
+    instruments = [
         i if isinstance(i, int) else database.INSTRUMENTS[i]
-        for i in instruments_numbers
+        for i in instruments
     ]
     result = current_chord.__dict__
     result['tracks'] = [i.__dict__ for i in result['tracks']]
@@ -1978,7 +1997,6 @@ def write_json(current_chord,
         for j in i:
             j['mode'] = 'value'
             del j['value_percentage']
-    del result['instruments_numbers']
     del result['track_number']
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(result,

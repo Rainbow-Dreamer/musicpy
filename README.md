@@ -101,17 +101,28 @@ If you are interested in the latest progress and develop thoughts of musicpy, yo
 Contact
 -------------
 Discord: Rainbow Dreamer#7122  
+
 qq: 2180502841  
+
 Bilibili account: Rainbow_Dreamer  
-email: 2180502841@qq.com / q1036889495@gmail.com  
+
+email: 2180502841@qq.com / q1036889495@gmail.com
+
 Discussion group:
 
 [![Join our Discord server!](https://invidget.switchblade.xyz/m4xEzPQ76V)](http://discord.gg/m4xEzPQ76V)
 
 QQ discussion group: 364834221
 
+## Donation
+
+This project is developed by Rainbow Dreamer on his spare time to create an interesting music composition library and a high-level MIDI toolkit. If you feel this project is useful to you and want to support it and it's future development, please consider buy me a coffee, I appreciate any amount.
+
+[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.com/donate/?business=7XSUZCQNT4M4Y&no_recurring=0&currency_code=CAD)
+
 Reasons Why I Develop This Language and Keep Working on This Project
 -------------
+
 There are two main reasons why I develop this language. Firstly, compared with project files and MIDI files that simply store unitary information such as notes, intensity, tempo, etc., it would be more meaningful to represent how a piece of music is realized from a compositional point of view, in terms of music theory. Most music is extremely regular in music theory, as long as it is not modernist atonal music, and these rules can be greatly simplified by abstracting them into logical statements of music theory. (A MIDI file with 1000 notes, for example, can actually be reduced to a few lines of code from a music theory perspective.) Secondly, the language was developed so that the composing AI could compose with a real understanding of music theory (instead of deep learning and feeding a lot of data), and the language is also an interface that allows the AI to compose with a human-like mind once it understands the syntax of music theory. We can tell AI the rules on music theory, what is good to do and what is not, and these things can still be quantified, so this music theory library can also be used as a music theory interface to communicate music between people and AI. So, for example, if you want AI to learn someone's composing style, you can also quantify that person's style in music theory, and each style corresponds to some different music theory logic rules, which can be written to AI, and after this library, AI can realize imitating that person's style. If it is the AI's own original style, then it is looking for possibilities from various complex composition rules.
 
 I am thinking that without deep learning, neural network, teaching AI music theory and someone's stylized music theory rules, AI may be able to do better than deep learning and big data training. That's why I want to use this library to teach AI human music theory, so that AI can understand music theory in a real sense, so that composing music won't be hard and random. That's why one of my original reasons for writing this library was to avoid the deep learning. But I feel that it is really difficult to abstract the rules of music theory of different musicians, I will cheer up to write this algorithm qwq In addition, in fact, the musician himself can tell the AI how he likes to write his own music theory (that is, his own unique rules of music theory preference), then the AI will imitate it very well, because the AI does know music theory at that time, composition is not likely to have a sense of machine and random. At this point, what the AI is thinking in its head is exactly the same as what the musician is thinking in his head.

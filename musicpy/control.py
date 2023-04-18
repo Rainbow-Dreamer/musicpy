@@ -51,10 +51,10 @@ def piece_to_event_list(current_chord, set_instrument=False):
                                     track=0)
     event_list.append(tempo_change_event)
 
-    if set_instrument and current_chord.instruments_numbers:
+    if set_instrument and current_chord.instruments:
         for i, each in enumerate(current_chord.tracks):
             current_channel = channels[i]
-            current_instrument = current_chord.instruments_numbers[i] - 1
+            current_instrument = current_chord.instruments[i] - 1
             event_list.append(
                 midi_event(value=current_instrument,
                            time=0,

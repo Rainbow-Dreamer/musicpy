@@ -387,8 +387,7 @@ class daw:
                     each_note.volume = 0
             if not all_has_audio(current_track) and isinstance(
                     current_instrument, rs.sf2_loader):
-                current_instrument_number = current_chord.instruments_numbers[
-                    i]
+                current_instrument_number = current_chord.instruments[i]
                 current_channel = current_chord.channels[
                     i] if current_chord.channels else current_instrument.current_channel
                 current_sfid, current_bank, current_preset = current_instrument.channel_info(
