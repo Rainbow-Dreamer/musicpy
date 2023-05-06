@@ -300,7 +300,7 @@ class chord:
     def get_msg(self, types):
         return [i for i in self.other_messages if i.type == types]
 
-    def cut(self, ind1=0, ind2=None, start_time=0, return_inds=False):
+    def cut(self, ind1=0, ind2=None, start_time=0, return_inds=False, mode=0):
         # get parts of notes between two bars
         temp = copy(self)
         start_offset = start_time - ind1
@@ -325,8 +325,8 @@ class chord:
                 each.start_time -= (ind1 + start_time - start_offset)
                 if 0 <= each.start_time < ind2 - ind1:
                     changes.append(each)
-        temp = temp.only_notes()
 
+        temp = temp.only_notes()
         current_bar = 0
         notes = temp.notes
         intervals = temp.interval
@@ -345,9 +345,7 @@ class chord:
                     start_ind = i + 1
                     find_start = True
                     actual_start_time = current_bar - ind1
-                    if ind2 is None:
-                        break
-                elif ind2 and current_bar >= ind2:
+                elif current_bar >= ind2:
                     to_ind = i + 1
                     break
         if not find_start:
@@ -360,6 +358,33 @@ class chord:
             i for i in result.other_messages if ind1 <= i.start_time < ind2
         ]
         result.start_time = actual_start_time
+        if mode == 1:
+            current_bar = ind1
+            new_notes = []
+            new_intervals = []
+            for i in range(len(result.notes)):
+                current_note = result.notes[i]
+                current_interval = result.interval[i]
+                if isinstance(current_note, note):
+                    current_duration = current_note.duration
+                    new_bar_with_duration = current_bar + current_duration
+                    if new_bar_with_duration > ind2:
+                        current_note.duration -= (new_bar_with_duration - ind2)
+                        if current_note.duration > 0:
+                            new_notes.append(current_note)
+                            new_intervals.append(current_interval)
+                        else:
+                            if new_intervals:
+                                new_intervals[-1] += current_interval
+                    else:
+                        new_notes.append(current_note)
+                        new_intervals.append(current_interval)
+                    current_bar += current_interval
+                else:
+                    new_notes.append(current_note)
+                    new_intervals.append(current_interval)
+            result.notes = new_notes
+            result.interval = new_intervals
         return result
 
     def cut_time(self,
@@ -368,7 +393,8 @@ class chord:
                  time2=None,
                  start_time=0,
                  return_inds=False,
-                 normalize_tempo=False):
+                 normalize_tempo=False,
+                 mode=0):
         if normalize_tempo:
             temp = copy(self)
             temp.normalize_tempo(bpm)
@@ -395,13 +421,14 @@ class chord:
             current_note = notes[i]
             if isinstance(current_note, note):
                 current_bar += intervals[i]
-                if (not find_start) and (60 / bpm) * current_bar * 4 >= time1:
+                current_time = (60 / bpm) * current_bar * 4
+                if (not find_start) and current_time >= time1:
                     start_ind = i + 1
                     find_start = True
                     actual_start_time = current_bar - start_length
                     if time2 is None:
                         break
-                elif time2 and (60 / bpm) * current_bar * 4 >= time2:
+                elif time2 is not None and current_time >= time2:
                     to_ind = i + 1
                     break
         if not find_start:
@@ -410,6 +437,36 @@ class chord:
             return start_ind, to_ind
         result = self[start_ind:to_ind]
         result.start_time = actual_start_time
+        if mode == 1:
+            current_bar = time1
+            new_notes = []
+            new_intervals = []
+            for i in range(len(result.notes)):
+                current_note = result.notes[i]
+                current_interval = result.interval[i]
+                if isinstance(current_note, note):
+                    current_duration = current_note.duration
+                    new_bar_with_duration = current_bar + current_duration
+                    current_time = (60 / bpm) * new_bar_with_duration * 4
+                    if current_time > time2:
+                        extra_time = current_time - time2
+                        extra_duration = (extra_time / (60 / bpm)) / 4
+                        current_note.duration -= extra_duration
+                        if current_note.duration > 0:
+                            new_notes.append(current_note)
+                            new_intervals.append(current_interval)
+                        else:
+                            if new_intervals:
+                                new_intervals[-1] += current_interval
+                    else:
+                        new_notes.append(current_note)
+                        new_intervals.append(current_interval)
+                    current_bar += current_interval
+                else:
+                    new_notes.append(current_note)
+                    new_intervals.append(current_interval)
+            result.notes = new_notes
+            result.interval = new_intervals
         return result
 
     def last_note_standardize(self):
@@ -444,6 +501,15 @@ class chord:
                 if current_length > max_length:
                     max_length = current_length
                 current_length -= current_duration
+        elif mode == 2:
+            result = self.bars(start_time=start_time,
+                               mode=1,
+                               audio_mode=audio_mode,
+                               bpm=bpm)
+            last_extra_interval = self.interval[-1] - self.notes[-1].duration
+            if last_extra_interval > 0:
+                result += last_extra_interval
+            return result
         return start_time + max_length
 
     def firstnbars(self, n, start_time=0):
@@ -1415,11 +1481,14 @@ class chord:
         if dotted is not None:
             length = length * sum([(1 / 2)**i for i in range(dotted + 1)])
         if ind is None:
-            last_interval = temp.interval[-1]
+            i = len(temp.notes) - 1
+            while not isinstance(temp.notes[i], note):
+                i -= 1
+            last_interval = temp.interval[i]
             if last_interval != 0:
-                temp.interval[-1] += length
+                temp.interval[i] += length
             else:
-                temp.interval[-1] += (temp.notes[-1].duration + length)
+                temp.interval[i] += (temp.notes[i].duration + length)
         else:
             if ind == len(temp) - 1:
                 last_interval = temp.interval[-1]
@@ -3145,6 +3214,8 @@ class piece:
     def __or__(self, n):
         if isinstance(n, piece):
             return self + n
+        elif isinstance(n, (int, float)):
+            return self.rest(n)
 
     def __and__(self, n):
         if isinstance(n, tuple):
@@ -3176,7 +3247,12 @@ class piece:
     def __call__(self, ind):
         return self.tracks[ind]
 
-    def merge_track(self, n, mode='after', start_time=0):
+    def merge_track(self,
+                    n,
+                    mode='after',
+                    start_time=0,
+                    ind_mode=0,
+                    include_last_interval=False):
         temp = copy(self)
         temp2 = copy(n)
         if temp.channels is not None:
@@ -3185,11 +3261,18 @@ class piece:
             ]
             counter = 0
         if mode == 'after':
-            start_time = temp.bars()
+            start_time = temp.bars(mode=1 if not include_last_interval else 2)
         for i in range(len(temp2)):
             current_instrument_number = temp2.instruments[i]
             if current_instrument_number in temp.instruments:
-                current_ind = temp.instruments.index(current_instrument_number)
+                if ind_mode == 0:
+                    current_ind = temp.instruments.index(
+                        current_instrument_number)
+                elif ind_mode == 1:
+                    current_ind = i
+                    if current_ind > len(temp.tracks) - 1:
+                        temp.append(
+                            track(content=chord([]), start_time=start_time))
                 current_track = temp2.tracks[i]
                 for each in current_track:
                     if isinstance(each, (tempo, pitch_bend)):
@@ -3230,6 +3313,24 @@ class piece:
                 if temp.track_names is not None:
                     temp.track_names.append(temp2.track_names[i])
         return temp
+
+    def align(self, extra=0):
+        temp = copy(self)
+        track_lens = [
+            temp.start_times[i] + temp.tracks[i].bars()
+            for i in range(len(temp.tracks))
+        ]
+        for each in temp.tracks:
+            each.interval[-1] = each.notes[-1].duration
+        max_len = max(track_lens) + extra
+        for i in range(len(temp.tracks)):
+            extra_lens = max_len - track_lens[i]
+            if extra_lens > 0:
+                temp.tracks[i] |= extra_lens
+        return temp
+
+    def rest(self, n):
+        return self.align(n)
 
     def add_pitch_bend(self,
                        value,
