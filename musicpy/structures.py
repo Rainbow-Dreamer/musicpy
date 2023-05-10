@@ -439,10 +439,9 @@ class chord:
         if mode == 0:
             max_length = sum(self.interval)
         elif mode == 1:
+            temp = self.only_notes()
             if audio_mode == 1:
                 from pydub import AudioSegment
-            temp = self.only_notes(audio_mode=audio_mode)
-            if audio_mode == 1:
                 temp = temp.set(duration=[
                     mp.real_time_to_bar(len(i), bpm) if isinstance(
                         i, AudioSegment) else i.duration for i in temp.notes
@@ -606,6 +605,12 @@ class chord:
             tempos = self.tempos
             inds = [i for i in range(length) if not cond(tempos[i])]
             self.tempos = [tempos[k] for k in inds]
+
+    def only_notes(self):
+        temp = copy(self)
+        temp.clear_tempo()
+        temp.clear_pitch_bend()
+        return temp
 
     def __mod__(self, alist):
         if isinstance(alist, (list, tuple)):
@@ -985,16 +990,16 @@ class chord:
             temp2 = temp.only_notes()
             length = len(temp2)
             bar_length = temp2.bars()
-            changes = []
-            for i in range(len(temp.notes)):
-                each = temp.notes[i]
-                if isinstance(each, (tempo, pitch_bend)):
-                    if each.start_time is None:
-                        each.start_time = temp[:i].bars()
-                    else:
-                        each.start_time -= start_time
-                    each.start_time = bar_length - each.start_time
-                    changes.append(each)
+            tempos = []
+            pitch_bends = []
+            for each in temp.tempos:
+                each.start_time -= start_time
+                each.start_time = bar_length - each.start_time
+                tempos.append(each)
+            for each in temp.pitch_bends:
+                each.start_time -= start_time
+                each.start_time = bar_length - each.start_time
+                pitch_bends.append(each)
             if temp2.notes:
                 last_interval = temp2.interval[-1]
                 end_events = []
@@ -1014,7 +1019,8 @@ class chord:
                 new_interval.append(last_interval)
                 temp2.notes = new_notes
                 temp2.interval = new_interval
-            temp2 += chord(changes)
+            temp2.tempos = tempos
+            temp2.pitch_bends = pitch_bends
             return temp2
         else:
             if end is None:
@@ -1033,13 +1039,12 @@ class chord:
         temp.interval = temp.interval[::-1]
         if temp.interval:
             temp.interval.append(temp.interval.pop(0))
-        for i in temp.notes:
-            if isinstance(i, (tempo, pitch_bend)):
-                if i.start_time is None:
-                    i.start_time = temp[:i].bars()
-                else:
-                    i.start_time -= start_time
-                i.start_time = bar_length - i.start_time
+        for each in temp.tempos:
+            each.start_time -= start_time
+            each.start_time = bar_length - each.start_time
+        for each in temp.pitch_bends:
+            each.start_time -= start_time
+            each.start_time = bar_length - each.start_time
         return temp
 
     def intervalof(self, cumulative=True, translate=False):
@@ -1230,18 +1235,12 @@ class chord:
             return temp
         if ind2 is None:
             if ind is None:
-                temp.notes = [
-                    each.up(unit) if isinstance(each, note) else each
-                    for each in temp.notes
-                ]
+                temp.notes = [each.up(unit) for each in temp.notes]
             else:
-                change_note = temp[ind]
-                if isinstance(change_note, note):
-                    temp[ind] = change_note.up(unit)
+                temp[ind] = temp[ind].up(unit)
         else:
             temp.notes = temp.notes[:ind] + [
-                each.up(unit)
-                for each in temp.notes[ind:ind2] if isinstance(each, note)
+                each.up(unit) for each in temp.notes[ind:ind2]
             ] + temp.notes[ind2:]
         return temp
 
@@ -1425,15 +1424,11 @@ class chord:
             temp.start_time += length
             return temp
         if ind is None:
-            i = len(temp.notes) - 1
-            while not isinstance(temp.notes[i], note):
-                i -= 1
-            if i >= 0:
-                last_interval = temp.interval[i]
-                if last_interval != 0:
-                    temp.interval[i] += length
-                else:
-                    temp.interval[i] += (temp.notes[i].duration + length)
+            last_interval = temp.interval[-1]
+            if last_interval != 0:
+                temp.interval[-1] += length
+            else:
+                temp.interval[-1] += (temp.notes[-1].duration + length)
         else:
             if ind == len(temp) - 1:
                 last_interval = temp.interval[-1]
@@ -1473,16 +1468,15 @@ class chord:
         }
         for k in range(len(temp)):
             current = temp.notes[k]
-            if isinstance(current, note):
-                if current.name in database.standard_dict:
-                    current_name = database.standard_dict[current.name]
-                else:
-                    current_name = current.name
-                if current_name in transdict:
-                    current_note = mp.closest_note(transdict[current_name],
-                                                   current)
-                    temp.notes[k] = current.reset(name=current_note.name,
-                                                  num=current_note.num)
+            if current.name in database.standard_dict:
+                current_name = database.standard_dict[current.name]
+            else:
+                current_name = current.name
+            if current_name in transdict:
+                current_note = mp.closest_note(transdict[current_name],
+                                               current)
+                temp.notes[k] = current.reset(name=current_note.name,
+                                              num=current_note.num)
         return temp
 
     def __getitem__(self, ind):
@@ -1586,25 +1580,6 @@ class chord:
         result += pitch_bend_changes
         return result
 
-    def only_notes(self, audio_mode=0):
-        temp = copy(self)
-        whole_notes = temp.notes
-        intervals = temp.interval
-        if audio_mode == 0:
-            inds = [
-                i for i in range(len(temp))
-                if isinstance(whole_notes[i], note)
-            ]
-        else:
-            from pydub import AudioSegment
-            inds = [
-                i for i in range(len(temp))
-                if isinstance(whole_notes[i], (note, AudioSegment))
-            ]
-        temp.notes = [whole_notes[k] for k in inds]
-        temp.interval = [intervals[k] for k in inds]
-        return temp
-
     def normalize_tempo(self,
                         bpm,
                         start_time=0,
@@ -1615,25 +1590,14 @@ class chord:
         # changes, use relative ratios of the chosen bpms and changes bpms
         # to re-calculate the notes durations and intervals
         if original_bpm is not None:
-            self.append(tempo(bpm=original_bpm, start_time=0))
-        if all(i.bpm == bpm for i in self.notes if isinstance(i, tempo)):
+            self.tempos.append(tempo(bpm=original_bpm, start_time=0))
+        if all(i.bpm == bpm for i in self.tempos):
             self.clear_tempo()
             return
         if start_time > 0:
             self.notes.insert(0, note('C', 5, duration=0))
             self.interval.insert(0, start_time)
-        tempo_changes = [
-            i for i in range(len(self.notes))
-            if isinstance(self.notes[i], tempo)
-        ]
-        tempo_changes_no_time = [
-            k for k in tempo_changes if self.notes[k].start_time is None
-        ]
-        for each in tempo_changes_no_time:
-            current_time = self[:each].bars(mode=0)
-            current_tempo = self.notes[each]
-            current_tempo.start_time = current_time
-        tempo_changes = [self.notes[j] for j in tempo_changes]
+        tempo_changes = self.tempos
         tempo_changes.insert(0, tempo(bpm, 0))
         self.clear_tempo()
         tempo_changes.sort(key=lambda s: s.start_time)
@@ -1653,10 +1617,10 @@ class chord:
         tempo_changes_ranges.append(
             (new_tempo_changes[-1].start_time, self.bars(mode=1),
              new_tempo_changes[-1].bpm))
-        pitch_bend_msg = self.split(pitch_bend, get_time=True)
-        self.clear_pitch_bend('all')
+        pitch_bend_msg = self.pitch_bends
+        self.clear_pitch_bend()
         _process_normalize_tempo(self, tempo_changes_ranges, bpm)
-        other_types = pitch_bend_msg.notes + self.other_messages
+        other_types = pitch_bend_msg + self.other_messages
         if pan_msg:
             other_types += pan_msg
         if volume_msg:
@@ -1694,8 +1658,7 @@ class chord:
                 new_volume.append(each)
             else:
                 new_other_messages.append(each)
-        self.notes.extend(new_pitch_bends)
-        self.interval.extend([0 for i in range(len(new_pitch_bends))])
+        self.pitch_bends.extend(new_pitch_bends)
         result = [new_other_messages]
         if new_pan or new_volume:
             result += [new_pan, new_volume]
@@ -1707,12 +1670,14 @@ class chord:
 
     def place_shift(self, time=0, pan_msg=None, volume_msg=None):
         temp = copy(self)
-        for i in temp.notes:
-            if isinstance(i, (tempo, pitch_bend)):
-                if i.start_time is not None:
-                    i.start_time += time
-                    if i.start_time < 0:
-                        i.start_time = 0
+        for i in temp.tempos:
+            i.start_time += time
+            if i.start_time < 0:
+                i.start_time = 0
+        for i in temp.pitch_bends:
+            i.start_time += time
+            if i.start_time < 0:
+                i.start_time = 0
         if pan_msg:
             for each in pan_msg:
                 each.start_time += time
@@ -1782,14 +1747,12 @@ class chord:
             x = mp.trans_note(x)
         if isinstance(y, str):
             y = mp.trans_note(y)
-        if all(x.degree <= i.degree <= y.degree for i in self.notes
-               if isinstance(i, note)):
+        if all(x.degree <= i.degree <= y.degree for i in self.notes):
             return self, 0
         temp = self.copy()
         available_inds = [
             k for k in range(len(temp))
-            if not (isinstance(temp.notes[k], note)
-                    and not (x.degree <= temp.notes[k].degree <= y.degree))
+            if x.degree <= temp.notes[k].degree <= y.degree
         ]
         if available_inds:
             new_interval = []
@@ -1993,12 +1956,14 @@ class chord:
         return temp
 
     def apply_start_time_to_changes(self, start_time, msg=False):
-        for each in self.notes:
-            if isinstance(each, (tempo, pitch_bend)):
-                if each.start_time is not None:
-                    each.start_time += start_time
-                    if each.start_time < 0:
-                        each.start_time = 0
+        for each in self.tempos:
+            each.start_time += start_time
+            if each.start_time < 0:
+                each.start_time = 0
+        for each in self.pitch_bends:
+            each.start_time += start_time
+            if each.start_time < 0:
+                each.start_time = 0
         if msg:
             for each in self.other_messages:
                 each.start_time += start_time
@@ -2019,21 +1984,20 @@ class chord:
             for i in self.other_messages:
                 if hasattr(i, 'channel'):
                     i.channel = channel
-        if reset_pitch_bend or reset_note:
+        if reset_note:
             for i in self.notes:
-                if isinstance(i, pitch_bend) and reset_pitch_bend:
-                    i.channel = channel
-                elif isinstance(i, note) and reset_note:
-                    i.channel = channel
+                i.channel = channel
+        if reset_pitch_bend:
+            for i in self.pitch_bends:
+                i.channel = channel
 
     def reset_track(self, track, reset_msg=True, reset_pitch_bend=True):
         if reset_msg:
             for i in self.other_messages:
                 i.track = track
         if reset_pitch_bend:
-            for i in self.notes:
-                if isinstance(i, pitch_bend):
-                    i.track = track
+            for i in self.pitch_bends:
+                i.track = track
 
     def pick(self, indlist):
         temp = copy(self)
@@ -2066,16 +2030,15 @@ class chord:
         return temp
 
     def delete_track(self, current_ind):
-        available_inds = [
-            i for i, each in enumerate(self.notes)
-            if not (isinstance(each, (tempo, pitch_bend))
-                    and each.track == current_ind)
+        self.tempos = [i for i in self.tempos if i.track != current_ind]
+        self.pitch_bends = [
+            i for i in self.pitch_bends if i.track != current_ind
         ]
-        self.notes = [self.notes[i] for i in available_inds]
-        self.interval = [self.interval[i] for i in available_inds]
-        for i in self.notes:
-            if isinstance(i, (tempo, pitch_bend)
-                          ) and i.track is not None and i.track > current_ind:
+        for i in self.tempos:
+            if i.track is not None and i.track > current_ind:
+                i.track -= 1
+        for i in self.pitch_bends:
+            if i.track is not None and i.track > current_ind:
                 i.track -= 1
         self.other_messages = [
             i for i in self.other_messages if i.track != current_ind
@@ -2091,6 +2054,10 @@ class chord:
         ]
         self.notes = [self.notes[i] for i in available_inds]
         self.interval = [self.interval[i] for i in available_inds]
+        self.tempos = [i for i in self.tempos if i.channel != current_ind]
+        self.pitch_bends = [
+            i for i in self.pitch_bends if i.channel != current_ind
+        ]
         self.other_messages = [
             i for i in self.other_messages
             if not (hasattr(i, 'channel') and i.channel == current_ind)
@@ -3140,28 +3107,19 @@ class piece:
         whole_length = temp.bars()
         for i in range(temp.track_number):
             current = temp.tracks[i]
-            counter = 0
-            for j in range(len(current) - 1, -1, -1):
-                current_note = current.notes[j]
-                if isinstance(current_note, note):
-                    current.interval[j] = current.notes[j].duration
-                    counter = j
-                    break
+            current.interval[-1] = current.notes[-1].duration
             current_start_time = temp.start_times[i]
-            current.interval[counter] += (whole_length - current.bars() -
-                                          current_start_time)
+            current.interval[-1] += (whole_length - current.bars() -
+                                     current_start_time)
             unit = copy(current)
             for k in range(n - 1):
                 if current_start_time:
-                    for j in range(len(current) - 1, -1, -1):
-                        current_note = current.notes[j]
-                        if isinstance(current_note, note):
-                            current.interval[j] += current_start_time
-                            break
-                for each in unit.notes:
-                    if isinstance(each, (tempo, pitch_bend)):
-                        if each.start_time is not None:
-                            each.start_time += (k + 1) * whole_length
+                    current.interval[-1] += current_start_time
+                extra = (k + 1) * whole_length
+                for each in unit.tempos:
+                    each.start_time += extra
+                for each in unit.pitch_bends:
+                    each.start_time += extra
                 current.notes += unit.notes
                 current.interval += unit.interval
             temp.tracks[i] = current
@@ -3230,10 +3188,10 @@ class piece:
                         temp.append(
                             track(content=chord([]), start_time=start_time))
                 current_track = temp2.tracks[i]
-                for each in current_track:
-                    if isinstance(each, (tempo, pitch_bend)):
-                        if each.start_time is not None:
-                            each.start_time += start_time
+                for each in current_track.tempos:
+                    each.start_time += start_time
+                for each in current_track.pitch_bends:
+                    each.start_time += start_time
                 current_start_time = temp2.start_times[
                     i] + start_time - temp.start_times[current_ind]
                 temp.tracks[current_ind] &= (current_track, current_start_time)
@@ -3244,10 +3202,10 @@ class piece:
                 current_start_time = temp2.start_times[i]
                 current_start_time += start_time
                 current_track = temp2.tracks[i]
-                for each in current_track:
-                    if isinstance(each, (tempo, pitch_bend)):
-                        if each.start_time is not None:
-                            each.start_time += start_time
+                for each in current_track.tempos:
+                    each.start_time += start_time
+                for each in current_track.pitch_bends:
+                    each.start_time += start_time
                 temp.tracks.append(current_track)
                 temp.start_times.append(current_start_time)
                 if temp.channels is not None:
@@ -3343,13 +3301,12 @@ class piece:
         if bpm is None:
             bpm = self.bpm
         if bpm == self.bpm and all(i.bpm == bpm for each in self.tracks
-                                   for i in each if isinstance(i, tempo)):
+                                   for i in each.tempos):
             self.clear_tempo()
             return
         temp = copy(self)
         original_bpm = None
-        if bpm != self.bpm and not any(
-                isinstance(i, tempo) for each in self.tracks for i in each):
+        if bpm != self.bpm and all(not each.tempos for each in self.tracks):
             original_bpm = self.bpm
         _piece_process_normalize_tempo(temp,
                                        bpm,
@@ -3460,15 +3417,6 @@ class piece:
                 self.delete_track(current_ind)
         self.delete_channel(9)
 
-    def get_off_not_notes(self):
-        j = 0
-        while j < len(self):
-            current_track = self.tracks[j]
-            if all(not isinstance(k, note) for k in current_track):
-                self.delete_track(j)
-                continue
-            j += 1
-
     def merge(self,
               add_labels=True,
               add_pan_volume=False,
@@ -3526,17 +3474,22 @@ class piece:
         first_track_start_time += first_track.start_time
         first_track.start_time = 0
         if track_map_dict:
-            for i in first_track.notes:
-                if isinstance(i, (tempo, pitch_bend)):
-                    if i.track in track_map_dict:
-                        current_track = track_map_dict[i.track]
-                        i.track = current_track
-                        if add_labels:
-                            i.track_num = current_track
-                else:
+            if add_labels:
+                for i in first_track.notes:
+                    if i.track_num in track_map_dict:
+                        i.track_num = track_map_dict[i.track_num]
+            for i in first_track.tempos:
+                if i.track in track_map_dict:
+                    current_track = track_map_dict[i.track]
+                    i.track = current_track
                     if add_labels:
-                        if i.track_num in track_map_dict:
-                            i.track_num = track_map_dict[i.track_num]
+                        i.track_num = current_track
+            for i in first_track.pitch_bends:
+                if i.track in track_map_dict:
+                    current_track = track_map_dict[i.track]
+                    i.track = current_track
+                    if add_labels:
+                        i.track_num = current_track
             for i in first_track.other_messages:
                 if i.track in track_map_dict:
                     i.track = track_map_dict[i.track]
@@ -3560,8 +3513,7 @@ class piece:
         length = len(self.tracks)
         start_times_inds = [[
             i for i in range(len(first_track))
-            if isinstance(first_track.notes[i], note)
-            and first_track.notes[i].track_num == k
+            if first_track.notes[i].track_num == k
         ] for k in range(length)]
         if not include_empty_track:
             available_tracks_inds = [
@@ -3702,15 +3654,8 @@ class piece:
                     for each in temp.pan]
         temp.volume = [[i for i in each if i.start_time < ind2]
                        for each in temp.volume]
-        tempo_changes = temp.get_tempo_changes()
+        tempo_changes = mp.concat(temp.get_tempo_changes(), start=[])
         temp.clear_tempo()
-        k = 0
-        while k < len(temp.tracks):
-            current = temp.tracks[k]
-            if all(not isinstance(i, note) for i in current.notes):
-                del temp[k]
-                continue
-            k += 1
         track_inds = [each.track_ind for each in temp.tracks]
         temp.other_messages = [
             i for i in temp.other_messages if ind1 <= i.start_time < ind2
@@ -3720,7 +3665,7 @@ class piece:
         ]
         for each in temp.other_messages:
             each.track = track_inds.index(each.track)
-        temp.tracks[0] += tempo_changes
+        temp.tracks[0].tempos.extend(tempo_changes)
         temp.reset_track([*range(len(temp.tracks))])
         return temp
 
@@ -3753,14 +3698,8 @@ class piece:
                                 bpm=bpm) for i in range(len(self.tracks))
         ])
 
-    def total(self, mode='all'):
-        if mode == 'all':
-            return sum([len(i) for i in self.tracks])
-        elif mode == 'notes':
-            return sum([
-                len([k for k, each in enumerate(i) if isinstance(each, note)])
-                for i in self.tracks
-            ])
+    def total(self):
+        return sum([len(i) for i in self.tracks])
 
     def count(self, note1, mode='name'):
         return sum([each.count(note1, mode) for each in self.tracks])
@@ -3774,6 +3713,8 @@ class piece:
             result.notes += each.notes
             result.interval += each.interval
             result.other_messages += each.other_messages
+            result.tempos += each.tempos
+            result.pitch_bends += each.pitch_bends
         return result
 
     def standard_notation(self):
@@ -3794,12 +3735,16 @@ class piece:
         for i in range(len(tracks)):
             current_start_time = start_time[i]
             current_track = tracks[i]
-            for each in current_track.notes:
-                if isinstance(each, (tempo, pitch_bend)):
-                    if each.start_time is not None:
-                        each.start_time += current_start_time
-                        if each.start_time < 0:
-                            each.start_time = 0
+            for each in current_track.tempos:
+                if each.start_time is not None:
+                    each.start_time += current_start_time
+                    if each.start_time < 0:
+                        each.start_time = 0
+            for each in current_track.pitch_bends:
+                if each.start_time is not None:
+                    each.start_time += current_start_time
+                    if each.start_time < 0:
+                        each.start_time = 0
             if msg:
                 for each in current_track.other_messages:
                     each.start_time += current_start_time
@@ -4005,12 +3950,12 @@ class piece:
                 for each in current_other_messages:
                     if hasattr(each, 'channel'):
                         each.channel = current_channel
-            if reset_pitch_bend or reset_note:
+            if reset_pitch_bend:
+                for each in current_track.pitch_bends:
+                    each.channel = current_channel
+            if reset_note:
                 for each in current_track.notes:
-                    if isinstance(each, pitch_bend) and reset_pitch_bend:
-                        each.channel = current_channel
-                    elif isinstance(each, note) and reset_note:
-                        each.channel = current_channel
+                    each.channel = current_channel
             if reset_pan_volume:
                 current_pan = self.pan[i]
                 current_volume = self.volume[i]
@@ -4034,9 +3979,8 @@ class piece:
                 for each in current_other_messages:
                     each.track = current_track_num
             if reset_pitch_bend:
-                for each in current_track.notes:
-                    if isinstance(each, pitch_bend):
-                        each.track = current_track_num
+                for each in current_track.pitch_bends:
+                    each.track = current_track_num
             if reset_pan_volume:
                 current_pan = self.pan[i]
                 current_volume = self.volume[i]

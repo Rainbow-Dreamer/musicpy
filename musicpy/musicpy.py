@@ -1043,7 +1043,8 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
         for each in current_chord.notes:
             each.track_num = channels_list.index(
                 each.channel) if each.channel is not None else 0
-            if isinstance(each, pitch_bend) and each.track != each.track_num:
+        for each in current_chord.pitch_bends:
+            if each.track != each.track_num:
                 each.track = each.track_num
         for each in current_chord.other_messages:
             if hasattr(each, 'channel') and each.channel is not None:
@@ -1074,9 +1075,8 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
             for each in volume_list:
                 each.track = result_piece.channels.index(each.channel)
             for k in range(len(result_piece.tracks)):
-                for each in result_piece.tracks[k].notes:
-                    if isinstance(each, pitch_bend):
-                        each.track = k
+                for each in result_piece.tracks[k].pitch_bends:
+                    each.track = k
             current_chord.other_messages = [
                 i for i in current_chord.other_messages
                 if not (hasattr(i, 'channel')
@@ -1880,6 +1880,8 @@ def read_json(file):
                 **{i: j
                    for i, j in k.items() if i != 'type'}) for k in j['notes']
         ]
+        j['tempos'] = [tempo(**k) for k in j['tempos']]
+        j['pitch_bends'] = [pitch_bend(**k) for k in j['pitch_bends']]
         j['other_messages'] = [event(**k) for k in j['other_messages']]
     current['tracks'] = [chord(**i) for i in current['tracks']]
     current['other_messages'] = [event(**k) for k in current['other_messages']]
@@ -1950,26 +1952,24 @@ def write_json(current_chord,
     for j in result['tracks']:
         for i, each in enumerate(j['notes']):
             current_dict = {'type': each.__class__.__name__}
-            if isinstance(each, note):
-                current_dict.update({
-                    k1: k2
-                    for k1, k2 in each.__dict__.items()
-                    if k1 not in ['degree']
-                })
-            elif isinstance(each, pitch_bend):
-                current_dict.update({
-                    k1: k2
-                    for k1, k2 in each.__dict__.items()
-                    if k1 not in ['degree', 'volume', 'duration']
-                })
-                current_dict['mode'] = 'value'
-            elif isinstance(each, tempo):
-                current_dict.update({
-                    k1: k2
-                    for k1, k2 in each.__dict__.items()
-                    if k1 not in ['degree', 'volume', 'duration']
-                })
+            current_dict.update({
+                k1: k2
+                for k1, k2 in each.__dict__.items() if k1 not in ['degree']
+            })
             j['notes'][i] = current_dict
+        for each in j['pitch_bends']:
+            current_dict.update({
+                k1: k2
+                for k1, k2 in each.__dict__.items()
+                if k1 not in ['degree', 'volume', 'duration']
+            })
+            current_dict['mode'] = 'value'
+        for each in j['tempos']:
+            current_dict.update({
+                k1: k2
+                for k1, k2 in each.__dict__.items()
+                if k1 not in ['degree', 'volume', 'duration']
+            })
         j['other_messages'] = [k.__dict__ for k in j['other_messages']]
         for i, each in enumerate(j['notes']):
             each['interval'] = j['interval'][i]
