@@ -506,9 +506,14 @@ class chord:
                                mode=1,
                                audio_mode=audio_mode,
                                bpm=bpm)
-            last_extra_interval = self.interval[-1] - self.notes[-1].duration
-            if last_extra_interval > 0:
-                result += last_extra_interval
+            counter = len(self.interval) - 1
+            while not isinstance(self.notes[counter], note):
+                counter -= 1
+            if counter >= 0:
+                last_extra_interval = self.interval[counter] - self.notes[
+                    counter].duration
+                if last_extra_interval > 0:
+                    result += last_extra_interval
             return result
         return start_time + max_length
 
@@ -1484,11 +1489,12 @@ class chord:
             i = len(temp.notes) - 1
             while not isinstance(temp.notes[i], note):
                 i -= 1
-            last_interval = temp.interval[i]
-            if last_interval != 0:
-                temp.interval[i] += length
-            else:
-                temp.interval[i] += (temp.notes[i].duration + length)
+            if i >= 0:
+                last_interval = temp.interval[i]
+                if last_interval != 0:
+                    temp.interval[i] += length
+                else:
+                    temp.interval[i] += (temp.notes[i].duration + length)
         else:
             if ind == len(temp) - 1:
                 last_interval = temp.interval[-1]
