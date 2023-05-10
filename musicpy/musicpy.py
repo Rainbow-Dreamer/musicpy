@@ -519,9 +519,8 @@ def read(name,
             for each in volume_list:
                 each.track = result_piece.channels.index(each.channel)
             for k in range(len(result_piece.tracks)):
-                for each in result_piece.tracks[k].notes:
-                    if isinstance(each, pitch_bend):
-                        each.track = k
+                for each in result_piece.tracks[k].pitch_bends:
+                    each.track = k
             result_merge_track.other_messages = [
                 i for i in result_merge_track.other_messages
                 if not (hasattr(i, 'channel')
@@ -578,6 +577,8 @@ def _midi_to_chord(current_track,
                    track_channels=None):
     intervals = []
     notelist = []
+    tempo_list = []
+    pitch_bend_list = []
     notes_len = len(current_track)
     find_first_note = False
     start_time = 0
@@ -650,8 +651,7 @@ def _midi_to_chord(current_track,
                                   track=track_ind)
             if add_track_num:
                 current_tempo.track_num = track_ind
-            notelist.append(current_tempo)
-            intervals.append(0)
+            tempo_list.append(current_tempo)
         elif current_msg.type == 'pitchwheel':
             current_msg_channel = current_msg.channel
             if track_channels:
@@ -665,8 +665,7 @@ def _midi_to_chord(current_track,
                                             mode='values')
             if add_track_num:
                 current_pitch_bend.track_num = current_track_ind
-            notelist.append(current_pitch_bend)
-            intervals.append(0)
+            pitch_bend_list.append(current_pitch_bend)
         elif current_msg.type == 'control_change':
             current_msg_channel = current_msg.channel
             if track_channels:
@@ -702,15 +701,11 @@ def _midi_to_chord(current_track,
                                  current_track_ind)
     result = chord(notelist, interval=intervals)
     if clear_empty_notes:
-        result.interval = [
-            result.interval[j] for j in range(len(result))
-            if not isinstance(result.notes[j], note)
-            or result.notes[j].duration > 0
-        ]
-        result.notes = [
-            each for each in result.notes
-            if not isinstance(each, note) or each.duration > 0
-        ]
+        inds = [i for i, each in enumerate(result.notes) if each.duration > 0]
+        result.notes = [result.notes[i] for i in inds]
+        result.interval = [result.interval[i] for i in inds]
+    result.tempos = tempo_list
+    result.pitch_bends = pitch_bend_list
     result.pan_list = pan_list
     result.volume_list = volume_list
     result.other_messages = other_messages
@@ -857,54 +852,47 @@ def write(current_chord,
         current_start_time = current_start_time * interval_unit
         for j in range(len(content)):
             current_note = content_notes[j]
-            current_type = type(current_note)
-            if current_type == note:
-                current_note_on_message = mido.Message(
-                    'note_on',
-                    time=int(current_start_time),
-                    channel=current_channel
-                    if current_note.channel is None else current_note.channel,
-                    note=current_note.degree,
-                    velocity=current_note.volume)
-                current_note_off_message = mido.Message(
-                    'note_off',
-                    time=int(current_start_time +
-                             current_note.duration * interval_unit),
-                    channel=current_channel
-                    if current_note.channel is None else current_note.channel,
-                    note=current_note.degree,
-                    velocity=current_note.volume)
-                current_midi.tracks[i].append(current_note_on_message)
-                current_midi.tracks[i].append(current_note_off_message)
-                current_start_time += content_intervals[j] * interval_unit
-            elif current_type == tempo:
-                if current_note.start_time is not None:
-                    if current_note.start_time < 0:
-                        tempo_change_time = 0
-                    else:
-                        tempo_change_time = current_note.start_time * interval_unit
+            current_note_on_message = mido.Message(
+                'note_on',
+                time=int(current_start_time),
+                channel=current_channel
+                if current_note.channel is None else current_note.channel,
+                note=current_note.degree,
+                velocity=current_note.volume)
+            current_note_off_message = mido.Message(
+                'note_off',
+                time=int(current_start_time +
+                         current_note.duration * interval_unit),
+                channel=current_channel
+                if current_note.channel is None else current_note.channel,
+                note=current_note.degree,
+                velocity=current_note.volume)
+            current_midi.tracks[i].append(current_note_on_message)
+            current_midi.tracks[i].append(current_note_off_message)
+            current_start_time += content_intervals[j] * interval_unit
+        for each in content.tempos:
+            if each.start_time is not None:
+                if each.start_time < 0:
+                    tempo_change_time = 0
                 else:
-                    tempo_change_time = current_start_time
-                current_midi.tracks[0].append(
-                    mido.MetaMessage('set_tempo',
-                                     time=int(tempo_change_time),
-                                     tempo=mido.bpm2tempo(current_note.bpm)))
-            elif current_type == pitch_bend:
-                if current_note.start_time is not None:
-                    if current_note.start_time < 0:
-                        pitch_bend_time = 0
-                    else:
-                        pitch_bend_time = current_note.start_time * interval_unit
-                else:
-                    pitch_bend_time = current_start_time
-                pitch_bend_track = i if current_note.track is None else current_note.track
-                pitch_bend_channel = current_channel if current_note.channel is None else current_note.channel
-                current_midi.tracks[
-                    pitch_bend_track if not is_track_type else 0].append(
-                        mido.Message('pitchwheel',
-                                     time=int(pitch_bend_time),
-                                     channel=pitch_bend_channel,
-                                     pitch=current_note.value))
+                    tempo_change_time = each.start_time * interval_unit
+            current_midi.tracks[0].append(
+                mido.MetaMessage('set_tempo',
+                                 time=int(tempo_change_time),
+                                 tempo=mido.bpm2tempo(each.bpm)))
+        for each in content.pitch_bends:
+            if each.start_time < 0:
+                pitch_bend_time = 0
+            else:
+                pitch_bend_time = each.start_time * interval_unit
+            pitch_bend_track = i if each.track is None else each.track
+            pitch_bend_channel = current_channel if each.channel is None else each.channel
+            current_midi.tracks[
+                pitch_bend_track if not is_track_type else 0].append(
+                    mido.Message('pitchwheel',
+                                 time=int(pitch_bend_time),
+                                 channel=pitch_bend_channel,
+                                 pitch=each.value))
 
     if not nomsg:
         if current_chord.other_messages:
