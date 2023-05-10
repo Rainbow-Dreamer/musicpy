@@ -2196,6 +2196,17 @@ class chord:
                                          current_rhythm=current_rhythm,
                                          set_duration=set_duration)
 
+    def fix_length(self, n, cut_mode=0):
+        current_bar = self.bars(mode=0 if cut_mode == 0 else 2)
+        if current_bar < n:
+            extra = n - current_bar
+            result = self | extra
+        elif current_bar > n:
+            result = self.cut(0, n, mode=cut_mode)
+        else:
+            result = copy(self)
+        return result
+
 
 class scale:
     '''
