@@ -3744,11 +3744,11 @@ class piece:
                                        start_time=start_time,
                                        audio_mode=audio_mode)
 
-    def cut(self, ind1=0, ind2=None, correct=False):
+    def cut(self, ind1=0, ind2=None, correct=False, mode=0):
         merged_result, temp_bpm, start_time = self.merge()
         if ind1 < 0:
             ind1 = 0
-        result = merged_result.cut(ind1, ind2, start_time)
+        result = merged_result.cut(ind1, ind2, start_time, mode=mode)
         offset = ind1
         temp = copy(self)
         start_time -= ind1
@@ -3793,7 +3793,7 @@ class piece:
         temp.reset_track([*range(len(temp.tracks))])
         return temp
 
-    def cut_time(self, time1=0, time2=None, bpm=None, start_time=0):
+    def cut_time(self, time1=0, time2=None, bpm=None, start_time=0, mode=0):
         temp = copy(self)
         temp.normalize_tempo()
         if bpm is not None:
@@ -3803,7 +3803,7 @@ class piece:
         bar_left = time1 / ((60 / temp_bpm) * 4)
         bar_right = time2 / (
             (60 / temp_bpm) * 4) if time2 is not None else temp.bars()
-        result = temp.cut(bar_left, bar_right)
+        result = temp.cut(bar_left, bar_right, mode=mode)
         return result
 
     def get_bar(self, n):
