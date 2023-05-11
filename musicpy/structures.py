@@ -226,14 +226,17 @@ class chord:
             for i in range(1, len(notes)):
                 last_note = notels[i - 1]
                 current_note = notes[i]
-                current = note(name=current_note.name,
-                               num=last_note.num,
-                               duration=current_note.duration,
-                               volume=current_note.volume,
-                               channel=current_note.channel)
-                if current.get_number() <= last_note.get_number():
-                    current.num += 1
-                notels.append(current)
+                if isinstance(current_note, note):
+                    current = note(name=current_note.name,
+                                   num=last_note.num,
+                                   duration=current_note.duration,
+                                   volume=current_note.volume,
+                                   channel=current_note.channel)
+                    if current.get_number() <= last_note.get_number():
+                        current.num += 1
+                    notels.append(current)
+                else:
+                    notels.append(current_note)
             notes = notels
         self.notes = notes
         # interval between each two notes one-by-one
@@ -5864,6 +5867,7 @@ def _read_notes(note_ls,
             continue
         if isinstance(each, note):
             notes_result.append(each)
+            intervals.append(default_interval)
             last_non_num_note = notes_result[-1]
         elif isinstance(each, rest):
             if not notes_result:
@@ -5911,6 +5915,7 @@ def _read_notes(note_ls,
                     has_same_time=has_same_time)
         else:
             notes_result.append(each)
+            intervals.append(default_interval)
     if len(intervals) != len(notes_result):
         intervals = []
     return notes_result, intervals, start_time
