@@ -116,49 +116,33 @@ def piece_to_event_list(current_chord, set_instrument=False):
         current_channel = channels[i]
         current_start_time = current_chord.start_times[i]
         for j, current in enumerate(each.notes):
-            if isinstance(current, tempo):
-                if current.start_time is not None:
-                    current_time = bar_to_real_time(
-                        current.start_time, current_chord.bpm, 1) / 1000
-                else:
-                    current_time = bar_to_real_time(
-                        current_start_time + sum(each.interval[:j]),
-                        current_chord.bpm, 1) / 1000
-                event_list.append(
-                    midi_event(value=current.bpm,
-                               time=current_time,
-                               mode=4,
-                               track=i))
-            elif isinstance(current, pitch_bend):
-                if current.start_time is not None:
-                    current_time = bar_to_real_time(
-                        current.start_time, current_chord.bpm, 1) / 1000
-                else:
-                    current_time = bar_to_real_time(
-                        current_start_time + sum(each.interval[:j]),
-                        current_chord.bpm, 1) / 1000
-                event_list.append(
-                    midi_event(value=current,
-                               time=current_time,
-                               mode=3,
-                               track=i))
-            elif isinstance(current, note):
-                current_on_time = current_start_time + sum(each.interval[:j])
-                current_off_time = current_on_time + current.duration
-                event_list.append(
-                    midi_event(value=current,
-                               time=bar_to_real_time(current_on_time,
-                                                     current_chord.bpm, 1) /
-                               1000,
-                               mode=0,
-                               track=i))
-                event_list.append(
-                    midi_event(value=current,
-                               time=bar_to_real_time(current_off_time,
-                                                     current_chord.bpm, 1) /
-                               1000,
-                               mode=1,
-                               track=i))
+            current_on_time = current_start_time + sum(each.interval[:j])
+            current_off_time = current_on_time + current.duration
+            event_list.append(
+                midi_event(value=current,
+                           time=bar_to_real_time(current_on_time,
+                                                 current_chord.bpm, 1) / 1000,
+                           mode=0,
+                           track=i))
+            event_list.append(
+                midi_event(value=current,
+                           time=bar_to_real_time(current_off_time,
+                                                 current_chord.bpm, 1) / 1000,
+                           mode=1,
+                           track=i))
+        for j, current in enumerate(each.tempos):
+            current_time = bar_to_real_time(current.start_time,
+                                            current_chord.bpm, 1) / 1000
+            event_list.append(
+                midi_event(value=current.bpm,
+                           time=current_time,
+                           mode=4,
+                           track=i))
+        for j, current in enumerate(each.pitch_bends):
+            current_time = bar_to_real_time(current.start_time,
+                                            current_chord.bpm, 1) / 1000
+            event_list.append(
+                midi_event(value=current, time=current_time, mode=3, track=i))
 
     event_list.sort(key=lambda s: s.time)
     return event_list

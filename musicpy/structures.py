@@ -1593,17 +1593,17 @@ class chord:
 
     def retrograde(self):
         temp = self.copy()
-        tempo_changes = temp.split(tempo)
+        tempo_changes = temp.tempos
         if tempo_changes:
             temp.normalize_tempo(tempo_changes[0].bpm)
         result = temp.reverse()
         return result
 
     def pitch_inversion(self):
-        pitch_bend_changes = self.split(pitch_bend, get_time=True)
+        pitch_bend_changes = self.pitch_bends
         temp = self.copy()
         temp.clear_pitch_bend('all')
-        tempo_changes = temp.split(tempo)
+        tempo_changes = temp.tempos
         if tempo_changes:
             temp.normalize_tempo(tempo_changes[0].bpm)
         volumes = temp.get_volume()
@@ -1682,10 +1682,7 @@ class chord:
         for i in range(len(other_types_chord.notes)):
             each = other_types_chord.notes[i]
             current_start_time = sum(other_types_chord.interval[:i])
-            if isinstance(each, (pitch_bend, pan, volume)):
-                each.start_time = current_start_time
-            else:
-                each.start_time = current_start_time
+            each.start_time = current_start_time
         del other_types_chord[0]
         for each in other_types_chord.notes:
             if isinstance(each, pitch_bend):
