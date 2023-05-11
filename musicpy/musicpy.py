@@ -1897,18 +1897,14 @@ def write_json(current_chord,
                start_time=None,
                filename='untitled.json',
                instrument=None,
-               i=None,
-               msg=None,
-               nomsg=False):
+               i=None):
     if i is not None:
         instrument = i
-    is_track_type = False
     if isinstance(current_chord, note):
         current_chord = chord([current_chord])
     elif isinstance(current_chord, list):
         current_chord = concat(current_chord, '|')
     if isinstance(current_chord, chord):
-        is_track_type = True
         if instrument is None:
             instrument = 1
         current_chord = P(
@@ -1921,16 +1917,8 @@ def write_json(current_chord,
             ],
             other_messages=current_chord.other_messages)
     elif isinstance(current_chord, track):
-        is_track_type = True
-        if hasattr(current_chord, 'other_messages'):
-            msg = current_chord.other_messages
-        else:
-            msg = current_chord.content.other_messages
         current_chord = build(current_chord, bpm=current_chord.bpm)
     elif isinstance(current_chord, drum):
-        is_track_type = True
-        if hasattr(current_chord, 'other_messages'):
-            msg = current_chord.other_messages
         current_chord = P(tracks=[current_chord.notes],
                           instruments=[current_chord.instrument],
                           bpm=bpm,
@@ -1941,12 +1929,6 @@ def write_json(current_chord,
                           channels=[9])
     else:
         current_chord = copy(current_chord)
-    track_number, start_times, instruments, bpm, tracks_contents, track_names, channels, pan_msg, volume_msg = \
-    current_chord.track_number, current_chord.start_times, current_chord.instruments, current_chord.bpm, current_chord.tracks, current_chord.track_names, current_chord.channels, current_chord.pan, current_chord.volume
-    instruments = [
-        i if isinstance(i, int) else database.INSTRUMENTS[i]
-        for i in instruments
-    ]
     result = current_chord.__dict__
     result['tracks'] = [i.__dict__ for i in result['tracks']]
     for j in result['tracks']:
