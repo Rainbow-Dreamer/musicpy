@@ -1091,13 +1091,12 @@ class chord:
         ]
 
     def add(self, note1=None, mode='after', start=0, duration=1 / 4):
-        if len(self) == 0:
+        if not self.notes and not self.tempos and not self.pitch_bends:
             result = copy(note1)
-            if start != 0:
-                result.start_time += start
+            result.start_time += start
             return result
         temp = copy(self)
-        if len(note1) == 0:
+        if not note1.notes and not note1.tempos and not note1.pitch_bends:
             return temp
         if mode == 'tail':
             note1 = copy(note1)
@@ -1117,30 +1116,38 @@ class chord:
                 note1 = chord(note1)
             # calculate the absolute distances of all of the notes of the chord to add and self,
             # and then sort them, make differences between each two distances
-            distance = []
-            intervals1 = temp.interval
-            intervals2 = note1.interval
-            current_start_time = min(temp.start_time, note1.start_time + start)
-            start += (note1.start_time - temp.start_time)
-            if start != 0:
-                note1.notes.insert(0, temp.notes[0])
-                intervals2.insert(0, start)
-            counter = 0
-            for i in range(len(intervals1)):
-                distance.append([counter, temp.notes[i]])
-                counter += intervals1[i]
-            counter = 0
-            for j in range(len(intervals2)):
-                if not (j == 0 and start != 0):
-                    distance.append([counter, note1.notes[j]])
-                counter += intervals2[j]
-            distance.sort(key=lambda s: s[0])
-            new_notes = [each[1] for each in distance]
-            new_interval = [each[0] for each in distance]
-            new_interval = [
-                new_interval[i] - new_interval[i - 1]
-                for i in range(1, len(new_interval))
-            ] + [distance[-1][1].duration]
+            if temp.notes:
+                distance = []
+                intervals1 = temp.interval
+                intervals2 = note1.interval
+                current_start_time = min(temp.start_time,
+                                         note1.start_time + start)
+                start += (note1.start_time - temp.start_time)
+                if start != 0:
+                    note1.notes.insert(0, temp.notes[0])
+                    intervals2.insert(0, start)
+                counter = 0
+                for i in range(len(intervals1)):
+                    distance.append([counter, temp.notes[i]])
+                    counter += intervals1[i]
+                counter = 0
+                for j in range(len(intervals2)):
+                    if not (j == 0 and start != 0):
+                        distance.append([counter, note1.notes[j]])
+                    counter += intervals2[j]
+                distance.sort(key=lambda s: s[0])
+                new_notes = [each[1] for each in distance]
+                new_interval = [each[0] for each in distance]
+                new_interval = [
+                    new_interval[i] - new_interval[i - 1]
+                    for i in range(1, len(new_interval))
+                ] + [distance[-1][1].duration]
+            else:
+                new_notes = note1.notes
+                new_interval = note1.interval
+                temp.start_time += start
+                current_start_time = min(temp.start_time,
+                                         note1.start_time + start)
             return chord(new_notes,
                          interval=new_interval,
                          start_time=current_start_time,
@@ -1149,7 +1156,7 @@ class chord:
                          tempos=temp.tempos + note1.tempos,
                          pitch_bends=temp.pitch_bends + note1.pitch_bends)
         elif mode == 'after':
-            if self.interval[-1] == 0:
+            if self.interval and self.interval[-1] == 0:
                 return (self.rest(0) | (start + note1.start_time)).add(
                     note1, mode='tail')
             else:
@@ -1623,7 +1630,7 @@ class chord:
         if start_time > 0:
             self.notes.insert(0, note('C', 5, duration=0))
             self.interval.insert(0, start_time)
-        tempo_changes = self.tempos
+        tempo_changes = copy(self.tempos)
         tempo_changes.insert(0, tempo(bpm, 0))
         self.clear_tempo()
         tempo_changes.sort(key=lambda s: s.start_time)
@@ -1658,7 +1665,9 @@ class chord:
             for i in range(len(other_types) - 1)
         ]
         other_types_interval.append(0)
-        other_types_chord = chord(other_types, interval=other_types_interval)
+        other_types_chord = chord([])
+        other_types_chord.notes = other_types
+        other_types_chord.interval = other_types_interval
         _process_normalize_tempo(other_types_chord,
                                  tempo_changes_ranges,
                                  bpm,
@@ -2142,6 +2151,9 @@ class chord:
         else:
             result = copy(self)
         return result
+
+    def is_empty(self):
+        return not self.notes and not self.tempos and not self.pitch_bends and not self.other_messages
 
 
 class scale:
@@ -3584,11 +3596,17 @@ class piece:
         new_start_times = [i if i >= 0 else 0 for i in new_start_times]
         new_track_notes = [[] for k in range(length)]
         new_track_inds = [[] for k in range(length)]
+        new_track_tempos = [[] for k in range(length)]
+        new_track_pitch_bends = [[] for k in range(length)]
         whole_length = len(first_track)
         for j in range(whole_length):
             current_note = first_track.notes[j]
             new_track_notes[current_note.track_num].append(current_note)
             new_track_inds[current_note.track_num].append(j)
+        for i in first_track.tempos:
+            new_track_tempos[i.track_num].append(i)
+        for i in first_track.pitch_bends:
+            new_track_pitch_bends[i.track_num].append(i)
         whole_interval = first_track.interval
         new_track_intervals = [[
             sum(whole_interval[inds[i]:inds[i + 1]])
@@ -3598,20 +3616,21 @@ class piece:
             if new_track_inds[i]:
                 new_track_intervals[i].append(
                     sum(whole_interval[new_track_inds[i][-1]:]))
-
-        new_tracks = [
-            chord(new_track_notes[available_tracks_inds[i]],
-                  interval=new_track_intervals[available_tracks_inds[i]],
-                  other_messages=available_tracks_messages[i])
-            for i in range(len(available_tracks_inds))
-        ]
-        for j in range(len(available_tracks_inds)):
-            new_tracks[j].track_ind = available_tracks_inds[j]
-        for each in new_tracks:
-            each.interval = [
+        new_tracks = []
+        for i in range(len(available_tracks_inds)):
+            current_track_ind = available_tracks_inds[i]
+            current_track = chord(
+                new_track_notes[current_track_ind],
+                interval=new_track_intervals[current_track_ind],
+                tempos=new_track_tempos[current_track_ind],
+                pitch_bends=new_track_pitch_bends[current_track_ind],
+                other_messages=available_tracks_messages[i])
+            current_track.track_ind = current_track_ind
+            current_track.interval = [
                 int(i) if isinstance(i, float) and i.is_integer() else i
-                for i in each.interval
+                for i in current_track.interval
             ]
+            new_tracks.append(current_track)
         self.tracks = new_tracks
         self.start_times = [
             int(i) if isinstance(i, float) and i.is_integer() else i

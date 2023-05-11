@@ -339,7 +339,7 @@ def read(name,
             split_channels = False
         elif current_type == 2:
             split_channels = False
-    changes = []
+    changes = chord([])
     if not split_channels:
         changes_track_ind = [
             i for i, each in enumerate(whole_tracks)
@@ -544,11 +544,14 @@ def read(name,
             for i in range(len(current_track_names)):
                 result_piece.tracks[i].other_messages.append(
                     current_track_names[i])
-    if current_type == 1 and changes:
+    if current_type == 1 and not changes.is_empty():
         if result_piece.tracks:
-            result_piece.tracks[0].notes.extend(changes.notes)
-            result_piece.tracks[0].interval.extend(changes.interval)
-            result_piece.tracks[0].other_messages[0:0] = changes.other_messages
+            first_track = result_piece.tracks[0]
+            first_track.notes.extend(changes.notes)
+            first_track.interval.extend(changes.interval)
+            first_track.tempos.extend(changes.tempos)
+            first_track.pitch_bends.extend(changes.pitch_bends)
+            first_track.other_messages[0:0] = changes.other_messages
         result_piece.other_messages[0:0] = changes.other_messages
 
     if clear_other_channel_msg:
