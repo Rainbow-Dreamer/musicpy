@@ -661,11 +661,12 @@ def _midi_to_chord(current_track,
                 current_track_ind = track_channels.index(current_msg_channel)
             else:
                 current_track_ind = track_ind
-            current_pitch_bend = pitch_bend(current_msg.pitch,
-                                            current_time / interval_unit,
+            current_pitch_bend = pitch_bend(value=current_msg.pitch,
+                                            start_time=current_time /
+                                            interval_unit,
+                                            mode='values',
                                             channel=current_msg_channel,
-                                            track=current_track_ind,
-                                            mode='values')
+                                            track=current_track_ind)
             if add_track_num:
                 current_pitch_bend.track_num = current_track_ind
             pitch_bend_list.append(current_pitch_bend)
@@ -1038,10 +1039,8 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
         else:
             current_track_names = track_names_msg
         track_names_list = [i.name for i in current_track_names]
-    rename_track_names = False
     if (not track_names_list) or (len(track_names_list) != channels_num):
         track_names_list = [f'Channel {i+1}' for i in range(channels_num)]
-        rename_track_names = True
     if not has_track_num:
         for each in current_chord.notes:
             each.track_num = channels_list.index(

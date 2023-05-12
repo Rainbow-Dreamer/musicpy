@@ -612,8 +612,8 @@ class chord:
             return bars_length
 
     def clear_pitch_bend(self, value='all', cond=None):
-        length = len(self)
         pitch_bends = self.pitch_bends
+        length = len(pitch_bends)
         if cond is None:
             if value == 'all':
                 self.pitch_bends.clear()
@@ -630,8 +630,8 @@ class chord:
         if cond is None:
             self.tempos.clear()
         else:
-            length = len(self)
             tempos = self.tempos
+            length = len(tempos)
             inds = [i for i in range(length) if not cond(tempos[i])]
             self.tempos = [tempos[k] for k in inds]
 
@@ -1602,7 +1602,7 @@ class chord:
     def pitch_inversion(self):
         pitch_bend_changes = self.pitch_bends
         temp = self.copy()
-        temp.clear_pitch_bend('all')
+        temp.clear_pitch_bend()
         tempo_changes = temp.tempos
         if tempo_changes:
             temp.normalize_tempo(tempo_changes[0].bpm)
@@ -1634,7 +1634,7 @@ class chord:
             self.notes.insert(0, note('C', 5, duration=0))
             self.interval.insert(0, start_time)
         tempo_changes = copy(self.tempos)
-        tempo_changes.insert(0, tempo(bpm, 0))
+        tempo_changes.insert(0, tempo(bpm=bpm, start_time=0))
         self.clear_tempo()
         tempo_changes.sort(key=lambda s: s.start_time)
         new_tempo_changes = [tempo_changes[0]]
@@ -1653,7 +1653,7 @@ class chord:
         tempo_changes_ranges.append(
             (new_tempo_changes[-1].start_time, self.bars(mode=1),
              new_tempo_changes[-1].bpm))
-        pitch_bend_msg = self.pitch_bends
+        pitch_bend_msg = copy(self.pitch_bends)
         self.clear_pitch_bend()
         _process_normalize_tempo(self, tempo_changes_ranges, bpm)
         other_types = pitch_bend_msg + self.other_messages
@@ -1662,7 +1662,7 @@ class chord:
         if volume_msg:
             other_types += volume_msg
         other_types.sort(key=lambda s: s.start_time)
-        other_types.insert(0, pitch_bend(0, start_time=0))
+        other_types.insert(0, pitch_bend(value=0, start_time=0))
         other_types_interval = [
             other_types[i + 1].start_time - other_types[i].start_time
             for i in range(len(other_types) - 1)
@@ -3299,33 +3299,39 @@ class piece:
             for i in range(len(self.tracks)):
                 current_channel = self.channels[
                     i] if self.channels is not None else i
-                self.tracks[i].pitch_bends.append(
-                    chord([
-                        pitch_bend(value, start_time, current_channel, track,
-                                   mode)
-                    ]))
+                current_pitch_bend = pitch_bend(value=value,
+                                                start_time=start_time,
+                                                mode=mode,
+                                                channel=current_channel,
+                                                track=track)
+                self.tracks[i].pitch_bends.append(current_pitch_bend)
         else:
             current_channel = self.channels[
                 channel] if self.channels is not None else channel
             if ind is not None:
                 self.tracks[channel].pitch_bends.insert(
                     ind,
-                    pitch_bend(value, start_time, current_channel, track,
-                               mode))
+                    pitch_bend(value=value,
+                               start_time=start_time,
+                               mode=mode,
+                               channel=current_channel,
+                               track=track))
             else:
                 self.tracks[channel].pitch_bends.append(
-                    chord([
-                        pitch_bend(value, start_time, current_channel, track,
-                                   mode)
-                    ]))
+                    pitch_bend(value=value,
+                               start_time=start_time,
+                               mode=mode,
+                               channel=current_channel,
+                               track=track))
 
     def add_tempo_change(self, bpm, start_time=None, ind=None, track_ind=None):
         if ind is not None and track_ind is not None:
-            self.tracks[track_ind].tempos.insert(ind, tempo(bpm, start_time))
+            self.tracks[track_ind].tempos.insert(
+                ind, tempo(bpm=bpm, start_time=start_time))
         else:
-            self.tracks[0].tempos.append(chord([tempo(bpm, start_time)]))
+            self.tracks[0].tempos.append(tempo(bpm=bpm, start_time=start_time))
 
-    def clear_pitch_bend(self, ind='all', value=0, cond=None):
+    def clear_pitch_bend(self, ind='all', value='all', cond=None):
         if ind == 'all':
             for each in self.tracks:
                 each.clear_pitch_bend(value, cond)
@@ -3541,7 +3547,12 @@ class piece:
         all_tracks = self.tracks
         length = len(all_tracks)
         for k in range(length):
-            for each in all_tracks[k]:
+            current_track = all_tracks[k]
+            for each in current_track.notes:
+                each.track_num = k
+            for each in current_track.tempos:
+                each.track_num = k
+            for each in current_track.pitch_bends:
                 each.track_num = k
 
     def reconstruct(self,
@@ -4071,9 +4082,6 @@ class tempo:
     def __init__(self, bpm, start_time=None, channel=None, track=None):
         self.bpm = bpm
         self.start_time = start_time
-        self.degree = 0
-        self.duration = 0
-        self.volume = 100
         self.channel = channel
         self.track = track
 
@@ -4125,9 +4133,6 @@ class pitch_bend:
             self.value = int(self.value * 40.96)
         elif self.mode == 'semitones':
             self.value = int(self.value * 4096)
-        self.degree = 0
-        self.duration = 0
-        self.volume = 100
 
     def __repr__(self):
         attributes = ['value', 'start_time', 'channel', 'track']
@@ -6158,7 +6163,12 @@ def _piece_process_normalize_tempo(self,
     all_tracks = temp.tracks
     length = len(all_tracks)
     for k in range(length):
-        for each in all_tracks[k]:
+        current_track = all_tracks[k]
+        for each in current_track.notes:
+            each.track_num = k
+        for each in current_track.tempos:
+            each.track_num = k
+        for each in current_track.pitch_bends:
             each.track_num = k
 
     first_track_ind = start_time_ls.index(first_track_start_time)
@@ -6218,11 +6228,17 @@ def _piece_process_normalize_tempo(self,
     new_track_notes = [[] for k in range(length)]
     new_track_inds = [[] for k in range(length)]
     new_track_intervals = [[] for k in range(length)]
+    new_track_tempos = [[] for k in range(length)]
+    new_track_pitch_bends = [[] for k in range(length)]
     whole_length = len(first_track)
     for j in range(whole_length):
         current_note = first_track.notes[j]
         new_track_notes[current_note.track_num].append(current_note)
         new_track_inds[current_note.track_num].append(j)
+    for i in first_track.tempos:
+        new_track_tempos[i.track_num].append(i)
+    for i in first_track.pitch_bends:
+        new_track_pitch_bends[i.track_num].append(i)
     whole_interval = first_track.interval
     new_track_intervals = [[
         sum(whole_interval[inds[i]:inds[i + 1]]) for i in range(len(inds) - 1)
@@ -6231,13 +6247,18 @@ def _piece_process_normalize_tempo(self,
         if new_track_inds[i]:
             new_track_intervals[i].append(
                 sum(whole_interval[new_track_inds[i][-1]:]))
-    new_tracks = [
-        chord(new_track_notes[k],
-              interval=new_track_intervals[k],
-              other_messages=[
-                  each for each in new_other_messages if each.track == k
-              ]) for k in range(length)
-    ]
+    new_tracks = []
+    for k in range(length):
+        current_track_ind = k
+        current_track = chord(
+            new_track_notes[current_track_ind],
+            interval=new_track_intervals[current_track_ind],
+            tempos=new_track_tempos[current_track_ind],
+            pitch_bends=new_track_pitch_bends[current_track_ind],
+            other_messages=[
+                each for each in new_other_messages if each.track == k
+            ])
+        new_tracks.append(current_track)
     self.tracks = new_tracks
     self.start_times = new_start_times
 
