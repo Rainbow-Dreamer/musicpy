@@ -875,11 +875,10 @@ def write(current_chord,
             current_midi.tracks[i].append(current_note_off_message)
             current_start_time += content_intervals[j] * interval_unit
         for each in content.tempos:
-            if each.start_time is not None:
-                if each.start_time < 0:
-                    tempo_change_time = 0
-                else:
-                    tempo_change_time = each.start_time * interval_unit
+            if each.start_time < 0:
+                tempo_change_time = 0
+            else:
+                tempo_change_time = each.start_time * interval_unit
             current_midi.tracks[0].append(
                 mido.MetaMessage('set_tempo',
                                  time=int(tempo_change_time),

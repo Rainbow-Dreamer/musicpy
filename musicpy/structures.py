@@ -3290,11 +3290,10 @@ class piece:
 
     def add_pitch_bend(self,
                        value,
-                       start_time=0,
+                       start_time,
                        channel='all',
                        track=0,
-                       mode='cents',
-                       ind=None):
+                       mode='cents'):
         if channel == 'all':
             for i in range(len(self.tracks)):
                 current_channel = self.channels[
@@ -3308,28 +3307,16 @@ class piece:
         else:
             current_channel = self.channels[
                 channel] if self.channels is not None else channel
-            if ind is not None:
-                self.tracks[channel].pitch_bends.insert(
-                    ind,
-                    pitch_bend(value=value,
-                               start_time=start_time,
-                               mode=mode,
-                               channel=current_channel,
-                               track=track))
-            else:
-                self.tracks[channel].pitch_bends.append(
-                    pitch_bend(value=value,
-                               start_time=start_time,
-                               mode=mode,
-                               channel=current_channel,
-                               track=track))
+            self.tracks[channel].pitch_bends.append(
+                pitch_bend(value=value,
+                           start_time=start_time,
+                           mode=mode,
+                           channel=current_channel,
+                           track=track))
 
-    def add_tempo_change(self, bpm, start_time=None, ind=None, track_ind=None):
-        if ind is not None and track_ind is not None:
-            self.tracks[track_ind].tempos.insert(
-                ind, tempo(bpm=bpm, start_time=start_time))
-        else:
-            self.tracks[0].tempos.append(tempo(bpm=bpm, start_time=start_time))
+    def add_tempo_change(self, bpm, start_time, track_ind=0):
+        self.tracks[track_ind].tempos.append(
+            tempo(bpm=bpm, start_time=start_time))
 
     def clear_pitch_bend(self, ind='all', value='all', cond=None):
         if ind == 'all':
@@ -3708,7 +3695,10 @@ class piece:
         start_time -= ind1
         if start_time < 0:
             start_time = 0
-        temp.reconstruct(result, start_time, offset, correct)
+        temp.reconstruct(track=result,
+                         start_time=start_time,
+                         offset=offset,
+                         correct=correct)
         if ind2 is None:
             ind2 = temp.bars()
         for each in temp.pan:
@@ -3818,15 +3808,13 @@ class piece:
             current_start_time = start_time[i]
             current_track = tracks[i]
             for each in current_track.tempos:
-                if each.start_time is not None:
-                    each.start_time += current_start_time
-                    if each.start_time < 0:
-                        each.start_time = 0
+                each.start_time += current_start_time
+                if each.start_time < 0:
+                    each.start_time = 0
             for each in current_track.pitch_bends:
-                if each.start_time is not None:
-                    each.start_time += current_start_time
-                    if each.start_time < 0:
-                        each.start_time = 0
+                each.start_time += current_start_time
+                if each.start_time < 0:
+                    each.start_time = 0
             if msg:
                 for each in current_track.other_messages:
                     each.start_time += current_start_time
@@ -4079,7 +4067,7 @@ class tempo:
     then it also works for the piece.
     '''
 
-    def __init__(self, bpm, start_time=None, channel=None, track=None):
+    def __init__(self, bpm, start_time=0, channel=None, track=None):
         self.bpm = bpm
         self.start_time = start_time
         self.channel = channel
@@ -4110,7 +4098,7 @@ class pitch_bend:
 
     def __init__(self,
                  value,
-                 start_time=None,
+                 start_time=0,
                  mode='cents',
                  channel=None,
                  track=None):

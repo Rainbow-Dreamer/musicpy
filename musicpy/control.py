@@ -17,7 +17,7 @@ def real_time_to_bar(time, bpm):
 
 class midi_event:
 
-    def __init__(self, value, time, mode=0, track=0, channel=None):
+    def __init__(self, value, start_time, mode=0, track=0, channel=None):
         '''
         mode:
         0: note on
@@ -29,7 +29,7 @@ class midi_event:
         6: program change
         '''
         self.value = value
-        self.time = time
+        self.start_time = start_time
         self.mode = mode
         self.track = track
         self.channel = channel
@@ -46,7 +46,7 @@ def piece_to_event_list(current_chord, set_instrument=False):
     current_chord.normalize_tempo()
     event_list = []
     tempo_change_event = midi_event(value=current_chord.bpm,
-                                    time=0,
+                                    start_time=0,
                                     mode=4,
                                     track=0)
     event_list.append(tempo_change_event)
@@ -57,7 +57,7 @@ def piece_to_event_list(current_chord, set_instrument=False):
             current_instrument = current_chord.instruments[i] - 1
             event_list.append(
                 midi_event(value=current_instrument,
-                           time=0,
+                           start_time=0,
                            mode=2,
                            track=i,
                            channel=current_channel))
@@ -66,15 +66,15 @@ def piece_to_event_list(current_chord, set_instrument=False):
         if each.type == 'control_change':
             event_list.append(
                 midi_event(value=each,
-                           time=bar_to_real_time(each.start_time,
-                                                 current_chord.bpm, 1) / 1000,
+                           start_time=bar_to_real_time(
+                               each.start_time, current_chord.bpm, 1) / 1000,
                            mode=5,
                            track=each.track))
         elif each.type == 'program_change':
             event_list.append(
                 midi_event(value=each,
-                           time=bar_to_real_time(each.start_time,
-                                                 current_chord.bpm, 1) / 1000,
+                           start_time=bar_to_real_time(
+                               each.start_time, current_chord.bpm, 1) / 1000,
                            mode=6,
                            track=each.track))
 
@@ -82,35 +82,33 @@ def piece_to_event_list(current_chord, set_instrument=False):
         current_channel = channels[i]
         for j in each:
             event_list.append(
-                midi_event(
-                    value=event('control_change',
-                                track=i,
-                                channel=j.channel
-                                if j.channel is not None else current_channel,
-                                start_time=j.start_time,
-                                control=10,
-                                value=j.value),
-                    time=bar_to_real_time(j.start_time, current_chord.bpm, 1) /
-                    1000,
-                    mode=5,
-                    track=i))
+                midi_event(value=event('control_change',
+                                       track=i,
+                                       channel=j.channel if j.channel
+                                       is not None else current_channel,
+                                       start_time=j.start_time,
+                                       control=10,
+                                       value=j.value),
+                           start_time=bar_to_real_time(
+                               j.start_time, current_chord.bpm, 1) / 1000,
+                           mode=5,
+                           track=i))
 
     for i, each in enumerate(current_chord.volume):
         current_channel = channels[i]
         for j in each:
             event_list.append(
-                midi_event(
-                    value=event('control_change',
-                                track=i,
-                                channel=j.channel
-                                if j.channel is not None else current_channel,
-                                start_time=j.start_time,
-                                control=7,
-                                value=j.value),
-                    time=bar_to_real_time(j.start_time, current_chord.bpm, 1) /
-                    1000,
-                    mode=5,
-                    track=i))
+                midi_event(value=event('control_change',
+                                       track=i,
+                                       channel=j.channel if j.channel
+                                       is not None else current_channel,
+                                       start_time=j.start_time,
+                                       control=7,
+                                       value=j.value),
+                           start_time=bar_to_real_time(
+                               j.start_time, current_chord.bpm, 1) / 1000,
+                           mode=5,
+                           track=i))
 
     for i, each in enumerate(current_chord.tracks):
         current_channel = channels[i]
@@ -120,14 +118,14 @@ def piece_to_event_list(current_chord, set_instrument=False):
             current_off_time = current_on_time + current.duration
             event_list.append(
                 midi_event(value=current,
-                           time=bar_to_real_time(current_on_time,
-                                                 current_chord.bpm, 1) / 1000,
+                           start_time=bar_to_real_time(
+                               current_on_time, current_chord.bpm, 1) / 1000,
                            mode=0,
                            track=i))
             event_list.append(
                 midi_event(value=current,
-                           time=bar_to_real_time(current_off_time,
-                                                 current_chord.bpm, 1) / 1000,
+                           start_time=bar_to_real_time(
+                               current_off_time, current_chord.bpm, 1) / 1000,
                            mode=1,
                            track=i))
         for j, current in enumerate(each.tempos):
@@ -135,16 +133,19 @@ def piece_to_event_list(current_chord, set_instrument=False):
                                             current_chord.bpm, 1) / 1000
             event_list.append(
                 midi_event(value=current.bpm,
-                           time=current_time,
+                           start_time=current_time,
                            mode=4,
                            track=i))
         for j, current in enumerate(each.pitch_bends):
             current_time = bar_to_real_time(current.start_time,
                                             current_chord.bpm, 1) / 1000
             event_list.append(
-                midi_event(value=current, time=current_time, mode=3, track=i))
+                midi_event(value=current,
+                           start_time=current_time,
+                           mode=3,
+                           track=i))
 
-    event_list.sort(key=lambda s: s.time)
+    event_list.sort(key=lambda s: s.start_time)
     return event_list
 
 
@@ -196,7 +197,7 @@ def start(current_chord,
     while counter < length:
         past_time = time.time() - start_time
         current_event = event_list[counter]
-        if past_time >= current_event.time:
+        if past_time >= current_event.start_time:
             if print_log:
                 print(current_event, flush=True)
             mode = current_event.mode
