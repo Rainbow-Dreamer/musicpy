@@ -300,17 +300,23 @@ class chord:
         else:
             ind2 = temp.bars(mode=0)
 
-        changes = []
+        new_tempos = []
+        new_pitch_bends = []
+        new_other_messages = []
+        adjust_time = ind1 + start_time - start_offset
         for each in temp.tempos:
-            each.start_time -= (ind1 + start_time - start_offset)
+            each.start_time -= adjust_time
             if 0 <= each.start_time < ind2 - ind1:
-                changes.append(each)
+                new_tempos.append(each)
         for each in temp.pitch_bends:
-            each.start_time -= (ind1 + start_time - start_offset)
+            each.start_time -= adjust_time
             if 0 <= each.start_time < ind2 - ind1:
-                changes.append(each)
+                new_pitch_bends.append(each)
+        for each in temp.other_messages:
+            each.start_time -= adjust_time
+            if 0 <= each.start_time < ind2 - ind1:
+                new_other_messages.append(each)
 
-        temp = temp.only_notes()
         current_bar = 0
         notes = temp.notes
         intervals = temp.interval
@@ -333,10 +339,9 @@ class chord:
         if not find_start:
             start_ind = to_ind
         result = temp[start_ind:to_ind]
-        result += chord(changes)
-        result.other_messages = [
-            i for i in result.other_messages if ind1 <= i.start_time < ind2
-        ]
+        result.tempos = new_tempos
+        result.pitch_bends = new_pitch_bends
+        result.other_messages = new_other_messages
         result.start_time = actual_start_time
         if cut_extra_duration:
             current_bar = ind1
@@ -387,78 +392,18 @@ class chord:
                                  time1=time1,
                                  time2=time2,
                                  start_time=start_time,
+                                 normalize_tempo=False,
                                  cut_extra_duration=cut_extra_duration,
                                  cut_extra_interval=cut_extra_interval,
                                  round_duration=round_duration)
-        time1 -= start_time
-        if time1 < 0:
-            return chord([])
-        if time2 is not None:
-            time2 -= start_time
-            if time2 <= 0:
-                return chord([])
-        current_bar = 0
-        notes = self.notes
-        intervals = self.interval
-        length = len(notes)
-        start_ind = 0
-        to_ind = length
-        find_start = False
-        if time1 == 0:
-            find_start = True
-        actual_start_time = 0
-        start_length = (time1 / 4) * bpm / 60
-        for i in range(length):
-            current_bar += intervals[i]
-            current_time = (60 / bpm) * current_bar * 4
-            if (not find_start) and current_time >= time1:
-                start_ind = i + 1
-                find_start = True
-                actual_start_time = current_bar - start_length
-                if time2 is None:
-                    break
-            elif time2 is not None and current_time >= time2:
-                to_ind = i + 1
-                break
-        if not find_start:
-            start_ind = to_ind
-        result = self[start_ind:to_ind]
-        result.start_time = actual_start_time
-        if cut_extra_duration:
-            current_bar = time1
-            new_notes = []
-            new_intervals = []
-            for i in range(len(result.notes)):
-                current_note = result.notes[i]
-                current_interval = result.interval[i]
-                current_duration = current_note.duration
-                new_bar_with_duration = current_bar + current_duration
-                current_time = (60 / bpm) * new_bar_with_duration * 4
-                if current_time > time2:
-                    extra_time = current_time - time2
-                    extra_duration = (extra_time / (60 / bpm)) / 4
-                    current_note.duration -= extra_duration
-                    if round_duration:
-                        current_note.duration = float(
-                            Fraction(
-                                current_note.duration).limit_denominator())
-                    if current_note.duration > 0:
-                        new_notes.append(current_note)
-                        new_intervals.append(current_interval)
-                    else:
-                        if new_intervals:
-                            new_intervals[-1] += current_interval
-                else:
-                    new_notes.append(current_note)
-                    new_intervals.append(current_interval)
-                current_bar += current_interval
-            result.notes = new_notes
-            result.interval = new_intervals
-        if cut_extra_interval:
-            current_bar = result.bars(mode=0)
-            ind2 = mp.real_time_to_bar(time2, bpm)
-            if current_bar > ind2:
-                result.interval[-1] -= (current_bar - ind2)
+        bar_left = time1 / ((60 / bpm) * 4)
+        bar_right = time2 / ((60 / bpm) * 4) if time2 is not None else None
+        result = self.cut(ind1=bar_left,
+                          ind2=bar_right,
+                          start_time=start_time,
+                          cut_extra_duration=cut_extra_duration,
+                          cut_extra_interval=cut_extra_interval,
+                          round_duration=round_duration)
         return result
 
     def last_note_standardize(self):
@@ -1103,8 +1048,15 @@ class chord:
             return temp
         if mode == 'tail':
             note1 = copy(note1)
+            adjust_interval = sum(temp.interval)
             temp.notes += note1.notes
             temp.interval += note1.interval
+            for each in note1.other_messages:
+                each.start_time += adjust_interval
+            for each in note1.tempos:
+                each.start_time += adjust_interval
+            for each in note1.pitch_bends:
+                each.start_time += adjust_interval
             temp.other_messages += note1.other_messages
             temp.tempos += note1.tempos
             temp.pitch_bends += note1.pitch_bends
@@ -1126,6 +1078,8 @@ class chord:
                 current_start_time = min(temp.start_time,
                                          note1.start_time + start)
                 start += (note1.start_time - temp.start_time)
+                if start < 0:
+                    raise ValueError('shift time must be non-negative')
                 if start != 0:
                     note1.notes.insert(0, temp.notes[0])
                     intervals2.insert(0, start)
@@ -1146,11 +1100,19 @@ class chord:
                     for i in range(1, len(new_interval))
                 ] + [distance[-1][1].duration]
             else:
+                if start < 0:
+                    raise ValueError('shift time must be non-negative')
                 new_notes = note1.notes
                 new_interval = note1.interval
                 temp.start_time += start
                 current_start_time = min(temp.start_time,
                                          note1.start_time + start)
+            for each in note1.other_messages:
+                each.start_time += start
+            for each in note1.tempos:
+                each.start_time += start
+            for each in note1.pitch_bends:
+                each.start_time += start
             return chord(new_notes,
                          interval=new_interval,
                          start_time=current_start_time,
@@ -1525,10 +1487,10 @@ class chord:
             yield i
 
     def __getslice__(self, i, j):
-        return chord(self.notes[i:j],
-                     interval=self.interval[i:j],
-                     other_messages=self.other_messages,
-                     start_time=self.start_time)
+        temp = copy(self)
+        temp.notes = temp.notes[i:j]
+        temp.interval = temp.interval[i:j]
+        return temp
 
     def __len__(self):
         return len(self.notes)
