@@ -1072,14 +1072,23 @@ class chord:
             # calculate the absolute distances of all of the notes of the chord to add and self,
             # and then sort them, make differences between each two distances
             if temp.notes:
+                note1_start_time = note1.start_time + start
+                if note1_start_time < 0:
+                    start = temp.start_time - note1_start_time
+                    note1.start_time = temp.start_time + note1_start_time
+                    temp, note1 = note1, temp
+                else:
+                    if note1_start_time < temp.start_time:
+                        start = temp.start_time - note1_start_time
+                        note1.start_time = note1_start_time
+                        temp, note1 = note1, temp
+                    else:
+                        start = note1_start_time - temp.start_time
                 distance = []
                 intervals1 = temp.interval
                 intervals2 = note1.interval
-                current_start_time = min(temp.start_time,
-                                         note1.start_time + start)
-                start += (note1.start_time - temp.start_time)
-                if start < 0:
-                    raise ValueError('shift time must be non-negative')
+                current_start_time = temp.start_time
+
                 if start != 0:
                     note1.notes.insert(0, temp.notes[0])
                     intervals2.insert(0, start)
@@ -1100,13 +1109,9 @@ class chord:
                     for i in range(1, len(new_interval))
                 ] + [distance[-1][1].duration]
             else:
-                if start < 0:
-                    raise ValueError('shift time must be non-negative')
                 new_notes = note1.notes
                 new_interval = note1.interval
-                temp.start_time += start
-                current_start_time = min(temp.start_time,
-                                         note1.start_time + start)
+                current_start_time = note1.start_time + start
             for each in note1.other_messages:
                 each.start_time += start
             for each in note1.tempos:
@@ -3192,12 +3197,12 @@ class piece:
                         temp.append(
                             track(content=chord([]), start_time=start_time))
                 current_track = temp2.tracks[i]
+                shift = temp2.start_times[i] - temp.start_times[current_ind]
                 for each in current_track.tempos:
-                    each.start_time += start_time
+                    each.start_time -= shift
                 for each in current_track.pitch_bends:
-                    each.start_time += start_time
-                current_start_time = temp2.start_times[
-                    i] + start_time - temp.start_times[current_ind]
+                    each.start_time -= shift
+                current_start_time = start_time + shift
                 temp.tracks[current_ind] &= (current_track, current_start_time)
                 if current_start_time < 0:
                     temp.start_times[current_ind] += current_start_time
@@ -3445,7 +3450,14 @@ class piece:
         first_track_ind = sort_tracks_inds[0][0]
         first_track = all_tracks[first_track_ind]
         for i in sort_tracks_inds[1:]:
-            first_track &= (all_tracks[i[0]], i[1] - first_track_start_time)
+            current_track = all_tracks[i[0]]
+            current_start_time = i[1]
+            current_shift = current_start_time - first_track_start_time
+            for k in current_track.tempos:
+                k.start_time -= current_shift
+            for k in current_track.pitch_bends:
+                k.start_time -= current_shift
+            first_track &= (current_track, current_shift)
         first_track.other_messages = temp.other_messages
         if add_pan_volume:
             whole_pan = mp.concat(temp.pan)
@@ -3596,6 +3608,17 @@ class piece:
             int(i) if isinstance(i, float) and i.is_integer() else i
             for i in new_start_times
         ]
+        first_track_ind = self.start_times.index(first_track_start_time)
+        for i, each in enumerate(self.tracks):
+            current_start_time = self.start_times[i]
+            if i != first_track_ind:
+                shift = current_start_time - first_track_start_time
+            else:
+                shift = first_track_start_time
+            for j in each.tempos:
+                j.start_time -= shift
+            for j in each.pitch_bends:
+                j.start_time -= shift
         self.instruments = [self.instruments[k] for k in available_tracks_inds]
         if self.track_names:
             self.track_names = [
@@ -6128,8 +6151,14 @@ def _piece_process_normalize_tempo(self,
     first_track = all_tracks[0]
 
     for i in range(1, length):
-        first_track &= (all_tracks[i],
-                        start_time_ls[i] - first_track_start_time)
+        current_track = all_tracks[i]
+        current_start_time = start_time_ls[i]
+        current_shift = current_start_time - first_track_start_time
+        for k in current_track.tempos:
+            k.start_time -= current_shift
+        for k in current_track.pitch_bends:
+            k.start_time -= current_shift
+        first_track &= (current_track, current_shift)
     first_track.other_messages = other_messages
     if self.pan:
         for k in range(len(self.pan)):
