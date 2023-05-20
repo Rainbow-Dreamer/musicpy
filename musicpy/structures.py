@@ -1044,12 +1044,12 @@ class chord:
             start=0,
             duration=1 / 4,
             adjust_msg=True):
-        if not self.notes and not self.tempos and not self.pitch_bends:
+        if self.is_empty():
             result = copy(note1)
             result.start_time += start
             return result
         temp = copy(self)
-        if not note1.notes and not note1.tempos and not note1.pitch_bends:
+        if note1.is_empty():
             return temp
         if mode == 'tail':
             note1 = copy(note1)
@@ -3050,9 +3050,14 @@ class piece:
         else:
             self.tracks[i].set_volume(self.muted_msg[i])
 
+    def update_msg(self):
+        self.other_messages = mp.concat(
+            [i.other_messages for i in self.tracks], start=[])
+
     def append(self, new_track):
         if not isinstance(new_track, track):
             raise ValueError('must be a track type to be appended')
+        new_track = copy(new_track)
         self.tracks.append(new_track.content)
         self.instruments.append(new_track.instrument)
         self.start_times.append(new_track.start_time)
@@ -3075,32 +3080,38 @@ class piece:
                 self.daw_channels.append(new_track.daw_channel)
             else:
                 self.daw_channels.append(0)
+        self.tracks[-1].reset_track(len(self.tracks) - 1)
+        self.update_msg()
 
-    def insert(self, i, new_track):
+    def insert(self, ind, new_track):
         if not isinstance(new_track, track):
             raise ValueError('must be a track type to be inserted')
-        self.tracks.insert(i, new_track.content)
-        self.instruments.insert(i, new_track.instrument)
-        self.start_times.insert(i, new_track.start_time)
+        new_track = copy(new_track)
+        self.tracks.insert(ind, new_track.content)
+        self.instruments.insert(ind, new_track.instrument)
+        self.start_times.insert(ind, new_track.start_time)
         if self.channels:
             if new_track.channel:
-                self.channels.insert(i, new_track.channel)
+                self.channels.insert(ind, new_track.channel)
             else:
-                self.channels.insert(i, max(self.channels) + 1)
+                self.channels.insert(ind, max(self.channels) + 1)
         if self.track_names:
             if new_track.track_name:
-                self.track_names.insert(i, new_track.track_name)
+                self.track_names.insert(ind, new_track.track_name)
             else:
                 self.track_names.insert(
-                    i, new_track.name if new_track.name is not None else
+                    ind, new_track.name if new_track.name is not None else
                     f'track {self.track_number}')
-        self.pan.insert(i, new_track.pan if new_track.pan else [])
-        self.volume.insert(i, new_track.volume if new_track.volume else [])
+        self.pan.insert(ind, new_track.pan if new_track.pan else [])
+        self.volume.insert(ind, new_track.volume if new_track.volume else [])
         if self.daw_channels:
             if new_track.daw_channel:
-                self.daw_channels.insert(i, new_track.daw_channel)
+                self.daw_channels.insert(ind, new_track.daw_channel)
             else:
-                self.daw_channels.insert(i, 0)
+                self.daw_channels.insert(ind, 0)
+        for k in range(ind, len(self.tracks)):
+            self.tracks[k].reset_track(k)
+        self.update_msg()
 
     def up(self, n=1, mode=0):
         temp = copy(self)
