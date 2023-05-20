@@ -1270,6 +1270,7 @@ def build(*tracks_list, **kwargs):
     volume_msg = []
     daw_channels = []
     remain_list = [1, 0, None, None, [], [], None]
+    other_messages = []
     for each in tracks_list:
         if isinstance(each, track):
             tracks.append(each.content)
@@ -1280,6 +1281,7 @@ def build(*tracks_list, **kwargs):
             pan_msg.append(each.pan if each.pan else [])
             volume_msg.append(each.volume if each.volume else [])
             daw_channels.append(each.daw_channel)
+            other_messages.extend(each.content.other_messages)
         else:
             new_each = each + remain_list[len(each) - 1:]
             tracks.append(new_each[0])
@@ -1290,6 +1292,7 @@ def build(*tracks_list, **kwargs):
             pan_msg.append(new_each[5])
             volume_msg.append(new_each[6])
             daw_channels.append(new_each[7])
+            other_messages.extend(new_each[0].other_messages)
     if any(i is None for i in channels):
         channels = None
     if all(i is None for i in track_names):
@@ -1305,7 +1308,8 @@ def build(*tracks_list, **kwargs):
                channels=channels,
                pan=pan_msg,
                volume=volume_msg,
-               daw_channels=daw_channels)
+               daw_channels=daw_channels,
+               other_messages=other_messages)
     for key, value in kwargs.items():
         setattr(result, key, value)
     return result
