@@ -287,46 +287,39 @@ class chord:
             round_duration=False):
         # get parts of notes between two bars
         temp = copy(self)
-        start_offset = start_time - ind1
-        if start_offset < 0:
-            start_offset = 0
-        ind1 -= start_time
-        if ind1 < 0:
-            ind1 = 0
-        if ind2 is not None:
-            ind2 -= start_time
-            if ind2 <= 0:
-                ind2 = 0
+        find_start = False
+        if ind1 <= start_time:
+            find_start = True
+            actual_start_time = start_time - ind1
         else:
-            ind2 = temp.bars(mode=0)
+            actual_start_time = 0
+        if ind2 is None:
+            ind2 = temp.bars(mode=0, start_time=start_time)
 
         new_tempos = []
         new_pitch_bends = []
         new_other_messages = []
-        adjust_time = ind1 + start_time - start_offset
+        adjust_time = ind1
+        cut_bar_length = ind2 - ind1
         for each in temp.tempos:
             each.start_time -= adjust_time
-            if 0 <= each.start_time < ind2 - ind1:
+            if 0 <= each.start_time < cut_bar_length:
                 new_tempos.append(each)
         for each in temp.pitch_bends:
             each.start_time -= adjust_time
-            if 0 <= each.start_time < ind2 - ind1:
+            if 0 <= each.start_time < cut_bar_length:
                 new_pitch_bends.append(each)
         for each in temp.other_messages:
             each.start_time -= adjust_time
-            if 0 <= each.start_time < ind2 - ind1:
+            if 0 <= each.start_time < cut_bar_length:
                 new_other_messages.append(each)
 
-        current_bar = 0
+        current_bar = start_time
         notes = temp.notes
         intervals = temp.interval
         length = len(notes)
         start_ind = 0
         to_ind = length
-        find_start = False
-        if ind1 == 0:
-            find_start = True
-        actual_start_time = 0
         for i in range(length):
             current_bar += intervals[i]
             if (not find_start) and current_bar >= ind1:
@@ -344,7 +337,7 @@ class chord:
         result.other_messages = new_other_messages
         result.start_time = actual_start_time
         if cut_extra_duration:
-            current_bar = ind1
+            current_bar = result.start_time
             new_notes = []
             new_intervals = []
             for i in range(len(result.notes)):
@@ -352,8 +345,9 @@ class chord:
                 current_interval = result.interval[i]
                 current_duration = current_note.duration
                 new_bar_with_duration = current_bar + current_duration
-                if new_bar_with_duration > ind2:
-                    current_note.duration -= (new_bar_with_duration - ind2)
+                if new_bar_with_duration > cut_bar_length:
+                    current_note.duration -= (new_bar_with_duration -
+                                              cut_bar_length)
                     if round_duration:
                         current_note.duration = float(
                             Fraction(
@@ -371,9 +365,9 @@ class chord:
             result.notes = new_notes
             result.interval = new_intervals
         if cut_extra_interval:
-            current_bar = result.bars(mode=0)
-            if current_bar > ind2:
-                result.interval[-1] -= (current_bar - ind2)
+            current_bar = result.bars(mode=0, start_time=result.start_time)
+            if current_bar > cut_bar_length:
+                result.interval[-1] -= (current_bar - cut_bar_length)
         return result
 
     def cut_time(self,
@@ -2112,13 +2106,14 @@ class chord:
                                          set_duration=set_duration)
 
     def fix_length(self, n, round_duration=False):
-        current_bar = self.bars(mode=2)
+        current_bar = self.bars(mode=2, start_time=self.start_time)
         if current_bar < n:
             extra = n - current_bar
             result = self | extra
         elif current_bar > n:
             result = self.cut(0,
                               n,
+                              start_time=self.start_time,
                               cut_extra_duration=True,
                               cut_extra_interval=True,
                               round_duration=round_duration)
