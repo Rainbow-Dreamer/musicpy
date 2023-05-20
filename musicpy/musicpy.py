@@ -462,7 +462,13 @@ def read(name,
             first_track = all_tracks[0]
             all_track_notes, tempos, first_track_start_time = first_track
             for i in all_tracks[1:]:
-                all_track_notes &= (i[0], i[2] - first_track_start_time)
+                current_track = i[0]
+                current_start_time = i[2]
+                current_shift = current_start_time - first_track_start_time
+                all_track_notes = all_track_notes.add(current_track,
+                                                      start=current_shift,
+                                                      mode='head',
+                                                      adjust_msg=False)
             all_track_notes.other_messages = concat(
                 [each[0].other_messages for each in all_tracks])
             all_track_notes.pan_list = concat(

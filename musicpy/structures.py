@@ -1038,7 +1038,12 @@ class chord:
             for i in result
         ]
 
-    def add(self, note1=None, mode='after', start=0, duration=1 / 4):
+    def add(self,
+            note1=None,
+            mode='after',
+            start=0,
+            duration=1 / 4,
+            adjust_msg=True):
         if not self.notes and not self.tempos and not self.pitch_bends:
             result = copy(note1)
             result.start_time += start
@@ -1051,12 +1056,13 @@ class chord:
             adjust_interval = sum(temp.interval)
             temp.notes += note1.notes
             temp.interval += note1.interval
-            for each in note1.other_messages:
-                each.start_time += adjust_interval
-            for each in note1.tempos:
-                each.start_time += adjust_interval
-            for each in note1.pitch_bends:
-                each.start_time += adjust_interval
+            if adjust_msg:
+                for each in note1.other_messages:
+                    each.start_time += adjust_interval
+                for each in note1.tempos:
+                    each.start_time += adjust_interval
+                for each in note1.pitch_bends:
+                    each.start_time += adjust_interval
             temp.other_messages += note1.other_messages
             temp.tempos += note1.tempos
             temp.pitch_bends += note1.pitch_bends
@@ -1112,12 +1118,13 @@ class chord:
                 new_notes = note1.notes
                 new_interval = note1.interval
                 current_start_time = note1.start_time + start
-            for each in note1.other_messages:
-                each.start_time += start
-            for each in note1.tempos:
-                each.start_time += start
-            for each in note1.pitch_bends:
-                each.start_time += start
+            if adjust_msg:
+                for each in note1.other_messages:
+                    each.start_time += start
+                for each in note1.tempos:
+                    each.start_time += start
+                for each in note1.pitch_bends:
+                    each.start_time += start
             return chord(new_notes,
                          interval=new_interval,
                          start_time=current_start_time,
@@ -3197,13 +3204,17 @@ class piece:
                         temp.append(
                             track(content=chord([]), start_time=start_time))
                 current_track = temp2.tracks[i]
-                shift = temp2.start_times[i] - temp.start_times[current_ind]
                 for each in current_track.tempos:
-                    each.start_time -= shift
+                    each.start_time += start_time
                 for each in current_track.pitch_bends:
-                    each.start_time -= shift
-                current_start_time = start_time + shift
-                temp.tracks[current_ind] &= (current_track, current_start_time)
+                    each.start_time += start_time
+                current_start_time = temp2.start_times[
+                    i] + start_time - temp.start_times[current_ind]
+                temp.tracks[current_ind] = temp.tracks[current_ind].add(
+                    current_track,
+                    start=current_start_time,
+                    mode='head',
+                    adjust_msg=False)
                 if current_start_time < 0:
                     temp.start_times[current_ind] += current_start_time
             else:
@@ -3453,11 +3464,10 @@ class piece:
             current_track = all_tracks[i[0]]
             current_start_time = i[1]
             current_shift = current_start_time - first_track_start_time
-            for k in current_track.tempos:
-                k.start_time -= current_shift
-            for k in current_track.pitch_bends:
-                k.start_time -= current_shift
-            first_track &= (current_track, current_shift)
+            first_track = first_track.add(current_track,
+                                          start=current_shift,
+                                          mode='head',
+                                          adjust_msg=False)
         first_track.other_messages = temp.other_messages
         if add_pan_volume:
             whole_pan = mp.concat(temp.pan)
@@ -3608,17 +3618,6 @@ class piece:
             int(i) if isinstance(i, float) and i.is_integer() else i
             for i in new_start_times
         ]
-        first_track_ind = self.start_times.index(first_track_start_time)
-        for i, each in enumerate(self.tracks):
-            current_start_time = self.start_times[i]
-            if i != first_track_ind:
-                shift = current_start_time - first_track_start_time
-            else:
-                shift = first_track_start_time
-            for j in each.tempos:
-                j.start_time -= shift
-            for j in each.pitch_bends:
-                j.start_time -= shift
         self.instruments = [self.instruments[k] for k in available_tracks_inds]
         if self.track_names:
             self.track_names = [
@@ -6154,11 +6153,10 @@ def _piece_process_normalize_tempo(self,
         current_track = all_tracks[i]
         current_start_time = start_time_ls[i]
         current_shift = current_start_time - first_track_start_time
-        for k in current_track.tempos:
-            k.start_time -= current_shift
-        for k in current_track.pitch_bends:
-            k.start_time -= current_shift
-        first_track &= (current_track, current_shift)
+        first_track = first_track.add(current_track,
+                                      start=current_shift,
+                                      mode='head',
+                                      adjust_msg=False)
     first_track.other_messages = other_messages
     if self.pan:
         for k in range(len(self.pan)):
