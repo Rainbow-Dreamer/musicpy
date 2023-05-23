@@ -1069,7 +1069,7 @@ def chord_to_piece(current_chord, bpm=120, start_time=0, has_track_num=False):
     result_piece.reconstruct(current_chord,
                              current_start_time,
                              include_empty_track=True)
-    if result_piece.channels:
+    if result_piece.channels is not None:
         if len(result_piece.channels) != channels_num:
             pan_list = [
                 i for i in pan_list if i.channel in result_piece.channels
