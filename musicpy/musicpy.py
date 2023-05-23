@@ -1269,38 +1269,7 @@ def build(*tracks_list, **kwargs):
     pan_msg = []
     volume_msg = []
     daw_channels = []
-    remain_list = [1, 0, None, None, [], [], None]
     other_messages = []
-    for each in tracks_list:
-        if isinstance(each, track):
-            tracks.append(each.content)
-            instruments.append(each.instrument)
-            start_times.append(each.start_time)
-            channels.append(each.channel)
-            track_names.append(each.track_name)
-            pan_msg.append(each.pan if each.pan else [])
-            volume_msg.append(each.volume if each.volume else [])
-            daw_channels.append(each.daw_channel)
-            other_messages.extend(each.content.other_messages)
-        else:
-            new_each = each + remain_list[len(each) - 1:]
-            tracks.append(new_each[0])
-            instruments.append(new_each[1])
-            start_times.append(new_each[2])
-            channels.append(new_each[3])
-            track_names.append(new_each[4])
-            pan_msg.append(new_each[5])
-            volume_msg.append(new_each[6])
-            daw_channels.append(new_each[7])
-            other_messages.extend(new_each[0].other_messages)
-    if any(i is None for i in channels):
-        channels = None
-    if all(i is None for i in track_names):
-        track_names = None
-    else:
-        track_names = [i if i else '' for i in track_names]
-    if any(i is None for i in daw_channels):
-        daw_channels = None
     result = P(tracks=tracks,
                instruments=instruments,
                start_times=start_times,
@@ -1310,6 +1279,21 @@ def build(*tracks_list, **kwargs):
                volume=volume_msg,
                daw_channels=daw_channels,
                other_messages=other_messages)
+    for each in tracks_list:
+        if isinstance(each, track):
+            result.append(each)
+        else:
+            new_each = each + remain_list[len(each) - 1:]
+            each = track(content=new_each[0],
+                         instrument=ew_each[1],
+                         start_time=ew_each[2],
+                         channel=ew_each[3],
+                         track_name=ew_each[4],
+                         pan=ew_each[5],
+                         volume=ew_each[6],
+                         daw_channel=ew_each[7])
+            result.append(each)
+
     for key, value in kwargs.items():
         setattr(result, key, value)
     return result

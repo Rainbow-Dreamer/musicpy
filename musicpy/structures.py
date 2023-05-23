@@ -2966,9 +2966,9 @@ class piece:
 
     def show(self, limit=10):
         result = (
-            f'[piece] {self.name if self.name else ""}\n'
+            f'[piece] {self.name if self.name is not None else ""}\n'
         ) + f'BPM: {round(self.bpm, 3)}\n' + '\n'.join([
-            f'track {i} | channel: {self.channels[i] if self.channels else None} | track name: {self.track_names[i] if self.track_names and self.track_names[i] else None} | instrument: {database.reverse_instruments[self.instruments[i]]} | start time: {self.start_times[i]} | content: {self.tracks[i].show(limit=limit)}'
+            f'track {i} | channel: {self.channels[i] if self.channels is not None else None} | track name: {self.track_names[i] if self.track_names is not None and self.track_names[i] is not None else None} | instrument: {database.reverse_instruments[self.instruments[i]]} | start time: {self.start_times[i]} | content: {self.tracks[i].show(limit=limit)}'
             for i in range(len(self.tracks))
         ])
         return result
@@ -2985,40 +2985,42 @@ class piece:
             content=self.tracks[i],
             instrument=self.instruments[i],
             start_time=self.start_times[i],
-            channel=self.channels[i] if self.channels else None,
-            track_name=self.track_names[i] if self.track_names else None,
+            channel=self.channels[i] if self.channels is not None else None,
+            track_name=self.track_names[i]
+            if self.track_names is not None else None,
             pan=self.pan[i],
             volume=self.volume[i],
             bpm=self.bpm,
             name=self.name,
-            daw_channel=self.daw_channels[i] if self.daw_channels else None)
+            daw_channel=self.daw_channels[i]
+            if self.daw_channels is not None else None)
 
     def __delitem__(self, i):
         del self.tracks[i]
         del self.instruments[i]
         del self.start_times[i]
-        if self.track_names:
+        if self.track_names is not None:
             del self.track_names[i]
-        if self.channels:
+        if self.channels is not None:
             del self.channels[i]
         del self.pan[i]
         del self.volume[i]
-        if self.daw_channels:
+        if self.daw_channels is not None:
             del self.daw_channels[i]
 
     def __setitem__(self, i, new_track):
         self.tracks[i] = new_track.content
         self.instruments[i] = new_track.instrument
         self.start_times[i] = new_track.start_time
-        if self.track_names and new_track.track_name:
+        if self.track_names is not None and new_track.track_name is not None:
             self.track_names[i] = new_track.track_name
-        if self.channels and new_track.channel is not None:
+        if self.channels is not None and new_track.channel is not None:
             self.channels[i] = new_track.channel
-        if new_track.pan:
+        if new_track.pan is not None:
             self.pan[i] = new_track.pan
-        if new_track.volume:
+        if new_track.volume is not None:
             self.volume[i] = new_track.volume
-        if self.daw_channels and new_track.daw_channel is not None:
+        if self.daw_channels is not None and new_track.daw_channel is not None:
             self.daw_channels[i] = new_track.daw_channel
 
     def __len__(self):
@@ -3056,22 +3058,24 @@ class piece:
         self.tracks.append(new_track.content)
         self.instruments.append(new_track.instrument)
         self.start_times.append(new_track.start_time)
-        if self.channels:
-            if new_track.channel:
+        if self.channels is not None:
+            if new_track.channel is not None:
                 self.channels.append(new_track.channel)
             else:
-                self.channels.append(max(self.channels) + 1)
-        if self.track_names:
-            if new_track.track_name:
+                self.channels.append(
+                    max(self.channels) + 1 if self.channels else 0)
+        if self.track_names is not None:
+            if new_track.track_name is not None:
                 self.track_names.append(new_track.track_name)
             else:
                 self.track_names.append(
                     new_track.name if new_track.
                     name is not None else f'track {self.track_number}')
-        self.pan.append(new_track.pan if new_track.pan else [])
-        self.volume.append(new_track.volume if new_track.volume else [])
-        if self.daw_channels:
-            if new_track.daw_channel:
+        self.pan.append(new_track.pan if new_track.pan is not None else [])
+        self.volume.append(
+            new_track.volume if new_track.volume is not None else [])
+        if self.daw_channels is not None:
+            if new_track.daw_channel is not None:
                 self.daw_channels.append(new_track.daw_channel)
             else:
                 self.daw_channels.append(0)
@@ -3085,22 +3089,26 @@ class piece:
         self.tracks.insert(ind, new_track.content)
         self.instruments.insert(ind, new_track.instrument)
         self.start_times.insert(ind, new_track.start_time)
-        if self.channels:
-            if new_track.channel:
+        if self.channels is not None:
+            if new_track.channel is not None:
                 self.channels.insert(ind, new_track.channel)
             else:
-                self.channels.insert(ind, max(self.channels) + 1)
-        if self.track_names:
-            if new_track.track_name:
+                self.channels.insert(
+                    ind,
+                    max(self.channels) + 1 if self.channels else 0)
+        if self.track_names is not None:
+            if new_track.track_name is not None:
                 self.track_names.insert(ind, new_track.track_name)
             else:
                 self.track_names.insert(
                     ind, new_track.name if new_track.name is not None else
                     f'track {self.track_number}')
-        self.pan.insert(ind, new_track.pan if new_track.pan else [])
-        self.volume.insert(ind, new_track.volume if new_track.volume else [])
-        if self.daw_channels:
-            if new_track.daw_channel:
+        self.pan.insert(ind,
+                        new_track.pan if new_track.pan is not None else [])
+        self.volume.insert(
+            ind, new_track.volume if new_track.volume is not None else [])
+        if self.daw_channels is not None:
+            if new_track.daw_channel is not None:
                 self.daw_channels.insert(ind, new_track.daw_channel)
             else:
                 self.daw_channels.insert(ind, 0)
@@ -3111,16 +3119,16 @@ class piece:
     def up(self, n=1, mode=0):
         temp = copy(self)
         for i in range(temp.track_number):
-            if mode == 0 or (mode == 1 and
-                             not (temp.channels and temp.channels[i] == 9)):
+            if mode == 0 or (mode == 1 and not (temp.channels is not None
+                                                and temp.channels[i] == 9)):
                 temp.tracks[i] += n
         return temp
 
     def down(self, n=1, mode=0):
         temp = copy(self)
         for i in range(temp.track_number):
-            if mode == 0 or (mode == 1 and
-                             not (temp.channels and temp.channels[i] == 9)):
+            if mode == 0 or (mode == 1 and not (temp.channels is not None
+                                                and temp.channels[i] == 9)):
                 temp.tracks[i] -= n
         return temp
 
@@ -3430,7 +3438,7 @@ class piece:
                        for each in self.volume]
 
     def get_off_drums(self):
-        if self.channels:
+        if self.channels is not None:
             while 9 in self.channels:
                 current_ind = self.channels.index(9)
                 self.delete_track(current_ind)
@@ -3446,7 +3454,7 @@ class piece:
             temp.add_track_labels()
         if get_off_drums:
             temp.get_off_drums()
-        if track_names_add_channel and temp.channels:
+        if track_names_add_channel and temp.channels is not None:
             for i, each in enumerate(temp.tracks):
                 for j in each.other_messages:
                     if j.type == 'track_name':
@@ -3454,7 +3462,7 @@ class piece:
         all_tracks = temp.tracks
         length = len(all_tracks)
         track_map_dict = {}
-        if temp.channels:
+        if temp.channels is not None:
             merge_channels = list(dict.fromkeys(temp.channels))
             merge_length = len(merge_channels)
             if merge_length < length:
@@ -3625,11 +3633,11 @@ class piece:
             for i in new_start_times
         ]
         self.instruments = [self.instruments[k] for k in available_tracks_inds]
-        if self.track_names:
+        if self.track_names is not None:
             self.track_names = [
                 self.track_names[k] for k in available_tracks_inds
             ]
-        if self.channels:
+        if self.channels is not None:
             self.channels = [self.channels[k] for k in available_tracks_inds]
         else:
             if get_channels:
@@ -3962,7 +3970,8 @@ class piece:
         if inds == 'all':
             inds = list(range(len(temp)))
         for i in inds:
-            if not (mode == 1 and temp.channels and temp.channels[i] == 9):
+            if not (mode == 1 and temp.channels is not None
+                    and temp.channels[i] == 9):
                 temp.tracks[i] = temp.tracks[i].modulation(
                     old_scale, new_scale)
         return temp
@@ -4451,7 +4460,7 @@ class drum:
                           if i in database.drum_set_dict_reverse else 1)
 
     def __repr__(self):
-        return f"[drum] {self.name if self.name else ''}\n{self.notes}"
+        return f"[drum] {self.name if self.name is not None else ''}\n{self.notes}"
 
     def translate(self,
                   pattern,
