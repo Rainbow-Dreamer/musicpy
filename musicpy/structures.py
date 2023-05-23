@@ -1041,6 +1041,8 @@ class chord:
         if self.is_empty():
             result = copy(note1)
             result.start_time += start
+            if adjust_msg:
+                result.apply_start_time_to_changes(start, msg=True)
             return result
         temp = copy(self)
         if note1.is_empty():
@@ -1051,12 +1053,7 @@ class chord:
             temp.notes += note1.notes
             temp.interval += note1.interval
             if adjust_msg:
-                for each in note1.other_messages:
-                    each.start_time += adjust_interval
-                for each in note1.tempos:
-                    each.start_time += adjust_interval
-                for each in note1.pitch_bends:
-                    each.start_time += adjust_interval
+                note1.apply_start_time_to_changes(adjust_interval, msg=True)
             temp.other_messages += note1.other_messages
             temp.tempos += note1.tempos
             temp.pitch_bends += note1.pitch_bends
@@ -1113,12 +1110,7 @@ class chord:
                 new_interval = note1.interval
                 current_start_time = note1.start_time + start
             if adjust_msg:
-                for each in note1.other_messages:
-                    each.start_time += start
-                for each in note1.tempos:
-                    each.start_time += start
-                for each in note1.pitch_bends:
-                    each.start_time += start
+                note1.apply_start_time_to_changes(start, msg=True)
             return chord(new_notes,
                          interval=new_interval,
                          start_time=current_start_time,
