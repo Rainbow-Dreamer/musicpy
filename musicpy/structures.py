@@ -1071,31 +1071,31 @@ class chord:
             if temp.notes:
                 note1_start_time = note1.start_time + start
                 if note1_start_time < 0:
-                    start = temp.start_time - note1_start_time
+                    current_add_start_time = temp.start_time - note1_start_time
                     note1.start_time = temp.start_time + note1_start_time
                     temp, note1 = note1, temp
                 else:
                     if note1_start_time < temp.start_time:
-                        start = temp.start_time - note1_start_time
+                        current_add_start_time = temp.start_time - note1_start_time
                         note1.start_time = note1_start_time
                         temp, note1 = note1, temp
                     else:
-                        start = note1_start_time - temp.start_time
+                        current_add_start_time = note1_start_time - temp.start_time
                 distance = []
                 intervals1 = temp.interval
                 intervals2 = note1.interval
                 current_start_time = temp.start_time
 
-                if start != 0:
+                if current_add_start_time != 0:
                     note1.notes.insert(0, temp.notes[0])
-                    intervals2.insert(0, start)
+                    intervals2.insert(0, current_add_start_time)
                 counter = 0
                 for i in range(len(intervals1)):
                     distance.append([counter, temp.notes[i]])
                     counter += intervals1[i]
                 counter = 0
                 for j in range(len(intervals2)):
-                    if not (j == 0 and start != 0):
+                    if not (j == 0 and current_add_start_time != 0):
                         distance.append([counter, note1.notes[j]])
                     counter += intervals2[j]
                 distance.sort(key=lambda s: s[0])
