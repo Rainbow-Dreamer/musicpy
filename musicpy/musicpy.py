@@ -1261,6 +1261,7 @@ def build(*tracks_list, **kwargs):
         if current_tracks_list and isinstance(current_tracks_list[0],
                                               (list, track)):
             return build(*tracks_list[0], **kwargs)
+    remain_list = [1, 0, None, None, [], [], None]
     tracks = []
     instruments = []
     start_times = []
@@ -1285,13 +1286,13 @@ def build(*tracks_list, **kwargs):
         else:
             new_each = each + remain_list[len(each) - 1:]
             each = track(content=new_each[0],
-                         instrument=ew_each[1],
-                         start_time=ew_each[2],
-                         channel=ew_each[3],
-                         track_name=ew_each[4],
-                         pan=ew_each[5],
-                         volume=ew_each[6],
-                         daw_channel=ew_each[7])
+                         instrument=new_each[1],
+                         start_time=new_each[2],
+                         channel=new_each[3],
+                         track_name=new_each[4],
+                         pan=new_each[5],
+                         volume=new_each[6],
+                         daw_channel=new_each[7])
             result.append(each)
 
     for key, value in kwargs.items():
