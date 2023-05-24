@@ -2644,21 +2644,45 @@ class scale:
         else:
             return self.inversion(n)
 
-    def _parse_scale_text(self, text, rootpitch):
+    def _parse_scale_text(self, text, rootpitch, pitch_mode=0):
         octaves = None
         if '.' in text:
             text, octaves = text.split('.', 1)
         if text.endswith('#'):
             current_degree = int(text[:-1])
-            result = self.get_note_from_degree(current_degree,
-                                               pitch=rootpitch) + 1
+            if pitch_mode == 0:
+                result = self.get_note_from_degree(current_degree,
+                                                   pitch=rootpitch) + 1
+            elif pitch_mode == 1:
+                extra_num, current_degree_in_scale = divmod(
+                    current_degree - 1, 7)
+                diff = self[current_degree_in_scale].degree - self[0].degree
+                result = self.get_note_from_degree(
+                    1,
+                    pitch=rootpitch) + 1 + diff + extra_num * database.octave
         elif text.endswith('b'):
             current_degree = int(text[:-1])
-            result = self.get_note_from_degree(current_degree,
-                                               pitch=rootpitch) - 1
+            if pitch_mode == 0:
+                result = self.get_note_from_degree(current_degree,
+                                                   pitch=rootpitch) - 1
+            elif pitch_mode == 1:
+                extra_num, current_degree_in_scale = divmod(
+                    current_degree - 1, 7)
+                diff = self[current_degree_in_scale].degree - self[0].degree
+                result = self.get_note_from_degree(
+                    1,
+                    pitch=rootpitch) - 1 + diff + extra_num * database.octave
         else:
             current_degree = int(text)
-            result = self.get_note_from_degree(current_degree, pitch=rootpitch)
+            if pitch_mode == 0:
+                result = self.get_note_from_degree(current_degree,
+                                                   pitch=rootpitch)
+            elif pitch_mode == 1:
+                extra_num, current_degree_in_scale = divmod(
+                    current_degree - 1, 7)
+                diff = self[current_degree_in_scale].degree - self[0].degree
+                result = self.get_note_from_degree(
+                    1, pitch=rootpitch) + diff + extra_num * database.octave
         if octaves:
             octaves = int(octaves) * database.octave
             result += octaves
@@ -2668,7 +2692,8 @@ class scale:
             current_ind,
             default_duration=1 / 8,
             default_interval=1 / 8,
-            default_volume=100):
+            default_volume=100,
+            pitch_mode=0):
         if isinstance(current_ind, list):
             current_ind = ','.join([str(i) for i in current_ind])
         current = current_ind.replace(' ', '').split(',')
@@ -2718,7 +2743,8 @@ class scale:
                         intervals,
                         start_time,
                         has_settings=has_settings,
-                        has_same_time=has_same_time)
+                        has_same_time=has_same_time,
+                        pitch_mode=pitch_mode)
         current_chord = chord(notes_result,
                               interval=intervals,
                               start_time=start_time)
@@ -2734,7 +2760,8 @@ class scale:
                           intervals,
                           start_time,
                           has_settings=False,
-                          has_same_time=False):
+                          has_same_time=False,
+                          pitch_mode=0):
         dotted_num = 0
         if each.endswith('.'):
             for k in range(len(each) - 1, -1, -1):
@@ -2758,7 +2785,9 @@ class scale:
             if intervals:
                 intervals[-1] += current_interval
         else:
-            current_note = self._parse_scale_text(each, rootpitch)
+            current_note = self._parse_scale_text(each,
+                                                  rootpitch,
+                                                  pitch_mode=pitch_mode)
             current_note.duration = duration
             current_note.volume = volume
             if has_same_time:
