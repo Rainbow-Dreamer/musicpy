@@ -314,6 +314,13 @@ class chord:
             if 0 <= each.start_time < cut_bar_length:
                 new_other_messages.append(each)
 
+        if ind2 <= start_time:
+            result = chord([], start_time=ind2 - ind1)
+            result.tempos = new_tempos
+            result.pitch_bends = new_pitch_bends
+            result.other_messages = new_other_messages
+            return result
+
         current_bar = start_time
         notes = temp.notes
         intervals = temp.interval
