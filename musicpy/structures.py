@@ -365,9 +365,10 @@ class chord:
             result.notes = new_notes
             result.interval = new_intervals
         if cut_extra_interval:
-            current_bar = result.bars(mode=0, start_time=result.start_time)
-            if current_bar > cut_bar_length:
-                result.interval[-1] -= (current_bar - cut_bar_length)
+            if result.interval:
+                current_bar = result.bars(mode=0, start_time=result.start_time)
+                if current_bar > cut_bar_length:
+                    result.interval[-1] -= (current_bar - cut_bar_length)
         return result
 
     def cut_time(self,
