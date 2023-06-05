@@ -6,6 +6,9 @@ from io import BytesIO
 import mido_fix as mido
 import functools
 import json
+import yaml
+
+yaml.Dumper.ignore_aliases = lambda *args: True
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import database
@@ -1863,37 +1866,12 @@ def write_musicxml(current_chord, filename, save_musicxml_args={}):
     partitura.save_musicxml(current_midi, filename, **save_musicxml_args)
 
 
-def read_json(file):
-    note_list_dict = {'note': note, 'pitch_bend': pitch_bend, 'tempo': tempo}
-    with open(file, encoding='utf-8') as f:
-        current = json.load(f)
-    for j in current['tracks']:
-        j['interval'] = [i['interval'] for i in j['notes']]
-        for i in j['notes']:
-            del i['interval']
-        j['notes'] = [
-            note_list_dict[k['type']](
-                **{i: j
-                   for i, j in k.items() if i != 'type'}) for k in j['notes']
-        ]
-        j['tempos'] = [tempo(**k) for k in j['tempos']]
-        j['pitch_bends'] = [pitch_bend(**k) for k in j['pitch_bends']]
-        j['other_messages'] = [event(**k) for k in j['other_messages']]
-    current['tracks'] = [chord(**i) for i in current['tracks']]
-    current['other_messages'] = [event(**k) for k in current['other_messages']]
-    current['pan'] = [[pan(**i) for i in j] for j in current['pan']]
-    current['volume'] = [[volume(**i) for i in j] for j in current['volume']]
-    result = piece(**current)
-    return result
-
-
-def write_json(current_chord,
-               bpm=120,
-               channel=0,
-               start_time=None,
-               filename='untitled.json',
-               instrument=None,
-               i=None):
+def to_dict(current_chord,
+            bpm=120,
+            channel=0,
+            start_time=None,
+            instrument=None,
+            i=None):
     if i is not None:
         instrument = i
     if isinstance(current_chord, note):
@@ -1927,31 +1905,31 @@ def write_json(current_chord,
         current_chord = copy(current_chord)
     result = current_chord.__dict__
     result['tracks'] = [i.__dict__ for i in result['tracks']]
-    for j in result['tracks']:
-        for i, each in enumerate(j['notes']):
-            current_dict = {'type': each.__class__.__name__}
-            current_dict.update({
+    for each_track in result['tracks']:
+        for i, each in enumerate(each_track['notes']):
+            each_track['notes'][i] = {
                 k1: k2
                 for k1, k2 in each.__dict__.items() if k1 not in ['degree']
-            })
-            j['notes'][i] = current_dict
-        for each in j['pitch_bends']:
-            current_dict.update({
+            }
+        for i, each in enumerate(each_track['pitch_bends']):
+            each_track['pitch_bends'][i] = {
                 k1: k2
                 for k1, k2 in each.__dict__.items()
                 if k1 not in ['degree', 'volume', 'duration']
-            })
-            current_dict['mode'] = 'value'
-        for each in j['tempos']:
-            current_dict.update({
+            }
+            each_track['pitch_bends'][i]['mode'] = 'value'
+        for i, each in enumerate(each_track['tempos']):
+            each_track['tempos'][i] = {
                 k1: k2
                 for k1, k2 in each.__dict__.items()
                 if k1 not in ['degree', 'volume', 'duration']
-            })
-        j['other_messages'] = [k.__dict__ for k in j['other_messages']]
-        for i, each in enumerate(j['notes']):
-            each['interval'] = j['interval'][i]
-        del j['interval']
+            }
+        each_track['other_messages'] = [
+            k.__dict__ for k in each_track['other_messages']
+        ]
+        for i, each in enumerate(each_track['notes']):
+            each['interval'] = each_track['interval'][i]
+        del each_track['interval']
     result['other_messages'] = [i.__dict__ for i in result['other_messages']]
     result['pan'] = [[i.__dict__ for i in j] for j in result['pan']]
     result['volume'] = [[i.__dict__ for i in j] for j in result['volume']]
@@ -1963,13 +1941,97 @@ def write_json(current_chord,
         for j in i:
             j['mode'] = 'value'
             del j['value_percentage']
-    del result['track_number']
+    return result
+
+
+def read_json(file):
+    with open(file, encoding='utf-8') as f:
+        current = json.load(f)
+    for each_track in current['tracks']:
+        each_track['interval'] = [i['interval'] for i in each_track['notes']]
+        for i in each_track['notes']:
+            del i['interval']
+        each_track['notes'] = [note(**k) for k in each_track['notes']]
+        each_track['tempos'] = [tempo(**k) for k in each_track['tempos']]
+        each_track['pitch_bends'] = [
+            pitch_bend(**k) for k in each_track['pitch_bends']
+        ]
+        each_track['other_messages'] = [
+            event(**k) for k in each_track['other_messages']
+        ]
+    current['tracks'] = [chord(**i) for i in current['tracks']]
+    current['other_messages'] = [event(**k) for k in current['other_messages']]
+    current['pan'] = [[pan(**i) for i in j] for j in current['pan']]
+    current['volume'] = [[volume(**i) for i in j] for j in current['volume']]
+    ticks_per_beat = current['ticks_per_beat']
+    del current['ticks_per_beat']
+    result = piece(**current)
+    result.ticks_per_beat = ticks_per_beat
+    return result
+
+
+def write_json(current_chord,
+               bpm=120,
+               channel=0,
+               start_time=None,
+               filename='untitled.json',
+               instrument=None,
+               i=None):
+    result = to_dict(current_chord=current_chord,
+                     bpm=bpm,
+                     channel=channel,
+                     start_time=start_time,
+                     instrument=instrument,
+                     i=i)
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(result,
                   f,
                   indent=4,
                   separators=(',', ': '),
                   ensure_ascii=False)
+
+
+def read_yaml(file):
+    with open(file, encoding='utf-8') as f:
+        current = yaml.safe_load(f)
+    for each_track in current['tracks']:
+        each_track['interval'] = [i['interval'] for i in each_track['notes']]
+        for i in each_track['notes']:
+            del i['interval']
+        each_track['notes'] = [note(**k) for k in each_track['notes']]
+        each_track['tempos'] = [tempo(**k) for k in each_track['tempos']]
+        each_track['pitch_bends'] = [
+            pitch_bend(**k) for k in each_track['pitch_bends']
+        ]
+        each_track['other_messages'] = [
+            event(**k) for k in each_track['other_messages']
+        ]
+    current['tracks'] = [chord(**i) for i in current['tracks']]
+    current['other_messages'] = [event(**k) for k in current['other_messages']]
+    current['pan'] = [[pan(**i) for i in j] for j in current['pan']]
+    current['volume'] = [[volume(**i) for i in j] for j in current['volume']]
+    ticks_per_beat = current['ticks_per_beat']
+    del current['ticks_per_beat']
+    result = piece(**current)
+    result.ticks_per_beat = ticks_per_beat
+    return result
+
+
+def write_yaml(current_chord,
+               bpm=120,
+               channel=0,
+               start_time=None,
+               filename='untitled.yaml',
+               instrument=None,
+               i=None):
+    result = to_dict(current_chord=current_chord,
+                     bpm=bpm,
+                     channel=channel,
+                     start_time=start_time,
+                     instrument=instrument,
+                     i=i)
+    with open(filename, 'w', encoding='utf-8') as f:
+        yaml.dump(result, f, default_flow_style=False, sort_keys=False)
 
 
 def bar_to_real_time(bar, bpm, mode=0):
