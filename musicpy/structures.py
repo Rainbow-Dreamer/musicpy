@@ -1060,6 +1060,8 @@ class chord:
             result.start_time += shift
             if adjust_msg:
                 result.apply_start_time_to_changes(shift, msg=True)
+            if not result.notes:
+                result.start_time = max(result.start_time, self.start_time)
             return result
         temp = copy(self)
         if note1.is_empty():
@@ -1096,49 +1098,58 @@ class chord:
                 note1 = chord(note1)
             # calculate the absolute distances of all of the notes of the chord to add and self,
             # and then sort them, make differences between each two distances
+            apply_msg_chord = note1
             if temp.notes:
                 note1_start_time = note1.start_time + start
                 if note1_start_time < 0:
                     current_add_start_time = temp.start_time - note1_start_time
                     note1.start_time = temp.start_time + note1_start_time
                     temp, note1 = note1, temp
+                    apply_msg_chord = temp
                 else:
                     if note1_start_time < temp.start_time:
                         current_add_start_time = temp.start_time - note1_start_time
                         note1.start_time = note1_start_time
                         temp, note1 = note1, temp
+                        apply_msg_chord = temp
                     else:
                         current_add_start_time = note1_start_time - temp.start_time
-                distance = []
-                intervals1 = temp.interval
-                intervals2 = note1.interval
-                current_start_time = temp.start_time
 
-                if current_add_start_time != 0:
-                    note1.notes.insert(0, temp.notes[0])
-                    intervals2.insert(0, current_add_start_time)
-                counter = 0
-                for i in range(len(intervals1)):
-                    distance.append([counter, temp.notes[i]])
-                    counter += intervals1[i]
-                counter = 0
-                for j in range(len(intervals2)):
-                    if not (j == 0 and current_add_start_time != 0):
-                        distance.append([counter, note1.notes[j]])
-                    counter += intervals2[j]
-                distance.sort(key=lambda s: s[0])
-                new_notes = [each[1] for each in distance]
-                new_interval = [each[0] for each in distance]
-                new_interval = [
-                    new_interval[i] - new_interval[i - 1]
-                    for i in range(1, len(new_interval))
-                ] + [distance[-1][1].duration]
+                if not temp.notes:
+                    new_notes = note1.notes
+                    new_interval = note1.interval
+                    current_start_time = note1.start_time
+                else:
+                    distance = []
+                    intervals1 = temp.interval
+                    intervals2 = note1.interval
+                    current_start_time = temp.start_time
+
+                    if current_add_start_time != 0:
+                        note1.notes.insert(0, temp.notes[0])
+                        intervals2.insert(0, current_add_start_time)
+                    counter = 0
+                    for i in range(len(intervals1)):
+                        distance.append([counter, temp.notes[i]])
+                        counter += intervals1[i]
+                    counter = 0
+                    for j in range(len(intervals2)):
+                        if not (j == 0 and current_add_start_time != 0):
+                            distance.append([counter, note1.notes[j]])
+                        counter += intervals2[j]
+                    distance.sort(key=lambda s: s[0])
+                    new_notes = [each[1] for each in distance]
+                    new_interval = [each[0] for each in distance]
+                    new_interval = [
+                        new_interval[i] - new_interval[i - 1]
+                        for i in range(1, len(new_interval))
+                    ] + [distance[-1][1].duration]
             else:
                 new_notes = note1.notes
                 new_interval = note1.interval
                 current_start_time = note1.start_time + start
             if adjust_msg:
-                note1.apply_start_time_to_changes(start, msg=True)
+                apply_msg_chord.apply_start_time_to_changes(start, msg=True)
             return chord(new_notes,
                          interval=new_interval,
                          start_time=current_start_time,
