@@ -6,9 +6,6 @@ from io import BytesIO
 import mido_fix as mido
 import functools
 import json
-import yaml
-
-yaml.Dumper.ignore_aliases = lambda *args: True
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     import database
@@ -1992,6 +1989,8 @@ def write_json(current_chord,
 
 
 def read_yaml(file):
+    import yaml
+    yaml.Dumper.ignore_aliases = lambda *args: True
     with open(file, encoding='utf-8') as f:
         current = yaml.safe_load(f)
     for each_track in current['tracks']:
@@ -2024,6 +2023,8 @@ def write_yaml(current_chord,
                filename='untitled.yaml',
                instrument=None,
                i=None):
+    import yaml
+    yaml.Dumper.ignore_aliases = lambda *args: True
     result = to_dict(current_chord=current_chord,
                      bpm=bpm,
                      channel=channel,
