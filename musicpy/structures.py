@@ -2502,6 +2502,11 @@ class scale:
         return result
 
     def get_chord(self, degree, chord_type=None, natural=False):
+        current_accidental = None
+        original_degree = degree
+        if degree.startswith('#') or degree.startswith('b'):
+            current_accidental = degree[0]
+            degree = degree[1:]
         if not chord_type:
             current_keys = list(database.roman_numerals_dict.keys())
             current_keys.sort(key=lambda s: len(s[0]), reverse=True)
@@ -2516,21 +2521,34 @@ class scale:
                 if found:
                     break
             if not found:
-                return f'{degree} is not a valid roman numerals chord representation'
-        if degree not in database.roman_numerals_dict[degree]:
-            return f'{degree} is not a valid roman numerals chord representation'
+                raise ValueError(
+                    f'{original_degree} is not a valid roman numerals chord representation'
+                )
+        if degree not in database.roman_numerals_dict:
+            raise ValueError(
+                f'{original_degree} is not a valid roman numerals chord representation'
+            )
         current_degree = database.roman_numerals_dict[degree] - 1
         current_note = self[current_degree].name
         if natural:
             temp = mp.C(current_note + chord_type)
             if not isinstance(temp, chord):
-                return f'{chord_type} is not a valid chord type'
+                raise ValueError(f'{chord_type} is not a valid chord type')
             length = len(temp)
             return self.pick_chord_by_degree(current_degree, num=length)
         if degree.islower():
-            current_note += 'm'
-        current_chord_type = current_note + chord_type
-        return mp.C(current_chord_type)
+            try:
+                result = mp.C(current_note + 'm' + chord_type)
+            except:
+                result = mp.C(current_note + chord_type)
+        else:
+            result = mp.C(current_note + chord_type)
+        if current_accidental is not None:
+            if current_accidental == '#':
+                result += 1
+            elif current_accidental == 'b':
+                result -= 1
+        return result
 
     def up(self, unit=1, ind=None, ind2=None):
         if ind2 is not None:
@@ -2618,31 +2636,74 @@ class scale:
             current_chord = chords[k]
             if isinstance(current_chord, (tuple, list)):
                 current_degree_name = current_chord[0]
+                current_accidental = None
+                if current_degree_name.startswith(
+                        '#') or current_degree_name.startswith('b'):
+                    current_accidental = current_degree_name[0]
+                    current_degree_name = current_degree_name[1:]
                 if current_degree_name not in database.roman_numerals_dict:
-                    return f'{current_chord} is not a valid roman numerals chord representation'
+                    raise ValueError(
+                        f'{"".join(current_chord)} is not a valid roman numerals chord representation'
+                    )
                 current_degree = database.roman_numerals_dict[
                     current_degree_name] - 1
-                current_note = self[current_degree].name
+                current_note = self[current_degree]
+                if current_accidental is not None:
+                    if current_accidental == '#':
+                        current_note += 1
+                    elif current_accidental == 'b':
+                        current_note -= 1
                 if current_degree_name.islower():
-                    current_note += 'm'
-                chords[k] = current_note + current_chord[1]
+                    try:
+                        current_chord_name = current_note.name + 'm' + current_chord[
+                            1]
+                        temp = mp.C(current_chord_name)
+                    except:
+                        current_chord_name = current_note.name + current_chord[
+                            1]
+                else:
+                    current_chord_name = current_note.name + current_chord[1]
+                chords[k] = current_chord_name
             else:
                 found = False
                 current_degree = None
+                current_accidental = None
+                original_current_chord = current_chord
+                if current_chord.startswith('#') or current_chord.startswith(
+                        'b'):
+                    current_accidental = current_chord[0]
+                    current_chord = current_chord[1:]
                 for each in current_keys:
                     for i in each:
                         if current_chord.startswith(i):
                             found = True
+                            current_degree_name = i
                             current_degree = database.roman_numerals_dict[i] - 1
-                            current_note = self[current_degree].name
-                            if i.islower():
-                                current_note += 'm'
-                            chords[k] = current_note + current_chord[len(i):]
+                            current_note = self[current_degree]
+                            if current_accidental is not None:
+                                if current_accidental == '#':
+                                    current_note += 1
+                                elif current_accidental == 'b':
+                                    current_note -= 1
+                            if current_degree_name.islower():
+                                try:
+                                    current_chord_name = current_note.name + 'm' + current_chord[
+                                        len(i):]
+                                    temp = mp.C(current_chord_name)
+                                except:
+                                    current_chord_name = current_note.name + current_chord[
+                                        len(i):]
+                            else:
+                                current_chord_name = current_note.name + current_chord[
+                                    len(i):]
+                            chords[k] = current_chord_name
                             break
                     if found:
                         break
                 if not found:
-                    return f'{current_chord} is not a valid roman numerals chord representation'
+                    raise ValueError(
+                        f'{original_current_chord} is not a valid roman numerals chord representation'
+                    )
         return mp.chord_progression(chords, durations, intervals, volumes,
                                     chords_interval, merge)
 
