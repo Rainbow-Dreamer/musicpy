@@ -284,7 +284,8 @@ class chord:
             start_time=0,
             cut_extra_duration=False,
             cut_extra_interval=False,
-            round_duration=False):
+            round_duration=False,
+            round_cut_interval=False):
         # get parts of notes between two bars
         temp = copy(self)
         find_start = False
@@ -329,6 +330,8 @@ class chord:
         to_ind = length
         for i in range(length):
             current_bar += intervals[i]
+            if round_cut_interval:
+                current_bar = float(Fraction(current_bar).limit_denominator())
             if (not find_start) and current_bar >= ind1:
                 start_ind = i + 1
                 find_start = True
@@ -386,7 +389,8 @@ class chord:
                  normalize_tempo=False,
                  cut_extra_duration=False,
                  cut_extra_interval=False,
-                 round_duration=False):
+                 round_duration=False,
+                 round_cut_interval=False):
         if normalize_tempo:
             temp = copy(self)
             temp.normalize_tempo(bpm)
@@ -397,7 +401,8 @@ class chord:
                                  normalize_tempo=False,
                                  cut_extra_duration=cut_extra_duration,
                                  cut_extra_interval=cut_extra_interval,
-                                 round_duration=round_duration)
+                                 round_duration=round_duration,
+                                 round_cut_interval=round_cut_interval)
         bar_left = time1 / ((60 / bpm) * 4)
         bar_right = time2 / ((60 / bpm) * 4) if time2 is not None else None
         result = self.cut(ind1=bar_left,
@@ -405,7 +410,8 @@ class chord:
                           start_time=start_time,
                           cut_extra_duration=cut_extra_duration,
                           cut_extra_interval=cut_extra_interval,
-                          round_duration=round_duration)
+                          round_duration=round_duration,
+                          round_cut_interval=round_cut_interval)
         return result
 
     def last_note_standardize(self):
@@ -2131,7 +2137,7 @@ class chord:
                                          current_rhythm=current_rhythm,
                                          set_duration=set_duration)
 
-    def fix_length(self, n, round_duration=False):
+    def fix_length(self, n, round_duration=False, round_cut_interval=False):
         current_bar = self.bars(mode=2, start_time=self.start_time)
         if current_bar < n:
             extra = n - current_bar
@@ -2142,7 +2148,8 @@ class chord:
                               start_time=self.start_time,
                               cut_extra_duration=True,
                               cut_extra_interval=True,
-                              round_duration=round_duration)
+                              round_duration=round_duration,
+                              round_cut_interval=round_cut_interval)
         else:
             result = copy(self)
         return result
@@ -3794,7 +3801,8 @@ class piece:
             correct=False,
             cut_extra_duration=False,
             cut_extra_interval=False,
-            round_duration=False):
+            round_duration=False,
+            round_cut_interval=False):
         merged_result, temp_bpm, start_time = self.merge()
         if ind1 < 0:
             ind1 = 0
@@ -3803,7 +3811,8 @@ class piece:
                                    start_time,
                                    cut_extra_duration=cut_extra_duration,
                                    cut_extra_interval=cut_extra_interval,
-                                   round_duration=round_duration)
+                                   round_duration=round_duration,
+                                   round_cut_interval=round_cut_interval)
         offset = ind1
         temp = copy(self)
         start_time -= ind1
@@ -3851,7 +3860,8 @@ class piece:
                  start_time=0,
                  cut_extra_duration=False,
                  cut_extra_interval=False,
-                 round_duration=False):
+                 round_duration=False,
+                 round_cut_interval=False):
         temp = copy(self)
         temp.normalize_tempo()
         if bpm is not None:
@@ -3865,7 +3875,8 @@ class piece:
                           bar_right,
                           cut_extra_duration=cut_extra_duration,
                           cut_extra_interval=cut_extra_interval,
-                          round_duration=round_duration)
+                          round_duration=round_duration,
+                          round_cut_interval=round_cut_interval)
         return result
 
     def get_bar(self, n):
