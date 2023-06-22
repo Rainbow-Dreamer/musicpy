@@ -2331,7 +2331,7 @@ def add_to_index(current_chord, value, start=None, stop=None, step=1):
         counter += current_chord[i]
         inds.append(i)
         if counter == value:
-            inds.append(i + 1)
+            inds.append(i + step)
             break
         elif counter > value:
             break
@@ -2351,7 +2351,7 @@ def add_to_last_index(current_chord, value, start=None, stop=None, step=1):
         counter += current_chord[i]
         ind = i
         if counter == value:
-            ind += 1
+            ind += step
             break
         elif counter > value:
             break
