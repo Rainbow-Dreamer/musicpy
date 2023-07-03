@@ -65,8 +65,10 @@ class match:
 
     def reverse(self):
         dic = self.dic
-        return match({((tuple(j), ) if not isinstance(j, tuple) else j): i
-                      for i, j in dic.items()})
+        return match({
+            ((tuple(j), ) if not isinstance(j, tuple) else j): i
+            for i, j in dic.items()
+        })
 
     def __repr__(self):
         return str(self.dic)
@@ -88,35 +90,118 @@ class match:
                 return
 
 
-perfect_unison = diminished_second = P1 = d2 = 0
-minor_second = augmented_unison = m2 = A1 = 1
-major_second = diminished_third = M2 = d3 = 2
-minor_third = augmented_second = m3 = A2 = 3
-major_third = diminished_fourth = M3 = d4 = 4
-perfect_fourth = augmented_third = P4 = A3 = 5
-diminished_fifth = augmented_fourth = tritone = d5 = A4 = 6
-perfect_fifth = diminished_sixth = P5 = d6 = 7
-minor_sixth = augmented_fifth = m6 = A5 = 8
-major_sixth = diminished_seventh = M6 = d7 = 9
-minor_seventh = augmented_sixth = m7 = A6 = 10
-major_seventh = diminished_octave = M7 = d8 = 11
-perfect_octave = octave = augmented_seventh = diminished_ninth = P8 = A7 = d9 = 12
-minor_ninth = augmented_octave = m9 = A8 = 13
-major_ninth = diminished_tenth = M9 = d10 = 14
-minor_tenth = augmented_ninth = m10 = A9 = 15
-major_tenth = diminished_eleventh = M10 = d11 = 16
-perfect_eleventh = augmented_tenth = P11 = A10 = 17
-diminished_twelfth = augmented_eleventh = d12 = A11 = 18
-perfect_twelfth = tritave = diminished_thirteenth = P12 = d13 = 19
-minor_thirteenth = augmented_twelfth = m13 = A12 = 20
-major_thirteenth = diminished_fourteenth = M13 = d14 = 21
-minor_fourteenth = augmented_thirteenth = m14 = A13 = 22
-major_fourteenth = diminished_fifteenth = M14 = d15 = 23
-perfect_fifteenth = double_octave = augmented_fourteenth = P15 = A14 = 24
-minor_sixteenth = augmented_fifteenth = m16 = A15 = 25
-major_sixteenth = diminished_seventeenth = M16 = d17 = 26
-minor_seventeenth = augmented_sixteenth = m17 = A16 = 27
-major_seventeenth = M17 = 28
+class Interval:
+
+    def __init__(self, number, quality, name=None):
+        self.number = number
+        self.quality = quality
+        self.value = self.get_value()
+        self.name = name
+
+    def __repr__(self):
+        return f'{self.quality}{self.number}'
+
+    def get_value(self):
+        if len(self.quality) > 1 and len(set(self.quality)) == 1:
+            current_quality = self.quality[0]
+        else:
+            current_quality = self.quality
+        if current_quality not in quality_dict:
+            raise ValueError(
+                f'quality {self.quality} is not a valid quality, should be one of {list(quality_dict.keys())} or multiples of each'
+            )
+        if self.number not in interval_number_dict:
+            raise ValueError(
+                f'number {self.number} is not a valid number, should be one of {list(interval_number_dict.keys())}'
+            )
+        times = len(self.quality)
+        quality_number = quality_dict[current_quality]
+        if current_quality == 'd' and self.number in [1, 4, 5, 8]:
+            quality_number += 1
+        if quality_number != 0:
+            quality_number_sign = int(quality_number / abs(quality_number))
+        else:
+            quality_number_sign = 0
+        current_value = interval_number_dict[
+            self.number] + quality_number + quality_number_sign * (times - 1)
+        return current_value
+
+    def __add__(self, other):
+        import musicpy as mp
+        if isinstance(other, mp.note):
+            current_pitch_name = other.name.upper()[0]
+            current_pitch_name_ind = standard_pitch_name.index(
+                current_pitch_name)
+            new_other_name = standard_pitch_name[(current_pitch_name_ind +
+                                                  self.number - 1) %
+                                                 len(standard_pitch_name)]
+            result = mp.degree_to_note(other.degree + self.value)
+            result.name = mp.relative_note(result.name, new_other_name)
+        else:
+            result = self.value + other
+        return result
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+
+quality_dict = {'P': 0, 'M': 0, 'm': -1, 'd': -2, 'A': 1}
+
+quality_name_dict = {
+    'P': 'perfect',
+    'M': 'major',
+    'm': 'minor',
+    'd': 'diminished',
+    'A': 'augmented'
+}
+
+interval_number_dict = {
+    1: 0,
+    2: 2,
+    3: 4,
+    4: 5,
+    5: 7,
+    6: 9,
+    7: 11,
+    8: 12,
+    9: 14,
+    10: 16,
+    11: 17,
+    12: 19,
+    13: 21,
+    14: 23,
+    15: 24,
+    16: 26,
+    17: 28
+}
+
+interval_number_name_list = [
+    'unison', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh',
+    'octave', 'ninth', 'tenth', 'eleventh', 'twelfth', 'thirteenth',
+    'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth'
+]
+
+interval_dict = {}
+for i, each in enumerate(interval_number_name_list):
+    current_interval_number = i + 1
+    if current_interval_number == 1:
+        current_quality = ['P', 'A']
+    else:
+        current_interval_number_mod = current_interval_number % 7
+        if current_interval_number_mod in [1, 4, 5, 8]:
+            current_quality = ['P', 'A', 'd']
+        elif current_interval_number_mod in [2, 3, 6, 7]:
+            current_quality = ['M', 'm', 'A', 'd']
+    for each_quality in current_quality:
+        current_interval_name = f'{quality_name_dict[each_quality]}_{each}'
+        current_interval = Interval(number=current_interval_number,
+                                    quality=each_quality,
+                                    name=current_interval_name)
+        interval_dict[current_interval_name] = current_interval
+        interval_dict[str(current_interval)] = current_interval
+
+globals().update(interval_dict)
+
 semitone = halfstep = 1
 wholetone = wholestep = tone = 2
 
@@ -217,6 +302,8 @@ reverse_standard_dict.update({
     i: reverse_standard_dict[standard_dict2[i]]
     for i in standard_dict2 if standard_dict2[i] in reverse_standard_dict
 })
+
+standard_pitch_name = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 
 scaleTypes = match({
     ('major', ): [2, 2, 1, 2, 2, 2, 1],

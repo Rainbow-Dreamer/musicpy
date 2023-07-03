@@ -8,10 +8,8 @@ import functools
 import json
 
 if __name__ == '__main__' or __name__ == 'musicpy':
-    import database
     from structures import *
 else:
-    from . import database
     from .structures import *
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
