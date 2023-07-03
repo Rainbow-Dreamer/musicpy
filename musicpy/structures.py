@@ -2,6 +2,7 @@ from copy import deepcopy as copy
 from fractions import Fraction
 from dataclasses import dataclass
 import functools
+
 if __name__ == 'musicpy.structures':
     from . import database
 else:
@@ -14,7 +15,7 @@ class note:
     '''
 
     def __init__(self, name, num=4, duration=1 / 4, volume=100, channel=None):
-        if name not in database.standard:
+        if name[0] not in database.standard:
             raise ValueError(
                 f"Invalid note name '{name}', accepted note names are {list(database.standard.keys())}"
             )
@@ -124,6 +125,8 @@ class note:
     def __add__(self, obj):
         if isinstance(obj, int):
             return self.up(obj)
+        elif isinstance(obj, database.Interval):
+            return obj + self
         if not isinstance(obj, note):
             obj = mp.to_note(obj)
         return chord([copy(self), copy(obj)])
@@ -2987,7 +2990,9 @@ class circle_of_fifths:
         if mode == 0:
             return self[ind]
         else:
-            return self[ind, ]
+            return self[
+                ind,
+            ]
 
     def rotate(self, start, step=1, direction='cw', inner=False):
         if direction == 'ccw':
@@ -2998,7 +3003,9 @@ class circle_of_fifths:
             startind = self.outer.index(start)
         else:
             startind = start
-        return self[startind + step] if not inner else self[startind + step, ]
+        return self[startind + step] if not inner else self[
+            startind + step,
+        ]
 
     def rotate_get_scale(self,
                          start,
@@ -3016,7 +3023,9 @@ class circle_of_fifths:
 
     def get_scale(self, ind, pitch, inner=False):
         return scale(note(self[ind], pitch), 'major') if not inner else scale(
-            note(self[ind, ][:-1], pitch), 'minor')
+            note(self[
+                ind,
+            ][:-1], pitch), 'minor')
 
     def __repr__(self):
         return f'[circle of fifths]\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
