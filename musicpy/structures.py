@@ -14,12 +14,24 @@ class note:
     This class represents a single note.
     '''
 
-    def __init__(self, name, num=4, duration=1 / 4, volume=100, channel=None):
+    def __init__(self,
+                 name,
+                 num=4,
+                 duration=1 / 4,
+                 volume=100,
+                 channel=None,
+                 accidental=None):
         if name[0] not in database.standard:
-            raise ValueError(
-                f"Invalid note name '{name}', accepted note names are {list(database.standard.keys())}"
-            )
-        self.name = name
+            raise ValueError(f"Invalid note name '{name}'")
+        if accidental is not None:
+            self.base_name = name
+            self.accidental = accidental
+        else:
+            self.base_name = name[0]
+            accidental = name[1:]
+            if not accidental:
+                accidental = None
+            self.accidental = accidental
         self.num = num
         self.duration = duration
         volume = int(volume)
@@ -27,8 +39,22 @@ class note:
         self.channel = channel
 
     @property
+    def name(self):
+        return f'{self.base_name}{self.accidental if self.accidental is not None else ""}'
+
+    @name.setter
+    def name(self, value):
+        self.base_name = value[0]
+        accidental = value[1:]
+        if not accidental:
+            accidental = None
+        self.accidental = accidental
+
+    @property
     def degree(self):
-        return database.standard[self.name] + 12 * (self.num + 1)
+        return database.standard.get(
+            self.name, database.standard.get(
+                self.standard_name())) + 12 * (self.num + 1)
 
     @degree.setter
     def degree(self, value):
@@ -47,6 +73,14 @@ class note:
 
     def __le__(self, other):
         return self.degree <= other.degree
+
+    def to_standard(self):
+        temp = copy(self)
+        temp.name = mp.standardize_note(temp.name)
+        return temp
+
+    def standard_name(self):
+        return mp.standardize_note(self.name)
 
     def get_number(self):
         return database.standard[self.name]
