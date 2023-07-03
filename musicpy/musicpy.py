@@ -184,7 +184,6 @@ def get_chord(start,
                                      start_time=start_time)
     pre_chord_type = current_chord_type
     current_chord_type = current_chord_type.lower().replace(' ', '')
-    initial = start.degree
     chordlist = [start]
     current_chord_types = database.chordTypes if custom_mapping is None else custom_mapping
     if pre_chord_type in current_chord_types:
@@ -199,7 +198,7 @@ def get_chord(start,
             raise ValueError(
                 f'could not detect the chord type {current_chord_type}')
     for i in range(len(interval)):
-        chordlist.append(degree_to_note(initial + interval[i]))
+        chordlist.append(start + interval[i])
     return chord(chordlist, duration, intervals, start_time=start_time)
 
 
@@ -1131,30 +1130,28 @@ def modulation(current_chord, old_scale, new_scale, **args):
 
 def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
     obj = obj.replace(' ', '')
-    if ':' in obj:
-        current = obj.split(':')
-        current[0] = to_note(current[0])
-        return trans(f'{current[0].name}{current[1]}', current[0].num,
-                     duration, interval)
-    if obj.count('/') > 1:
-        current_parts = obj.split('/')
-        current_parts = [int(i) if i.isdigit() else i for i in current_parts]
-        result = trans(current_parts[0], pitch, duration, interval)
-        for each in current_parts[1:]:
-            if each in database.standard:
-                each = database.standard_dict.get(each, each)
-            elif not isinstance(each, int):
-                each = trans(each, pitch, duration, interval)
-            result /= each
-        return result
-    if obj in database.standard:
+    if is_valid_note(obj):
         return get_chord(obj,
                          'M',
                          pitch=pitch,
                          duration=duration,
                          intervals=interval,
                          custom_mapping=custom_mapping)
-    if '/' not in obj:
+    elif ':' in obj:
+        current = obj.split(':')
+        current[0] = to_note(current[0])
+        return trans(f'{current[0].name}{current[1]}', current[0].num,
+                     duration, interval)
+    elif obj.count('/') > 1:
+        current_parts = obj.split('/')
+        current_parts = [int(i) if i.isdigit() else i for i in current_parts]
+        result = trans(current_parts[0], pitch, duration, interval)
+        for each in current_parts[1:]:
+            if not isinstance(each, int):
+                each = trans(each, pitch, duration, interval)
+            result /= each
+        return result
+    elif '/' not in obj:
         check_structure = obj.split(',')
         check_structure_len = len(check_structure)
         if check_structure_len > 1:
@@ -1175,7 +1172,8 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
-            if first_two in database.standard and type1 in current_chord_types:
+            if first_two[
+                    0] in database.standard and type1 in current_chord_types:
                 return get_chord(first_two,
                                  type1,
                                  pitch=pitch,
@@ -1200,9 +1198,7 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
                 return (first_chord / int(part2)) % (duration, interval)
             elif part2[-1] == '!' and part2[:-1].isdigit():
                 return (first_chord @ int(part2[:-1])) % (duration, interval)
-            elif part2 in database.standard:
-                if part2 not in database.standard2:
-                    part2 = database.standard_dict[part2]
+            elif is_valid_note(part2):
                 first_chord_notenames = first_chord.names()
                 if part2 in first_chord_notenames and part2 != first_chord_notenames[
                         0]:
@@ -1716,9 +1712,13 @@ def relative_note(a, b):
 
 
 def get_note_name(current_note):
-    if any(i.isdigit() for i in current_note):
-        current_note = ''.join([i for i in current_note if not i.isdigit()])
-    return current_note
+    result = ''
+    for i in current_note:
+        if i.isdigit():
+            break
+        else:
+            result += i
+    return result
 
 
 def get_note_num(current_note):
@@ -1766,6 +1766,12 @@ def get_accidental(current_note):
     else:
         result = ''
     return result
+
+
+def is_valid_note(current_note):
+    return len(
+        current_note) > 0 and current_note[0] in database.standard and all(
+            i in database.accidentals for i in current_note[1:])
 
 
 def reset(self, **kwargs):

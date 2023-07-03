@@ -65,10 +65,8 @@ class match:
 
     def reverse(self):
         dic = self.dic
-        return match({
-            ((tuple(j), ) if not isinstance(j, tuple) else j): i
-            for i, j in dic.items()
-        })
+        return match({((tuple(j), ) if not isinstance(j, tuple) else j): i
+                      for i, j in dic.items()})
 
     def __repr__(self):
         return str(self.dic)
@@ -144,6 +142,63 @@ class Interval:
     def __radd__(self, other):
         return self.__add__(other)
 
+    def __sub__(self, other):
+        return self.value - other
+
+    def __rsub__(self, other):
+        import musicpy as mp
+        if isinstance(other, mp.note):
+            current_pitch_name = other.name.upper()[0]
+            current_pitch_name_ind = standard_pitch_name.index(
+                current_pitch_name)
+            new_other_name = standard_pitch_name[(current_pitch_name_ind -
+                                                  self.number - 1) %
+                                                 len(standard_pitch_name)]
+            result = mp.degree_to_note(other.degree - self.value)
+            result.name = mp.relative_note(result.name, new_other_name)
+        else:
+            result = other - self.value
+        return result
+
+    def __neg__(self):
+        return -self.value
+
+    def __gt__(self, other):
+        return self.value > other
+
+    def __ge__(self, other):
+        return self.value >= other
+
+    def __lt__(self, other):
+        return self.value < other
+
+    def __le__(self, other):
+        return self.value <= other
+
+    def __eq__(self, other):
+        return self.value == other
+
+    def __mul__(self, other):
+        return self.value * other
+
+    def __rmul__(self, other):
+        return other * self.value
+
+    def __truediv__(self, other):
+        return self.value / other
+
+    def __rtruediv__(self, other):
+        return other / self.value
+
+    def __floordiv__(self, other):
+        return self.value // other
+
+    def __rfloordiv__(self, other):
+        return other // self.value
+
+    def __hash__(self):
+        return id(self)
+
 
 quality_dict = {'P': 0, 'M': 0, 'm': -1, 'd': -2, 'A': 1}
 
@@ -202,8 +257,15 @@ for i, each in enumerate(interval_number_name_list):
 
 globals().update(interval_dict)
 
+tritone = d5
+octave = perfect_octave = P8
+tritave = P12
+double_octave = P15
+
 semitone = halfstep = 1
 wholetone = wholestep = tone = 2
+
+accidentals = ['b', '#', 'x', '♮']
 
 INTERVAL = {
     0: 'perfect unison',
@@ -326,70 +388,69 @@ diatonic_modes = [
 # you can sort the chord types from most commonly used to least commonly used
 # to get better chord detection results
 chordTypes = match({
-    ('major', 'M', 'maj', 'majorthird'): ((4, 7), ),
-    ('minor', 'm', 'minorthird', 'min', '-'): ((3, 7), ),
-    ('maj7', 'M7', 'major7th', 'majorseventh'): ((4, 7, 11), ),
-    ('m7', 'min7', 'minor7th', 'minorseventh', '-7'): ((3, 7, 10), ),
+    ('major', 'M', 'maj', 'majorthird'): (M3, P5),
+    ('minor', 'm', 'minorthird', 'min', '-'): (3, 7),
+    ('maj7', 'M7', 'major7th', 'majorseventh'): (4, 7, 11),
+    ('m7', 'min7', 'minor7th', 'minorseventh', '-7'): (3, 7, 10),
     ('7', 'seven', 'seventh', 'dominant seventh', 'dom7', 'dominant7', 'germansixth'):
-    ((4, 7, 10), ),
-    ('minormajor7', 'minor major 7', 'mM7'): ((3, 7, 11), ),
-    ('dim', 'o'): ((3, 6), ),
-    ('dim7', 'o7'): ((3, 6, 9), ),
+    (4, 7, 10),
+    ('minormajor7', 'minor major 7', 'mM7'): (3, 7, 11),
+    ('dim', 'o'): (m3, d5),
+    ('dim7', 'o7'): (3, 6, 9),
     ('half-diminished7', 'ø7', 'ø', 'half-diminished', 'half-dim', 'm7b5'):
-    ((3, 6, 10), ),
-    ('aug', 'augmented', '+', 'aug3', '+3'): ((4, 8), ),
-    ('aug7', 'augmented7', '+7'): ((4, 8, 10), ),
-    ('augmaj7', 'augmented-major7', '+maj7', 'augM7'): ((4, 8, 11), ),
-    ('aug6', 'augmented6', '+6', 'italian-sixth'): ((4, 10), ),
-    ('frenchsixth', ): ((4, 6, 10), ),
-    ('aug9', '+9'): ((4, 8, 10, 14), ),
-    ('sus', 'sus4'): ((5, 7), ),
-    ('sus2', ): ((2, 7), ),
-    ('9', 'dominant9', 'dominant-ninth', 'ninth'): ((4, 7, 10, 14), ),
-    ('maj9', 'major-ninth', 'major9th', 'M9'): ((4, 7, 11, 14), ),
-    ('m9', 'minor9', 'minor9th', '-9'): ((3, 7, 10, 14), ),
-    ('augmaj9', '+maj9', '+M9', 'augM9'): ((4, 8, 11, 14), ),
-    ('add6', '6', 'sixth'): ((4, 7, 9), ),
-    ('m6', 'minorsixth'): ((3, 7, 9), ),
-    ('add2', '+2'): ((2, 4, 7), ),
-    ('add9', ): ((4, 7, 14), ),
-    ('madd2', 'm+2'): ((2, 3, 7), ),
-    ('madd9', ): ((3, 7, 14), ),
-    ('7sus4', '7sus'): ((5, 7, 10), ),
-    ('7sus2', ): ((2, 7, 10), ),
-    ('maj7sus4', 'maj7sus', 'M7sus4'): ((5, 7, 11), ),
-    ('maj7sus2', 'M7sus2'): ((2, 7, 11), ),
-    ('9sus4', '9sus'): ((5, 7, 10, 14), ),
-    ('9sus2', ): ((2, 7, 10, 14), ),
-    ('maj9sus4', 'maj9sus', 'M9sus', 'M9sus4'): ((5, 7, 11, 14), ),
-    ('11', 'dominant11', 'dominant 11'): ((4, 7, 10, 14, 17), ),
+    (3, 6, 10),
+    ('aug', 'augmented', '+', 'aug3', '+3'): (4, 8),
+    ('aug7', 'augmented7', '+7'): (4, 8, 10),
+    ('augmaj7', 'augmented-major7', '+maj7', 'augM7'): (4, 8, 11),
+    ('aug6', 'augmented6', '+6', 'italian-sixth'): (4, 10),
+    ('frenchsixth', ): (4, 6, 10),
+    ('aug9', '+9'): (4, 8, 10, 14),
+    ('sus', 'sus4'): (5, 7),
+    ('sus2', ): (2, 7),
+    ('9', 'dominant9', 'dominant-ninth', 'ninth'): (4, 7, 10, 14),
+    ('maj9', 'major-ninth', 'major9th', 'M9'): (4, 7, 11, 14),
+    ('m9', 'minor9', 'minor9th', '-9'): (3, 7, 10, 14),
+    ('augmaj9', '+maj9', '+M9', 'augM9'): (4, 8, 11, 14),
+    ('add6', '6', 'sixth'): (4, 7, 9),
+    ('m6', 'minorsixth'): (3, 7, 9),
+    ('add2', '+2'): (2, 4, 7),
+    ('add9', ): (4, 7, 14),
+    ('madd2', 'm+2'): (2, 3, 7),
+    ('madd9', ): (3, 7, 14),
+    ('7sus4', '7sus'): (5, 7, 10),
+    ('7sus2', ): (2, 7, 10),
+    ('maj7sus4', 'maj7sus', 'M7sus4'): (5, 7, 11),
+    ('maj7sus2', 'M7sus2'): (2, 7, 11),
+    ('9sus4', '9sus'): (5, 7, 10, 14),
+    ('9sus2', ): (2, 7, 10, 14),
+    ('maj9sus4', 'maj9sus', 'M9sus', 'M9sus4'): (5, 7, 11, 14),
+    ('11', 'dominant11', 'dominant 11'): (4, 7, 10, 14, 17),
     ('maj11', 'M11', 'eleventh', 'major 11', 'major eleventh'):
-    ((4, 7, 11, 14, 17), ),
-    ('m11', 'minor eleventh', 'minor 11'): ((3, 7, 10, 14, 17), ),
-    ('13', 'dominant13', 'dominant 13'): ((4, 7, 10, 14, 17, 21), ),
-    ('maj13', 'major 13', 'M13'): ((4, 7, 11, 14, 17, 21), ),
-    ('m13', 'minor 13'): ((3, 7, 10, 14, 17, 21), ),
-    ('13sus4', '13sus'): ((5, 7, 10, 14, 21), (7, 10, 14, 17, 21)),
-    ('13sus2', ): ((2, 7, 10, 17, 21), ),
-    ('maj13sus4', 'maj13sus', 'M13sus', 'M13sus4'):
-    ((5, 7, 11, 14, 21), (7, 11, 14, 17, 21)),
-    ('maj13sus2', 'M13sus2'): ((2, 7, 11, 17, 21), ),
-    ('add4', '+4'): ((4, 5, 7), ),
-    ('madd4', 'm+4'): ((3, 5, 7), ),
-    ('maj7b5', 'M7b5'): ((4, 6, 11), ),
-    ('maj7#11', 'M7#11'): ((4, 7, 11, 18), ),
-    ('maj9#11', 'M9#11'): ((4, 7, 11, 14, 18), ),
-    ('69', '6/9', 'add69'): ((4, 7, 9, 14), ),
-    ('m69', 'madd69'): ((3, 7, 9, 14), ),
-    ('6sus4', '6sus'): ((5, 7, 9), ),
-    ('6sus2', ): ((2, 7, 9), ),
-    ('5', 'power chord'): ((7, ), ),
-    ('5(+octave)', 'power chord(with octave)'): ((7, 12), ),
-    ('maj13#11', 'M13#11'): ((4, 7, 11, 14, 18, 21), ),
-    ('13#11', ): ((4, 7, 10, 14, 18, 21), ),
-    ('fifth_9th', ): ((7, 14), ),
-    ('minormajor9', 'minor major 9', 'mM9'): ((3, 7, 11, 14), ),
-    ('dim(Maj7)', ): ((3, 6, 11), )
+    (4, 7, 11, 14, 17),
+    ('m11', 'minor eleventh', 'minor 11'): (3, 7, 10, 14, 17),
+    ('13', 'dominant13', 'dominant 13'): (4, 7, 10, 14, 17, 21),
+    ('maj13', 'major 13', 'M13'): (4, 7, 11, 14, 17, 21),
+    ('m13', 'minor 13'): (3, 7, 10, 14, 17, 21),
+    ('13sus4', '13sus'): (5, 7, 10, 14, 21),
+    ('13sus2', ): (2, 7, 10, 17, 21),
+    ('maj13sus4', 'maj13sus', 'M13sus', 'M13sus4'): (5, 7, 11, 14, 21),
+    ('maj13sus2', 'M13sus2'): (2, 7, 11, 17, 21),
+    ('add4', '+4'): (4, 5, 7),
+    ('madd4', 'm+4'): (3, 5, 7),
+    ('maj7b5', 'M7b5'): (4, 6, 11),
+    ('maj7#11', 'M7#11'): (4, 7, 11, 18),
+    ('maj9#11', 'M9#11'): (4, 7, 11, 14, 18),
+    ('69', '6/9', 'add69'): (4, 7, 9, 14),
+    ('m69', 'madd69'): (3, 7, 9, 14),
+    ('6sus4', '6sus'): (5, 7, 9),
+    ('6sus2', ): (2, 7, 9),
+    ('5', 'power chord'): (7, ),
+    ('5(+octave)', 'power chord(with octave)'): (7, 12),
+    ('maj13#11', 'M13#11'): (4, 7, 11, 14, 18, 21),
+    ('13#11', ): (4, 7, 10, 14, 18, 21),
+    ('fifth_9th', ): (7, 14),
+    ('minormajor9', 'minor major 9', 'mM9'): (3, 7, 11, 14),
+    ('dim(Maj7)', ): (3, 6, 11)
 })
 standard_reverse = {j: i for i, j in standard2.items()}
 detectScale = scaleTypes.reverse()

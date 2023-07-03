@@ -870,8 +870,9 @@ class daw:
                 current_timer = Timer(
                     current_time / 1000,
                     lambda each=each, duration=duration, volume=volume: self.
-                    play_note_func(f'{standardize_note(each.name)}{each.num}',
-                                   duration, volume, current_channel_num))
+                    play_note_func(
+                        f'{mp.standardize_note(each.name)}{each.num}',
+                        duration, volume, current_channel_num))
                 self.current_playing.append(current_timer)
                 current_timer.start()
                 current_time += bar_to_real_time(current_intervals[i], bpm, 1)
@@ -1124,12 +1125,6 @@ def load_audiosegments(current_dict, current_sound_path):
         else:
             current_sounds[i] = None
     return current_sounds
-
-
-def standardize_note(i):
-    if i in database.standard_dict:
-        i = database.standard_dict[i]
-    return i
 
 
 def velocity_to_db(vol):
