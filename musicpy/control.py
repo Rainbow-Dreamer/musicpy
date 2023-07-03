@@ -171,7 +171,7 @@ def start(current_chord,
             track_num = [track_num for i in range(len(current_chord))]
     i = 0
     info_list = []
-    while pygame.midi.get_device_info(i) != None:
+    while pygame.midi.get_device_info(i) is not None:
         current_info = pygame.midi.get_device_info(i)
         info_list.append(current_info)
         i += 1

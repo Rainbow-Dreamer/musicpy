@@ -169,6 +169,8 @@ class note:
     def __sub__(self, obj):
         if isinstance(obj, int):
             return self.down(obj)
+        elif isinstance(obj, database.Interval):
+            return obj.__rsub__(self)
 
     def __call__(self, obj=''):
         return mp.C(self.name + obj, self.num)
@@ -2329,29 +2331,27 @@ class scale:
                     ]
 
     def get_scale(self, intervals=1 / 4, durations=None):
-        if self.mode == None:
-            if self.interval == None:
+        if self.mode is None:
+            if self.interval is None:
                 raise ValueError(
                     'at least one of mode or interval in the scale should be settled'
                 )
             else:
                 result = [self.start]
-                count = self.start.degree
+                start = copy(self.start)
                 for t in self.interval:
-                    count += t
-                    result.append(mp.degree_to_note(count))
+                    start += t
+                    result.append(start)
                 if (result[-1].degree - result[0].degree) % 12 == 0:
                     result[-1].name = result[0].name
                 return chord(result, duration=durations, interval=intervals)
         else:
             result = [self.start]
-            count = self.start.degree
+            start = copy(self.start)
             interval1 = self.get_interval()
-            if isinstance(interval1, str):
-                raise ValueError(f'cannot find scale {interval1}')
             for t in interval1:
-                count += t
-                result.append(mp.degree_to_note(count))
+                start += t
+                result.append(start)
             if (result[-1].degree - result[0].degree) % 12 == 0:
                 result[-1].name = result[0].name
             return chord(result, duration=durations, interval=intervals)
@@ -2372,7 +2372,8 @@ class scale:
                              duration=1 / 4,
                              interval=0,
                              num=3,
-                             step=2):
+                             step=2,
+                             standardize=False):
         result = []
         high = False
         if degree1 == 7:
@@ -2382,13 +2383,15 @@ class scale:
         scale_notes = temp.notes[:-1]
         for i in range(degree1, degree1 + step * num, step):
             result.append(scale_notes[i % 7])
-        resultchord = chord(result,
-                            rootpitch=temp[0].num,
-                            interval=interval,
-                            duration=duration).standardize()
+        result_chord = chord(result,
+                             rootpitch=temp[0].num,
+                             interval=interval,
+                             duration=duration)
+        if standardize:
+            result_chord = result_chord.standardize()
         if high:
-            resultchord = resultchord.up(database.octave)
-        return resultchord
+            result_chord = result_chord.up(database.octave)
+        return result_chord
 
     def pattern(self, indlist, duration=1 / 4, interval=0, num=3, step=2):
         if isinstance(indlist, str):

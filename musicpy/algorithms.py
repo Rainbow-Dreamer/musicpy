@@ -370,7 +370,8 @@ def detect(current_chord,
            get_chord_type=False,
            original_first_ratio=0.86,
            similarity_ratio=0.6,
-           custom_mapping=None):
+           custom_mapping=None,
+           standardize=False):
     current_chord_type = chord_type()
     if not isinstance(current_chord, chord):
         current_chord = chord(current_chord)
@@ -392,7 +393,8 @@ def detect(current_chord,
                               get_chord_type=get_chord_type,
                               show_degree=show_degree,
                               custom_mapping=custom_mapping)
-    current_chord = current_chord.standardize()
+    if standardize:
+        current_chord = current_chord.standardize()
     N = len(current_chord)
     if N == 1:
         current_chord_type.type = 'note'
@@ -662,9 +664,11 @@ def detect_chord_by_root(current_chord,
                          show_degree=False,
                          custom_mapping=None,
                          return_mode=0,
-                         inner=False):
+                         inner=False,
+                         standardize=False):
     if not inner:
-        current_chord = current_chord.standardize()
+        if standardize:
+            current_chord = current_chord.standardize()
         if len(current_chord) < 3:
             return detect(current_chord,
                           get_chord_type=get_chord_type,
@@ -818,7 +822,7 @@ def random_composing(current_scale,
     # pick is the sets of notes from the required scales which used to pick up notes for melody
     pick = [x.up(2 * database.octave) for x in standard]
     focused = False
-    if focus_notes != None:
+    if focus_notes is not None:
         focused = True
         focus_notes = [pick[i - 1] for i in focus_notes]
         remained_notes = [j for j in pick if j not in focus_notes]

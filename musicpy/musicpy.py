@@ -170,7 +170,6 @@ def get_chord(start,
               interval=None,
               cumulative=True,
               pitch=4,
-              ind=0,
               start_time=0,
               custom_mapping=None):
     if not isinstance(start, note):
@@ -187,12 +186,12 @@ def get_chord(start,
     chordlist = [start]
     current_chord_types = database.chordTypes if custom_mapping is None else custom_mapping
     if pre_chord_type in current_chord_types:
-        interval_pre_chord_type = current_chord_types[pre_chord_type][ind]
+        interval_pre_chord_type = current_chord_types[pre_chord_type]
         interval = interval_pre_chord_type
     else:
         if current_chord_type in current_chord_types:
             interval_current_chord_type = current_chord_types[
-                current_chord_type][ind]
+                current_chord_type]
             interval = interval_current_chord_type
         else:
             raise ValueError(
