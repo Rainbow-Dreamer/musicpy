@@ -172,7 +172,6 @@ def get_chord(start,
               pitch=4,
               start_time=0,
               custom_mapping=None):
-    print(111, start, current_chord_type)
     if not isinstance(start, note):
         start = to_note(start, pitch=pitch)
     if interval is not None:
@@ -1140,7 +1139,6 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
     elif ':' in obj:
         current = obj.split(':')
         current[0] = to_note(current[0])
-        print(123, current)
         return trans(f'{current[0].name}{current[1]}', current[0].num,
                      duration, interval)
     elif obj.count('/') > 1:
@@ -1163,7 +1161,7 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
         if N == 2:
             first = obj[0]
             types = obj[1]
-            if first in database.standard and types in current_chord_types:
+            if is_valid_note(first) and types in current_chord_types:
                 return get_chord(first,
                                  types,
                                  pitch=pitch,
@@ -1173,8 +1171,7 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
         elif N > 2:
             first_two = obj[:2]
             type1 = obj[2:]
-            if first_two[
-                    0] in database.standard and type1 in current_chord_types:
+            if is_valid_note(first_two) and type1 in current_chord_types:
                 return get_chord(first_two,
                                  type1,
                                  pitch=pitch,
@@ -1183,7 +1180,7 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
                                  custom_mapping=custom_mapping)
             first_one = obj[0]
             type2 = obj[1:]
-            if first_one in database.standard and type2 in current_chord_types:
+            if is_valid_note(first_one) and type2 in current_chord_types:
                 return get_chord(first_one,
                                  type2,
                                  pitch=pitch,
