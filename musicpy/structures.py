@@ -135,13 +135,13 @@ class note:
 
     def down(self, unit=1):
         return self.up(-unit)
-    
+
     def sharp(self, unit=1):
         temp = self
         for i in range(unit):
             temp += database.A1
         return temp
-    
+
     def flat(self, unit=1):
         temp = self
         for i in range(unit):
@@ -2212,7 +2212,12 @@ class scale:
     This class represents a scale.
     '''
 
-    def __init__(self, start=None, mode=None, interval=None, notes=None):
+    def __init__(self,
+                 start=None,
+                 mode=None,
+                 interval=None,
+                 notes=None,
+                 standard_interval=True):
         self.interval = interval
         self.notes = None
         if notes is not None:
@@ -2231,7 +2236,8 @@ class scale:
             self.notes = self.get_scale().notes
 
         if interval is None:
-            self.interval = self.get_interval()
+            self.interval = self.get_interval(
+                standard_interval=standard_interval)
         if mode is None:
             current_mode = mp.alg.detect_scale_type(self.interval,
                                                     mode='interval')
@@ -2310,7 +2316,7 @@ class scale:
                     notes[current_ind] = notes[current_ind].flat()
             return scale(notes=notes)
 
-    def get_interval(self):
+    def get_interval(self, standard_interval=True):
         if self.mode is None:
             if self.interval is None:
                 if self.notes is None:
@@ -2318,11 +2324,18 @@ class scale:
                         'a mode or interval or notes list should be settled')
                 else:
                     notes = self.notes
-                    rootdegree = notes[0].degree
-                    return [
-                        notes[i].degree - notes[i - 1].degree
-                        for i in range(1, len(notes))
-                    ]
+                    if not standard_interval:
+                        root_degree = notes[0].degree
+                        return [
+                            notes[i].degree - notes[i - 1].degree
+                            for i in range(1, len(notes))
+                        ]
+                    else:
+                        start = notes[0]
+                        return [
+                            mp.get_pitch_interval(notes[i - 1], notes[i])
+                            for i in range(1, len(notes))
+                        ]
             else:
                 return self.interval
         else:
@@ -2336,11 +2349,18 @@ class scale:
                     raise ValueError(f'could not find scale {self.mode}')
                 else:
                     notes = self.notes
-                    rootdegree = notes[0].degree
-                    return [
-                        notes[i].degree - notes[i - 1].degree
-                        for i in range(1, len(notes))
-                    ]
+                    if not standard_interval:
+                        root_degree = notes[0].degree
+                        return [
+                            notes[i].degree - notes[i - 1].degree
+                            for i in range(1, len(notes))
+                        ]
+                    else:
+                        start = notes[0]
+                        return [
+                            mp.get_pitch_interval(notes[i - 1], notes[i])
+                            for i in range(1, len(notes))
+                        ]
 
     def get_scale(self, intervals=1 / 4, durations=None):
         if self.mode is None:
@@ -3037,7 +3057,9 @@ class circle_of_fifths:
         if mode == 0:
             return self[ind]
         else:
-            return self[ind, ]
+            return self[
+                ind,
+            ]
 
     def rotate(self, start, step=1, direction='cw', inner=False):
         if direction == 'ccw':
@@ -3048,7 +3070,9 @@ class circle_of_fifths:
             startind = self.outer.index(start)
         else:
             startind = start
-        return self[startind + step] if not inner else self[startind + step, ]
+        return self[startind + step] if not inner else self[
+            startind + step,
+        ]
 
     def rotate_get_scale(self,
                          start,
@@ -3066,7 +3090,9 @@ class circle_of_fifths:
 
     def get_scale(self, ind, pitch, inner=False):
         return scale(note(self[ind], pitch), 'major') if not inner else scale(
-            note(self[ind, ][:-1], pitch), 'minor')
+            note(self[
+                ind,
+            ][:-1], pitch), 'minor')
 
     def __repr__(self):
         return f'[circle of fifths]\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'

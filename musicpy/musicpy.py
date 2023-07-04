@@ -1773,6 +1773,22 @@ def is_valid_note(current_note):
             i in database.accidentals for i in current_note[1:])
 
 
+def get_pitch_interval(note1, note2):
+    if not isinstance(note1, note):
+        note1 = N(note1)
+    if not isinstance(note2, note):
+        note2 = N(note2)
+    name1 = note1.base_name.upper()
+    name2 = note2.base_name.upper()
+    pitch_names = database.standard_pitch_name
+    number = ((pitch_names.index(name2) - pitch_names.index(name1)) %
+              len(pitch_names)) + 1
+    degree_diff = note2.degree - note1.degree
+    for i in database.interval_dict.values():
+        if i.number == number and i.value == degree_diff:
+            return copy(i)
+
+
 def reset(self, **kwargs):
     temp = copy(self)
     for i, j in kwargs.items():
