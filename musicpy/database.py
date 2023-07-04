@@ -65,9 +65,11 @@ class match:
 
     def reverse(self, mode=0):
         dic = self.dic
-        return match({((tuple(j), ) if
-                       (not isinstance(j, tuple) or mode == 1) else j): i
-                      for i, j in dic.items()})
+        return match({
+            ((tuple(j), ) if (not isinstance(j, tuple) or mode == 1) else j):
+            i
+            for i, j in dic.items()
+        })
 
     def __repr__(self):
         return str(self.dic)
@@ -199,6 +201,36 @@ class Interval:
 
     def __hash__(self):
         return id(self)
+
+    def sharp(self):
+        current_interval_number_mod = self.number % 7
+        if current_interval_number == 1:
+            current_quality = ['P', 'A']
+        elif current_interval_number_mod in [1, 4, 5, 8]:
+            current_quality = ['d', 'P', 'A']
+        elif current_interval_number_mod in [2, 3, 6, 7]:
+            current_quality = ['d', 'm', 'M', 'A']
+        current_quality_ind = current_quality.index(self.quality)
+        if current_quality_ind == len(current_quality) - 1:
+            raise ValueError(f'interval {self} cannot be raised')
+        else:
+            new_quality = current_quality[current_quality_ind + 1]
+            return Interval(self.number, new_quality)
+
+    def flat(self):
+        current_interval_number_mod = self.number % 7
+        if current_interval_number == 1:
+            current_quality = ['P', 'A']
+        elif current_interval_number_mod in [1, 4, 5, 8]:
+            current_quality = ['d', 'P', 'A']
+        elif current_interval_number_mod in [2, 3, 6, 7]:
+            current_quality = ['d', 'm', 'M', 'A']
+        current_quality_ind = current_quality.index(self.quality)
+        if current_quality_ind == 0:
+            raise ValueError(f'interval {self} cannot be lowered')
+        else:
+            new_quality = current_quality[current_quality_ind - 1]
+            return Interval(self.number, new_quality)
 
 
 quality_dict = {'P': 0, 'M': 0, 'm': -1, 'd': -2, 'A': 1}

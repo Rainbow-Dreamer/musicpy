@@ -135,6 +135,18 @@ class note:
 
     def down(self, unit=1):
         return self.up(-unit)
+    
+    def sharp(self, unit=1):
+        temp = self
+        for i in range(unit):
+            temp += database.A1
+        return temp
+    
+    def flat(self, unit=1):
+        temp = self
+        for i in range(unit):
+            temp -= database.A1
+        return temp
 
     def __pos__(self):
         return self.up()
@@ -2292,10 +2304,10 @@ class scale:
             for each in altered_notes:
                 if each.startswith('#'):
                     current_ind = int(each.split('#')[1]) - 1
-                    notes[current_ind] = notes[current_ind].up()
+                    notes[current_ind] = notes[current_ind].sharp()
                 elif each.startswith('b'):
                     current_ind = int(each.split('b')[1]) - 1
-                    notes[current_ind] = notes[current_ind].down()
+                    notes[current_ind] = notes[current_ind].flat()
             return scale(notes=notes)
 
     def get_interval(self):

@@ -1662,12 +1662,11 @@ def relative_note(a, b):
         a = note(a, 5)
     else:
         a = note(a_name, 5)
-        if accidental_a == 'b':
-            a = a.down()
-        elif accidental_a == 'bb':
-            a = a.down(2)
-        elif accidental_a == '#':
-            a = a.up()
+        a_distinct = list(set(accidental_a))
+        if len(a_distinct) == 1 and a_distinct[0] == 'b':
+            a = a.down(len(accidental_a))
+        elif len(a_distinct) == 1 and a_distinct[0] == '#':
+            a = a.up(len(accidental_a))
         elif accidental_a == 'x':
             a = a.up(2)
         elif accidental_a == '♮':
@@ -1676,14 +1675,13 @@ def relative_note(a, b):
             raise ValueError(f'unrecognizable accidentals {accidental_a}')
     if b in database.standard:
         b = note(b, 5)
+        a_distinct = list(set(accidental_a))
     else:
         b = note(b_name, 5)
-        if accidental_b == 'b':
-            b = b.down()
-        elif accidental_b == 'bb':
-            b = b.down(2)
-        elif accidental_b == '#':
-            b = b.up()
+        if len(b_distinct) == 1 and b_distinct[0] == 'b':
+            b = b.down(len(accidental_b))
+        elif len(b_distinct) == 1 and b_distinct[0] == '#':
+            b = b.up(len(accidental_b))
         elif accidental_b == 'x':
             b = b.up(2)
         elif accidental_b == '♮':
@@ -1700,14 +1698,18 @@ def relative_note(a, b):
         diff = diff2
     if diff == 0:
         return b.name
-    if diff == 1:
+    elif diff == 1:
         return b.name + '#'
-    if diff == 2:
+    elif diff == 2:
         return b.name + 'x'
-    if diff == -1:
+    elif diff > 2:
+        return b.name + '#' * diff
+    elif diff == -1:
         return b.name + 'b'
-    if diff == -2:
+    elif diff == -2:
         return b.name + 'bb'
+    elif diff < -2:
+        return b.name + 'b' * abs(diff)
 
 
 def get_note_name(current_note):
@@ -1752,16 +1754,14 @@ def standardize_note(current_note):
 
 
 def get_accidental(current_note):
-    if current_note.endswith('bb'):
-        result = 'bb'
+    if current_note.endswith('b'):
+        result = current_note[current_note.index('b'):]
+    elif current_note.endswith('#'):
+        result = current_note[current_note.index('#'):]
     elif current_note.endswith('x'):
         result = 'x'
     elif current_note.endswith('♮'):
         result = '♮'
-    elif current_note.endswith('#'):
-        result = '#'
-    elif current_note.endswith('b'):
-        result = 'b'
     else:
         result = ''
     return result
