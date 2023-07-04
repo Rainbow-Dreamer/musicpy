@@ -198,6 +198,9 @@ class Interval:
 
     def __rfloordiv__(self, other):
         return other // self.value
+    
+    def __rmod__(self, other):
+        return other % self.value
 
     def __hash__(self):
         return id(self)

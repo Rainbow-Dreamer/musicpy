@@ -172,6 +172,7 @@ def get_chord(start,
               pitch=4,
               start_time=0,
               custom_mapping=None):
+    print(111, start, current_chord_type)
     if not isinstance(start, note):
         start = to_note(start, pitch=pitch)
     if interval is not None:
@@ -1139,6 +1140,7 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
     elif ':' in obj:
         current = obj.split(':')
         current[0] = to_note(current[0])
+        print(123, current)
         return trans(f'{current[0].name}{current[1]}', current[0].num,
                      duration, interval)
     elif obj.count('/') > 1:
