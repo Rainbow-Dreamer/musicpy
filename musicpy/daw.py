@@ -639,8 +639,8 @@ class daw:
                 has_effect = True
                 current_effects = copy(current_chord.effects)
             current_chord = build(current_chord,
-                                  bpm=current_chord.bpm
-                                  if current_chord.bpm is not None else bpm)
+                                  bpm=current_chord.bpm if current_chord.bpm
+                                  is not None else self.bpm)
             if has_effect:
                 current_chord.effects = current_effects
         return current_chord

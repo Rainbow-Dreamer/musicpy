@@ -1663,26 +1663,26 @@ def relative_note(a, b):
         a = note(a_name, 5)
         a_distinct = list(set(accidental_a))
         if len(a_distinct) == 1 and a_distinct[0] == 'b':
-            a = a.down(len(accidental_a))
+            a = a.flat(len(accidental_a))
         elif len(a_distinct) == 1 and a_distinct[0] == '#':
-            a = a.up(len(accidental_a))
+            a = a.sharp(len(accidental_a))
         elif accidental_a == 'x':
-            a = a.up(2)
+            a = a.sharp(2)
         elif accidental_a == '♮':
             pass
         else:
             raise ValueError(f'unrecognizable accidentals {accidental_a}')
     if b in database.standard:
         b = note(b, 5)
-        a_distinct = list(set(accidental_a))
     else:
         b = note(b_name, 5)
+        b_distinct = list(set(accidental_b))
         if len(b_distinct) == 1 and b_distinct[0] == 'b':
-            b = b.down(len(accidental_b))
+            b = b.flat(len(accidental_b))
         elif len(b_distinct) == 1 and b_distinct[0] == '#':
-            b = b.up(len(accidental_b))
+            b = b.sharp(len(accidental_b))
         elif accidental_b == 'x':
-            b = b.up(2)
+            b = b.sharp(2)
         elif accidental_b == '♮':
             pass
         else:
