@@ -65,9 +65,11 @@ class match:
 
     def reverse(self, mode=0):
         dic = self.dic
-        return match({((tuple(j), ) if
-                       (not isinstance(j, tuple) or mode == 1) else j): i
-                      for i, j in dic.items()})
+        return match({
+            ((tuple(j), ) if (not isinstance(j, tuple) or mode == 1) else j):
+            i
+            for i, j in dic.items()
+        })
 
     def __repr__(self):
         return str(self.dic)
@@ -370,18 +372,18 @@ standard_pitch_name = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
 
 scaleTypes = match({
     ('major', ): [M2, M2, m2, M2, M2, M2, m2],
-    ('minor', ): [2, 1, 2, 2, 1, 2, 2],
-    ('melodic minor', ): [2, 1, 2, 2, 2, 2, 1],
-    ('harmonic minor', ): [2, 1, 2, 2, 1, 3, 1],
-    ('lydian', ): [2, 2, 2, 1, 2, 2, 1],
-    ('dorian', ): [2, 1, 2, 2, 2, 1, 2],
-    ('phrygian', ): [1, 2, 2, 2, 1, 2, 2],
-    ('mixolydian', ): [2, 2, 1, 2, 2, 1, 2],
-    ('locrian', ): [1, 2, 2, 1, 2, 2, 2],
-    ('whole tone', ): [2, 2, 2, 2, 2, 2],
-    ('12', ): [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    ('major pentatonic', ): [2, 2, 3, 2, 3],
-    ('minor pentatonic', ): [3, 2, 2, 3, 2]
+    ('minor', ): [M2, m2, M2, M2, m2, M2, M2],
+    ('melodic minor', ): [M2, m2, M2, M2, M2, M2, m2],
+    ('harmonic minor', ): [M2, m2, M2, M2, m2, m3, m2],
+    ('lydian', ): [M2, M2, M2, m2, M2, M2, m2],
+    ('dorian', ): [M2, m2, M2, M2, M2, m2, M2],
+    ('phrygian', ): [m2, M2, M2, M2, m2, M2, M2],
+    ('mixolydian', ): [M2, M2, m2, M2, M2, m2, M2],
+    ('locrian', ): [m2, M2, M2, m2, M2, M2, M2],
+    ('whole tone', ): [M2, M2, M2, M2, M2, M2],
+    ('12', ): [m2, m2, m2, m2, m2, m2, m2, m2, m2, m2, m2, m2],
+    ('major pentatonic', ): [M2, M2, m3, M2, m3],
+    ('minor pentatonic', ): [m3, M2, M2, m3, M2]
 })
 diatonic_modes = [
     'major', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'minor', 'locrian'
