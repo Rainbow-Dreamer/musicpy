@@ -1733,20 +1733,19 @@ def standardize_note(current_note):
     elif current_note in database.standard_dict:
         return database.standard_dict[current_note]
     else:
-        if current_note.endswith('bb'):
-            current_name = current_note[:-2]
-            result = (N(standardize_note(current_name)) - 2).name
+        if current_note.endswith('#'):
+            current_name = current_note[:current_note.index('#')]
+            accidental_num = current_note.count('#')
+            result = (N(standardize_note(current_name)) + accidental_num).name
+        elif current_note.endswith('b'):
+            current_name = current_note[:current_note.index('b')]
+            accidental_num = current_note.count('b')
+            result = (N(standardize_note(current_name)) - accidental_num).name
         elif current_note.endswith('x'):
             current_name = current_note[:-1]
             result = (N(standardize_note(current_name)) + 2).name
         elif current_note.endswith('♮'):
             result = current_note[:-1]
-        elif current_note.endswith('#'):
-            current_name = current_note[:-1]
-            result = (N(standardize_note(current_name)) + 1).name
-        elif current_note.endswith('b'):
-            current_name = current_note[:-1]
-            result = (N(standardize_note(current_name)) - 1).name
         else:
             raise ValueError(f'Invalid note name or accidental {current_note}')
         return result

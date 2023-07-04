@@ -652,12 +652,15 @@ class chord:
         elif isinstance(alist, (str, note)):
             return self.on(alist)
 
-    def standardize(self):
+    def standardize(self, standardize_note=True):
         temp = self.only_notes()
         notenames = temp.names()
         intervals = temp.interval
         durations = temp.get_duration()
-        names_standard = [mp.standardize_note(i) for i in notenames]
+        if standardize_note:
+            names_standard = [mp.standardize_note(i) for i in notenames]
+        else:
+            names_standard = notenames
         names_offrep = []
         new_duration = []
         new_interval = []

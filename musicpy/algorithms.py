@@ -270,6 +270,7 @@ def detect_variation(current_chord,
                 if inv_msg is None:
                     result = find_similarity(a=current_chord,
                                              b=change_from_chord,
+                                             b_type=each_detect.chord_type,
                                              similarity_ratio=similarity_ratio,
                                              custom_mapping=custom_mapping)
                 else:
@@ -299,6 +300,7 @@ def detect_variation(current_chord,
                 if inv_msg is None:
                     result = find_similarity(a=current_chord,
                                              b=change_from_chord,
+                                             b_type=each_detect.chord_type,
                                              similarity_ratio=similarity_ratio,
                                              custom_mapping=custom_mapping)
                 else:
@@ -371,7 +373,7 @@ def detect(current_chord,
            original_first_ratio=0.86,
            similarity_ratio=0.6,
            custom_mapping=None,
-           standardize=False):
+           standardize_note=False):
     current_chord_type = chord_type()
     if not isinstance(current_chord, chord):
         current_chord = chord(current_chord)
@@ -393,8 +395,8 @@ def detect(current_chord,
                               get_chord_type=get_chord_type,
                               show_degree=show_degree,
                               custom_mapping=custom_mapping)
-    if standardize:
-        current_chord = current_chord.standardize()
+    current_chord = current_chord.standardize(
+        standardize_note=standardize_note)
     N = len(current_chord)
     if N == 1:
         current_chord_type.type = 'note'
