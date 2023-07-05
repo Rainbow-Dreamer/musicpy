@@ -28,12 +28,16 @@ def omit_from(a, b):
     b_first_note = b[0]
     omitnotes_degree = []
     for j in omitnotes:
-        current_degree = b[b_notes.index(j)].degree - b_first_note.degree
-        if current_degree not in database.reverse_precise_degree_match:
+        current_degree = mp.get_pitch_interval(b_first_note,
+                                               b[b_notes.index(j)])
+        precise_degrees = list(database.reverse_precise_degree_match.keys())
+        if current_degree not in precise_degrees:
             omitnotes_degree.append(j)
         else:
+            current_precise_degree = precise_degrees[precise_degrees.index(
+                current_degree)]
             omitnotes_degree.append(
-                database.reverse_precise_degree_match[current_degree])
+                database.reverse_precise_degree_match[current_precise_degree])
     omitnotes = omitnotes_degree
     return omitnotes
 
@@ -120,20 +124,24 @@ def find_similarity(a,
         current_chord_types = database.chordTypes if custom_mapping is None else custom_mapping[
             2]
         wholeTypes = current_chord_types.keynames()
-        selfname = a.names()
+        a_standardize = a.standardize_note()
+        selfname = a_standardize.names()
         root_note = a[0]
-        possible_chords = [(get_chord(root_note,
-                                      i,
-                                      custom_mapping=current_chord_types), i)
-                           for i in wholeTypes]
+        possible_chords = [
+            (get_chord(root_note, each,
+                       custom_mapping=current_chord_types).standardize_note(),
+             each, i) for i, each in enumerate(wholeTypes)
+        ]
         lengths = len(possible_chords)
         if same_note_special:
-            ratios = [(1 if samenote_set(a, x[0]) else SequenceMatcher(
-                None, selfname, x[0].names()).ratio(), x[1])
-                      for x in possible_chords]
+            ratios = [
+                (1 if samenote_set(a_standardize, x[0]) else SequenceMatcher(
+                    None, selfname, x[0].names()).ratio(), x[1], x[2])
+                for x in possible_chords
+            ]
         else:
             ratios = [(SequenceMatcher(None, selfname,
-                                       x[0].names()).ratio(), x[1])
+                                       x[0].names()).ratio(), x[1], x[2])
                       for x in possible_chords]
         alen = len(a)
         ratios_temp = [
@@ -145,7 +153,9 @@ def find_similarity(a,
         ratios.sort(key=lambda x: x[0], reverse=True)
         first = ratios[0]
         highest = first[0]
-        chordfrom = possible_chords[wholeTypes.index(first[1])][0]
+        chordfrom = get_chord(root_note,
+                              wholeTypes[first[2]],
+                              custom_mapping=current_chord_types)
         current_chord_type.highest_ratio = highest
         if highest >= similarity_ratio:
             if change_from_first:
@@ -164,12 +174,16 @@ def find_similarity(a,
                     except:
                         first = ratios[0]
                         highest = first[0]
-                        chordfrom = possible_chords[wholeTypes.index(
-                            first[1])][0]
+                        chordfrom = get_chord(
+                            root_note,
+                            wholeTypes[first[2]],
+                            custom_mapping=current_chord_types)
                         current_chord_type.chord_type = None
                         break
                     highest = first[0]
-                    chordfrom = possible_chords[wholeTypes.index(first[1])][0]
+                    chordfrom = get_chord(root_note,
+                                          wholeTypes[first[2]],
+                                          custom_mapping=current_chord_types)
                     if highest >= similarity_ratio:
                         current_chord_type = find_similarity(
                             a=a,
@@ -181,8 +195,10 @@ def find_similarity(a,
                     else:
                         first = ratios[0]
                         highest = first[0]
-                        chordfrom = possible_chords[wholeTypes.index(
-                            first[1])][0]
+                        chordfrom = get_chord(
+                            root_note,
+                            wholeTypes[first[2]],
+                            custom_mapping=current_chord_types)
                         current_chord_type.chord_type = None
                         break
             if not change_from_first:
@@ -201,22 +217,27 @@ def find_similarity(a,
         if b_type is None:
             raise ValueError('requires chord type name of b')
         chordfrom_type = b_type
-        if samenotes(a, b):
-            b_chord_type = detect(current_chord=b,
-                                  change_from_first=change_from_first,
-                                  same_note_special=same_note_special,
-                                  get_chord_type=True,
-                                  custom_mapping=custom_mapping)
-            return b_chord_type
         chordfrom = b
-        if samenote_set(a, chordfrom):
+        a_standardize = a.standardize_note()
+        chordfrom_standardize = chordfrom.standardize_note()
+
+        if samenotes(a_standardize, chordfrom_standardize):
+            chordfrom_type = detect(current_chord=chordfrom,
+                                    change_from_first=change_from_first,
+                                    same_note_special=same_note_special,
+                                    get_chord_type=True,
+                                    custom_mapping=custom_mapping)
+            return chordfrom_type
+
+        elif samenote_set(a_standardize, chordfrom_standardize):
             current_chord_type.root = chordfrom[0].name
             current_chord_type.chord_type = chordfrom_type
-            current_inv_msg = inversion_way(a, chordfrom)
+            current_inv_msg = inversion_way(a_standardize,
+                                            chordfrom_standardize)
             current_chord_type.apply_sort_msg(current_inv_msg,
                                               change_order=True)
-        elif contains(a, chordfrom):
-            current_omit_msg = omit_from(a, chordfrom)
+        elif contains(a_standardize, chordfrom_standardize):
+            current_omit_msg = omit_from(a_standardize, chordfrom_standardize)
             current_chord_type.chord_speciality = 'root position'
             current_chord_type.omit = current_omit_msg
             current_chord_type.root = chordfrom[0].name
@@ -226,12 +247,16 @@ def find_similarity(a,
                 2] if custom_mapping is not None else None
             current_chord_omit = current_chord_type.to_chord(
                 custom_mapping=current_custom_chord_types)
-            if not samenotes(a, current_chord_omit):
-                current_inv_msg = inversion_way(a, current_chord_omit)
+            current_chord_omit_standardize = current_chord_omit.standardize_note(
+            )
+            if not samenotes(a_standardize, current_chord_omit_standardize):
+                current_inv_msg = inversion_way(
+                    a_standardize, current_chord_omit_standardize)
                 current_chord_type.apply_sort_msg(current_inv_msg,
                                                   change_order=True)
         elif len(a) == len(chordfrom):
-            current_change_msg = change_from(a, chordfrom)
+            current_change_msg = change_from(a_standardize,
+                                             chordfrom_standardize)
             if current_change_msg:
                 current_chord_type.chord_speciality = 'altered chord'
                 current_chord_type.altered = current_change_msg

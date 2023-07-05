@@ -679,6 +679,12 @@ class chord:
         temp.interval = new_interval
         return temp
 
+    def standardize_note(self):
+        temp = copy(self)
+        for i in temp:
+            i.name = mp.standardize_note(i.name)
+        return temp
+
     def sortchord(self):
         temp = self.copy()
         temp.notes.sort(key=lambda x: x.degree)

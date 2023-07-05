@@ -1169,20 +1169,16 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
                                  intervals=interval,
                                  custom_mapping=custom_mapping)
         elif N > 2:
-            first_two = obj[:2]
-            type1 = obj[2:]
-            if is_valid_note(first_two) and type1 in current_chord_types:
-                return get_chord(first_two,
+            current_root_name = ''
+            for i, each in enumerate(obj):
+                if is_valid_note(current_root_name + each):
+                    current_root_name += each
+                else:
+                    type1 = obj[i:]
+                    break
+            if current_root_name and type1 in current_chord_types:
+                return get_chord(current_root_name,
                                  type1,
-                                 pitch=pitch,
-                                 duration=duration,
-                                 intervals=interval,
-                                 custom_mapping=custom_mapping)
-            first_one = obj[0]
-            type2 = obj[1:]
-            if is_valid_note(first_one) and type2 in current_chord_types:
-                return get_chord(first_one,
-                                 type2,
                                  pitch=pitch,
                                  duration=duration,
                                  intervals=interval,

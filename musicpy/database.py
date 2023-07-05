@@ -190,7 +190,10 @@ class Interval:
         return self.value <= other
 
     def __eq__(self, other):
-        return self.value == other
+        if isinstance(other, Interval):
+            return self.value == other.value
+        else:
+            return self.value == other
 
     def __mul__(self, other):
         return self.value * other
