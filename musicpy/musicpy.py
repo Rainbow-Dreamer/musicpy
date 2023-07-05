@@ -1788,9 +1788,10 @@ def get_pitch_interval(note1, note2):
     degree_diff = note2.degree - note1.degree
     for i in database.interval_dict.values():
         if i.number == number and i.value == degree_diff:
-            result = copy(i)
-            result.direction = direction
-            result.value = result.get_value()
+            result = database.Interval(number=i.number,
+                                       quality=i.quality,
+                                       name=i.name,
+                                       direction=direction)
             return result
 
 
