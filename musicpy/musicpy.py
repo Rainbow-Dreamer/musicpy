@@ -1776,8 +1776,10 @@ def get_pitch_interval(note1, note2):
         note1 = N(note1)
     if not isinstance(note2, note):
         note2 = N(note2)
+    direction = 1
     if note1.degree > note2.degree:
         note1, note2 = note2, note1
+        direction = -1
     name1 = note1.base_name.upper()
     name2 = note2.base_name.upper()
     pitch_names = database.standard_pitch_name
@@ -1786,7 +1788,10 @@ def get_pitch_interval(note1, note2):
     degree_diff = note2.degree - note1.degree
     for i in database.interval_dict.values():
         if i.number == number and i.value == degree_diff:
-            return copy(i)
+            result = copy(i)
+            result.direction = direction
+            result.value = result.get_value()
+            return result
 
 
 def reset(self, **kwargs):

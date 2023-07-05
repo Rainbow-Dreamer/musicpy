@@ -65,9 +65,11 @@ class match:
 
     def reverse(self, mode=0):
         dic = self.dic
-        return match({((tuple(j), ) if
-                       (not isinstance(j, tuple) or mode == 1) else j): i
-                      for i, j in dic.items()})
+        return match({
+            ((tuple(j), ) if (not isinstance(j, tuple) or mode == 1) else j):
+            i
+            for i, j in dic.items()
+        })
 
     def __repr__(self):
         return str(self.dic)
@@ -91,14 +93,15 @@ class match:
 
 class Interval:
 
-    def __init__(self, number, quality, name=None):
+    def __init__(self, number, quality, name=None, direction=1):
         self.number = number
         self.quality = quality
-        self.value = self.get_value()
         self.name = name
+        self.direction = direction
+        self.value = self.get_value()
 
     def __repr__(self):
-        return f'{self.quality}{self.number}'
+        return f'{"-" if self.direction == -1 else ""}{self.quality}{self.number}'
 
     def get_value(self):
         if len(self.quality) > 1 and len(set(self.quality)) == 1:
@@ -123,6 +126,7 @@ class Interval:
             quality_number_sign = 0
         current_value = interval_number_dict[
             self.number] + quality_number + quality_number_sign * (times - 1)
+        current_value *= self.direction
         return current_value
 
     def __add__(self, other):
