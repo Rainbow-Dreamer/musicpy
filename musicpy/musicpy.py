@@ -1785,14 +1785,20 @@ def get_pitch_interval(note1, note2):
     pitch_names = database.standard_pitch_name
     number = ((pitch_names.index(name2) - pitch_names.index(name1)) %
               len(pitch_names)) + 1
+    if note2.num > note1.num:
+        number += 7 * (note2.num - note1.num)
     degree_diff = note2.degree - note1.degree
+    found = False
     for i in database.interval_dict.values():
         if i.number == number and i.value == degree_diff:
             result = database.Interval(number=i.number,
                                        quality=i.quality,
                                        name=i.name,
                                        direction=direction)
+            found = True
             return result
+    if not found:
+        raise ValueError(f'cannot find pitch interval for {note1} and {note2}')
 
 
 def reset(self, **kwargs):
