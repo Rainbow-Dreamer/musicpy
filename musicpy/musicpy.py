@@ -1776,6 +1776,8 @@ def get_pitch_interval(note1, note2):
         note1 = N(note1)
     if not isinstance(note2, note):
         note2 = N(note2)
+    if note1.degree > note2.degree:
+        note1, note2 = note2, note1
     name1 = note1.base_name.upper()
     name2 = note2.base_name.upper()
     pitch_names = database.standard_pitch_name
