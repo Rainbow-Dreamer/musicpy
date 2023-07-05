@@ -1,3 +1,6 @@
+from copy import deepcopy as copy
+
+
 class match:
 
     def __init__(self, current_dict):
@@ -127,6 +130,10 @@ class Interval:
         current_value *= self.direction
         return current_value
 
+    def change_direction(self, direction):
+        self.direction = direction
+        self.value = self.get_value()
+
     def __add__(self, other):
         import musicpy as mp
         if isinstance(other, mp.note):
@@ -134,7 +141,8 @@ class Interval:
             current_pitch_name_ind = standard_pitch_name.index(
                 current_pitch_name)
             new_other_name = standard_pitch_name[(current_pitch_name_ind +
-                                                  self.number - 1) %
+                                                  self.direction *
+                                                  (self.number - 1)) %
                                                  len(standard_pitch_name)]
             result = mp.degree_to_note(other.degree + self.value)
             result.name = mp.relative_note(result.name, new_other_name)
@@ -155,6 +163,7 @@ class Interval:
             current_pitch_name_ind = standard_pitch_name.index(
                 current_pitch_name)
             new_other_name = standard_pitch_name[(current_pitch_name_ind -
+                                                  self.direction *
                                                   (self.number - 1)) %
                                                  len(standard_pitch_name)]
             result = mp.degree_to_note(other.degree - self.value)
@@ -164,7 +173,9 @@ class Interval:
         return result
 
     def __neg__(self):
-        return -self.value
+        result = copy(self)
+        result.change_direction(-result.direction)
+        return result
 
     def __gt__(self, other):
         return self.value > other
