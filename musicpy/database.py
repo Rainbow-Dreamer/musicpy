@@ -119,7 +119,7 @@ class Interval:
             )
         times = len(self.quality)
         quality_number = quality_dict[current_quality]
-        if current_quality == 'd' and self.number in [1, 4, 5, 8]:
+        if current_quality == 'd' and self.number % 7 in [1, 4, 5]:
             quality_number += 1
         if quality_number != 0:
             quality_number_sign = int(quality_number / abs(quality_number))
@@ -210,51 +210,82 @@ class Interval:
     def __rfloordiv__(self, other):
         return other // self.value
 
+    def __mod__(self, other):
+        return self.value % other.value
+
     def __rmod__(self, other):
         return other % self.value
+
+    def __divmod__(self, other):
+        return divmod(self.value, other.value)
+
+    def __rdivmod__(self, other):
+        return divmod(other, self.value)
 
     def __hash__(self):
         return id(self)
 
-    def sharp(self):
+    def sharp(self, unit=1):
+        if unit == 0:
+            return self
+        if unit > 1:
+            result = self
+            for i in range(unit):
+                result = result.sharp()
+            return result
         current_interval_number_mod = self.number % 7
         if current_interval_number == 1:
             current_quality = ['P', 'A']
-        elif current_interval_number_mod in [1, 4, 5, 8]:
+        elif current_interval_number_mod in [1, 4, 5]:
             current_quality = ['d', 'P', 'A']
         elif current_interval_number_mod in [2, 3, 6, 7]:
             current_quality = ['d', 'm', 'M', 'A']
-        current_quality_ind = current_quality.index(self.quality)
-        if current_quality_ind == len(current_quality) - 1:
-            raise ValueError(f'interval {self} cannot be raised')
-        else:
-            new_quality = current_quality[current_quality_ind + 1]
-            return Interval(self.number, new_quality)
+        if self.quality not in current_quality and self.quality[
+                0] == current_quality[0]:
+            return Interval(self.number, self.quality[:-1])
+        elif self.quality[0] == current_quality[-1]:
+            return Interval(self.number, self.quality + current_quality[-1])
+        elif self.quality in current_quality:
+            current_quality_ind = current_quality.index(self.quality)
+            return Interval(self.number,
+                            current_quality[current_quality_ind + 1])
 
-    def flat(self):
+    def flat(self, unit=1):
+        if unit == 0:
+            return self
+        if unit > 1:
+            result = self
+            for i in range(unit):
+                result = result.flat()
+            return result
         current_interval_number_mod = self.number % 7
         if current_interval_number == 1:
             current_quality = ['P', 'A']
-        elif current_interval_number_mod in [1, 4, 5, 8]:
+        elif current_interval_number_mod in [1, 4, 5]:
             current_quality = ['d', 'P', 'A']
         elif current_interval_number_mod in [2, 3, 6, 7]:
             current_quality = ['d', 'm', 'M', 'A']
-        current_quality_ind = current_quality.index(self.quality)
-        if current_quality_ind == 0:
-            raise ValueError(f'interval {self} cannot be lowered')
-        else:
-            new_quality = current_quality[current_quality_ind - 1]
-            return Interval(self.number, new_quality)
+        if self.quality not in current_quality and self.quality[
+                0] == current_quality[-1]:
+            return Interval(self.number, self.quality[:-1])
+        elif self.quality[0] == current_quality[0]:
+            return Interval(self.number, self.quality + current_quality[0])
+        elif self.quality in current_quality:
+            current_quality_ind = current_quality.index(self.quality)
+            return Interval(self.number,
+                            current_quality[current_quality_ind - 1])
 
 
-quality_dict = {'P': 0, 'M': 0, 'm': -1, 'd': -2, 'A': 1}
+quality_dict = {'P': 0, 'M': 0, 'm': -1, 'd': -2, 'A': 1, 'dd': -3, 'AA': 2}
 
 quality_name_dict = {
     'P': 'perfect',
     'M': 'major',
     'm': 'minor',
     'd': 'diminished',
-    'A': 'augmented'
+    'A': 'augmented',
+    'dd': 'doubly-diminished',
+    'AA': 'doubly-augmented'
 }
 
 interval_number_dict = {
@@ -287,13 +318,13 @@ interval_dict = {}
 for i, each in enumerate(interval_number_name_list):
     current_interval_number = i + 1
     if current_interval_number == 1:
-        current_quality = ['P', 'A']
+        current_quality = ['P', 'A', 'AA']
     else:
         current_interval_number_mod = current_interval_number % 7
-        if current_interval_number_mod in [1, 4, 5, 8]:
-            current_quality = ['P', 'A', 'd']
+        if current_interval_number_mod in [1, 4, 5]:
+            current_quality = ['P', 'A', 'd', 'AA', 'dd']
         elif current_interval_number_mod in [2, 3, 6, 7]:
-            current_quality = ['M', 'm', 'A', 'd']
+            current_quality = ['M', 'm', 'A', 'd', 'AA', 'dd']
     for each_quality in current_quality:
         current_interval_name = f'{quality_name_dict[each_quality]}_{each}'
         current_interval = Interval(number=current_interval_number,
@@ -331,8 +362,10 @@ INTERVAL = {
     13: 'minor ninth',
     14: 'major ninth',
     15: 'minor third / augmented ninth',
+    16: 'major third / major tenth',
     17: 'perfect eleventh',
     18: 'augmented eleventh',
+    19: 'perfect twelfth',
     20: 'minor thirteenth',
     21: 'major thirteenth'
 }

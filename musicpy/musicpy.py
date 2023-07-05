@@ -1786,19 +1786,42 @@ def get_pitch_interval(note1, note2):
     number = ((pitch_names.index(name2) - pitch_names.index(name1)) %
               len(pitch_names)) + 1
     if note2.num > note1.num:
-        number += 7 * (note2.num - note1.num)
+        number += 7 * ((note2.degree - note1.degree) // database.octave)
     degree_diff = note2.degree - note1.degree
+    max_pitch_interval = max(database.interval_dict.values())
+    if number == 1 and degree_diff == 11:
+        number = 8
+    elif number > max(database.interval_number_dict):
+        down_octave, degree_diff = divmod(degree_diff, database.octave)
+        number -= down_octave * 7
     found = False
-    for i in database.interval_dict.values():
-        if i.number == number and i.value == degree_diff:
-            result = database.Interval(number=i.number,
-                                       quality=i.quality,
-                                       name=i.name,
-                                       direction=direction)
-            found = True
-            return result
-    if not found:
-        raise ValueError(f'cannot find pitch interval for {note1} and {note2}')
+    current_number_interval = [
+        i for i in database.interval_dict.values() if i.number == number
+    ]
+    current_number_interval_values = [i.value for i in current_number_interval]
+    if degree_diff in current_number_interval_values:
+        result_interval = current_number_interval[
+            current_number_interval_values.index(degree_diff)]
+        result = database.Interval(number=result_interval.number,
+                                   quality=result_interval.quality,
+                                   name=result_interval.name,
+                                   direction=direction)
+        return result
+    else:
+        min_interval = min(current_number_interval_values)
+        max_interval = max(current_number_interval_values)
+        if degree_diff < min_interval:
+            result = min(current_number_interval,
+                         key=lambda s: s.value).flat(min_interval -
+                                                     degree_diff)
+        elif degree_diff > max_interval:
+            result = max(current_number_interval,
+                         key=lambda s: s.value).sharp(degree_diff -
+                                                      max_interval)
+        else:
+            raise ValueError(
+                f'cannot find pitch interval for {note1} and {note2}')
+        return result
 
 
 def reset(self, **kwargs):
