@@ -42,16 +42,24 @@ def omit_from(a, b):
     return omitnotes
 
 
-def change_from(a, b, octave_a=False, octave_b=False, same_degree=True):
+def change_from(a,
+                b,
+                octave_a=False,
+                octave_b=False,
+                same_degree=True,
+                original_b=None):
     '''
     how a is changed from b (flat or sharp some notes of b to get a)
     this is used only when two chords have the same number of notes
     in the detect chord function
     '''
+    if original_b is None:
+        original_b = b
     if octave_a:
         a = a.inoctave()
     if octave_b:
         b = b.inoctave()
+        original_b = original_b.inoctave()
     if same_degree:
         b = b.down(12 * (b[0].num - a[0].num))
     N = min(len(a), len(b))
@@ -61,24 +69,31 @@ def change_from(a, b, octave_a=False, octave_b=False, same_degree=True):
     bnames = b.names()
     M = min(len(anotes), len(bnotes))
     changes = [(bnames[i], bnotes[i] - anotes[i]) for i in range(M)]
-    changes = [x for x in changes if x[1] != 0]
-    if any(abs(j[1]) != 1 for j in changes):
+    result = []
+    if any(j[1] != 0 and abs(j[1]) != 1 for j in changes):
         changes = []
     else:
         b_first_note = b[0].degree
-        for i in range(len(changes)):
-            note_name, note_change = changes[i]
-            current_b_degree = bnotes[bnames.index(note_name)] - b_first_note
-            if current_b_degree not in database.reverse_precise_degree_match:
-                current_degree = note_name
-            else:
-                current_degree = database.reverse_precise_degree_match[
-                    current_b_degree]
-            if note_change > 0:
-                changes[i] = f'b{current_degree}'
-            else:
-                changes[i] = f'#{current_degree}'
-    return changes
+        for i, each in enumerate(changes):
+            note_name, note_change = each
+            if note_change != 0:
+                current_b_degree = mp.get_pitch_interval(
+                    original_b.notes[0],
+                    original_b.notes[bnames.index(note_name)])
+                precise_degrees = list(
+                    database.reverse_precise_degree_match.keys())
+                if current_b_degree not in precise_degrees:
+                    current_degree = original_b.notes[i].name
+                else:
+                    current_precise_degree = precise_degrees[
+                        precise_degrees.index(current_b_degree)]
+                    current_degree = database.reverse_precise_degree_match[
+                        current_precise_degree]
+                if note_change > 0:
+                    result.append(f'b{current_degree}')
+                else:
+                    result.append(f'#{current_degree}')
+    return result
 
 
 def contains(a, b):
@@ -256,7 +271,8 @@ def find_similarity(a,
                                                   change_order=True)
         elif len(a) == len(chordfrom):
             current_change_msg = change_from(a_standardize,
-                                             chordfrom_standardize)
+                                             chordfrom_standardize,
+                                             original_b=chordfrom)
             if current_change_msg:
                 current_chord_type.chord_speciality = 'altered chord'
                 current_chord_type.altered = current_change_msg
@@ -476,8 +492,9 @@ def detect(current_chord,
     if distance in current_detect_types:
         result = current_detect_types[distance]
         current_chord_type.clear()
-        current_invert_msg = inversion_way(current_chord,
-                                           current_chord_inoctave)
+        current_invert_msg = inversion_way(
+            current_chord.standardize_note(),
+            current_chord_inoctave.standardize_note())
         current_chord_type.root = current_chord_inoctave[0].name
         current_chord_type.chord_type = result[0]
         current_chord_type.apply_sort_msg(current_invert_msg,
@@ -494,8 +511,9 @@ def detect(current_chord,
                                          custom_mapping=custom_mapping)
 
     if current_chord_type.chord_type is not None:
-        if (original_first and current_chord_type.highest_ratio >=
-                original_first_ratio) or current_chord_type.highest_ratio == 1:
+        if (original_first
+                and current_chord_type.highest_ratio >= original_first_ratio
+            ) or current_chord_type.highest_ratio == 1:
             return _detect_helper(current_chord_type=current_chord_type,
                                   get_chord_type=get_chord_type,
                                   show_degree=show_degree,
@@ -509,8 +527,8 @@ def detect(current_chord,
         custom_mapping=custom_mapping)
 
     if current_chord_type_inoctave.chord_type is not None:
-        if (original_first and current_chord_type_inoctave.highest_ratio >=
-                original_first_ratio
+        if (original_first and current_chord_type_inoctave.highest_ratio
+                >= original_first_ratio
             ) or current_chord_type_inoctave.highest_ratio == 1:
             current_invert_msg = inversion_way(current_chord,
                                                current_chord_inoctave)
@@ -611,8 +629,8 @@ def detect(current_chord,
         highest_chord_type, current_inversion = possibles[0]
         if current_chord_type.chord_type is not None:
             if current_chord_type.highest_ratio >= similarity_ratio and (
-                    current_chord_type.highest_ratio >=
-                    highest_chord_type.highest_ratio
+                    current_chord_type.highest_ratio
+                    >= highest_chord_type.highest_ratio
                     or highest_chord_type.voicing is not None):
                 return _detect_helper(current_chord_type=current_chord_type,
                                       get_chord_type=get_chord_type,
@@ -641,10 +659,11 @@ def detect(current_chord,
                 current_chord_type._add_order(3)
             else:
                 current_invert_msg = inversion_way(
-                    current_chord,
+                    current_chord.standardize_note(),
                     highest_chord_type.to_chord(
                         apply_voicing=False,
-                        custom_mapping=current_custom_chord_types))
+                        custom_mapping=current_custom_chord_types).
+                    standardize_note())
                 current_chord_type = highest_chord_type
                 current_chord_type.apply_sort_msg(current_invert_msg,
                                                   change_order=True)
@@ -965,10 +984,14 @@ def negative_harmony(key,
     left_half = notes_dict[inds + 6:inds + 12]
     left_half.reverse()
     map_dict = {
-        **{left_half[i]: right_half[i]
-           for i in range(6)},
-        **{right_half[i]: left_half[i]
-           for i in range(6)}
+        **{
+            left_half[i]: right_half[i]
+            for i in range(6)
+        },
+        **{
+            right_half[i]: left_half[i]
+            for i in range(6)
+        }
     }
     if get_map:
         return map_dict
@@ -2084,8 +2107,8 @@ def split_melody(current_chord,
                     else:
                         if abs(next_degree_diff) < chord_tol and not (
                                 melody_degree_tol is not None
-                                and current_note.degree <
-                                melody_degree_tol.degree):
+                                and current_note.degree
+                                < melody_degree_tol.degree):
                             melody.append(current_note)
                             notes_num += 1
                             melody_interval.append(current_note_interval)
@@ -2101,8 +2124,8 @@ def split_melody(current_chord,
                     else:
                         if (abs(next_degree_diff) < chord_tol
                                 and not (melody_degree_tol is not None
-                                         and current_note.degree <
-                                         melody_degree_tol.degree) and
+                                         and current_note.degree
+                                         < melody_degree_tol.degree) and
                                 all(k.degree - current_note.degree < chord_tol
                                     for k in melody[-2:])):
                             melody.append(current_note)
@@ -2466,8 +2489,8 @@ def write_pop(
     if choose_chord_progressions is None:
         choose_chord_progressions = random.choice(
             database.choose_chord_progressions_list
-            if current_choose_chord_progressions_list is None else
-            current_choose_chord_progressions_list)
+            if current_choose_chord_progressions_list is
+            None else current_choose_chord_progressions_list)
     choose_chords = scale_type % (choose_chord_progressions,
                                   default_chord_durations, 0,
                                   random.choice(choose_chord_notes_num))

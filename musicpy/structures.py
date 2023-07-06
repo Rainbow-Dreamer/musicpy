@@ -923,17 +923,11 @@ class chord:
                             new_note = (temp[0] + degree_ls[0]).flat()
                         temp += new_note
                 else:
-                    if degree in database.standard:
-                        if degree in database.standard_dict:
-                            degree = database.standard_dict[degree]
-                        self_names = [
-                            i if i not in database.standard_dict else
-                            database.standard_dict[i] for i in temp.names()
-                        ]
-                        if degree in self_names:
-                            ind = temp.names().index(degree)
-                            temp.notes[ind] = temp.notes[ind].sharp(
-                            ) if first == '#' else temp.notes[ind].flat()
+                    self_names = temp.names()
+                    if degree in self_names:
+                        ind = temp.names().index(degree)
+                        temp.notes[ind] = temp.notes[ind].sharp(
+                        ) if first == '#' else temp.notes[ind].flat()
             elif each.startswith('omit') or each.startswith('no'):
                 degree = each[4:] if each.startswith('omit') else each[2:]
                 if degree in database.degree_match:
@@ -946,15 +940,9 @@ class chord:
                             del temp.interval[ind]
                             break
                 else:
-                    if degree in database.standard:
-                        if degree in database.standard_dict:
-                            degree = database.standard_dict[degree]
-                        self_names = [
-                            i if i not in database.standard_dict else
-                            database.standard_dict[i] for i in temp.names()
-                        ]
-                        if degree in self_names:
-                            temp = temp.omit(degree)
+                    self_names = temp.names()
+                    if degree in self_names:
+                        temp = temp.omit(degree)
             elif each.startswith('sus'):
                 num = each[3:]
                 if num.isdigit():
@@ -3074,7 +3062,9 @@ class circle_of_fifths:
         if mode == 0:
             return self[ind]
         else:
-            return self[ind, ]
+            return self[
+                ind,
+            ]
 
     def rotate(self, start, step=1, direction='cw', inner=False):
         if direction == 'ccw':
@@ -3085,7 +3075,9 @@ class circle_of_fifths:
             startind = self.outer.index(start)
         else:
             startind = start
-        return self[startind + step] if not inner else self[startind + step, ]
+        return self[startind + step] if not inner else self[
+            startind + step,
+        ]
 
     def rotate_get_scale(self,
                          start,
@@ -3103,7 +3095,9 @@ class circle_of_fifths:
 
     def get_scale(self, ind, pitch, inner=False):
         return scale(note(self[ind], pitch), 'major') if not inner else scale(
-            note(self[ind, ][:-1], pitch), 'minor')
+            note(self[
+                ind,
+            ][:-1], pitch), 'minor')
 
     def __repr__(self):
         return f'[circle of fifths]\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'

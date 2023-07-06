@@ -241,7 +241,7 @@ class Interval:
             current_quality = ['P', 'A']
         elif current_interval_number_mod in [1, 4, 5]:
             current_quality = ['d', 'P', 'A']
-        elif current_interval_number_mod in [2, 3, 6, 7]:
+        elif current_interval_number_mod in [0, 2, 3, 6]:
             current_quality = ['d', 'm', 'M', 'A']
         if self.quality not in current_quality and self.quality[
                 0] == current_quality[0]:
@@ -266,7 +266,7 @@ class Interval:
             current_quality = ['P', 'A']
         elif current_interval_number_mod in [1, 4, 5]:
             current_quality = ['d', 'P', 'A']
-        elif current_interval_number_mod in [2, 3, 6, 7]:
+        elif current_interval_number_mod in [0, 2, 3, 6]:
             current_quality = ['d', 'm', 'M', 'A']
         if self.quality not in current_quality and self.quality[
                 0] == current_quality[-1]:
@@ -326,7 +326,7 @@ for i, each in enumerate(interval_number_name_list):
         current_interval_number_mod = current_interval_number % 7
         if current_interval_number_mod in [1, 4, 5]:
             current_quality = ['P', 'A', 'd', 'AA', 'dd']
-        elif current_interval_number_mod in [2, 3, 6, 7]:
+        elif current_interval_number_mod in [0, 2, 3, 6]:
             current_quality = ['M', 'm', 'A', 'd', 'AA', 'dd']
     for each_quality in current_quality:
         current_interval_name = f'{quality_name_dict[each_quality]}_{each}'
