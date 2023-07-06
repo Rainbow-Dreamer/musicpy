@@ -171,7 +171,8 @@ def get_chord(start,
               cumulative=True,
               pitch=4,
               start_time=0,
-              custom_mapping=None):
+              custom_mapping=None,
+              pitch_interval=True):
     if not isinstance(start, note):
         start = to_note(start, pitch=pitch)
     if interval is not None:
@@ -197,7 +198,14 @@ def get_chord(start,
             raise ValueError(
                 f'could not detect the chord type {current_chord_type}')
     for i in range(len(interval)):
-        chordlist.append(start + interval[i])
+        if pitch_interval:
+            current_note = start + interval[i]
+        else:
+            current_pitch_interval = interval[i]
+            if isinstance(current_pitch_interval, database.Interval):
+                current_pitch_interval = current_pitch_interval.value
+            current_note = start + current_pitch_interval
+        chordlist.append(current_note)
     return chord(chordlist, duration, intervals, start_time=start_time)
 
 
@@ -1127,7 +1135,12 @@ def modulation(current_chord, old_scale, new_scale, **args):
     return current_chord.modulation(old_scale, new_scale, **args)
 
 
-def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
+def trans(obj,
+          pitch=4,
+          duration=1 / 4,
+          interval=None,
+          custom_mapping=None,
+          pitch_interval=True):
     obj = obj.replace(' ', '')
     if is_valid_note(obj):
         return get_chord(obj,
@@ -1135,7 +1148,8 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
                          pitch=pitch,
                          duration=duration,
                          intervals=interval,
-                         custom_mapping=custom_mapping)
+                         custom_mapping=custom_mapping,
+                         pitch_interval=pitch_interval)
     elif ':' in obj:
         current = obj.split(':')
         current[0] = to_note(current[0])
@@ -1167,7 +1181,8 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
                                  pitch=pitch,
                                  duration=duration,
                                  intervals=interval,
-                                 custom_mapping=custom_mapping)
+                                 custom_mapping=custom_mapping,
+                                 pitch_interval=pitch_interval)
         elif N > 2:
             current_root_name = ''
             for i, each in enumerate(obj):
@@ -1182,7 +1197,8 @@ def trans(obj, pitch=4, duration=1 / 4, interval=None, custom_mapping=None):
                                  pitch=pitch,
                                  duration=duration,
                                  intervals=interval,
-                                 custom_mapping=custom_mapping)
+                                 custom_mapping=custom_mapping,
+                                 pitch_interval=pitch_interval)
     else:
         parts = obj.split('/')
         part1, part2 = parts[0], '/'.join(parts[1:])
