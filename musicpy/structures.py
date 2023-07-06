@@ -3062,9 +3062,7 @@ class circle_of_fifths:
         if mode == 0:
             return self[ind]
         else:
-            return self[
-                ind,
-            ]
+            return self[ind, ]
 
     def rotate(self, start, step=1, direction='cw', inner=False):
         if direction == 'ccw':
@@ -3075,9 +3073,7 @@ class circle_of_fifths:
             startind = self.outer.index(start)
         else:
             startind = start
-        return self[startind + step] if not inner else self[
-            startind + step,
-        ]
+        return self[startind + step] if not inner else self[startind + step, ]
 
     def rotate_get_scale(self,
                          start,
@@ -3095,9 +3091,7 @@ class circle_of_fifths:
 
     def get_scale(self, ind, pitch, inner=False):
         return scale(note(self[ind], pitch), 'major') if not inner else scale(
-            note(self[
-                ind,
-            ][:-1], pitch), 'minor')
+            note(self[ind, ][:-1], pitch), 'minor')
 
     def __repr__(self):
         return f'[circle of fifths]\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
