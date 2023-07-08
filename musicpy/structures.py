@@ -1345,6 +1345,16 @@ class chord:
             return self.up(unit, ind, ind2)
         return self.up(-unit, ind, ind2)
 
+    def sharp(self, unit=1):
+        temp = copy(self)
+        temp.notes = [i.sharp(unit=unit) for i in temp.notes]
+        return temp
+
+    def flat(self, unit=1):
+        temp = copy(self)
+        temp.notes = [i.flat(unit=unit) for i in temp.notes]
+        return temp
+
     def omit(self, ind, mode=0):
         '''
         mode == 0: omit note as pitch interval with the first note
@@ -1795,6 +1805,7 @@ class chord:
     def same_accidentals(self, mode='#'):
         temp = copy(self)
         for each in temp.notes:
+            each.name = mp.standardize_note(each.name)
             if mode == '#':
                 if len(each.name) > 1 and each.name[-1] == 'b':
                     each.name = database.standard_dict[each.name]

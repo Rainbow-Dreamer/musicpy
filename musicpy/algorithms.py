@@ -99,7 +99,6 @@ def contains(a, b):
 
 
 def inversion_way(a, b):
-    print(777, a, b)
     if samenotes(a, b):
         result = None
     elif samenote_set(a, b):
@@ -111,7 +110,6 @@ def inversion_way(a, b):
             result = sort_msg
     else:
         result = None
-    print(777777777, result)
     return result
 
 
@@ -139,7 +137,9 @@ def find_similarity(a,
         wholeTypes = current_chord_types.keynames()
         selfname = a.names(standardize_note=True)
         root_note = a[0]
-        possible_chords = [(get_chord(root_note,
+        root_note_standardize = note(standardize_note(root_note.name),
+                                     root_note.num)
+        possible_chords = [(get_chord(root_note_standardize,
                                       each,
                                       custom_mapping=current_chord_types,
                                       pitch_interval=False), each, i)
@@ -240,7 +240,6 @@ def find_similarity(a,
         elif samenote_set(a, chordfrom):
             current_chord_type.root = chordfrom[0].name
             current_chord_type.chord_type = chordfrom_type
-            print('here2')
             current_inv_msg = inversion_way(a, chordfrom)
             current_chord_type.apply_sort_msg(current_inv_msg,
                                               change_order=True)
@@ -256,7 +255,6 @@ def find_similarity(a,
             current_chord_omit = current_chord_type.to_chord(
                 custom_mapping=current_custom_chord_types)
             if not samenotes(a, current_chord_omit):
-                print('here', current_chord_type)
                 current_inv_msg = inversion_way(a, current_chord_omit)
                 current_chord_type.apply_sort_msg(current_inv_msg,
                                                   change_order=True)
@@ -291,16 +289,12 @@ def detect_variation(current_chord,
                              get_chord_type=True,
                              custom_mapping=custom_mapping)
         if each_detect is not None:
-            print('variation1')
             inv_msg = inversion_way(current_chord, each_current)
             if each_detect.voicing is not None:
-                print('variation2')
                 change_from_chord = each_detect.to_chord(
                     apply_voicing=False,
                     custom_mapping=current_custom_chord_types)
                 inv_msg = inversion_way(current_chord, change_from_chord)
-                print('variation 2 info', each_detect, change_from_chord)
-                print('variation2 inv msg', inv_msg)
                 if inv_msg is None:
                     result = find_similarity(a=current_chord,
                                              b=change_from_chord,
@@ -325,10 +319,8 @@ def detect_variation(current_chord,
                              get_chord_type=True,
                              custom_mapping=custom_mapping)
         if each_detect is not None:
-            print('variation3')
             inv_msg = inversion_way(current_chord, each_current)
             if each_detect.voicing is not None:
-                print('variation4')
                 change_from_chord = each_detect.to_chord(
                     apply_voicing=False,
                     custom_mapping=current_custom_chord_types)
@@ -487,7 +479,6 @@ def detect(current_chord,
     if distance in current_detect_types:
         result = current_detect_types[distance]
         current_chord_type.clear()
-        print('first1')
         current_invert_msg = inversion_way(current_chord,
                                            current_chord_inoctave)
         current_chord_type.root = current_chord_inoctave[0].name
@@ -524,7 +515,6 @@ def detect(current_chord,
         if (original_first and current_chord_type_inoctave.highest_ratio >=
                 original_first_ratio
             ) or current_chord_type_inoctave.highest_ratio == 1:
-            print('first2')
             current_invert_msg = inversion_way(current_chord,
                                                current_chord_inoctave)
             current_chord_type_inoctave.apply_sort_msg(current_invert_msg,
@@ -543,7 +533,6 @@ def detect(current_chord,
             distance = current.intervalof()
         if distance in current_detect_types:
             result = current_detect_types[distance]
-            print('classic1')
             inversion_result = inversion_way(current_chord, current)
             if not isinstance(inversion_result, int):
                 continue
@@ -566,7 +555,6 @@ def detect(current_chord,
             distance = current.intervalof()
         if distance in current_detect_types:
             result = current_detect_types[distance]
-            print('classic2')
             inversion_high_result = inversion_way(current_chord, current)
             if not isinstance(inversion_high_result, int):
                 continue
@@ -639,7 +627,6 @@ def detect(current_chord,
             else:
                 current_invert = current_chord.inversion_highest(
                     current_inversion)
-            print('final1')
             invfrom_current_invert = inversion_way(current_chord,
                                                    current_invert)
             if highest_chord_type.voicing is not None and not isinstance(
@@ -656,7 +643,6 @@ def detect(current_chord,
                 current_chord_type.voicing = invfrom_current_invert
                 current_chord_type._add_order(3)
             else:
-                print('final2')
                 current_invert_msg = inversion_way(
                     current_chord,
                     highest_chord_type.to_chord(
