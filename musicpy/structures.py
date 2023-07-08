@@ -21,6 +21,8 @@ class note:
                  volume=100,
                  channel=None,
                  accidental=None):
+        if not name:
+            raise ValueError('note name is empty')
         if name[0] not in database.standard:
             raise ValueError(f"Invalid note name '{name}'")
         if accidental is not None:
@@ -321,8 +323,11 @@ class chord:
     def get_degree(self):
         return [i.degree for i in self]
 
-    def names(self):
-        return [i.name for i in self]
+    def names(self, standardize_note=False):
+        result = [i.name for i in self]
+        if standardize_note:
+            result = [mp.standardize_note(i) for i in result]
+        return result
 
     def __eq__(self, other):
         return type(other) is chord and self.notes == other.notes
@@ -1340,9 +1345,18 @@ class chord:
             return self.up(unit, ind, ind2)
         return self.up(-unit, ind, ind2)
 
-    def drop(self, ind):
+    def omit(self, ind, mode=0):
+        '''
+        mode == 0: omit note as pitch interval with the first note
+        mode == 1: omit note as number of semitones with the first note
+        mode == 2: omit note as index of current chord
+        '''
         if not isinstance(ind, list):
             ind = [ind]
+        if mode == 0:
+            ind = [self.interval_note(i) for i in ind]
+        elif mode == 1:
+            ind = [self.notes[0] + i for i in ind]
         if ind:
             if isinstance(ind[0], int):
                 temp = copy(self)
@@ -1361,33 +1375,21 @@ class chord:
                 current_ind = [
                     k for k in range(len(temp)) if temp.notes[k] in ind
                 ]
-                return self.drop(current_ind)
+                return self.omit(current_ind, mode=2)
             elif isinstance(ind[0],
                             str) and not any(i for i in ind[0] if i.isdigit()):
-                temp = self.same_accidentals()
+                temp = self.standardize_note()
                 self_notenames = temp.names()
-                ind = chord(ind).same_accidentals().names()
+                ind = chord(ind).standardize_note().names()
                 current_ind = [
                     k for k in range(len(self_notenames))
                     if self_notenames[k] in ind
                 ]
-                return self.drop(current_ind)
+                return self.omit(current_ind, mode=2)
             else:
                 return self
         else:
             return self
-
-    def omit(self, ind, mode=0):
-        if not isinstance(ind, list):
-            ind = [ind]
-        if ind and isinstance(ind[0], int):
-            if mode == 0:
-                return self.drop([self.interval_note(i) for i in ind])
-            elif mode == 1:
-                current_ind = [self.notes[0] + i for i in ind]
-                return self.drop(current_ind)
-        else:
-            return self.drop(ind)
 
     def sus(self, num=4):
         temp = self.copy()
@@ -2396,12 +2398,14 @@ class scale:
     def __len__(self):
         return len(self.notes)
 
-    def names(self):
+    def names(self, standardize_note=False):
         temp = [x.name for x in self.notes]
         result = []
         for i in temp:
             if i not in result:
                 result.append(i)
+        if standardize_note:
+            result = [mp.standardize_note(i) for i in result]
         return result
 
     def pick_chord_by_degree(self,

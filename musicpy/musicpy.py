@@ -1631,7 +1631,7 @@ def parse_dotted(text, get_fraction=False):
         else:
             dotted_num += 1
     duration = parse_num(text[:ind + 1], get_fraction=get_fraction)
-    current_duration = mp.beat(duration, dotted_num).get_duration()
+    current_duration = beat(duration, dotted_num).get_duration()
     return current_duration
 
 
@@ -1724,13 +1724,7 @@ def relative_note(a, b):
 
 
 def get_note_name(current_note):
-    result = ''
-    for i in current_note:
-        if i.isdigit():
-            break
-        else:
-            result += i
-    return result
+    return current_note[0]
 
 
 def get_note_num(current_note):
@@ -1738,43 +1732,42 @@ def get_note_num(current_note):
     return int(result) if result else None
 
 
+def get_accidental(current_note):
+    accidental_part = ''.join([i for i in current_note[1:] if not i.isdigit()])
+    if accidental_part.endswith('b'):
+        result = accidental_part[accidental_part.index('b'):]
+    elif accidental_part.endswith('#'):
+        result = accidental_part[accidental_part.index('#'):]
+    elif accidental_part.endswith('x'):
+        result = 'x'
+    elif accidental_part.endswith('♮'):
+        result = '♮'
+    else:
+        result = ''
+    return result
+
+
 def standardize_note(current_note):
-    current_note = get_note_name(current_note)
     if current_note in database.standard2:
         return current_note
     elif current_note in database.standard_dict:
         return database.standard_dict[current_note]
     else:
-        if current_note.endswith('#'):
-            current_name = current_note[:current_note.index('#')]
-            accidental_num = current_note.count('#')
-            result = (N(standardize_note(current_name)) + accidental_num).name
-        elif current_note.endswith('b'):
-            current_name = current_note[:current_note.index('b')]
-            accidental_num = current_note.count('b')
-            result = (N(standardize_note(current_name)) - accidental_num).name
-        elif current_note.endswith('x'):
-            current_name = current_note[:-1]
-            result = (N(standardize_note(current_name)) + 2).name
-        elif current_note.endswith('♮'):
-            result = current_note[:-1]
-        else:
+        current_note_name = get_note_name(current_note)
+        current_accidentals = get_accidental(current_note)
+        if not current_accidentals:
             raise ValueError(f'Invalid note name or accidental {current_note}')
-        return result
-
-
-def get_accidental(current_note):
-    if current_note.endswith('b'):
-        result = current_note[current_note.index('b'):]
-    elif current_note.endswith('#'):
-        result = current_note[current_note.index('#'):]
-    elif current_note.endswith('x'):
-        result = 'x'
-    elif current_note.endswith('♮'):
-        result = '♮'
-    else:
-        result = ''
-    return result
+        else:
+            diff = 0
+            for each in current_accidentals:
+                if each == '#':
+                    diff += 1
+                elif each == 'b':
+                    diff -= 1
+                elif each == 'x':
+                    diff += 2
+            result = (N(current_note_name) + diff).name
+            return result
 
 
 def is_valid_note(current_note):
