@@ -772,6 +772,8 @@ class chord:
                 return self.up(*obj)
         elif isinstance(obj, rest):
             return self.rest(obj.get_duration())
+        elif isinstance(obj, database.Interval):
+            return self.sharp(obj)
         temp = copy(self)
         if isinstance(obj, note):
             temp.notes.append(copy(obj))
@@ -788,7 +790,7 @@ class chord:
             temp.start_time += (obj if not isinstance(obj, rest) else
                                 obj.get_duration())
             return temp
-        elif isinstance(obj, int):
+        elif isinstance(obj, (int, database.Interval)):
             return self + obj
 
     def __ror__(self, obj):
@@ -996,8 +998,10 @@ class chord:
     def __sub__(self, obj):
         if isinstance(obj, (int, list)):
             return self.down(obj)
-        if isinstance(obj, tuple):
+        elif isinstance(obj, tuple):
             return self.down(*obj)
+        elif isinstance(obj, database.Interval):
+            return self.flat(obj)
         if not isinstance(obj, note):
             obj = mp.to_note(obj)
         temp = copy(self)
@@ -1347,12 +1351,18 @@ class chord:
 
     def sharp(self, unit=1):
         temp = copy(self)
-        temp.notes = [i.sharp(unit=unit) for i in temp.notes]
+        if isinstance(unit, int):
+            temp.notes = [i.sharp(unit=unit) for i in temp.notes]
+        elif isinstance(unit, database.Interval):
+            temp.notes = [i + unit for i in temp.notes]
         return temp
 
     def flat(self, unit=1):
         temp = copy(self)
-        temp.notes = [i.flat(unit=unit) for i in temp.notes]
+        if isinstance(unit, int):
+            temp.notes = [i.flat(unit=unit) for i in temp.notes]
+        elif isinstance(unit, database.Interval):
+            temp.notes = [i - unit for i in temp.notes]
         return temp
 
     def omit(self, ind, mode=0):
