@@ -2442,7 +2442,7 @@ class scale:
         temp = copy(self)
         scale_notes = temp.notes[:-1]
         for i in range(degree1, degree1 + step * num, step):
-            result.append(scale_notes[i % 7])
+            result.append(scale_notes[i % 7].name)
         result_chord = chord(result,
                              rootpitch=temp[0].num,
                              interval=interval,
@@ -2450,7 +2450,7 @@ class scale:
         if standardize:
             result_chord = result_chord.standardize()
         if high:
-            result_chord = result_chord.up(database.octave)
+            result_chord = result_chord + database.octave
         return result_chord
 
     def pattern(self, indlist, duration=1 / 4, interval=0, num=3, step=2):
