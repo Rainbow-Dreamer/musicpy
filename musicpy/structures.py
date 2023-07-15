@@ -132,23 +132,22 @@ class note:
             return temp
 
     def up(self, unit=1):
-        return mp.degree_to_note(self.degree + unit, self.duration,
-                                 self.volume, self.channel)
+        if isinstance(unit, database.Interval):
+            return self + unit
+        else:
+            return mp.degree_to_note(self.degree + unit, self.duration,
+                                     self.volume, self.channel)
 
     def down(self, unit=1):
         return self.up(-unit)
 
     def sharp(self, unit=1):
-        if isinstance(unit, database.Interval):
-            return self + unit
         temp = self
         for i in range(unit):
             temp += database.A1
         return temp
 
     def flat(self, unit=1):
-        if isinstance(unit, database.Interval):
-            return self - unit
         temp = self
         for i in range(unit):
             temp -= database.A1
@@ -767,7 +766,7 @@ class chord:
         return note1 in self.same_accidentals().notes
 
     def __add__(self, obj):
-        if isinstance(obj, (int, list)):
+        if isinstance(obj, (int, list, database.Interval)):
             return self.up(obj)
         elif isinstance(obj, tuple):
             if isinstance(obj[0], chord):
@@ -776,8 +775,6 @@ class chord:
                 return self.up(*obj)
         elif isinstance(obj, rest):
             return self.rest(obj.get_duration())
-        elif isinstance(obj, database.Interval):
-            return self.sharp(obj)
         temp = copy(self)
         if isinstance(obj, note):
             temp.notes.append(copy(obj))
@@ -1000,12 +997,10 @@ class chord:
         return result
 
     def __sub__(self, obj):
-        if isinstance(obj, (int, list)):
+        if isinstance(obj, (int, list, database.Interval)):
             return self.down(obj)
         elif isinstance(obj, tuple):
             return self.down(*obj)
-        elif isinstance(obj, database.Interval):
-            return self.flat(obj)
         if not isinstance(obj, note):
             obj = mp.to_note(obj)
         temp = copy(self)
@@ -1327,10 +1322,10 @@ class chord:
 
     def up(self, unit=1, ind=None, ind2=None):
         temp = copy(self)
-        if not isinstance(unit, int):
+        if not isinstance(unit, (int, database.Interval)):
             temp.notes = [temp.notes[k].up(unit[k]) for k in range(len(unit))]
             return temp
-        if not isinstance(ind, int) and ind is not None:
+        if not isinstance(ind, (int, database.Interval)) and ind is not None:
             temp.notes = [
                 temp.notes[i].up(unit) if i in ind else temp.notes[i]
                 for i in range(len(temp.notes))
@@ -1348,7 +1343,7 @@ class chord:
         return temp
 
     def down(self, unit=1, ind=None, ind2=None):
-        if not isinstance(unit, int):
+        if not isinstance(unit, (int, database.Interval)):
             unit = [-i for i in unit]
             return self.up(unit, ind, ind2)
         return self.up(-unit, ind, ind2)
@@ -2723,20 +2718,16 @@ class scale:
         mp.play(self.get_scale(intervals, durations), *args, **kwargs)
 
     def __add__(self, obj):
-        if isinstance(obj, int):
+        if isinstance(obj, (int, database.Interval)):
             return self.up(obj)
         elif isinstance(obj, tuple):
             return self.up(*obj)
-        elif isinstance(obj, database.Interval):
-            return self.sharp(obj)
 
     def __sub__(self, obj):
-        if isinstance(obj, int):
+        if isinstance(obj, (int, database.Interval)):
             return self.down(obj)
         elif isinstance(obj, tuple):
             return self.down(*obj)
-        elif isinstance(obj, database.Interval):
-            return self.flat(obj)
 
     def chord_progression(self,
                           chords,
@@ -3400,7 +3391,7 @@ class piece:
         return self.merge_track(n, mode='head', start_time=start_time)
 
     def __add__(self, n):
-        if isinstance(n, int):
+        if isinstance(n, (int, database.Interval)):
             return self.up(n)
         elif isinstance(n, piece):
             return self.merge_track(n, mode='after')
@@ -3408,7 +3399,7 @@ class piece:
             return self.up(*n)
 
     def __sub__(self, n):
-        if isinstance(n, int):
+        if isinstance(n, (int, database.Interval)):
             return self.down(n)
         elif isinstance(n, tuple):
             return self.down(*n)
@@ -4513,7 +4504,7 @@ class track:
         return self.down()
 
     def __add__(self, i):
-        if isinstance(i, int):
+        if isinstance(i, (int, database.Interval)):
             return self.up(i)
         else:
             temp = copy(self)
@@ -4521,7 +4512,7 @@ class track:
             return temp
 
     def __sub__(self, i):
-        if isinstance(i, int):
+        if isinstance(i, (int, database.Interval)):
             return self.down(i)
 
     def __or__(self, i):

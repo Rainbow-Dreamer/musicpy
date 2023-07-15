@@ -144,7 +144,10 @@ class Interval:
                                                   self.direction *
                                                   (self.number - 1)) %
                                                  len(standard_pitch_name)]
-            result = mp.degree_to_note(other.degree + self.value)
+            result = mp.degree_to_note(degree=other.degree + self.value,
+                                       duration=other.duration,
+                                       volume=other.volume,
+                                       channel=other.channel)
             result.name = mp.relative_note(result.name, new_other_name)
         else:
             result = self.value + other
@@ -166,7 +169,10 @@ class Interval:
                                                   self.direction *
                                                   (self.number - 1)) %
                                                  len(standard_pitch_name)]
-            result = mp.degree_to_note(other.degree - self.value)
+            result = mp.degree_to_note(degree=other.degree - self.value,
+                                       duration=other.duration,
+                                       volume=other.volume,
+                                       channel=other.channel)
             result.name = mp.relative_note(result.name, new_other_name)
         else:
             result = other - self.value
