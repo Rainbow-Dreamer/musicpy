@@ -220,7 +220,7 @@ class Interval:
         return other // self.value
 
     def __mod__(self, other):
-        return self.value % other.value
+        return self.value % other
 
     def __rmod__(self, other):
         return other % self.value
@@ -283,6 +283,16 @@ class Interval:
             current_quality_ind = current_quality.index(self.quality)
             return Interval(self.number,
                             current_quality[current_quality_ind - 1])
+
+    def inverse(self):
+        import musicpy as mp
+        root_note = mp.N('C')
+        notes = root_note, root_note + self
+        new_notes = notes[1], notes[0]
+        while new_notes[0].degree >= new_notes[1].degree:
+            new_notes[0].num -= 1
+        result = mp.get_pitch_interval(*new_notes)
+        return result
 
 
 quality_dict = {'P': 0, 'M': 0, 'm': -1, 'd': -2, 'A': 1, 'dd': -3, 'AA': 2}
