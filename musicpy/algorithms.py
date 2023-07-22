@@ -1251,12 +1251,9 @@ def detect_in_scale(current_chord,
     current_chord = current_chord.remove_duplicates()
     if not isinstance(current_chord, chord):
         current_chord = chord([trans_note(i) for i in current_chord])
-    whole_notes = current_chord.names()
+    whole_notes = current_chord.names(standardize_note=True)
     note_names = list(set(whole_notes))
-    note_names = [
-        database.standard_dict[i] if i not in database.standard2 else i
-        for i in note_names
-    ]
+    note_names = [standardize_note(i) for i in note_names]
     first_note = whole_notes[0]
     results = []
     if find_altered:
@@ -1265,7 +1262,7 @@ def detect_in_scale(current_chord,
         scale_name = each[0]
         if scale_name != '12':
             current_scale = scale(first_note, scale_name)
-            current_scale_notes = current_scale.names()
+            current_scale_notes = current_scale.names(standardize_note=True)
             if all(i in current_scale_notes for i in note_names):
                 results.append(current_scale)
                 if not search_all:
@@ -1498,14 +1495,16 @@ def detect_scale2(current_chord,
     counts_dict = {i[0]: i[1] for i in counts}
     appeared_note = [N(each[0]) for each in counts]
     note_scale_count = [
-        (i, sum([counts_dict[k]
-                 for k in scale(i, 'major').names()]) / len(current_chord))
-        for i in appeared_note
+        (i,
+         sum([
+             counts_dict[k]
+             for k in scale(i, 'major').names(standardize_note=True)
+         ]) / len(current_chord)) for i in appeared_note
     ]
     note_scale_count.sort(key=lambda s: s[1], reverse=True)
     most_appeared_note, current_key_rate = note_scale_count[0]
     current_scale = scale(most_appeared_note, 'major')
-    current_scale_names = current_scale.names()
+    current_scale_names = current_scale.names(standardize_note=True)
     current_scale_num = len(current_scale_names)
     tonic_chords = [[
         current_scale_names[i],
@@ -1576,9 +1575,11 @@ def detect_scale3(current_chord,
         counts_dict = {i[0]: i[1] for i in counts}
         appeared_note = [N(each[0]) for each in counts]
         note_scale_count = [
-            (i, sum([counts_dict[k]
-                     for k in scale(i, 'major').names()]) / len(current_part))
-            for i in appeared_note
+            (i,
+             sum([
+                 counts_dict[k]
+                 for k in scale(i, 'major').names(standardize_note=True)
+             ]) / len(current_part)) for i in appeared_note
         ]
         note_scale_count.sort(key=lambda s: s[1], reverse=True)
         most_appeared_note, current_key_rate = note_scale_count[0]
@@ -1588,7 +1589,7 @@ def detect_scale3(current_chord,
                 result_scale[-1][0][1] = current_range[1]
             continue
         current_scale = scale(most_appeared_note, 'major')
-        current_scale_names = current_scale.names()
+        current_scale_names = current_scale.names(standardize_note=True)
         current_scale_num = len(current_scale_names)
         tonic_chords = [[
             current_scale_names[i],
