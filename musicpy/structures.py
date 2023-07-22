@@ -5947,13 +5947,8 @@ class chord_type:
                 voicing_msg = f'sort as {self.voicing}' if self.voicing else ''
                 non_chord_bass_note_msg = f'/{self.non_chord_bass_note}' if self.non_chord_bass_note else ''
                 if self.inversion:
-                    if self.order is not None and 2 in self.order:
-                        current_custom_order = self.order[:self.order.index(2)]
-                    else:
-                        current_custom_order = None
                     current_new_chord = self.to_chord(
-                        custom_mapping=custom_mapping,
-                        custom_order=current_custom_order)
+                        custom_mapping=custom_mapping, apply_inversion=False)
                     inversion_msg = f'/{current_new_chord[self.inversion].name}'
                 else:
                     inversion_msg = ''
