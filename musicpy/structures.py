@@ -1682,7 +1682,7 @@ class chord:
                                           temp.get_duration(), temp.interval,
                                           False)
         result.set_volume(volumes)
-        result += pitch_bend_changes
+        result.pitch_bends += pitch_bend_changes
         return result
 
     def normalize_tempo(self,
