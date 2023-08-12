@@ -756,14 +756,13 @@ def _detect_chord_by_root_helper(current_chord,
     if not any(i in current_note_interval
                for i in database.non_standard_intervals):
         chord_type_intervals = list(current_chord_types.values())
-        match_chords = [
-            current_detect_types[i][0] for i in chord_type_intervals
-            if all((each in i or each - database.octave in i)
-                   for each in current_note_interval)
-        ]
+        match_chords = [(current_detect_types[i][0], i)
+                        for i in chord_type_intervals
+                        if all((each in i or each - database.octave in i)
+                               for each in current_note_interval)]
         if match_chords:
-            match_chords.sort(key=lambda s: len(s))
-            current_match_chord = match_chords[0]
+            match_chords.sort(key=lambda s: len(s[1]))
+            current_match_chord = match_chords[0][0]
     return current_match_chord
 
 
