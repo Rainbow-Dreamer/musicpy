@@ -2007,6 +2007,9 @@ def read_json(file):
         each_track['interval'] = [i['interval'] for i in each_track['notes']]
         for i in each_track['notes']:
             del i['interval']
+            i['name'] = i['base_name'] + (i['accidental'] or '')
+            del i['base_name']
+            del i['accidental']
         each_track['notes'] = [note(**k) for k in each_track['notes']]
         each_track['tempos'] = [tempo(**k) for k in each_track['tempos']]
         each_track['pitch_bends'] = [
@@ -2056,6 +2059,9 @@ def read_yaml(file):
         each_track['interval'] = [i['interval'] for i in each_track['notes']]
         for i in each_track['notes']:
             del i['interval']
+            i['name'] = i['base_name'] + (i['accidental'] or '')
+            del i['base_name']
+            del i['accidental']
         each_track['notes'] = [note(**k) for k in each_track['notes']]
         each_track['tempos'] = [tempo(**k) for k in each_track['tempos']]
         each_track['pitch_bends'] = [
