@@ -16,7 +16,7 @@ See [musicpy wiki](https://github.com/Rainbow-Dreamer/musicpy/wiki) or [Read the
 
 This wiki is updated frequently, since new functions and abilities are adding to musicpy regularly. The syntax and abilities of this wiki is synchronized with the latest released version of musicpy.
 
-You can click [here](https://www.jianguoyun.com/p/Dapi5bEQhPG0CBijkqYE) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
+You can click [here](https://www.jianguoyun.com/p/Ddiv4ykQt43aDBjTu8kFIAA) to download the entire wiki of musicpy I written in pdf and markdown format, which is updating continuously.
 
 Installation
 -------------

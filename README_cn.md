@@ -15,7 +15,7 @@ Musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和�
 
 这个wiki经常更新，因为musicpy经常在新版本中加入全新的函数和功能。wiki里的语法与功能与最新版本的musicpy是同步的。
 
-我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/Dapi5bEQhPG0CBijkqYE)下载，正在不断地更新中。
+我写的musicpy的wiki的pdf档和markdown档全套可以点击[这里](https://www.jianguoyun.com/p/Ddiv4ykQt43aDBjTu8kFIAA)下载，正在不断地更新中。
 
 安装musicpy
 -------------
