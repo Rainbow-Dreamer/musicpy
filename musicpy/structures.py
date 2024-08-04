@@ -3417,7 +3417,7 @@ class piece:
                     n,
                     mode='after',
                     start_time=0,
-                    ind_mode=0,
+                    ind_mode=1,
                     include_last_interval=False):
         temp = copy(self)
         temp2 = copy(n)
