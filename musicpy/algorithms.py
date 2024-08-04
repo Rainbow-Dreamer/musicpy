@@ -1197,7 +1197,7 @@ def find_chords_for_melody(melody,
     if current_scale.mode != 'major' and current_scale.mode in database.diatonic_modes:
         current_scale = current_scale.inversion(
             8 - database.diatonic_modes.index(current_scale.mode))
-    database.chordTypes = list(database.chordTypes.dic.keys())
+    current_chordTypes = list(database.chordTypes.dic.keys())
     result = []
     if get_pattern:
         choose_patterns = [
@@ -1218,12 +1218,12 @@ def find_chords_for_melody(melody,
             counter += 1
             if counter >= length:
                 counter = 0
-        current_chord_type = random.choice(database.chordtypes)[0]
+        current_chord_type = random.choice(current_chordTypes)[0]
         current_chord = get_chord(current_root, current_chord_type)
         while current_chord not in current_scale or current_chord_type == '5' or current_chord in result or (
                 chord_length is not None
                 and len(current_chord) < chord_length):
-            current_chord_type = random.choice(database.chordtypes)[0]
+            current_chord_type = random.choice(current_chordTypes)[0]
             current_chord = get_chord(current_root, current_chord_type)
         result.append(current_chord)
     if chord_length is not None:
