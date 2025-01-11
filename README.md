@@ -118,7 +118,7 @@ QQ discussion group: 364834221
 
 This project is developed by Rainbow Dreamer on his spare time to create an interesting music composition library and a high-level MIDI toolkit. If you feel this project is useful to you and want to support it and it's future development, please consider sponsor this project by clicking the sponsor button, it would help me out a lot.
 
-[![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/Rainbow-Dreamer)
+[![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://patreon.com/rainbow_dreamer)
 
 Reasons Why I Develop This Language and Keep Working on This Project
 -------------

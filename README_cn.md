@@ -116,7 +116,7 @@ QQ讨论群: 364834221
 
 这个项目是由Rainbow Dreamer在业余时间开发的，旨在创建一个有趣的音乐创作库和一个高级MIDI工具包。如果你觉得这个项目对你有用，想支持它和它的未来发展，请考虑点击赞助按钮以赞助这个项目，非常感谢。
 
-[![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/Rainbow-Dreamer)
+[![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://patreon.com/rainbow_dreamer)
 
 我开发musicpy的初衷
 -------------
