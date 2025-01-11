@@ -116,9 +116,9 @@ QQ discussion group: 364834221
 
 ## Donation
 
-This project is developed by Rainbow Dreamer on his spare time to create an interesting music composition library and a high-level MIDI toolkit. If you feel this project is useful to you and want to support it and it's future development, please consider buy me a coffee, I appreciate any amount.
+This project is developed by Rainbow Dreamer on his spare time to create an interesting music composition library and a high-level MIDI toolkit. If you feel this project is useful to you and want to support it and it's future development, please consider sponsor this project by clicking the sponsor button, it would help me out a lot.
 
-[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.com/donate/?business=7XSUZCQNT4M4Y&no_recurring=0&currency_code=CAD)
+[![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/Rainbow-Dreamer)
 
 Reasons Why I Develop This Language and Keep Working on This Project
 -------------

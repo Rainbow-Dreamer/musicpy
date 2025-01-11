@@ -1571,6 +1571,10 @@ class chord:
             old_scale_names[i]: new_scale_names[i]
             for i in range(number)
         }
+        transdict = {
+            mp.standardize_note(i): mp.standardize_note(j)
+            for i, j in transdict.items()
+        }
         for k in range(len(temp)):
             current = temp.notes[k]
             if current.name in database.standard_dict:
@@ -3086,7 +3090,9 @@ class circle_of_fifths:
         if mode == 0:
             return self[ind]
         else:
-            return self[ind, ]
+            return self[
+                ind,
+            ]
 
     def rotate(self, start, step=1, direction='cw', inner=False):
         if direction == 'ccw':
@@ -3097,7 +3103,9 @@ class circle_of_fifths:
             startind = self.outer.index(start)
         else:
             startind = start
-        return self[startind + step] if not inner else self[startind + step, ]
+        return self[startind + step] if not inner else self[
+            startind + step,
+        ]
 
     def rotate_get_scale(self,
                          start,
@@ -3115,7 +3123,9 @@ class circle_of_fifths:
 
     def get_scale(self, ind, pitch, inner=False):
         return scale(note(self[ind], pitch), 'major') if not inner else scale(
-            note(self[ind, ][:-1], pitch), 'minor')
+            note(self[
+                ind,
+            ][:-1], pitch), 'minor')
 
     def __repr__(self):
         return f'[circle of fifths]\nouter circle: {self.outer}\ninner circle: {self.inner}\ndirection: clockwise'
