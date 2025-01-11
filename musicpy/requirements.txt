@@ -1,2 +1,3 @@
 mido-fix
-pygame
+pygame-ce
+dataclasses
