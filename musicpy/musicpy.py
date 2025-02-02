@@ -1,7 +1,6 @@
 import os
 import math
 import struct
-import chunk
 from io import BytesIO
 import mido_fix as mido
 import functools
@@ -9,8 +8,10 @@ import json
 
 if __name__ == '__main__' or __name__ == 'musicpy':
     from structures import *
+    import chunk
 else:
     from .structures import *
+    from . import chunk
 
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
