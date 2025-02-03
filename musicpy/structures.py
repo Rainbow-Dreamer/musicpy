@@ -3431,6 +3431,14 @@ class piece:
                     include_last_interval=False):
         temp = copy(self)
         temp2 = copy(n)
+        max_track_number = max(len(self), len(n))
+        temp_length = len(temp)
+        if temp_length < max_track_number:
+            temp.pan.extend([[]
+                             for i in range(max_track_number - temp_length)])
+            temp.volume.extend([[]
+                                for i in range(max_track_number - temp_length)
+                                ])
         if temp.channels is not None:
             free_channel_numbers = [
                 i for i in range(16) if i not in temp.channels
@@ -3463,6 +3471,12 @@ class piece:
                     adjust_msg=False)
                 if current_start_time < 0:
                     temp.start_times[current_ind] += current_start_time
+                for each in temp2.pan[i]:
+                    each.start_time += start_time
+                for each in temp2.volume[i]:
+                    each.start_time += start_time
+                temp.pan[current_ind].extend(temp2.pan[i])
+                temp.volume[current_ind].extend(temp2.volume[i])
             else:
                 temp.instruments.append(current_instrument_number)
                 current_start_time = temp2.start_times[i]
@@ -3474,6 +3488,12 @@ class piece:
                     each.start_time += start_time
                 temp.tracks.append(current_track)
                 temp.start_times.append(current_start_time)
+                for each in temp2.pan[i]:
+                    each.start_time += start_time
+                for each in temp2.volume[i]:
+                    each.start_time += start_time
+                temp.pan.append(temp2.pan[i])
+                temp.volume.append(temp2.volume[i])
                 if temp.channels is not None:
                     if temp2.channels is not None:
                         current_channel_number = temp2.channels[i]
