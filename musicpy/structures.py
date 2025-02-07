@@ -5049,6 +5049,12 @@ class drum:
             for k in range(len(left_bracket_inds))
         ]
         current_append_notes = each[:left_bracket_inds[0]]
+        relative_pitch_num = 0
+        if '(' in current_append_notes and ')' in current_append_notes:
+            current_append_notes, relative_pitch_settings = current_append_notes.split(
+                '(', 1)
+            relative_pitch_settings = relative_pitch_settings[:-1]
+            relative_pitch_num = _parse_change_num(relative_pitch_settings)[0]
         if ';' in current_append_notes:
             current_append_notes = current_append_notes.split(';')
         else:
@@ -5107,6 +5113,14 @@ class drum:
                         new_current_append_notes.append(current_each_note)
                         self.last_non_num_note = current_each_note.notes[-1]
             current_append_notes = new_current_append_notes
+        if relative_pitch_num != 0:
+            dotted_num_list = [i.dotted_num for i in current_append_notes]
+            current_append_notes = [
+                each_note + relative_pitch_num
+                for each_note in current_append_notes
+            ]
+            for i, each_note in enumerate(current_append_notes):
+                each_note.dotted_num = dotted_num_list[i]
         custom_durations = False
         for j in current_brackets:
             current_bracket_settings = [k.split(':') for k in j.split(';')]
@@ -5313,6 +5327,12 @@ class drum:
                                        current_part_fix_length_unit,
                                        translate_mode):
         current_append_notes = each
+        relative_pitch_num = 0
+        if '(' in current_append_notes and ')' in current_append_notes:
+            current_append_notes, relative_pitch_settings = current_append_notes.split(
+                '(', 1)
+            relative_pitch_settings = relative_pitch_settings[:-1]
+            relative_pitch_num = _parse_change_num(relative_pitch_settings)[0]
         if ';' in current_append_notes:
             current_append_notes = current_append_notes.split(';')
         else:
@@ -5358,6 +5378,14 @@ class drum:
                         self.last_non_num_note = current_each_note.notes[-1]
             current_append_notes = new_current_append_notes
 
+        if relative_pitch_num != 0:
+            dotted_num_list = [i.dotted_num for i in current_append_notes]
+            current_append_notes = [
+                each_note + relative_pitch_num
+                for each_note in current_append_notes
+            ]
+            for i, each_note in enumerate(current_append_notes):
+                each_note.dotted_num = dotted_num_list[i]
         current_append_durations = [
             self._apply_dotted_notes(default_duration, k.dotted_num)
             if not current_part_fix_length_unit else self._apply_dotted_notes(
@@ -6119,6 +6147,7 @@ def _read_notes(note_ls,
             duration = default_duration
             interval = default_interval
             volume = default_volume
+            relative_pitch_num = 0
             if '[' in each and ']' in each:
                 has_settings = True
                 each, current_settings = each.split('[', 1)
@@ -6135,6 +6164,11 @@ def _read_notes(note_ls,
                     duration = _process_note(duration)
                     interval = _process_note(
                         interval) if interval != '.' else duration
+            if '(' in each and ')' in each:
+                each, relative_pitch_settings = each.split('(', 1)
+                relative_pitch_settings = relative_pitch_settings[:-1]
+                relative_pitch_num = _parse_change_num(
+                    relative_pitch_settings)[0]
             current_notes = each.split(';')
             current_length = len(current_notes)
             for i, each_note in enumerate(current_notes):
@@ -6152,7 +6186,8 @@ def _read_notes(note_ls,
                     intervals,
                     start_time,
                     has_settings=has_settings,
-                    has_same_time=has_same_time)
+                    has_same_time=has_same_time,
+                    relative_pitch_num=relative_pitch_num)
         else:
             notes_result.append(each)
             intervals.append(default_interval)
@@ -6171,7 +6206,8 @@ def _read_single_note(each,
                       intervals,
                       start_time,
                       has_settings=False,
-                      has_same_time=False):
+                      has_same_time=False,
+                      relative_pitch_num=0):
     dotted_num = 0
     if '.' in each:
         each, dotted = each.split('.', 1)
@@ -6195,7 +6231,7 @@ def _read_single_note(each,
             each)
         if last_non_num_note is None:
             raise ValueError('requires at least a previous non-number note')
-        current_note = last_non_num_note + current_num
+        current_note = last_non_num_note + current_num + relative_pitch_num
         current_note.duration = duration
         current_note.volume = volume
         current_interval = interval
@@ -6216,10 +6252,9 @@ def _read_single_note(each,
         notes_result.append(current_note)
         intervals.append(current_interval)
     else:
-        current_note = mp.to_note(each,
-                                  duration=duration,
-                                  volume=volume,
-                                  pitch=rootpitch)
+        current_note = mp.to_note(
+            each, duration=duration, volume=volume,
+            pitch=rootpitch) + relative_pitch_num
         if has_same_time:
             current_interval = 0
             if not has_settings:
@@ -6294,6 +6329,8 @@ def _parse_change_num(each):
             current_num = -(current_octave * database.octave + current_extra)
         else:
             current_num = -int(current_content)
+    else:
+        raise ValueError('Invalid relative pitch syntax')
     return current_num, current_changed, dotted_num
 
 
