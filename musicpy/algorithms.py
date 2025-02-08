@@ -1074,9 +1074,10 @@ def guitar_pattern(frets,
         if each.startswith('s'):
             if '(' in each and ')' in each:
                 relative_pitch_ind = each.index('(')
-                current_note = each[:relative_pitch_ind]
+                current_temp_string_ind = length - int(
+                    each[:relative_pitch_ind].split('s', 1)[1])
                 current_settings = each[relative_pitch_ind:]
-                each = str(current_string_root_note) + current_settings
+                each = str(tuning[current_temp_string_ind]) + current_settings
                 new_current.append(each)
             else:
                 current_string_ind = length - int(each.split('s', 1)[1])
