@@ -333,7 +333,9 @@ class chord:
         return result
 
     def __eq__(self, other):
-        return type(other) is chord and self.notes == other.notes
+        return type(
+            other
+        ) is chord and self.notes == other.notes and self.interval == other.interval
 
     def get_msg(self, types):
         return [i for i in self.other_messages if i.type == types]
