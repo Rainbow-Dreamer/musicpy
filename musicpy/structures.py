@@ -138,6 +138,8 @@ class note:
         if isinstance(unit, database.Interval):
             return self + unit
         else:
+            if unit == 0:
+                return copy(self)
             return mp.degree_to_note(self.degree + unit, self.duration,
                                      self.volume, self.channel)
 
@@ -1892,25 +1894,25 @@ class chord:
         return temp, start_time
 
     def interval_note(self, interval, mode=0):
+        interval = str(interval)
         if mode == 0:
-            interval = str(interval)
             if interval in database.degree_match:
-                self_notes = self.same_accidentals().notes
+                self_notes_degrees = [i.degree for i in self.notes]
                 degrees = database.degree_match[interval]
                 for each in degrees:
-                    current_note = self_notes[0] + each
-                    if current_note in self_notes:
+                    current_note = self.notes[0] + each
+                    if current_note.degree in self_notes_degrees:
                         return current_note
             if interval in database.precise_degree_match:
-                self_notes = self.same_accidentals().notes
+                self_notes_degrees = [i.degree for i in self.notes]
                 degrees = database.precise_degree_match[interval]
-                current_note = self_notes[0] + degrees
-                if current_note in self_notes:
+                current_note = self.notes[0] + degrees
+                if current_note.degree in self_notes_degrees:
                     return current_note
         elif mode == 1:
             if interval in database.precise_degree_match:
                 interval = database.precise_degree_match[interval]
-            return self[0] + interval
+                return self[0] + interval
 
     def note_interval(self, current_note, mode=0):
         if isinstance(current_note, str):
@@ -1929,18 +1931,16 @@ class chord:
         else:
             current_interval = current_note.degree - self[0].degree
         if mode == 0:
-            if current_interval in database.reverse_precise_degree_match:
-                return database.reverse_precise_degree_match[current_interval]
+            if current_interval in database.reverse_precise_degree_number_match:
+                return database.reverse_precise_degree_number_match[
+                    current_interval]
         elif mode == 1:
             return database.INTERVAL[current_interval]
 
-    def get_voicing(self, voicing):
-        notes = [self.interval_note(i).name for i in voicing]
+    def get_voicing(self, voicing, mode=0):
+        notes = [self.interval_note(i, mode=mode).name for i in voicing]
         pitch = self.notes[self.names().index(notes[0])].num
-        return chord(notes,
-                     interval=copy(self.interval),
-                     rootpitch=pitch,
-                     start_time=copy(self.start_time))
+        return chord(notes, rootpitch=pitch)
 
     def near_voicing(self,
                      other,

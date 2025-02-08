@@ -568,6 +568,7 @@ degree_match = {
     '7': [minor_seventh, major_seventh],
     '9': [major_ninth, minor_ninth],
     '11': [perfect_eleventh],
+    '12': [octave],
     '13': [major_thirteenth, minor_thirteenth]
 }
 
@@ -594,6 +595,7 @@ precise_degree_match = {
     'b11': diminished_eleventh,
     '11': perfect_eleventh,
     '#11': augmented_eleventh,
+    '12': octave,
     'b13': minor_thirteenth,
     '13': major_thirteenth,
     '#13': augmented_thirteenth
@@ -618,9 +620,15 @@ reverse_precise_degree_match = {
     diminished_eleventh: 'b11',
     perfect_eleventh: '11',
     augmented_eleventh: '#11',
+    octave: '12',
     minor_thirteenth: 'b13',
     major_thirteenth: '13',
     augmented_thirteenth: '#13'
+}
+
+reverse_precise_degree_number_match = {
+    i.value: j
+    for i, j in reverse_precise_degree_match.items()
 }
 
 INSTRUMENTS = {
