@@ -510,6 +510,8 @@ class chord:
             if last_extra_interval > 0:
                 result += last_extra_interval
             return result
+        else:
+            raise ValueError('Invalid bars mode')
         return start_time + max_length
 
     def firstnbars(self, n, start_time=0):
@@ -3365,6 +3367,8 @@ class piece:
         return temp
 
     def __mul__(self, n):
+        if isinstance(n, tuple):
+            return self | n
         temp = copy(self)
         whole_length = temp.bars()
         for i in range(temp.track_number):
@@ -3388,7 +3392,18 @@ class piece:
         return temp
 
     def __or__(self, n):
-        if isinstance(n, piece):
+        if isinstance(n, tuple):
+            n, start_time = n
+            if isinstance(n, int):
+                temp = copy(self)
+                for k in range(n - 1):
+                    temp |= (self, start_time)
+                return temp
+            elif isinstance(n, piece):
+                return self.merge_track(n,
+                                        mode='after',
+                                        extra_interval=start_time)
+        elif isinstance(n, piece):
             return self + n
         elif isinstance(n, (int, float)):
             return self.rest(n)
@@ -3396,6 +3411,13 @@ class piece:
     def __and__(self, n):
         if isinstance(n, tuple):
             n, start_time = n
+            if isinstance(n, int):
+                temp = copy(self)
+                for k in range(n - 1):
+                    temp &= (self, (k + 1) * start_time)
+                return temp
+        elif isinstance(n, int):
+            return self & (n, 0)
         else:
             start_time = 0
         return self.merge_track(n, mode='head', start_time=start_time)
@@ -3428,7 +3450,8 @@ class piece:
                     mode='after',
                     start_time=0,
                     ind_mode=1,
-                    include_last_interval=False):
+                    include_last_interval=False,
+                    extra_interval=0):
         temp = copy(self)
         temp2 = copy(n)
         max_track_number = max(len(self), len(n))
@@ -3445,7 +3468,8 @@ class piece:
             ]
             counter = 0
         if mode == 'after':
-            start_time = temp.bars(mode=1 if not include_last_interval else 2)
+            start_time = temp.bars(
+                mode=1 if not include_last_interval else 2) + extra_interval
         for i in range(len(temp2)):
             current_instrument_number = temp2.instruments[i]
             if current_instrument_number in temp.instruments:
