@@ -275,7 +275,7 @@ class chord:
                                 default_interval=default_interval,
                                 default_volume=default_volume)
         notes, current_intervals, current_start_time = notes_msg
-        if current_intervals and not interval:
+        if current_intervals and interval is None:
             interval = current_intervals
         if standardize_msg and notes:
             root = notes[0]
@@ -5640,7 +5640,7 @@ class beat:
         return f'{self.rhythm_name}({current_duration}{dotted_part})'
 
     def get_duration(self):
-        if self.dotted is not None:
+        if self.dotted is not None and self.dotted != 0:
             duration = self.duration * sum([(1 / 2)**i
                                             for i in range(self.dotted + 1)])
         else:

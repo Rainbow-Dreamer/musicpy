@@ -1618,7 +1618,11 @@ def load_data(name):
 
 
 def dotted(duration, num=1):
-    return duration * sum([(1 / 2)**i for i in range(num + 1)])
+    if num == 0:
+        return duration
+    else:
+        result = duration * sum([(1 / 2)**i for i in range(num + 1)])
+        return result
 
 
 def parse_dotted(text, get_fraction=False):
