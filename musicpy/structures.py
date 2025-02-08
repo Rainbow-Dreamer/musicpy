@@ -1912,7 +1912,7 @@ class chord:
         elif mode == 1:
             if interval in database.precise_degree_match:
                 interval = database.precise_degree_match[interval]
-                return self[0] + interval
+                return self.notes[0] + interval
 
     def note_interval(self, current_note, mode=0):
         if isinstance(current_note, str):
