@@ -68,9 +68,11 @@ class match:
 
     def reverse(self, mode=0):
         dic = self.dic
-        return match({((tuple(j), ) if
-                       (not isinstance(j, tuple) or mode == 1) else j): i
-                      for i, j in dic.items()})
+        return match({
+            ((tuple(j), ) if (not isinstance(j, tuple) or mode == 1) else j):
+            i
+            for i, j in dic.items()
+        })
 
     def __repr__(self):
         return str(self.dic)

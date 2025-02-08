@@ -497,8 +497,9 @@ def detect(current_chord,
                                          custom_mapping=custom_mapping)
 
     if current_chord_type.chord_type is not None:
-        if (original_first and current_chord_type.highest_ratio >=
-                original_first_ratio) or current_chord_type.highest_ratio == 1:
+        if (original_first
+                and current_chord_type.highest_ratio >= original_first_ratio
+            ) or current_chord_type.highest_ratio == 1:
             return _detect_helper(current_chord_type=current_chord_type,
                                   get_chord_type=get_chord_type,
                                   show_degree=show_degree,
@@ -512,8 +513,8 @@ def detect(current_chord,
         custom_mapping=custom_mapping)
 
     if current_chord_type_inoctave.chord_type is not None:
-        if (original_first and current_chord_type_inoctave.highest_ratio >=
-                original_first_ratio
+        if (original_first and current_chord_type_inoctave.highest_ratio
+                >= original_first_ratio
             ) or current_chord_type_inoctave.highest_ratio == 1:
             current_invert_msg = inversion_way(current_chord,
                                                current_chord_inoctave)
@@ -614,8 +615,8 @@ def detect(current_chord,
         highest_chord_type, current_inversion = possibles[0]
         if current_chord_type.chord_type is not None:
             if current_chord_type.highest_ratio >= similarity_ratio and (
-                    current_chord_type.highest_ratio >=
-                    highest_chord_type.highest_ratio
+                    current_chord_type.highest_ratio
+                    >= highest_chord_type.highest_ratio
                     or highest_chord_type.voicing is not None):
                 return _detect_helper(current_chord_type=current_chord_type,
                                       get_chord_type=get_chord_type,
@@ -967,10 +968,14 @@ def negative_harmony(key,
     left_half = notes_dict[inds + 6:inds + 12]
     left_half.reverse()
     map_dict = {
-        **{left_half[i]: right_half[i]
-           for i in range(6)},
-        **{right_half[i]: left_half[i]
-           for i in range(6)}
+        **{
+            left_half[i]: right_half[i]
+            for i in range(6)
+        },
+        **{
+            right_half[i]: left_half[i]
+            for i in range(6)
+        }
     }
     if get_map:
         return map_dict
@@ -1060,124 +1065,41 @@ def guitar_pattern(frets,
     tuning = [N(i) if isinstance(i, str) else i for i in tuning]
     length = len(tuning)
     current = [i.strip() for i in frets.split(',')]
-    notes_result = []
-    intervals = []
-    start_time = 0
+    new_current = []
     current_string_ind = length - 1
-
-    for each in current:
+    current_string_root_note = tuning[current_string_ind]
+    for i, each in enumerate(current):
         if each == '':
             continue
         if each.startswith('s'):
-            current_string_ind = length - int(each.split('s', 1)[1])
+            if '(' in each and ')' in each:
+                relative_pitch_ind = each.index('(')
+                current_note = each[:relative_pitch_ind]
+                current_settings = each[relative_pitch_ind:]
+                each = str(current_string_root_note) + current_settings
+                new_current.append(each)
+            else:
+                current_string_ind = length - int(each.split('s', 1)[1])
+                current_string_root_note = tuning[current_string_ind]
+        elif each[0].isnumeric():
+            current_fret_ind = len(each) - 1
+            for i, j in enumerate(each):
+                if not j.isnumeric():
+                    current_fret_ind = i - 1
+                    break
+            current_fret = each[:current_fret_ind + 1]
+            current_settings = each[current_fret_ind + 1:]
+            current_fret = f'{current_string_root_note}(+{current_fret})'
+            each = current_fret + current_settings
+            new_current.append(each)
         else:
-            has_settings = False
-            duration = default_duration
-            interval = default_interval
-            volume = default_volume
-            if '[' in each and ']' in each:
-                has_settings = True
-                each, current_settings = each.split('[', 1)
-                current_settings = current_settings[:-1].split(';')
-                current_settings_len = len(current_settings)
-                if current_settings_len == 1:
-                    duration = process_note(current_settings[0])
-                else:
-                    if current_settings_len == 2:
-                        duration, interval = current_settings
-                    else:
-                        duration, interval, volume = current_settings
-                        volume = parse_num(volume)
-                    duration = process_note(duration)
-                    interval = process_note(
-                        interval) if interval != '.' else duration
-            current_notes = each.split(';')
-            current_length = len(current_notes)
-            for i, each_note in enumerate(current_notes):
-                has_same_time = True
-                if i == current_length - 1:
-                    has_same_time = False
-                notes_result, intervals, start_time = _read_single_guitar_note(
-                    each_note,
-                    tuning,
-                    length,
-                    current_string_ind,
-                    duration,
-                    interval,
-                    volume,
-                    notes_result,
-                    intervals,
-                    start_time,
-                    has_settings=has_settings,
-                    has_same_time=has_same_time)
-    current_chord = chord(notes_result,
-                          interval=intervals,
-                          start_time=start_time)
+            new_current.append(each)
+    new_frets = ','.join(new_current)
+    current_chord = translate(new_frets,
+                              default_duration=default_duration,
+                              default_interval=default_interval,
+                              default_volume=default_volume)
     return current_chord
-
-
-def _read_single_guitar_note(each,
-                             tuning,
-                             length,
-                             current_string_ind,
-                             duration,
-                             interval,
-                             volume,
-                             notes_result,
-                             intervals,
-                             start_time,
-                             has_settings=False,
-                             has_same_time=False):
-    dotted_num = 0
-    if each.endswith('.'):
-        for k in range(len(each) - 1, -1, -1):
-            if each[k] != '.':
-                each = each[:k + 1]
-                break
-            else:
-                dotted_num += 1
-    if each == 'r':
-        current_interval = duration if has_settings else (
-            dotted(interval, dotted_num) if interval != 0 else 1 / 4)
-        if not notes_result:
-            start_time += current_interval
-        elif intervals:
-            intervals[-1] += current_interval
-    elif each == '-':
-        current_interval = duration if has_settings else (
-            dotted(interval, dotted_num) if interval != 0 else 1 / 4)
-        if notes_result:
-            notes_result[-1].duration += current_interval
-        if intervals:
-            intervals[-1] += current_interval
-    else:
-        if ':' in each:
-            current_string, current_fret = each.split(':')
-            current_string = current_string.strip()
-            current_fret = current_fret.strip()
-            current_note_string_ind = length - int(current_string)
-            current_note = tuning[current_note_string_ind].up(
-                int(current_fret))
-        else:
-            current_fret = each
-            current_note = tuning[current_string_ind].up(int(current_fret))
-        current_note.duration = duration
-        current_note.volume = volume
-        if has_same_time:
-            current_interval = 0
-            if not has_settings:
-                current_note.duration = dotted(current_note.duration,
-                                               dotted_num)
-        else:
-            if has_settings:
-                current_interval = interval
-            else:
-                current_interval = dotted(interval, dotted_num)
-                current_note.duration = dotted(current_note.duration,
-                                               dotted_num)
-        notes_result.append(current_note)
-        intervals.append(current_interval)
-    return notes_result, intervals, start_time
 
 
 @method_wrapper(chord)
@@ -2087,8 +2009,8 @@ def split_melody(current_chord,
                     else:
                         if abs(next_degree_diff) < chord_tol and not (
                                 melody_degree_tol is not None
-                                and current_note.degree <
-                                melody_degree_tol.degree):
+                                and current_note.degree
+                                < melody_degree_tol.degree):
                             melody.append(current_note)
                             notes_num += 1
                             melody_interval.append(current_note_interval)
@@ -2104,8 +2026,8 @@ def split_melody(current_chord,
                     else:
                         if (abs(next_degree_diff) < chord_tol
                                 and not (melody_degree_tol is not None
-                                         and current_note.degree <
-                                         melody_degree_tol.degree) and
+                                         and current_note.degree
+                                         < melody_degree_tol.degree) and
                                 all(k.degree - current_note.degree < chord_tol
                                     for k in melody[-2:])):
                             melody.append(current_note)
@@ -2469,8 +2391,8 @@ def write_pop(
     if choose_chord_progressions is None:
         choose_chord_progressions = random.choice(
             database.choose_chord_progressions_list
-            if current_choose_chord_progressions_list is None else
-            current_choose_chord_progressions_list)
+            if current_choose_chord_progressions_list is
+            None else current_choose_chord_progressions_list)
     choose_chords = scale_type % (choose_chord_progressions,
                                   default_chord_durations, 0,
                                   random.choice(choose_chord_notes_num))
