@@ -3437,6 +3437,7 @@ class piece:
                     start_time=0,
                     ind_mode=1,
                     include_last_interval=False,
+                    ignore_last_duration=False,
                     extra_interval=0):
         temp = copy(self)
         temp2 = copy(n)
@@ -3454,8 +3455,11 @@ class piece:
             ]
             counter = 0
         if mode == 'after':
-            start_time = temp.bars(
-                mode=1 if not include_last_interval else 2) + extra_interval
+            if ignore_last_duration:
+                bars_mode = 0
+            else:
+                bars_mode = 1 if not include_last_interval else 2
+            start_time = temp.bars(mode=bars_mode) + extra_interval
         for i in range(len(temp2)):
             current_instrument_number = temp2.instruments[i]
             if current_instrument_number in temp.instruments:
@@ -3522,6 +3526,34 @@ class piece:
                     temp.channels.append(current_channel_number)
                 if temp.track_names is not None:
                     temp.track_names.append(temp2.track_names[i])
+        return temp
+
+    def repeat(self,
+               n,
+               start_time=0,
+               include_last_interval=False,
+               ignore_last_duration=False,
+               ind_mode=1,
+               mode='after'):
+        temp = copy(self)
+        if mode == 'after':
+            for k in range(n - 1):
+                temp = temp.merge_track(
+                    self,
+                    mode=mode,
+                    extra_interval=start_time,
+                    include_last_interval=include_last_interval,
+                    ignore_last_duration=ignore_last_duration,
+                    ind_mode=ind_mode)
+        elif mode == 'head':
+            for k in range(n - 1):
+                temp = temp.merge_track(
+                    self,
+                    mode=mode,
+                    start_time=start_time,
+                    include_last_interval=include_last_interval,
+                    ignore_last_duration=ignore_last_duration,
+                    ind_mode=ind_mode)
         return temp
 
     def align(self, extra=0):
