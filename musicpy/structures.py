@@ -67,8 +67,8 @@ class note:
         return f'{self.name}{self.num}'
 
     def __eq__(self, other):
-        return type(other) is note and self.same_note_name(
-            other) and self.num == other.num
+        return type(other) is note and self.same_note(
+            other) and self.duration == other.duration
 
     def __lt__(self, other):
         return self.degree < other.degree
@@ -90,6 +90,9 @@ class note:
 
     def same_note_name(self, other):
         return self.get_number() == other.get_number()
+
+    def same_note(self, other):
+        return self.same_note_name(other) and self.num == other.num
 
     def __matmul__(self, other):
         if isinstance(other, rhythm):
@@ -206,6 +209,8 @@ class note:
 
     def dotted(self, num=1):
         temp = copy(self)
+        if num == 0:
+            return temp
         temp.duration = temp.duration * sum([(1 / 2)**i
                                              for i in range(num + 1)])
         return temp
@@ -1527,7 +1532,7 @@ class chord:
 
     def rest(self, length, dotted=None, ind=None):
         temp = copy(self)
-        if dotted is not None:
+        if dotted is not None and dotted != 0:
             length = length * sum([(1 / 2)**i for i in range(dotted + 1)])
         if not temp.notes:
             temp.start_time += length
@@ -2040,6 +2045,8 @@ class chord:
 
     def dotted(self, ind=-1, num=1, duration=True, interval=False):
         temp = copy(self)
+        if num == 0:
+            return temp
         if duration:
             if isinstance(ind, list):
                 for each in ind:
