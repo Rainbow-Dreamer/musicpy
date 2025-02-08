@@ -6419,9 +6419,8 @@ def _process_note(value, mode=0, value2=None):
                 value = (1 / mp.parse_num(
                     value[num_ind:dotted_notes_start_ind])) * sum(
                         [(1 / 2)**i for i in range(dotted_notes + 1)])
-        if mode == 2:
-            if isinstance(value, float) and value.is_integer():
-                value = int(value)
+        if isinstance(value, float) and value.is_integer():
+            value = int(value)
         return value
 
 
