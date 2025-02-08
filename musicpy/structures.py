@@ -3371,27 +3371,11 @@ class piece:
     def __mul__(self, n):
         if isinstance(n, tuple):
             return self | n
-        temp = copy(self)
-        whole_length = temp.bars()
-        for i in range(temp.track_number):
-            current = temp.tracks[i]
-            current.interval[-1] = current.notes[-1].duration
-            current_start_time = temp.start_times[i]
-            current.interval[-1] += (whole_length - current.bars() -
-                                     current_start_time)
-            unit = copy(current)
-            for k in range(n - 1):
-                if current_start_time:
-                    current.interval[-1] += current_start_time
-                extra = (k + 1) * whole_length
-                for each in unit.tempos:
-                    each.start_time += extra
-                for each in unit.pitch_bends:
-                    each.start_time += extra
-                current.notes += unit.notes
-                current.interval += unit.interval
-            temp.tracks[i] = current
-        return temp
+        else:
+            temp = copy(self)
+            for i in range(n - 1):
+                temp |= self
+            return temp
 
     def __or__(self, n):
         if isinstance(n, tuple):
