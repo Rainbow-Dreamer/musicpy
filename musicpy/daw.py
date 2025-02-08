@@ -819,7 +819,7 @@ class daw:
                 current_chord = self.convert_types(current_chord, bpm,
                                                    current_channel_num)
             else:
-                return
+                raise ValueError(f'daw cannot play {type(current_chord)}')
         current_channel_nums = current_chord.daw_channels if current_chord.daw_channels else [
             i for i in range(len(current_chord))
         ]
