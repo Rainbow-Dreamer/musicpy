@@ -3538,7 +3538,7 @@ class piece:
     def repeat(self,
                n,
                start_time=0,
-               include_last_interval=False,
+               include_last_interval=True,
                ignore_last_duration=False,
                ind_mode=1,
                mode='after'):
