@@ -1061,7 +1061,8 @@ def guitar_pattern(frets,
                    tuning=database.guitar_standard_tuning,
                    default_duration=1 / 8,
                    default_interval=1 / 8,
-                   default_volume=100):
+                   default_volume=100,
+                   mapping=database.drum_mapping):
     tuning = [N(i) if isinstance(i, str) else i for i in tuning]
     length = len(tuning)
     current = [i.strip() for i in frets.split(',')]
@@ -1099,7 +1100,8 @@ def guitar_pattern(frets,
     current_chord = translate(new_frets,
                               default_duration=default_duration,
                               default_interval=default_interval,
-                              default_volume=default_volume)
+                              default_volume=default_volume,
+                              mapping=mapping)
     return current_chord
 
 

@@ -1309,8 +1309,10 @@ def translate(pattern,
               default_duration=1 / 8,
               default_interval=0,
               default_volume=100,
-              start_time=None):
+              start_time=None,
+              mapping=database.drum_mapping):
     result = drum(pattern,
+                  mapping=mapping,
                   default_duration=default_duration,
                   start_time=start_time,
                   default_interval=default_interval,
