@@ -3443,7 +3443,7 @@ class piece:
                     mode='after',
                     start_time=0,
                     ind_mode=1,
-                    include_last_interval=False,
+                    include_last_interval=True,
                     ignore_last_duration=False,
                     extra_interval=0):
         temp = copy(self)
