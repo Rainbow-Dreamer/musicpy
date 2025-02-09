@@ -27,9 +27,19 @@ Run the following line in the terminal to install musicpy by pip.
 pip install musicpy
 ```
 
+If you need to read and write musicxml files, you can install the relevant dependencies by adding `[musicxml]` after the above command. If you need to use the raw module (musicpy.daw), you can install the relevant dependencies by adding `[daw]`. Like this:
+
+```shell
+pip install musicpy[musicxml]
+pip install musicpy[daw]
+pip install musicpy[daw, musicxml]
+```
+
 **Note 1: On Linux, you need to make sure the installed pygame version is older than 2.0.3, otherwise the play function of musicpy won't work properly, this is due to an existing bug with newer versions of pygame. You can run `pip install pygame==2.0.2` in terminal to install pygame 2.0.2 or any version that is older than 2.0.3. You also need to install freepats to make the play function works on Linux, you can run `sudo apt-get install freepats` (on Ubuntu).**
 
 **Note 2: If you cannot hear any sound when running the play function, this is because some IDE won't wait till the pygame's playback ends, they will stops the whole process after all of the code are executed without waiting for the playback. You can set `wait=True` in the parameter of the play function, which will block the function till the playback ends, so you can hear the sounds.**
+
+**Note 3: If you are using Linux or macOS, one of the dependency libraries of the daw module, sf2_loader, has some necessary configuration steps, you can refer to [here](https://github.com/Rainbow-Dreamer/sf2_loader#installation) for details.**
 
 In addition, I also wrote a musicpy editor for writing and compiling musicpy code more easily than regular python IDE with real-time automatic compilation and execution, there are some syntactic sugar and you can listen to the music generating from your musicpy code on the fly, it is more convenient and interactive. I strongly recommend to use this musicpy editor to write musicpy code. You can download this musicpy editor at the repository [musicpy_editor](https://github.com/Rainbow-Dreamer/musicpy_editor), the preparation steps are in the README.
 

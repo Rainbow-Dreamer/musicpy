@@ -26,9 +26,19 @@ Musicpy可以让你用非常简洁的语法来表达一段音乐的音符，和�
 pip install musicpy
 ```
 
+如果需要读写musicxml文件，你可以在上述命令后面加入`[musicxml]`来安装相关依赖。如果需要使用宿主模块(musicpy.daw)，则通过加入`[daw]`来安装相关依赖。就像这样：
+
+```shell
+pip install musicpy[musicxml]
+pip install musicpy[daw]
+pip install musicpy[daw, musicxml]
+```
+
 **注意事项1: 在Linux上，你需要确保安装的pygame版本早于2.0.3，否则musicpy的play函数将不能正常运行，这是由于pygame的较新版本的一个现有bug。你可以在终端运行`pip install pygame==2.0.2`来安装pygame 2.0.2或任何早于2.0.3的版本。你还需要安装freepats以使play函数在Linux上运行，你可以运行`sudo apt-get install freepats`（在Ubuntu上）。**
 
 **注意事项2: 如果你在运行play函数时听不到任何声音，这是因为有些IDE不会等待pygame的播放结束，他们会在所有代码执行完后停止整个过程，而不等待播放。你可以在播放函数的参数中设置 `wait=True`，这将阻塞该函数直到播放结束，这样你就可以听到声音了。**
+
+**注意事项3: 如果你使用的是Linux或者macOS，daw模块的其中一个依赖库sf2_loader有一些必须的配置步骤，详情请看[这里](https://github.com/Rainbow-Dreamer/sf2_loader#installation)。**
 
 除此之外，我为musicpy专门写了一个编辑器，你可以在这里写musicpy的代码，这个编辑器可以实时自动编译和运行，比在常规的python IDE里更加方便。这个编辑器有一些语法糖，并且你可以实时地听到你写的musicpy代码生成的音乐，更加地方便与互动。我强烈推荐大家使用这个musicpy编辑器来写musicpy代码。你可以在仓库[musicpy_editor](https://github.com/Rainbow-Dreamer/musicpy_editor)下载musicpy editor, 准备步骤在README。
 
