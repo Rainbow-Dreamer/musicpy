@@ -3443,7 +3443,7 @@ class piece:
                     mode='after',
                     start_time=0,
                     ind_mode=1,
-                    include_last_interval=True,
+                    include_last_interval=False,
                     ignore_last_duration=False,
                     extra_interval=0):
         temp = copy(self)
@@ -3538,7 +3538,7 @@ class piece:
     def repeat(self,
                n,
                start_time=0,
-               include_last_interval=True,
+               include_last_interval=False,
                ignore_last_duration=False,
                ind_mode=1,
                mode='after'):
@@ -3557,7 +3557,7 @@ class piece:
                 temp = temp.merge_track(
                     self,
                     mode=mode,
-                    start_time=start_time,
+                    start_time=(k + 1) * start_time,
                     include_last_interval=include_last_interval,
                     ignore_last_duration=ignore_last_duration,
                     ind_mode=ind_mode)
