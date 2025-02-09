@@ -16,7 +16,7 @@ setup(
     keywords=[
         'music language', 'use codes to write music', 'music language for AI'
     ],
-    install_requires=['mido-fix', 'pygame-ce', 'dataclasses'],
+    install_requires=['mido-fix', 'pygame-ce', 'dataclasses;python_version<"3.7"'],
     extras_require={
         "daw": ["sf2_loader", "pedalboard", "scipy", "numpy"],
         "musicxml": ["partitura"],
