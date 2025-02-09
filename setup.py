@@ -19,6 +19,7 @@ setup(
     install_requires=['mido-fix', 'pygame-ce', 'dataclasses'],
     extras_require={
         "daw": ["sf2_loader", "pedalboard", "scipy", "numpy"],
+        "musicxml": ["partitura"],
     },
     classifiers=[
         'Development Status :: 3 - Alpha',
