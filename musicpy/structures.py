@@ -5170,6 +5170,7 @@ class drum:
             ]
             for i, each_note in enumerate(current_append_notes):
                 each_note.dotted_num = dotted_num_list[i]
+            self.last_non_num_note = current_append_notes[-1]
         custom_durations = False
         for j in current_brackets:
             current_bracket_settings = [k.split(':') for k in j.split(';')]
@@ -5435,6 +5436,7 @@ class drum:
             ]
             for i, each_note in enumerate(current_append_notes):
                 each_note.dotted_num = dotted_num_list[i]
+            self.last_non_num_note = current_append_notes[-1]
         current_append_durations = [
             self._apply_dotted_notes(default_duration, k.dotted_num)
             if not current_part_fix_length_unit else self._apply_dotted_notes(
