@@ -9,6 +9,18 @@ else:
     import database
 
 
+# Lazy import helper to break circular dependency with musicpy module
+_mp = None
+
+
+def _get_mp():
+    global _mp
+    if _mp is None:
+        import musicpy as _m
+        _mp = _m
+    return _mp
+
+
 class note:
     '''
     This class represents a single note.
@@ -78,11 +90,11 @@ class note:
 
     def to_standard(self):
         temp = copy(self)
-        temp.name = mp.standardize_note(temp.name)
+        temp.name = _get_mp().standardize_note(temp.name)
         return temp
 
     def standard_name(self):
-        return mp.standardize_note(self.name)
+        return _get_mp().standardize_note(self.name)
 
     def get_number(self):
         return database.standard.get(
@@ -125,7 +137,7 @@ class note:
 
     def join(self, other, ind, interval):
         if isinstance(other, str):
-            other = mp.to_note(other)
+            other = _get_mp().to_note(other)
         if isinstance(other, note):
             return chord([copy(self), copy(other)], interval=interval)
         if isinstance(other, chord):
@@ -140,7 +152,7 @@ class note:
         else:
             if unit == 0:
                 return copy(self)
-            return mp.degree_to_note(self.degree + unit, self.duration,
+            return _get_mp().degree_to_note(self.degree + unit, self.duration,
                                      self.volume, self.channel)
 
     def down(self, unit=1):
@@ -185,7 +197,7 @@ class note:
         elif isinstance(obj, database.Interval):
             return obj + self
         if not isinstance(obj, note):
-            obj = mp.to_note(obj)
+            obj = _get_mp().to_note(obj)
         return chord([copy(self), copy(obj)])
 
     def __sub__(self, obj):
@@ -195,7 +207,7 @@ class note:
             return obj.__rsub__(self)
 
     def __call__(self, obj=''):
-        return mp.C(self.name + obj, self.num)
+        return _get_mp().C(self.name + obj, self.num)
 
     def with_interval(self, interval):
         result = chord([copy(self), self + interval])
@@ -206,7 +218,7 @@ class note:
                               duration=1 / 4,
                               interval=0,
                               cumulative=True):
-        return mp.get_chord_by_interval(start, interval1, duration, interval,
+        return _get_mp().get_chord_by_interval(start, interval1, duration, interval,
                                         cumulative)
 
     def dotted(self, num=1):
@@ -228,7 +240,7 @@ class note:
         return temp
 
     def reset_name(self, name):
-        temp = mp.to_note(name)
+        temp = _get_mp().to_note(name)
         temp.duration = self.duration
         temp.volume = self.volume
         temp.channel = self.channel
@@ -243,7 +255,7 @@ class note:
         return temp
 
     def from_rhythm(self, current_rhythm, set_duration=True):
-        return mp.get_chords_from_rhythm(chords=self,
+        return _get_mp().get_chords_from_rhythm(chords=self,
                                          current_rhythm=current_rhythm,
                                          set_duration=set_duration)
 
@@ -336,7 +348,7 @@ class chord:
     def names(self, standardize_note=False):
         result = [i.name for i in self]
         if standardize_note:
-            result = [mp.standardize_note(i) for i in result]
+            result = [_get_mp().standardize_note(i) for i in result]
         return result
 
     def __eq__(self, other):
@@ -494,7 +506,7 @@ class chord:
             if audio_mode == 1:
                 from pydub import AudioSegment
                 temp = temp.set(duration=[
-                    mp.real_time_to_bar(len(i), bpm) if isinstance(
+                    _get_mp().real_time_to_bar(len(i), bpm) if isinstance(
                         i, AudioSegment) else i.duration for i in temp.notes
                 ])
             current_durations = temp.get_duration()
@@ -540,7 +552,7 @@ class chord:
         if isinstance(note1, str):
             if any(i.isdigit() for i in note1):
                 mode = 'note'
-            note1 = mp.to_note(note1)
+            note1 = _get_mp().to_note(note1)
         if mode == 'name':
             return self.names().count(note1.name)
         elif mode == 'note':
@@ -562,7 +574,7 @@ class chord:
                        key=lambda s: test_obj.count(s))
         else:
             choices = [
-                mp.to_note(i) if isinstance(i, str) else i for i in choices
+                _get_mp().to_note(i) if isinstance(i, str) else i for i in choices
             ]
             if mode == 'name':
                 return max([i.name for i in choices],
@@ -580,7 +592,7 @@ class chord:
                 database.standard)
         else:
             choices = [
-                mp.to_note(i).name if isinstance(i, str) else i.name
+                _get_mp().to_note(i).name if isinstance(i, str) else i.name
                 for i in choices
             ]
         result = {i: test_obj.count(i) for i in choices}
@@ -677,7 +689,7 @@ class chord:
         intervals = temp.interval
         durations = temp.get_duration()
         if standardize_note:
-            names_standard = [mp.standardize_note(i) for i in notenames]
+            names_standard = [_get_mp().standardize_note(i) for i in notenames]
         else:
             names_standard = notenames
         names_offrep = []
@@ -701,7 +713,7 @@ class chord:
     def standardize_note(self):
         temp = copy(self)
         for i in temp:
-            i.name = mp.standardize_note(i.name)
+            i.name = _get_mp().standardize_note(i.name)
         return temp
 
     def sortchord(self):
@@ -771,7 +783,7 @@ class chord:
 
     def __contains__(self, note1):
         if not isinstance(note1, note):
-            note1 = mp.to_note(note1)
+            note1 = _get_mp().to_note(note1)
             if note1.name in database.standard_dict:
                 note1.name = database.standard_dict[note1.name]
         return note1 in self.same_accidentals().notes
@@ -791,7 +803,7 @@ class chord:
             temp.notes.append(copy(obj))
             temp.interval.append(temp.interval[-1])
         elif isinstance(obj, str):
-            return temp + mp.to_note(obj)
+            return temp + _get_mp().to_note(obj)
         elif isinstance(obj, chord):
             temp |= obj
         return temp
@@ -825,7 +837,7 @@ class chord:
         if isinstance(obj, (int, float)):
             return self.rest(obj)
         elif isinstance(obj, str):
-            obj = mp.trans(obj)
+            obj = _get_mp().trans(obj)
         elif isinstance(obj, tuple):
             first = obj[0]
             start = obj[1] if len(obj) == 2 else 0
@@ -869,7 +881,7 @@ class chord:
         else:
             if not isinstance(obj, chord):
                 if isinstance(obj, str):
-                    obj = mp.trans_note(obj)
+                    obj = _get_mp().trans_note(obj)
                 notenames = self.names()
                 if obj.name not in database.standard2:
                     obj.name = database.standard_dict[obj.name]
@@ -907,12 +919,12 @@ class chord:
             return self.from_rhythm(obj)
         else:
             if isinstance(obj, tuple):
-                return mp.alg.negative_harmony(obj[0], self, *obj[1:])
+                return _get_mp().alg.negative_harmony(obj[0], self, *obj[1:])
             else:
-                return mp.alg.negative_harmony(obj, self)
+                return _get_mp().alg.negative_harmony(obj, self)
 
     def negative_harmony(self, *args, **kwargs):
-        return mp.alg.negative_harmony(current_chord=self, *args, **kwargs)
+        return _get_mp().alg.negative_harmony(current_chord=self, *args, **kwargs)
 
     def __call__(self, obj):
         # deal with the chord's sharp or flat notes, or to omit some notes
@@ -1013,7 +1025,7 @@ class chord:
         elif isinstance(obj, tuple):
             return self.down(*obj)
         if not isinstance(obj, note):
-            obj = mp.to_note(obj)
+            obj = _get_mp().to_note(obj)
         temp = copy(self)
         if obj in temp:
             ind = temp.notes.index(obj)
@@ -1104,7 +1116,7 @@ class chord:
                 result = [degrees[i] - degrees[i - 1] for i in range(1, N)]
             else:
                 result = [
-                    mp.get_pitch_interval(self.notes[i - 1], self.notes[i])
+                    _get_mp().get_pitch_interval(self.notes[i - 1], self.notes[i])
                     for i in range(1, N)
                 ]
         else:
@@ -1114,7 +1126,7 @@ class chord:
                 result = [i - root for i in others]
             else:
                 result = [
-                    mp.get_pitch_interval(self.notes[0], i)
+                    _get_mp().get_pitch_interval(self.notes[0], i)
                     for i in self.notes[1:]
                 ]
         return result
@@ -1170,7 +1182,7 @@ class chord:
         elif mode == 'head':
             note1 = copy(note1)
             if isinstance(note1, str):
-                note1 = chord([mp.to_note(note1, duration=duration)])
+                note1 = chord([_get_mp().to_note(note1, duration=duration)])
             elif isinstance(note1, note):
                 note1 = chord([note1])
             elif isinstance(note1, list):
@@ -1286,7 +1298,7 @@ class chord:
         return [
             chord(i,
                   rootpitch=rootpitch).standardize().set(duration, interval)
-            for i in mp.alg.perm(notenames)
+            for i in _get_mp().alg.perm(notenames)
         ]
 
     def inversion_highest(self, ind):
@@ -1316,7 +1328,7 @@ class chord:
             if isinstance(root, chord):
                 return root & self
             if isinstance(root, str):
-                root = mp.to_note(root)
+                root = _get_mp().to_note(root)
                 root.duration = duration
             temp.notes.insert(0, root)
             if interval is not None:
@@ -1328,7 +1340,7 @@ class chord:
             if isinstance(root, chord):
                 root = list(root)
             else:
-                root = [mp.to_note(i) for i in root]
+                root = [_get_mp().to_note(i) for i in root]
             return [self.on(x, duration, interval) for x in root]
 
     def up(self, unit=1, ind=None, ind2=None):
@@ -1438,7 +1450,7 @@ class chord:
 
     def __setitem__(self, ind, value):
         if isinstance(value, str):
-            value = mp.to_note(value)
+            value = _get_mp().to_note(value)
         self.notes[ind] = value
         if isinstance(value, chord):
             self.interval[ind] = value.interval
@@ -1450,7 +1462,7 @@ class chord:
     def index(self, value):
         if isinstance(value, str):
             if value not in database.standard:
-                value = mp.to_note(value)
+                value = _get_mp().to_note(value)
                 if value not in self:
                     return -1
                 return self.notes.index(value)
@@ -1464,7 +1476,7 @@ class chord:
 
     def remove(self, note1):
         if isinstance(note1, str):
-            note1 = mp.to_note(note1)
+            note1 = _get_mp().to_note(note1)
         if note1 in self:
             inds = self.notes.index(note1)
             self.notes.remove(note1)
@@ -1472,7 +1484,7 @@ class chord:
 
     def append(self, value, interval=0):
         if isinstance(value, str):
-            value = mp.to_note(value)
+            value = _get_mp().to_note(value)
         self.notes.append(value)
         self.interval.append(interval)
 
@@ -1482,7 +1494,7 @@ class chord:
             self.interval.extend(values.interval)
         else:
             values = [
-                mp.to_note(value) if isinstance(value, str) else value
+                _get_mp().to_note(value) if isinstance(value, str) else value
                 for value in values
             ]
             if isinstance(intervals, int):
@@ -1500,7 +1512,7 @@ class chord:
             self.interval[ind:ind] = value.interval
         else:
             if isinstance(value, str):
-                value = mp.to_note(value)
+                value = _get_mp().to_note(value)
             self.notes.insert(ind, value)
             self.interval.insert(ind, interval)
 
@@ -1583,7 +1595,7 @@ class chord:
             for i in range(number)
         }
         transdict = {
-            mp.standardize_note(i): mp.standardize_note(j)
+            _get_mp().standardize_note(i): _get_mp().standardize_note(j)
             for i, j in transdict.items()
         }
         for k in range(len(temp)):
@@ -1593,7 +1605,7 @@ class chord:
             else:
                 current_name = current.name
             if current_name in transdict:
-                current_note = mp.closest_note(transdict[current_name],
+                current_note = _get_mp().closest_note(transdict[current_name],
                                                current)
                 temp.notes[k] = current.reset(name=current_note.name,
                                               num=current_note.num)
@@ -1692,7 +1704,7 @@ class chord:
             temp.normalize_tempo(tempo_changes[0].bpm)
         volumes = temp.get_volume()
         pitch_intervals = temp.intervalof(cumulative=False)
-        result = mp.get_chord_by_interval(temp[0],
+        result = _get_mp().get_chord_by_interval(temp[0],
                                           [-i for i in pitch_intervals],
                                           temp.get_duration(), temp.interval,
                                           False)
@@ -1823,7 +1835,7 @@ class chord:
     def same_accidentals(self, mode='#'):
         temp = copy(self)
         for each in temp.notes:
-            each.name = mp.standardize_note(each.name)
+            each.name = _get_mp().standardize_note(each.name)
             if mode == '#':
                 if len(each.name) > 1 and each.name[-1] == 'b':
                     each.name = database.standard_dict[each.name]
@@ -1864,9 +1876,9 @@ class chord:
 
     def pitch_filter(self, x='A0', y='C8'):
         if isinstance(x, str):
-            x = mp.trans_note(x)
+            x = _get_mp().trans_note(x)
         if isinstance(y, str):
-            y = mp.trans_note(y)
+            y = _get_mp().trans_note(y)
         if all(x.degree <= i.degree <= y.degree for i in self.notes):
             return self, 0
         temp = self.copy()
@@ -1917,7 +1929,7 @@ class chord:
     def note_interval(self, current_note, mode=0):
         if isinstance(current_note, str):
             if not any(i.isdigit() for i in current_note):
-                current_note = mp.to_note(current_note)
+                current_note = _get_mp().to_note(current_note)
                 if database.standard[self[0].name] == database.standard[
                         current_note.name]:
                     current_interval = 0
@@ -1926,7 +1938,7 @@ class chord:
                     current_interval = current_chord[1].degree - current_chord[
                         0].degree
             else:
-                current_note = mp.to_note(current_note)
+                current_note = _get_mp().to_note(current_note)
                 current_interval = current_note.degree - self[0].degree
         else:
             current_interval = current_note.degree - self[0].degree
@@ -1972,17 +1984,17 @@ class chord:
         if keep_root:
             root_note = temp.notes[0]
             other_root_note = other.notes[0]
-            new_root_note, current_distance = mp.closest_note(
+            new_root_note, current_distance = _get_mp().closest_note(
                 root_note, other_root_note, get_distance=True)
             remain_notes = []
             current_other_notes = other.notes[1:]
             total_distance = current_distance
             for each in temp.notes[1:]:
-                current_closest_note, current_distance = mp.closest_note_from_chord(
+                current_closest_note, current_distance = _get_mp().closest_note_from_chord(
                     each, current_other_notes, get_distance=True)
                 total_distance += current_distance
                 current_other_notes.remove(current_closest_note)
-                new_note = mp.closest_note(each, current_closest_note)
+                new_note = _get_mp().closest_note(each, current_closest_note)
                 remain_notes.append(new_note)
             remain_notes.insert(0, new_root_note)
         else:
@@ -1990,11 +2002,11 @@ class chord:
             current_other_notes = other.notes
             total_distance = 0
             for each in temp.notes:
-                current_closest_note, current_distance = mp.closest_note_from_chord(
+                current_closest_note, current_distance = _get_mp().closest_note_from_chord(
                     each, current_other_notes, get_distance=True)
                 total_distance += current_distance
                 current_other_notes.remove(current_closest_note)
-                new_note = mp.closest_note(each, current_closest_note)
+                new_note = _get_mp().closest_note(each, current_closest_note)
                 remain_notes.append(new_note)
         temp.notes = remain_notes
         temp = temp.sortchord()
@@ -2007,7 +2019,7 @@ class chord:
 
     def reset_pitch(self, pitch):
         if isinstance(pitch, str):
-            pitch = mp.to_note(pitch)
+            pitch = _get_mp().to_note(pitch)
         return self + (pitch.degree - self[0].degree)
 
     def reset_same_octave(self, octave):
@@ -2184,7 +2196,7 @@ class chord:
         ]
 
     def to_piece(self, *args, **kwargs):
-        return mp.chord_to_piece(self, *args, **kwargs)
+        return _get_mp().chord_to_piece(self, *args, **kwargs)
 
     def apply_rhythm(self, current_rhythm, set_duration=True):
         temp = copy(self)
@@ -2218,7 +2230,7 @@ class chord:
         return temp
 
     def from_rhythm(self, current_rhythm, set_duration=True):
-        return mp.get_chords_from_rhythm(chords=self,
+        return _get_mp().get_chords_from_rhythm(chords=self,
                                          current_rhythm=current_rhythm,
                                          set_duration=set_duration)
 
@@ -2257,13 +2269,13 @@ class scale:
         self.interval = interval
         self.notes = None
         if notes is not None:
-            notes = [mp.to_note(i) if isinstance(i, str) else i for i in notes]
+            notes = [_get_mp().to_note(i) if isinstance(i, str) else i for i in notes]
             self.notes = notes
             self.start = notes[0]
             self.mode = mode
         else:
             if isinstance(start, str):
-                start = mp.trans_note(start)
+                start = _get_mp().trans_note(start)
             self.start = start
             if mode is not None:
                 self.mode = mode.lower()
@@ -2275,7 +2287,7 @@ class scale:
             self.interval = self.get_interval(
                 standard_interval=standard_interval)
         if mode is None:
-            current_mode = mp.alg.detect_scale_type(self.interval,
+            current_mode = _get_mp().alg.detect_scale_type(self.interval,
                                                     mode='interval')
             if current_mode is not None:
                 self.mode = current_mode
@@ -2302,7 +2314,7 @@ class scale:
             inds = compare_notes.index(standard_notes[0][0])
             compare_notes = compare_notes[inds:] + compare_notes[:inds]
             standard_notes = [
-                mp.relative_note(standard_notes[i], compare_notes[i])
+                _get_mp().relative_note(standard_notes[i], compare_notes[i])
                 for i in range(7)
             ]
             return standard_notes
@@ -2326,7 +2338,7 @@ class scale:
             if isinstance(note1, note):
                 note1 = note1.name
             else:
-                note1 = mp.trans_note(note1).name
+                note1 = _get_mp().trans_note(note1).name
             return (database.standard_dict[note1]
                     if note1 in database.standard_dict else note1) in names
 
@@ -2369,7 +2381,7 @@ class scale:
                     else:
                         start = notes[0]
                         return [
-                            mp.get_pitch_interval(notes[i - 1], notes[i])
+                            _get_mp().get_pitch_interval(notes[i - 1], notes[i])
                             for i in range(1, len(notes))
                         ]
             else:
@@ -2394,7 +2406,7 @@ class scale:
                     else:
                         start = notes[0]
                         return [
-                            mp.get_pitch_interval(notes[i - 1], notes[i])
+                            _get_mp().get_pitch_interval(notes[i - 1], notes[i])
                             for i in range(1, len(notes))
                         ]
 
@@ -2434,7 +2446,7 @@ class scale:
             if i not in result:
                 result.append(i)
         if standardize_note:
-            result = [mp.standardize_note(i) for i in result]
+            result = [_get_mp().standardize_note(i) for i in result]
         return result
 
     def pick_chord_by_degree(self,
@@ -2576,7 +2588,7 @@ class scale:
         return chord([self[i] for i in indlist])
 
     def detect(self):
-        return mp.alg.detect_scale_type(self)
+        return _get_mp().alg.detect_scale_type(self)
 
     def get_all_chord(self, duration=None, interval=0, num=3, step=2):
         return [
@@ -2646,18 +2658,18 @@ class scale:
         current_degree = database.roman_numerals_dict[degree] - 1
         current_note = self[current_degree].name
         if natural:
-            temp = mp.C(current_note + chord_type)
+            temp = _get_mp().C(current_note + chord_type)
             if not isinstance(temp, chord):
                 raise ValueError(f'{chord_type} is not a valid chord type')
             length = len(temp)
             return self.pick_chord_by_degree(current_degree, num=length)
         if degree.islower():
             try:
-                result = mp.C(current_note + 'm' + chord_type)
+                result = _get_mp().C(current_note + 'm' + chord_type)
             except:
-                result = mp.C(current_note + chord_type)
+                result = _get_mp().C(current_note + chord_type)
         else:
-            result = mp.C(current_note + chord_type)
+            result = _get_mp().C(current_note + chord_type)
         if current_accidental is not None:
             if current_accidental == '#':
                 result += 1
@@ -2730,7 +2742,7 @@ class scale:
         return result
 
     def play(self, intervals=1 / 4, durations=None, *args, **kwargs):
-        mp.play(self.get_scale(intervals, durations), *args, **kwargs)
+        _get_mp().play(self.get_scale(intervals, durations), *args, **kwargs)
 
     def __add__(self, obj):
         if isinstance(obj, (int, database.Interval)):
@@ -2778,7 +2790,7 @@ class scale:
                     try:
                         current_chord_name = current_note.name + 'm' + current_chord[
                             1]
-                        temp = mp.C(current_chord_name)
+                        temp = _get_mp().C(current_chord_name)
                     except:
                         current_chord_name = current_note.name + current_chord[
                             1]
@@ -2810,7 +2822,7 @@ class scale:
                                 try:
                                     current_chord_name = current_note.name + 'm' + current_chord[
                                         len(i):]
-                                    temp = mp.C(current_chord_name)
+                                    temp = _get_mp().C(current_chord_name)
                                 except:
                                     current_chord_name = current_note.name + current_chord[
                                         len(i):]
@@ -2825,7 +2837,7 @@ class scale:
                     raise ValueError(
                         f'{original_current_chord} is not a valid roman numerals chord representation'
                     )
-        return mp.chord_progression(chords, durations, intervals, volumes,
+        return _get_mp().chord_progression(chords, durations, intervals, volumes,
                                     chords_interval, merge)
 
     def reset_octave(self, num):
@@ -2846,7 +2858,7 @@ class scale:
             start = temp.start
         else:
             if isinstance(start, str):
-                start = mp.trans_note(start)
+                start = _get_mp().trans_note(start)
         if num is not None:
             start.num = num
         if mode is None and interval is None:
@@ -2939,7 +2951,7 @@ class scale:
                             duration, interval = current_settings
                         else:
                             duration, interval, volume = current_settings
-                            volume = mp.parse_num(volume)
+                            volume = _get_mp().parse_num(volume)
                         duration = _process_note(duration)
                         interval = _process_note(
                             interval) if interval != '.' else duration
@@ -2988,14 +3000,14 @@ class scale:
                     dotted_num += 1
         if each == 'r':
             current_interval = duration if has_settings else (
-                mp.dotted(interval, dotted_num) if interval != 0 else 1 / 4)
+                _get_mp().dotted(interval, dotted_num) if interval != 0 else 1 / 4)
             if not notes_result:
                 start_time += current_interval
             elif intervals:
                 intervals[-1] += current_interval
         elif each == '-':
             current_interval = duration if has_settings else (
-                mp.dotted(interval, dotted_num) if interval != 0 else 1 / 4)
+                _get_mp().dotted(interval, dotted_num) if interval != 0 else 1 / 4)
             if notes_result:
                 notes_result[-1].duration += current_interval
             if intervals:
@@ -3009,14 +3021,14 @@ class scale:
             if has_same_time:
                 current_interval = 0
                 if not has_settings:
-                    current_note.duration = mp.dotted(current_note.duration,
+                    current_note.duration = _get_mp().dotted(current_note.duration,
                                                       dotted_num)
             else:
                 if has_settings:
                     current_interval = interval
                 else:
-                    current_interval = mp.dotted(interval, dotted_num)
-                    current_note.duration = mp.dotted(current_note.duration,
+                    current_interval = _get_mp().dotted(interval, dotted_num)
+                    current_note.duration = _get_mp().dotted(current_note.duration,
                                                       dotted_num)
             notes_result.append(current_note)
             intervals.append(current_interval)
@@ -3026,9 +3038,9 @@ class scale:
         if isinstance(current_note, note):
             current_note = current_note.name
         else:
-            current_note = mp.N(mp.standardize_note(current_note)).name
-        current_note = mp.standardize_note(current_note)
-        current_names = [mp.standardize_note(i) for i in self.names()]
+            current_note = _get_mp().N(_get_mp().standardize_note(current_note)).name
+        current_note = _get_mp().standardize_note(current_note)
+        current_names = [_get_mp().standardize_note(i) for i in self.names()]
         if current_note not in current_names:
             raise ValueError(
                 f'{current_note} is not in {self.get_scale_name(with_octave=False)}'
@@ -3042,7 +3054,7 @@ class scale:
     def get_note_with_interval(self, current_note, interval, standard=False):
         current_scale_degree = self.get_scale_degree(current_note)
         current_num = current_note.num if isinstance(
-            current_note, note) else mp.get_note_num(current_note)
+            current_note, note) else _get_mp().get_note_num(current_note)
         if not current_num:
             current_num = 4
         if interval < 0:
@@ -3063,7 +3075,7 @@ class scale:
             result_scale_degree = self.get_scale_degree(result.name) - 1
             current_name = self.standard()[result_scale_degree]
             if current_name not in database.standard:
-                current_name = mp.standardize_note(current_name)
+                current_name = _get_mp().standardize_note(current_name)
             result.name = current_name
         return result
 
@@ -3291,7 +3303,7 @@ class piece:
             self.tracks[i].set_volume(self.muted_msg[i])
 
     def update_msg(self):
-        self.other_messages = mp.concat(
+        self.other_messages = _get_mp().concat(
             [i.other_messages for i in self.tracks], start=[])
 
     def append(self, new_track):
@@ -3785,8 +3797,8 @@ class piece:
                                           adjust_msg=False)
         first_track.other_messages = temp.other_messages
         if add_pan_volume:
-            whole_pan = mp.concat(temp.pan)
-            whole_volume = mp.concat(temp.volume)
+            whole_pan = _get_mp().concat(temp.pan)
+            whole_volume = _get_mp().concat(temp.volume)
             pan_msg = [
                 event('control_change',
                       channel=i.channel,
@@ -4016,7 +4028,7 @@ class piece:
                     for each in temp.pan]
         temp.volume = [[i for i in each if i.start_time < ind2]
                        for each in temp.volume]
-        tempo_changes = mp.concat(temp.get_tempo_changes(), start=[])
+        tempo_changes = _get_mp().concat(temp.get_tempo_changes(), start=[])
         temp.clear_tempo()
         track_inds = [each.track_ind for each in temp.tracks]
         temp.other_messages = [
@@ -4985,7 +4997,7 @@ class drum:
                     ]:
                         current_note = self._convert_to_note(current_note,
                                                              mode=1)
-                        current_each_note = mp.C(
+                        current_each_note = _get_mp().C(
                             f'{current_note.name}{current_chord_type}',
                             current_note.num)
                         for i in current_each_note:
@@ -5249,7 +5261,7 @@ class drum:
                     ]:
                         current_note = self._convert_to_note(current_note,
                                                              mode=1)
-                        current_each_note = mp.C(
+                        current_each_note = _get_mp().C(
                             f'{current_note.name}{current_chord_type}',
                             current_note.num)
                         for i in current_each_note:
@@ -5408,9 +5420,9 @@ class drum:
                 text, dotted = text.split('.', 1)
                 dotted_num = len(dotted) + 1
             if mode == 0:
-                result = mp.degree_to_note(mapping[text])
+                result = _get_mp().degree_to_note(mapping[text])
             else:
-                result = mp.N(text)
+                result = _get_mp().N(text)
             result.dotted_num = dotted_num
             self.last_non_num_note = result
 
@@ -5441,12 +5453,12 @@ class drum:
 
     def _get_length(self, notes):
         return sum([
-            mp.dotted(1, self._get_dotted(i)) for i in notes
+            _get_mp().dotted(1, self._get_dotted(i)) for i in notes
             if not (isinstance(i, str) and i.startswith('i:'))
         ])
 
     def _apply_dotted_notes(self, current_part_fix_length_unit, dotted_num):
-        return mp.dotted(current_part_fix_length_unit, dotted_num)
+        return _get_mp().dotted(current_part_fix_length_unit, dotted_num)
 
     def __mul__(self, n):
         temp = copy(self)
@@ -5527,7 +5539,7 @@ class chord_type:
         if self.type == 'note':
             return chord([self.note_name])
         elif self.type == 'interval':
-            current_root = mp.N(self.root)
+            current_root = _get_mp().N(self.root)
             if root_octave is not None:
                 current_root.num = root_octave
             return chord([
@@ -5552,7 +5564,7 @@ class chord_type:
             else:
                 if self.root is None or self.chord_type is None:
                     return None
-                current = mp.C(self.get_root_position(),
+                current = _get_mp().C(self.get_root_position(),
                                custom_mapping=custom_mapping)
                 if not root_position:
                     if custom_order is not None:
@@ -5626,7 +5638,7 @@ class chord_type:
             else:
                 if self.root is None or self.chord_type is None:
                     return None
-                current_chord = mp.C(self.get_root_position(),
+                current_chord = _get_mp().C(self.get_root_position(),
                                      custom_mapping=custom_mapping)
                 if self.altered:
                     if show_degree:
@@ -5722,7 +5734,7 @@ class chord_type:
             current_chord1 = self.to_chord()
             current_chord2 = self.to_chord(apply_inversion=False,
                                            apply_voicing=False)
-            current_inversion_way = mp.alg.inversion_way(
+            current_inversion_way = _get_mp().alg.inversion_way(
                 current_chord1, current_chord2)
             if isinstance(current_inversion_way, int):
                 self.inversion = current_inversion_way
@@ -5784,5 +5796,3 @@ class chord_type:
 
 
 from musicpy.parsing import _read_notes, _read_single_note, _parse_change_num, _process_note, _process_settings, _process_normalize_tempo, _piece_process_normalize_tempo, copy_list, process_note
-
-import musicpy as mp
