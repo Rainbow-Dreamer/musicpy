@@ -1829,7 +1829,7 @@ class chord:
             return temp
 
     def info(self, **detect_args):
-        chord_type = self.detect(get_chord_type=True, **detect_args)
+        chord_type = self.detect_chord_type(get_chord_type=True, **detect_args)
         return chord_type
 
     def same_accidentals(self, mode='#'):
