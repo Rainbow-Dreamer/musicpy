@@ -1,0 +1,15 @@
+{
+  "chord-concat": "2l5hmw1",
+  "chord-construct": "11nmrpo",
+  "chord-detect": "5w9bedv",
+  "chord-inversion": "3tzhmr5",
+  "chord-progression": "3x6jrin",
+  "chord-transpose": "60zsa00",
+  "negative-harmony": "4vdqkxr",
+  "note-construct": "4cwskkd",
+  "scale-construct": "1eygcjf",
+  "scale-detect": "f0xu6qt",
+  "chain/build-analyze-transpose": "pkush3e",
+  "chain/chord-transform-flow": "5ps56p0",
+  "chain/scale-to-progression": "6blphn6"
+}
