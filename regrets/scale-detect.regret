@@ -1,0 +1,14 @@
+cluster: scale-detect
+version: 1
+fingerprint: f0xu6qt
+captured: 2026-06-13T19:32:19.936125+00:00
+watches: [detect_scale_from_chord]
+entry: detect_scale_from_chord
+stack: python
+fingerprintLevel: entry
+module: regret_adapter
+env: {"gmpy": "not_installed", "gmpy2": "not_installed", "numpy": "2.1.3", "python_impl": "CPython", "python_version": "3.12.13"}
+---
+INPUT  "Cmaj7"
+OUTPUT "most likely scales: C major, G major, E minor, C# minor, B phrygian"
+HASH   f0xu6qt

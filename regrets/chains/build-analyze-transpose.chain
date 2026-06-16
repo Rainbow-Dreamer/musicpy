@@ -1,0 +1,23 @@
+chain: build-analyze-transpose
+chain_hash: pkush3e
+captured: 2026-06-13T19:32:41.162058+00:00
+steps:
+  1. cluster: chord-construct
+     fingerprint: 11nmrpo
+  2. cluster: chord-detect
+     fingerprint: 5w9bedv
+  3. cluster: chord-transpose
+     fingerprint: 60zsa00
+---
+STEP 1  chord-construct
+  INPUT  "Cmaj7"
+  OUTPUT {"tracks": [{"notes": [{"base_name": "C", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "E", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "G", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "B", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}], "start_time": 0, "other_messages": [], "tempos": [], "pitch_bends": []}], "instruments": [1], "bpm": 120, "start_times": [0], "track_names": null, "channels": [0], "name": null, "pan": [[]], "volume": [[]], "other_messages": [], "daw_channels": null, "ticks_per_beat": null}
+  HASH   11nmrpo
+STEP 2  chord-detect
+  INPUT  "Cmaj7"
+  OUTPUT "Cmaj7"
+  HASH   5w9bedv
+STEP 3  chord-transpose
+  INPUT  ["Cmaj7", 2]
+  OUTPUT {"tracks": [{"notes": [{"base_name": "D", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "F", "accidental": "#", "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "A", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "C", "accidental": "#", "num": 5, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}], "start_time": 0, "other_messages": [], "tempos": [], "pitch_bends": []}], "instruments": [1], "bpm": 120, "start_times": [0], "track_names": null, "channels": [0], "name": null, "pan": [[]], "volume": [[]], "other_messages": [], "daw_channels": null, "ticks_per_beat": null}
+  HASH   60zsa00
