@@ -122,7 +122,7 @@ def samenote_set(a, b):
         b.names(standardize_note=True))
 
 
-def find_chord_similarity(a,
+def find_similarity(a,
                     b=None,
                     b_type=None,
                     change_from_first=True,
@@ -169,7 +169,7 @@ def find_chord_similarity(a,
         current_chord_type.highest_ratio = highest
         if highest >= similarity_ratio:
             if change_from_first:
-                current_chord_type = find_chord_similarity(
+                current_chord_type = find_similarity(
                     a=a,
                     b=chordfrom,
                     b_type=first[1],
@@ -195,7 +195,7 @@ def find_chord_similarity(a,
                                           wholeTypes[first[2]],
                                           custom_mapping=current_chord_types)
                     if highest >= similarity_ratio:
-                        current_chord_type = find_chord_similarity(
+                        current_chord_type = find_similarity(
                             a=a,
                             b=chordfrom,
                             b_type=first[1],
@@ -213,7 +213,7 @@ def find_chord_similarity(a,
                         break
             if not change_from_first:
                 chordfrom_type = first[1]
-                current_chord_type = find_chord_similarity(
+                current_chord_type = find_similarity(
                     a=a,
                     b=chordfrom,
                     b_type=chordfrom_type,
@@ -230,7 +230,7 @@ def find_chord_similarity(a,
         chordfrom = b
 
         if samenotes(a, chordfrom):
-            chordfrom_type = detect_chord_type(current_chord=chordfrom,
+            chordfrom_type = detect(current_chord=chordfrom,
                                     change_from_first=change_from_first,
                                     same_note_special=same_note_special,
                                     get_chord_type=True,
@@ -269,7 +269,7 @@ def find_chord_similarity(a,
         return current_chord_type
 
 
-def detect_chord_variation(current_chord,
+def detect_variation(current_chord,
                      change_from_first=True,
                      original_first=True,
                      same_note_special=False,
@@ -280,7 +280,7 @@ def detect_chord_variation(current_chord,
         2] if custom_mapping is not None else None
     for each in range(1, N):
         each_current = current_chord.inversion(each)
-        each_detect = detect_chord_type(current_chord=each_current,
+        each_detect = detect(current_chord=each_current,
                              change_from_first=change_from_first,
                              original_first=original_first,
                              same_note_special=same_note_special,
@@ -296,7 +296,7 @@ def detect_chord_variation(current_chord,
                     custom_mapping=current_custom_chord_types)
                 inv_msg = inversion_way(current_chord, change_from_chord)
                 if inv_msg is None:
-                    result = find_chord_similarity(a=current_chord,
+                    result = find_similarity(a=current_chord,
                                              b=change_from_chord,
                                              b_type=each_detect.chord_type,
                                              similarity_ratio=similarity_ratio,
@@ -310,7 +310,7 @@ def detect_chord_variation(current_chord,
             return result
     for each2 in range(1, N):
         each_current = current_chord.inversion_highest(each2)
-        each_detect = detect_chord_type(current_chord=each_current,
+        each_detect = detect(current_chord=each_current,
                              change_from_first=change_from_first,
                              original_first=original_first,
                              same_note_special=same_note_special,
@@ -326,7 +326,7 @@ def detect_chord_variation(current_chord,
                     custom_mapping=current_custom_chord_types)
                 inv_msg = inversion_way(current_chord, change_from_chord)
                 if inv_msg is None:
-                    result = find_chord_similarity(a=current_chord,
+                    result = find_similarity(a=current_chord,
                                              b=change_from_chord,
                                              b_type=each_detect.chord_type,
                                              similarity_ratio=similarity_ratio,
@@ -340,23 +340,23 @@ def detect_chord_variation(current_chord,
             return result
 
 
-def detect_polychord_split(current_chord, N=None, **detect_args):
+def detect_split(current_chord, N=None, **detect_args):
     if N is None:
         N = len(current_chord)
     result = chord_type(chord_speciality='polychord')
     if N < 6:
         splitind = 1
         lower = chord_type(note_name=current_chord.notes[0].name, type='note')
-        upper = detect_chord_type(current_chord.notes[splitind:],
+        upper = detect(current_chord.notes[splitind:],
                        get_chord_type=True,
                        **detect_args)
         result.polychords = [lower, upper]
     else:
         splitind = N // 2
-        lower = detect_chord_type(current_chord.notes[:splitind],
+        lower = detect(current_chord.notes[:splitind],
                        get_chord_type=True,
                        **detect_args)
-        upper = detect_chord_type(current_chord.notes[splitind:],
+        upper = detect(current_chord.notes[splitind:],
                        get_chord_type=True,
                        **detect_args)
         result.polychords = [lower, upper]
@@ -389,7 +389,7 @@ def _detect_helper(current_chord_type,
 
 
 @method_wrapper(chord)
-def detect_chord_type(current_chord,
+def detect(current_chord,
            change_from_first=True,
            original_first=True,
            same_note_special=False,
@@ -490,7 +490,7 @@ def detect_chord_type(current_chord,
                               show_degree=show_degree,
                               custom_mapping=custom_mapping)
 
-    current_chord_type = find_chord_similarity(a=current_chord,
+    current_chord_type = find_similarity(a=current_chord,
                                          change_from_first=change_from_first,
                                          same_note_special=same_note_special,
                                          similarity_ratio=similarity_ratio,
@@ -505,7 +505,7 @@ def detect_chord_type(current_chord,
                                   show_degree=show_degree,
                                   custom_mapping=custom_mapping)
 
-    current_chord_type_inoctave = find_chord_similarity(
+    current_chord_type_inoctave = find_similarity(
         a=current_chord_inoctave,
         change_from_first=change_from_first,
         same_note_special=same_note_special,
@@ -571,7 +571,7 @@ def detect_chord_type(current_chord,
                                       show_degree=show_degree,
                                       custom_mapping=custom_mapping)
     if poly_chord_first and N > 3:
-        current_chord_type = detect_polychord_split(current_chord=current_chord,
+        current_chord_type = detect_split(current_chord=current_chord,
                                           N=N,
                                           change_from_first=change_from_first,
                                           original_first=original_first,
@@ -585,7 +585,7 @@ def detect_chord_type(current_chord,
                               show_degree=show_degree,
                               custom_mapping=custom_mapping)
     inversion_final = True
-    possibles = [(find_chord_similarity(a=current_chord.inversion(j),
+    possibles = [(find_similarity(a=current_chord.inversion(j),
                                   change_from_first=change_from_first,
                                   same_note_special=same_note_special,
                                   similarity_ratio=similarity_ratio,
@@ -593,7 +593,7 @@ def detect_chord_type(current_chord,
                  for j in range(1, N)]
     possibles = [x for x in possibles if x[0].chord_type is not None]
     if len(possibles) == 0:
-        possibles = [(find_chord_similarity(a=current_chord.inversion_highest(j),
+        possibles = [(find_similarity(a=current_chord.inversion_highest(j),
                                       change_from_first=change_from_first,
                                       same_note_special=same_note_special,
                                       similarity_ratio=similarity_ratio,
@@ -633,7 +633,7 @@ def detect_chord_type(current_chord,
             if highest_chord_type.voicing is not None and not isinstance(
                     invfrom_current_invert, int):
                 current_root_position = highest_chord_type.get_root_position()
-                current_chord_type = find_chord_similarity(
+                current_chord_type = find_similarity(
                     a=current_chord,
                     b=C(current_root_position,
                         custom_mapping=current_custom_chord_types),
@@ -660,7 +660,7 @@ def detect_chord_type(current_chord,
     if not whole_detect:
         return
     else:
-        detect_var = detect_chord_variation(current_chord=current_chord,
+        detect_var = detect_variation(current_chord=current_chord,
                                       change_from_first=change_from_first,
                                       original_first=original_first,
                                       same_note_special=same_note_special,
@@ -668,7 +668,7 @@ def detect_chord_type(current_chord,
                                       N=N,
                                       custom_mapping=custom_mapping)
         if detect_var is None:
-            current_chord_type = detect_polychord_split(
+            current_chord_type = detect_split(
                 current_chord=current_chord,
                 N=N,
                 change_from_first=change_from_first,
@@ -701,7 +701,7 @@ def detect_chord_by_root(current_chord,
         current_chord = current_chord.standardize(
             standardize_note=standardize_note)
         if len(current_chord) < 3:
-            return detect_chord_type(current_chord,
+            return detect(current_chord,
                           get_chord_type=get_chord_type,
                           custom_mapping=custom_mapping)
     current_chord_types = []
@@ -710,7 +710,7 @@ def detect_chord_by_root(current_chord,
     current_match_chord = _detect_chord_by_root_helper(
         current_chord, custom_mapping=custom_mapping, inner=inner)
     if current_match_chord:
-        current_chord_type = find_chord_similarity(
+        current_chord_type = find_similarity(
             a=current_chord,
             b=C(f'{current_chord[0].name}{current_match_chord}',
                 custom_mapping=current_custom_chord_types),
@@ -722,7 +722,7 @@ def detect_chord_by_root(current_chord,
         current_match_chord_inoctave = _detect_chord_by_root_helper(
             current_chord_inoctave, custom_mapping=custom_mapping, inner=inner)
         if current_match_chord_inoctave and current_match_chord_inoctave != current_match_chord:
-            current_chord_type_inoctave = find_chord_similarity(
+            current_chord_type_inoctave = find_similarity(
                 a=current_chord,
                 b=C(f'{current_chord[0].name}{current_match_chord_inoctave}',
                     custom_mapping=current_custom_chord_types),
@@ -1054,7 +1054,7 @@ def guitar_chord(frets,
     result = chord(guitar_notes, duration, interval)
     if return_chord:
         return result
-    return detect_chord_type(result.sortchord(), **detect_args)
+    return detect(result.sortchord(), **detect_args)
 
 
 def guitar_pattern(frets,
@@ -1807,7 +1807,7 @@ def chord_functions_analysis(current_chord,
         result = current_chord
     if is_detect:
         actual_chords = [
-            detect_chord_type(i, get_chord_type=True, **detect_args) for i in result
+            detect(i, get_chord_type=True, **detect_args) for i in result
         ]
     else:
         actual_chords = current_chord
@@ -2181,7 +2181,7 @@ def chord_analysis(chords,
         chord_inds.append([N + 1 - len(current_chord), N + 1])
     current_chord = []
     if formatted:
-        result = [detect_chord_type(each, **detect_args) for each in chord_ls]
+        result = [detect(each, **detect_args) for each in chord_ls]
         result = [i if not isinstance(i, list) else i[0] for i in result]
         result_notes = [chord_notes[k[0]:k[1]] for k in chord_inds]
         result_notes = [
@@ -2214,7 +2214,7 @@ def chord_analysis(chords,
             return [chord_notes[k[0]:k[1]] for k in chord_inds]
         return chord_ls
     elif mode == 'chord names':
-        result = [detect_chord_type(each, **detect_args) for each in chord_ls]
+        result = [detect(each, **detect_args) for each in chord_ls]
         return [i if not isinstance(i, list) else i[0] for i in result]
     elif mode == 'inds':
         return [[i[0], i[1]] for i in chord_inds]
@@ -2492,10 +2492,3 @@ def write_pop(
                   track_name='bass',
                   channel=2))
     return result
-
-
-# Backward-compatible aliases
-detect = detect_chord_type
-find_similarity = find_chord_similarity
-detect_variation = detect_chord_variation
-detect_split = detect_polychord_split
