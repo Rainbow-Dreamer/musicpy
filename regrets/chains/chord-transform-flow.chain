@@ -1,0 +1,29 @@
+chain: chord-transform-flow
+chain_hash: 5ps56p0
+captured: 2026-06-13T19:32:41.168245+00:00
+steps:
+  1. cluster: chord-construct
+     fingerprint: 11nmrpo
+  2. cluster: chord-inversion
+     fingerprint: 3tzhmr5
+  3. cluster: chord-transpose
+     fingerprint: 2ldevm5
+  4. cluster: chord-concat
+     fingerprint: 2l5hmw1
+---
+STEP 1  chord-construct
+  INPUT  "Cmaj7"
+  OUTPUT {"tracks": [{"notes": [{"base_name": "C", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "E", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "G", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "B", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}], "start_time": 0, "other_messages": [], "tempos": [], "pitch_bends": []}], "instruments": [1], "bpm": 120, "start_times": [0], "track_names": null, "channels": [0], "name": null, "pan": [[]], "volume": [[]], "other_messages": [], "daw_channels": null, "ticks_per_beat": null}
+  HASH   11nmrpo
+STEP 2  chord-inversion
+  INPUT  ["Cmaj7", 1]
+  OUTPUT {"tracks": [{"notes": [{"base_name": "E", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "G", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "B", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "C", "accidental": null, "num": 5, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}], "start_time": 0, "other_messages": [], "tempos": [], "pitch_bends": []}], "instruments": [1], "bpm": 120, "start_times": [0], "track_names": null, "channels": [0], "name": null, "pan": [[]], "volume": [[]], "other_messages": [], "daw_channels": null, "ticks_per_beat": null}
+  HASH   3tzhmr5
+STEP 3  chord-transpose
+  INPUT  ["Cmaj7", 5]
+  OUTPUT {"tracks": [{"notes": [{"base_name": "F", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "A", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "C", "accidental": null, "num": 5, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "E", "accidental": null, "num": 5, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}], "start_time": 0, "other_messages": [], "tempos": [], "pitch_bends": []}], "instruments": [1], "bpm": 120, "start_times": [0], "track_names": null, "channels": [0], "name": null, "pan": [[]], "volume": [[]], "other_messages": [], "daw_channels": null, "ticks_per_beat": null}
+  HASH   2ldevm5
+STEP 4  chord-concat
+  INPUT  ["Cmaj7", "Dm7"]
+  OUTPUT {"tracks": [{"notes": [{"base_name": "C", "accidental": null, "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}], "start_time": 0, "other_messages": [], "tempos": [], "pitch_bends": []}], "instruments": [1], "bpm": 120, "start_times": [0], "track_names": null, "channels": [0], "name": null, "pan": [[]], "volume": [[]], "other_messages": [], "daw_channels": null, "ticks_per_beat": null}
+  HASH   2l5hmw1

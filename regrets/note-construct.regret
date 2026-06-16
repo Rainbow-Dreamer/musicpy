@@ -1,0 +1,15 @@
+cluster: note-construct
+version: 1
+fingerprint: 4cwskkd
+captured: 2026-06-13T19:32:19.919044+00:00
+watches: [construct_note]
+entry: construct_note
+stack: python
+fingerprintLevel: entry
+module: regret_adapter
+outputTransform: to_dict
+env: {"gmpy": "not_installed", "gmpy2": "not_installed", "numpy": "2.1.3", "python_impl": "CPython", "python_version": "3.12.13"}
+---
+INPUT  "C5"
+OUTPUT {"base_name": "C", "accidental": null, "num": 5, "duration": 0.25, "volume": 100, "channel": null}
+HASH   4cwskkd

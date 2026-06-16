@@ -1,0 +1,17 @@
+cluster: negative-harmony
+version: 1
+fingerprint: 4vdqkxr
+captured: 2026-06-13T19:32:19.937751+00:00
+watches: [negative_harmony_transform]
+entry: negative_harmony_transform
+stack: python
+fingerprintLevel: entry
+normalize: [floatPrecision]
+multiArgs: True
+module: regret_adapter
+outputTransform: to_dict
+env: {"gmpy": "not_installed", "gmpy2": "not_installed", "numpy": "2.1.3", "python_impl": "CPython", "python_version": "3.12.13"}
+---
+INPUT  ["Cmaj7", "C", "major"]
+OUTPUT {"tracks": [{"notes": [{"base_name": "G", "accidental": null, "num": 3, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "D", "accidental": "#", "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "C", "accidental": null, "num": 5, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}, {"base_name": "G", "accidental": "#", "num": 4, "duration": 0.25, "volume": 100, "channel": null, "interval": 0}], "start_time": 0, "other_messages": [], "tempos": [], "pitch_bends": []}], "instruments": [1], "bpm": 120, "start_times": [0], "track_names": null, "channels": [0], "name": null, "pan": [[]], "volume": [[]], "other_messages": [], "daw_channels": null, "ticks_per_beat": null}
+HASH   4vdqkxr

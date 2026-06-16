@@ -1,0 +1,121 @@
+{
+  "projectName": "musicpy",
+  "clusters": [
+    {
+      "id": "chord-construct",
+      "entry": "construct_chord",
+      "watches": ["construct_chord"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "outputTransform": "to_dict",
+      "inputs": ["Cmaj7", "Dm7", "Gsus4", "F#dim", "Cm9", "Eb7"],
+      "description": "Chord construction from name returns deterministic dict"
+    },
+    {
+      "id": "note-construct",
+      "entry": "construct_note",
+      "watches": ["construct_note"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "outputTransform": "to_dict",
+      "inputs": ["C5", "D#4", "Bb3", "F#2", "A3"],
+      "description": "Note construction from name returns deterministic dict"
+    },
+    {
+      "id": "scale-construct",
+      "entry": "construct_scale",
+      "watches": ["construct_scale"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "multiArgs": true,
+      "inputs": [["C", "major"], ["D", "minor"], ["G", "mixolydian"], ["F#", "dorian"]],
+      "description": "Scale construction returns deterministic note list"
+    },
+    {
+      "id": "chord-detect",
+      "entry": "detect_chord",
+      "watches": ["detect_chord"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "inputs": ["Cmaj7", "Dm7", "Gsus4", "F#dim", "Cm9", "Eb7"],
+      "description": "Chord detection returns chord type name"
+    },
+    {
+      "id": "chord-transpose",
+      "entry": "transpose_chord",
+      "watches": ["transpose_chord"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "multiArgs": true,
+      "outputTransform": "to_dict",
+      "inputs": [["Cmaj7", 2], ["Dm7", 5], ["Gsus4", -3], ["F#dim", 7]],
+      "normalize": ["floatPrecision"],
+      "description": "Chord transposition returns transposed chord dict"
+    },
+    {
+      "id": "chord-inversion",
+      "entry": "invert_chord",
+      "watches": ["invert_chord"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "multiArgs": true,
+      "outputTransform": "to_dict",
+      "inputs": [["Cmaj7", 1], ["Cmaj7", 2], ["Cmaj7", 3], ["Dm7", 1]],
+      "normalize": ["floatPrecision"],
+      "description": "Chord inversion returns inverted chord dict"
+    },
+    {
+      "id": "chord-concat",
+      "entry": "concat_chords",
+      "watches": ["concat_chords"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "multiArgs": true,
+      "outputTransform": "to_dict",
+      "inputs": [["Cmaj7", "Dm7"], ["Gsus4", "F#dim"]],
+      "normalize": ["floatPrecision"],
+      "description": "Chord concatenation returns combined chord dict"
+    },
+    {
+      "id": "chord-progression",
+      "entry": "chord_progression_from_scale",
+      "watches": ["chord_progression_from_scale"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "multiArgs": true,
+      "inputs": [["C", "major"], ["D", "minor"]],
+      "description": "Chord progression from scale returns list of chord dicts"
+    },
+    {
+      "id": "scale-detect",
+      "entry": "detect_scale_from_chord",
+      "watches": ["detect_scale_from_chord"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "inputs": ["Cmaj7", "Dm7"],
+      "description": "Scale detection from chord returns scale information"
+    },
+    {
+      "id": "negative-harmony",
+      "entry": "negative_harmony_transform",
+      "watches": ["negative_harmony_transform"],
+      "module": "regret_adapter",
+      "stack": "python",
+      "pythonPath": ".",
+      "multiArgs": true,
+      "outputTransform": "to_dict",
+      "inputs": [["Cmaj7", "C", "major"], ["Dm7", "D", "minor"]],
+      "normalize": ["floatPrecision"],
+      "description": "Negative harmony transformation returns transformed chord dict"
+    }
+  ]
+}
