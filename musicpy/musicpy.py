@@ -3,7 +3,6 @@ import math
 import struct
 from io import BytesIO
 import mido_fix as mido
-import functools
 import json
 
 if __name__ == '__main__' or __name__ == 'musicpy':
@@ -37,26 +36,6 @@ class MetaSpec_key_signature(mido.midifiles.meta.MetaSpec_key_signature):
 
 
 mido.midifiles.meta.add_meta_spec(MetaSpec_key_signature)
-
-
-def method_wrapper(cls):
-
-    def method_decorator(func):
-
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-            return result
-
-        if not isinstance(cls, list):
-            types = [cls]
-        else:
-            types = cls
-        for each in types:
-            setattr(each, func.__name__, wrapper)
-        return func
-
-    return method_decorator
 
 
 def to_note(notename, duration=1 / 4, volume=100, pitch=4, channel=None):
@@ -255,6 +234,26 @@ def multi_voice(*current_chord, method=chord, start_times=None):
     else:
         result = concat(current_chord, mode='&')
     return result
+
+
+def method_wrapper(cls):
+
+    def method_decorator(func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+            return result
+
+        if not isinstance(cls, list):
+            types = [cls]
+        else:
+            types = cls
+        for each in types:
+            setattr(each, func.__name__, wrapper)
+        return func
+
+    return method_decorator
 
 
 @method_wrapper([note, chord, piece, track, drum])
@@ -482,6 +481,7 @@ def read(name,
                 [k[0].volume_list for k in all_tracks])
             all_tracks = [all_track_notes, tempos, first_track_start_time]
         else:
+            all_tracks[0][0].start_time = all_tracks[0][2]
             available_tracks = available_tracks[0]
             all_tracks = all_tracks[0]
         pan_list = all_tracks[0].pan_list
