@@ -481,6 +481,7 @@ def read(name,
                 [k[0].volume_list for k in all_tracks])
             all_tracks = [all_track_notes, tempos, first_track_start_time]
         else:
+            all_tracks[0][0].start_time = all_tracks[0][2]
             available_tracks = available_tracks[0]
             all_tracks = all_tracks[0]
         pan_list = all_tracks[0].pan_list
