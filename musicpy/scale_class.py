@@ -7,10 +7,20 @@ if __name__ == 'musicpy.scale_class':
     from . import database
     from .primitives import note, tempo, pitch_bend, pan, volume, event, beat, rest_symbol, continue_symbol, rest
     from .chord_class import chord, chord_type
+    from .parsers import (_read_notes, _read_single_note, _parse_change_num,
+                          _process_note, _process_settings,
+                          _process_normalize_tempo,
+                          _piece_process_normalize_tempo, copy_list,
+                          process_note)
 else:
     import database
     from primitives import note, tempo, pitch_bend, pan, volume, event, beat, rest_symbol, continue_symbol, rest
     from chord_class import chord, chord_type
+    from parsers import (_read_notes, _read_single_note, _parse_change_num,
+                         _process_note, _process_settings,
+                         _process_normalize_tempo,
+                         _piece_process_normalize_tempo, copy_list,
+                         process_note)
 
 
 class scale:

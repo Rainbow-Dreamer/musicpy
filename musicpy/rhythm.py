@@ -8,6 +8,19 @@ These are imported back into structures.py to maintain backward compatibility.
 from copy import deepcopy as copy
 from fractions import Fraction
 
+if __name__ == 'musicpy.rhythm':
+    from .parsers import (_read_notes, _read_single_note, _parse_change_num,
+                          _process_note, _process_settings,
+                          _process_normalize_tempo,
+                          _piece_process_normalize_tempo, copy_list,
+                          process_note)
+else:
+    from parsers import (_read_notes, _read_single_note, _parse_change_num,
+                         _process_note, _process_settings,
+                         _process_normalize_tempo,
+                         _piece_process_normalize_tempo, copy_list,
+                         process_note)
+
 # Lazy import helper to avoid circular dependency with musicpy module
 _mp = None
 
@@ -80,7 +93,6 @@ class rhythm(list):
                  time_signature=None,
                  separator=' ',
                  unit=None):
-        from musicpy.parsing import _process_note, copy_list
         is_str = False
         settings_list = []
         if isinstance(beat_list, str):
@@ -137,7 +149,6 @@ class rhythm(list):
         return f'[rhythm]\nrhythm: {current_rhythm}\ntotal bar length: {current_total_bar_length}\ntime signature: {self.time_signature[0]} / {self.time_signature[1]}'
 
     def _convert_to_rhythm(self, current_rhythm, separator=' '):
-        from musicpy.parsing import _process_note
         settings_list = []
         current_beat_list = current_rhythm.split(separator)
         current_beat_list = [i.strip() for i in current_beat_list if i]
